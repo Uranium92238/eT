@@ -33,12 +33,8 @@ module eri_ri_class
 !
    use parameters
 !
-   use global_out, only : output
-   use global_in,  only : input
-!
    use ao_tool_class, only : ao_tool
    use ri_basis_class, only : ri_basis
-!
    use memory_manager_class, only: mem
 !
    implicit none
@@ -72,7 +68,7 @@ module eri_ri_class
       procedure, private :: decompose_S
       procedure, private :: print_summary
 !
-   end type eri_ri 
+   end type eri_ri
 !
 !
    interface eri_ri
@@ -141,7 +137,7 @@ contains
 !
 !
    subroutine construct_cholesky_mo_vectors_eri_ri(this, ao, n_ao, n_mo, &
-                                                   orbital_coefficients, integrals)
+                                                   orbital_coefficients, cd_tool)
 !!
 !!    Construct Cholesky MO vectors
 !!    Written by Sarai D. Folkestad, Aug 2021
@@ -155,9 +151,9 @@ contains
 !!    the RI basis.
 !!
       use array_utilities, only: zero_array
-      use mo_eri_tool_class, only: mo_eri_tool
       use reordering, only: sort_123_to_132
       use batching_index_class, only: batching_index
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
 !
       implicit none
 !
@@ -169,7 +165,7 @@ contains
 !
       real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      class(mo_eri_tool), intent(inout) :: integrals
+      class(abstract_eri_cholesky), intent(inout) :: cd_tool
 !
       real(dp), dimension(:,:,:), allocatable :: X_Kwq, X_Kqw, X_Kqp, L_Jqp, g_Kwx, X_Kqp_red, L_Jpq
       real(dp), dimension(ao%max_sh_size**2*this%aux%max_dim), target :: g_KCD
@@ -293,11 +289,7 @@ contains
          call sort_123_to_132(L_Jqp, L_Jpq, this%aux%n_ao, batch_q%length, n_mo)
          call mem%dealloc(L_Jqp, this%aux%n_ao, batch_q%length, n_mo)
 !
-         call integrals%set_cholesky_mo(L_Jpq,                 &
-                                          1,                   &
-                                          n_mo,                &        
-                                          batch_q%first,       &
-                                          batch_q%get_last())
+         call cd_tool%set(L_Jpq, 1, n_mo, batch_q%first, batch_q%get_last())
 !
          call mem%dealloc(L_Jpq, this%aux%n_ao, n_mo, batch_q%length)
 !
@@ -436,6 +428,8 @@ contains
 !!    Print summary
 !!    Written by Sarai D. Folkestad, Aug 2021
 !!
+      use global_out, only : output
+!
       implicit none
 !
       class(eri_ri) :: this

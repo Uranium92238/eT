@@ -62,27 +62,11 @@ module eri_cd_class
    use parameters
 !
    use global_out, only: output
-   use global_in,  only: input
-!
    use memory_manager_class, only: mem
-!
-   use reordering,      only: sort_123_to_213, sort_123_to_312
-   use range_class,     only: range_
-   use array_utilities, only: quicksort_with_index_ascending_int
-   use array_utilities, only: quicksort_with_index_descending_int
-   use array_utilities, only: quicksort_with_index_descending
-   use array_utilities, only: get_n_highest
-!
-   use array_utilities, only: get_abs_max, is_significant, transpose_
-   use array_utilities, only: reduce_array_int, reduce_vector
-!
+   use range_class, only: range_
    use sequential_file_class, only: sequential_file
-!
    use cholesky_array_list_class, only: cholesky_array_list
-!
-   use batching_index_class, only: batching_index
    use ao_tool_class, only: ao_tool
-!
    use timings_class, only: timings
 !
    implicit none
@@ -135,8 +119,9 @@ module eri_cd_class
       procedure, public :: run &
                         => run_eri_cd
 !
-      procedure, public :: construct_cholesky_mo_vectors &
-                        => construct_cholesky_mo_vectors_eri_cd
+      procedure :: construct_cholesky_mo_vectors_eri_cd
+!
+      generic, public :: construct_cholesky_mo_vectors => construct_cholesky_mo_vectors_eri_cd
 !
       procedure, public :: diagonal_test &
                         => diagonal_test_eri_cd
@@ -192,15 +177,12 @@ contains
 !!    New ERI CD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      use citation_class,         only: citation
       use citation_printer_class, only: eT_citations
 !
       implicit none
 !
       type(eri_cd)  :: this
       type(ao_tool) :: ao
-!
-      type(citation), allocatable :: reference
 !
       this%timer = timings('Cholesky decomposition of ERIs')
       call this%timer%turn_on()
@@ -227,20 +209,7 @@ contains
 !
 !     Add citation for this implementation
 !
-      reference = citation(implementation = 'Cholesky decomposition of ERIs',            &
-                           journal        = 'J. Chem. Phys.',                            &
-                           title_         = 'An efficient algorithm for Cholesky &
-                                 &decomposition of electron repulsion integrals',        &
-                           volume         = '150',                                       &
-                           issue          = '19',                                        &
-                           pages          = '194112',                                    &
-                           year           = '2019',                                      &
-                           doi            = '10.1063/1.5083802',                         &
-                           authors        = [character(len=25) :: 'Sarai D. Folkestad',  &
-                                                                  'Eirik F. Kjønstad',   &
-                                                                  'Henrik Koch'])
-!
-      call eT_citations%add(reference)
+      call eT_citations%add("Cholesky decomposition of ERIs")
 !
 !     Initialize files
 !
@@ -756,6 +725,8 @@ contains
 !!
 !!    Compute number of AOPs and SHPs (I) that correspond to sig_shp(I) = .true.
 !!
+      use array_utilities, only: is_significant
+!
       implicit none
 !
       class(eri_cd), intent(in) :: this
@@ -805,6 +776,8 @@ contains
 !!    Determines the shell pairs that are significant (sig_shp) and
 !!    calculates the maximum value on the entire diagonal (max_diagonal).
 !!
+      use array_utilities, only: is_significant
+!
       implicit none
 !
       class(eri_cd), intent(in) :: this
@@ -894,6 +867,8 @@ contains
 !!    Determines for which SHPs to construct the diagonal of the ERI matrix
 !!    (construct_shp).
 !!
+      use array_utilities, only: is_significant
+!
       implicit none
 !
       class(eri_cd), intent(in) :: this
@@ -1155,6 +1130,8 @@ contains
 !!    Constructs the final diagonal from the bases obtained from diagonal batches.
 !!    Called as preparation for final decomposition step in PCD.
 !!
+      use array_utilities, only: quicksort_with_index_ascending_int
+!
       implicit none
 !
       class(eri_cd) :: this
@@ -1562,6 +1539,10 @@ contains
 !!
 !!    Determines the elements of the Cholesky auxiliary basis.
 !!
+      use array_utilities, only: quicksort_with_index_descending
+      use array_utilities, only: get_n_highest, is_significant
+      use array_utilities, only: reduce_array_int, reduce_vector
+!
       implicit none
 !
       class(eri_cd), intent(inout) :: this
@@ -1963,7 +1944,7 @@ contains
 !
          do CD_shp = 1, n_qual_shp - 1
 !
-             n_qual_aop_in_prev_shps(CD_shp + 1) = n_qual_aop_in_prev_shps(CD_shp) + qual_shp(CD_shp, 3)
+            n_qual_aop_in_prev_shps(CD_shp + 1) = n_qual_aop_in_prev_shps(CD_shp) + qual_shp(CD_shp, 3)
 !
          enddo
 !
@@ -2353,13 +2334,13 @@ contains
 !
             call mem%alloc(D_xy_new, n_new_sig_aop)
 !
-           call reduce_vector(D_xy,                      &
-                             D_xy_new,                   &
-                             sig_shp_to_first_sig_aop,   &
-                             new_sig_shp,                &
-                             n_sig_shp,                  &
-                             n_sig_aop,                  &
-                             n_new_sig_aop)
+            call reduce_vector(D_xy,                       &
+                               D_xy_new,                   &
+                               sig_shp_to_first_sig_aop,   &
+                               new_sig_shp,                &
+                               n_sig_shp,                  &
+                               n_sig_aop,                  &
+                               n_new_sig_aop)
 !
             call mem%dealloc(D_xy, n_sig_aop)
             call mem%alloc(D_xy, n_new_sig_aop)
@@ -2370,13 +2351,13 @@ contains
 !
             call mem%alloc(screening_vector_new, n_new_sig_aop)
 !
-           call reduce_vector(screening_vector,          &
-                             screening_vector_new,       &
-                             sig_shp_to_first_sig_aop,   &
-                             new_sig_shp,                &
-                             n_sig_shp,                  &
-                             n_sig_aop,                  &
-                             n_new_sig_aop)
+            call reduce_vector(screening_vector,           &
+                               screening_vector_new,       &
+                               sig_shp_to_first_sig_aop,   &
+                               new_sig_shp,                &
+                               n_sig_shp,                  &
+                               n_sig_aop,                  &
+                               n_new_sig_aop)
 !
             call mem%dealloc(screening_vector, n_sig_aop)
             call mem%alloc(screening_vector, n_new_sig_aop)
@@ -2818,16 +2799,16 @@ contains
 !
          do shp_in_basis = 1, n_shp_in_basis
 !
-              if (AB == basis_shell_info_full(shp_in_basis, 3)) then ! This shell pair is already
-                                                                    ! in the list, so must only
-                                                                    ! increment n_aops_in_shp.
+            if (AB == basis_shell_info_full(shp_in_basis, 3)) then ! This shell pair is already
+                                                                   ! in the list, so must only
+                                                                   ! increment n_aops_in_shp.
 !
-                 found = .true.
-                 basis_shell_info_full(shp_in_basis, 4) = basis_shell_info_full(shp_in_basis, 4) + 1
+               found = .true.
+               basis_shell_info_full(shp_in_basis, 4) = basis_shell_info_full(shp_in_basis, 4) + 1
 !
-                 exit ! Loop over shp_in_basis
+               exit ! Loop over shp_in_basis
 !
-              endif
+            endif
 !
          enddo
 !
@@ -2872,42 +2853,42 @@ contains
                                                           ! AOs in the shell they
                                                           ! belong to.
 !
-     aops_in_basis = 0
+      aops_in_basis = 0
 !
-    do AB_shp = 1, n_shp_in_basis
+      do AB_shp = 1, n_shp_in_basis
 !
-      A  = basis_shell_info(AB_shp, 1)
-      B  = basis_shell_info(AB_shp, 2)
-      AB = basis_shell_info(AB_shp, 3)
+         A  = basis_shell_info(AB_shp, 1)
+         B  = basis_shell_info(AB_shp, 2)
+         AB = basis_shell_info(AB_shp, 3)
 !
-      A_range = ao%shells(A)
-      B_range = ao%shells(B)
+         A_range = ao%shells(A)
+         B_range = ao%shells(B)
 !
-!     Determine which elements in the shell pair AB are elements of the basis
+!        Determine which elements in the shell pair AB are elements of the basis
 !
-      current_aop_in_shp = 0
+         current_aop_in_shp = 0
 !
-      do I = 1, this%n_cholesky
-         if (cholesky_basis_updated(I,3) == AB) then
+         do I = 1, this%n_cholesky
+            if (cholesky_basis_updated(I,3) == AB) then
 !
-            current_aop_in_shp = current_aop_in_shp + 1
+               current_aop_in_shp = current_aop_in_shp + 1
 !
-            aops_in_basis(AB_shp, current_aop_in_shp) &
-               = cholesky_basis_updated(I,1) - A_range%first + 1
+               aops_in_basis(AB_shp, current_aop_in_shp) &
+                  = cholesky_basis_updated(I,1) - A_range%first + 1
 !
-            aops_in_basis(AB_shp, max_n_basis_aops_in_shp + current_aop_in_shp) &
-               = cholesky_basis_updated(I,2) - B_range%first + 1
+               aops_in_basis(AB_shp, max_n_basis_aops_in_shp + current_aop_in_shp) &
+                  = cholesky_basis_updated(I,2) - B_range%first + 1
 !
-            aops_in_basis(AB_shp, 2*max_n_basis_aops_in_shp + current_aop_in_shp) &
-               = I
+               aops_in_basis(AB_shp, 2*max_n_basis_aops_in_shp + current_aop_in_shp) &
+                  = I
 !
-         endif
+            endif
+         enddo
+!
+         if (current_aop_in_shp .ne. basis_shell_info(AB_shp, 4)) &
+            call output%error_msg('something went wrong in construct_S.')
+!
       enddo
-!
-      if (current_aop_in_shp .ne. basis_shell_info(AB_shp, 4)) &
-         call output%error_msg('something went wrong in construct_S.')
-!
-    enddo
 !
 !     Write basis_shell_data file containing
 !
@@ -3071,7 +3052,7 @@ contains
    end function get_shp_from_shells
 !
 !
- subroutine read_settings(this)
+   subroutine read_settings(this)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3085,6 +3066,8 @@ contains
 !!           one center
 !!        end this cholesky
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(eri_cd) :: this
@@ -3147,7 +3130,7 @@ contains
 !
 !
    subroutine construct_cholesky_mo_vectors_eri_cd(this, ao, n_ao, n_mo, &
-                                                   orbital_coefficients, integrals)
+                                                   orbital_coefficients, cd_tool)
 !!
 !!    Construct Cholesky MO vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Feb 2020
@@ -3162,8 +3145,10 @@ contains
 !!
 !!    Passes the Cholesky vectors to the integrals (eri_tool)
 !!
-      use array_utilities, only: zero_array
-      use mo_eri_tool_class, only: mo_eri_tool
+      use array_utilities, only: zero_array, transpose_
+      use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_213, sort_123_to_312
 !
       implicit none
 !
@@ -3175,7 +3160,7 @@ contains
 !
       real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      class(mo_eri_tool), intent(inout) :: integrals
+      class(abstract_eri_cholesky), intent(inout) :: cd_tool
 !
       integer :: A, B, C, D, K_shp, AB_shp
       integer :: w, x, y, z
@@ -3463,11 +3448,11 @@ contains
          call sort_123_to_312(L_qpJ, L_Jqp, n_mo, batch_p%length, this%n_cholesky)
          call mem%dealloc(L_qpJ, n_mo, batch_p%length, this%n_cholesky)
 !
-         call integrals%set_cholesky_mo(L_Jqp,             &
-                                          1,               &
-                                          n_mo,            &
-                                          batch_p%first,   &
-                                          batch_p%get_last())
+         call cd_tool%set(L_Jqp,           &
+                          1,               &
+                          n_mo,            &
+                          batch_p%first,   &
+                          batch_p%get_last())
 !
          call mem%dealloc(L_Jqp, this%n_cholesky, n_mo, batch_p%length)
 !
@@ -3500,7 +3485,8 @@ contains
 !!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
 !!
 !
-      use array_utilities, only: zero_array
+      use array_utilities, only: zero_array, transpose_, get_abs_max
+      use batching_index_class, only: batching_index
 !
       implicit none
 !

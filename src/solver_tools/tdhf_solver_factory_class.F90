@@ -26,16 +26,17 @@ module tdhf_solver_factory_class
 !
 
    use kinds
-   use global_out,                   only: output
-   use transformation_tool_class,    only: transformation_tool
-   use eigen_storage_tool_class,     only: eigen_storage_tool
-   use hf_class,                     only: hf
-   use eigen_davidson_tool_class,    only: eigen_davidson_tool
-   use convergence_tool_class,       only: convergence_tool
-   use general_eigen_davidson_class, only: general_eigen_davidson
-   use start_vector_tool_class,      only: start_vector_tool
-   use tdhf_start_vector_tool_class, only: tdhf_start_vector_tool
-   use preconditioner_getter_class,  only: preconditioner_getter
+   use global_out,                      only: output
+   use transformation_tool_class,       only: transformation_tool
+   use eigen_storage_tool_class,        only: eigen_storage_tool
+   use hf_class,                        only: hf
+   use eigen_davidson_tool_class,       only: eigen_davidson_tool
+   use convergence_tool_class,          only: convergence_tool
+   use eigen_davidson_solver_class,     only: eigen_davidson_solver
+   use start_vector_tool_class,         only: start_vector_tool
+   use tdhf_start_vector_tool_class,    only: tdhf_start_vector_tool
+   use preconditioner_getter_class,     only: preconditioner_getter
+   use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
 !
    implicit none
 !
@@ -59,7 +60,7 @@ module tdhf_solver_factory_class
 contains
 !
 !
-    subroutine create_tdhf_solver_factory(this, wf, solver)
+   subroutine create_tdhf_solver_factory(this, wf, solver)
 !!
 !!    Create
 !!    Written by Sarai D. Folkestad, 2020
@@ -76,18 +77,21 @@ contains
 !!    for the determination of TDHF (RPA or Tamm-Dancoff)
 !!    excitation energies.
 !!
+      use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
+!
       implicit none
 !
       class(tdhf_solver_factory),                 intent(inout)  :: this
-      class(hf),                                  intent(in)  :: wf
-      class(general_eigen_davidson), allocatable, intent(out) :: solver
+      class(hf),                                  intent(in)     :: wf
+      class(eigen_davidson_solver), allocatable, intent(out)     :: solver
 !
-      class(eigen_davidson_tool),  allocatable :: davidson
-      class(convergence_tool),     allocatable :: convergence_checker
-      class(transformation_tool),  allocatable :: transformer
-      class(eigen_storage_tool),   allocatable :: storer
-      class(start_vector_tool),    allocatable :: start_vector
-      class(preconditioner_getter), allocatable :: preconditioner
+      class(eigen_davidson_tool),       allocatable :: davidson
+      class(convergence_tool),          allocatable :: convergence_checker
+      class(transformation_tool),       allocatable :: transformer
+      class(eigen_storage_tool),        allocatable :: storer
+      class(start_vector_tool),         allocatable :: start_vector
+      class(preconditioner_getter),     allocatable :: preconditioner
+      class(eigen_davidson_print_tool), allocatable :: printer
 !
       real(dp) :: lindep_threshold
 !
@@ -96,14 +100,6 @@ contains
       convergence_checker = convergence_tool(energy_threshold   = this%energy_threshold,     &
                                              residual_threshold = this%residual_threshold,   &
                                              energy_convergence = this%energy_convergence)
-!
-      lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
-      davidson = eigen_davidson_tool(name_            = 'tdhf_davidson',      &
-                                     n_parameters      = wf%n_v*wf%n_o,       &
-                                     n_solutions       = this%n_states,       &
-                                     lindep_threshold  = lindep_threshold,    &
-                                     max_dim_red       = this%max_dim_red,    &
-                                     records_in_memory = this%records_in_memory)
 !
       start_vector = tdhf_start_vector_tool(wf, restart=this%restart)
 !
@@ -119,16 +115,29 @@ contains
 !
       endif
 !
-      solver = general_eigen_davidson(transformer           = transformer,         &
-                                      davidson              = davidson,            &
-                                      convergence_checker   = convergence_checker, &
-                                      storer                = storer,              &
-                                      start_vector          = start_vector,        &
-                                      preconditioner        = preconditioner,      &
-                                      n_solutions           = this%n_states,       &
-                                      max_iterations        = this%max_iterations)
+      printer = eigen_davidson_print_tool(n_solutions = this%n_states, &
+                                          max_iterations = this%max_iterations)
+      call printer%print_banner()
 !
-    end subroutine create_tdhf_solver_factory
+      lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
+      davidson = eigen_davidson_tool(name_            = 'tdhf_davidson',      &
+                                     n_parameters      = wf%n_v*wf%n_o,       &
+                                     n_solutions       = this%n_states,       &
+                                     lindep_threshold  = lindep_threshold,    &
+                                     max_dim_red       = this%max_dim_red,    &
+                                     records_in_memory = this%records_in_memory)
+!
+      solver = eigen_davidson_solver(transformer           = transformer,         &
+                                     davidson              = davidson,            &
+                                     convergence_checker   = convergence_checker, &
+                                     storer                = storer,              &
+                                     start_vector          = start_vector,        &
+                                     preconditioner        = preconditioner,      &
+                                     printer               = printer,             &
+                                     n_solutions           = this%n_states,       &
+                                     max_iterations        = this%max_iterations)
+!
+   end subroutine create_tdhf_solver_factory
 !
 !
    subroutine create_rpa(wf, transformer, storer, preconditioner)
@@ -136,10 +145,9 @@ contains
 !!    Create RPA
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-!
-      use rpa_transformation_tool_class,           only: rpa_transformation_tool
-      use rpa_eigen_storage_tool_class,            only: rpa_eigen_storage_tool
-      use rpa_preconditioner_getter_class,           only: rpa_preconditioner_getter
+      use rpa_transformation_tool_class,   only: rpa_transformation_tool
+      use rpa_eigen_storage_tool_class,    only: rpa_eigen_storage_tool
+      use rpa_preconditioner_getter_class, only: rpa_preconditioner_getter
 !
       implicit none
 !
@@ -160,10 +168,9 @@ contains
 !!    Create Tamm-Dancoff
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-!
-      use tamm_dancoff_transformation_tool_class,  only: tamm_dancoff_transformation_tool
-      use tamm_dancoff_eigen_storage_tool_class,   only: tamm_dancoff_eigen_storage_tool
-      use tamm_dancoff_preconditioner_getter_class,only: tamm_dancoff_preconditioner_getter
+      use tamm_dancoff_transformation_tool_class,     only: tamm_dancoff_transformation_tool
+      use tamm_dancoff_eigen_storage_tool_class,      only: tamm_dancoff_eigen_storage_tool
+      use tamm_dancoff_preconditioner_getter_class,   only: tamm_dancoff_preconditioner_getter
 !
       implicit none
 !

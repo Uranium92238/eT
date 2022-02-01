@@ -113,7 +113,7 @@ contains
       call symmetric_sum(t2bar, wf%n_t1)
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
 !     t2bar += η_aibj
 !

@@ -50,21 +50,24 @@ module cc_multipliers_solver_factory_class
 !!     (See davidson_cc_es solver for more details.)
 !
 
-   use kinds
-   use global_out,                                     only: output
-   use transformation_tool_class,                      only: transformation_tool
-   use cc_jacobian_transformation_tool_class,          only: cc_jacobian_transformation_tool
-   use linear_storage_tool_class,                      only: linear_storage_tool
-   use cc_multipliers_linear_storage_tool_class,       only: cc_multipliers_linear_storage_tool
-   use ccs_class,                                      only: ccs
-   use linear_davidson_tool_class,                     only: linear_davidson_tool
-   use general_linear_davidson_class,                  only: general_linear_davidson
-   use rhs_linear_equation_tool_class,                 only: rhs_linear_equation_tool
-   use cc_multipliers_rhs_tool_class,                  only: cc_multipliers_rhs_tool
-   use start_vector_tool_class,                        only: start_vector_tool
-   use cc_multipliers_start_vector_tool_class,         only: cc_multipliers_start_vector_tool
-   use preconditioner_getter_class,                    only: preconditioner_getter
-   use cc_multipliers_preconditioner_getter_class,     only: cc_multipliers_preconditioner_getter
+   use parameters
+   use global_out,                                             only: output
+   use transformation_tool_class,                              only: transformation_tool
+   use cc_jacobian_transformation_tool_class,                  only: cc_jacobian_transformation_tool
+   use linear_storage_tool_class,                              only: linear_storage_tool
+   use cc_multipliers_linear_storage_tool_class,               only: cc_multipliers_linear_storage_tool
+   use ccs_class,                                              only: ccs
+   use linear_davidson_tool_class,                             only: linear_davidson_tool
+   use general_linear_davidson_solver_class,                   only: general_linear_davidson_solver
+   use rhs_linear_equation_tool_class,                         only: rhs_linear_equation_tool
+   use cc_multipliers_rhs_tool_class,                          only: cc_multipliers_rhs_tool
+   use start_vector_tool_class,                                only: start_vector_tool
+   use cc_multipliers_start_vector_tool_class,                 only: cc_multipliers_start_vector_tool
+   use preconditioner_getter_class,                            only: preconditioner_getter
+   use cc_multipliers_preconditioner_getter_class,             only: cc_multipliers_preconditioner_getter
+   use linear_davidson_print_tool_class,                       only: linear_davidson_print_tool
+   use linear_davidson_single_solution_print_tool_class,       only: linear_davidson_single_solution_print_tool
+   use linear_davidson_multiple_solutions_print_tool_class,    only: linear_davidson_multiple_solutions_print_tool
 !
    implicit none
 !
@@ -86,7 +89,7 @@ module cc_multipliers_solver_factory_class
 contains
 !
 !
-    subroutine create_cc_multipliers_solver_factory(this, wf, solver)
+   subroutine create_cc_multipliers_solver_factory(this, wf, solver)
 !!
 !!    Create
 !!    Written by Sarai D. Folkestad, 2021
@@ -105,27 +108,31 @@ contains
       implicit none
 !
       class(cc_multipliers_solver_factory),        intent(inout)  :: this
-      class(ccs),                                  intent(in)  :: wf
-      class(general_linear_davidson), allocatable, intent(out) :: solver
+      class(ccs),                                  intent(in)     :: wf
+      class(general_linear_davidson_solver), allocatable, intent(out) :: solver
 !
-      class(linear_davidson_tool),        allocatable  :: davidson
-      class(transformation_tool),         allocatable  :: transformer
-      class(linear_storage_tool),         allocatable  :: storer
-      class(rhs_linear_equation_tool),    allocatable  :: rhs_getter
-      class(start_vector_tool),           allocatable  :: start_vector
-      class(preconditioner_getter),       allocatable  :: preconditioner
+      class(linear_davidson_tool),                          allocatable :: davidson
+      class(transformation_tool),                           allocatable :: transformer
+      class(linear_storage_tool),                           allocatable :: storer
+      class(rhs_linear_equation_tool),                      allocatable :: rhs_getter
+      class(start_vector_tool),                             allocatable :: start_vector
+      class(preconditioner_getter),                         allocatable :: preconditioner
+      class(linear_davidson_print_tool),                    allocatable :: printer
 !
       real(dp) :: lindep_threshold
 !
       call this%read_settings()
 !
       lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
-      davidson = linear_davidson_tool(name_            = 'multipliers_davidson',      &
-                                     n_parameters      = wf%n_gs_amplitudes,          &
-                                     lindep_threshold  = lindep_threshold,    &
-                                     max_dim_red       = this%max_dim_red,    &
-                                     n_equations       = this%n_frequencies,  &
-                                     records_in_memory = this%records_in_memory)
+!
+      printer = linear_davidson_single_solution_print_tool()
+!
+      davidson = linear_davidson_tool(name_            = 'multipliers_davidson',&
+                                      n_parameters      = wf%n_gs_amplitudes,    &
+                                      lindep_threshold  = lindep_threshold,      &
+                                      max_dim_red       = this%max_dim_red,      &
+                                      n_equations       = this%n_frequencies,    &
+                                      records_in_memory = this%records_in_memory)
 !
       start_vector   = cc_multipliers_start_vector_tool(wf, restart=this%restart)
       transformer    = cc_jacobian_transformation_tool(wf, side=this%side)
@@ -133,18 +140,20 @@ contains
       preconditioner = cc_multipliers_preconditioner_getter(wf)
       rhs_getter     = cc_multipliers_rhs_tool(wf)
 !
-      solver = general_linear_davidson(transformer           = transformer,         &
-                                       davidson              = davidson,            &
-                                       storer                = storer,              &
-                                       start_vector          = start_vector,        &
-                                       preconditioner        = preconditioner,      &
-                                       rhs_getter            = rhs_getter,          &
-                                       n_rhs                 = 1,                   &
-                                       n_solutions           = this%n_frequencies,  &
-                                       max_iterations        = this%max_iterations, &
-                                       residual_threshold    = this%residual_threshold)
+      solver = general_linear_davidson_solver(transformer        = transformer,         &
+                                              davidson           = davidson,            &
+                                              storer             = storer,              &
+                                              start_vector       = start_vector,        &
+                                              preconditioner     = preconditioner,      &
+                                              rhs_getter         = rhs_getter,          &
+                                              printer            = printer,             &
+                                              n_rhs              = 1,                   &
+                                              n_solutions        = this%n_frequencies,  &
+                                              max_iterations     = this%max_iterations, &
+                                              residual_threshold = this%residual_threshold, &
+                                              frequencies        = [zero])
 !
-    end subroutine create_cc_multipliers_solver_factory
+   end subroutine create_cc_multipliers_solver_factory
 !
 !
    subroutine read_settings(this)

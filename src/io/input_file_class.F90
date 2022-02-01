@@ -360,10 +360,10 @@ contains
       integrals%required = .false.
       integrals%keywords = [character(len=30) :: &
                            'cholesky storage',   &
-                           'mo eri in memory',   &
-                           't1 eri in memory',   &
                            'eri storage',        &
-                           'ri']
+                           'mo eri in memory',   &
+                           'ri',                 &
+                           't1 eri in memory']
 !
 !
       memory%name_    = 'memory'
@@ -2610,7 +2610,7 @@ contains
    end function is_embedding_on_input_file
 !
 !
-  subroutine place_records_in_memory_input_file(this, section, records_in_memory)
+   subroutine place_records_in_memory_input_file(this, section, records_in_memory)
 !!
 !!    Place records in memory
 !!    Written by Sarai D. Folkestad, 2021

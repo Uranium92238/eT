@@ -37,10 +37,20 @@ module ccs_class
 !
    use range_class, only: range_
 !
-   use t1_eri_tool_class,   only : t1_eri_tool
-   use t1_eri_tool_c_class, only : t1_eri_tool_c
+   use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+   use abstract_eri_cholesky_c_class, only: abstract_eri_cholesky_c
+   use eri_adapter_class, only: eri_adapter
+   use eri_adapter_c_class, only: eri_adapter_c
+!
+!  Need these here to avoid intel segfault
+   use eri_memory_tool_c_class, only: eri_memory_tool_c
+   use eri_tool_c_class, only: eri_tool_c
+   use eri_cholesky_disk_c_class, only: eri_cholesky_disk_c
+   use eri_cholesky_memory_c_class, only: eri_cholesky_memory_c
 !
    use array_utilities, only: zdot
+!
+   use batching_index_class, only: batching_index
 !
    implicit none
 !
@@ -70,8 +80,14 @@ module ccs_class
 !
       type(stream_file), dimension(:), allocatable :: l_files, r_files
 !
-      type(t1_eri_tool) :: eri
-      type(t1_eri_tool_c) :: eri_complex
+      type(eri_adapter), allocatable :: eri_t1
+      type(eri_adapter_c), allocatable :: eri_t1_c
+!
+      class(abstract_eri_cholesky), allocatable :: L_mo
+      class(abstract_eri_cholesky), allocatable :: L_t1
+!
+      class(abstract_eri_cholesky_c), allocatable :: L_mo_c
+      class(abstract_eri_cholesky_c), allocatable :: L_t1_c
 !
       complex(dp) :: hf_energy_complex
 !
@@ -413,6 +429,9 @@ module ccs_class
       procedure :: mo_preparations                               => mo_preparations_ccs
       procedure :: construct_MO_screening_for_cd                 => construct_MO_screening_for_cd_ccs
 !
+      procedure :: integral_preparations                         => integral_preparations_ccs
+      procedure :: integral_preparations_complex                 => integral_preparations_ccs_complex
+!
 !     Core-valence separation procedures
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
@@ -448,6 +467,8 @@ module ccs_class
       procedure :: cleanup_complex                               => cleanup_complex_ccs
       procedure :: cleanup_ccs_complex                           => cleanup_ccs_complex_ccs
 !
+      procedure, private :: complexify_cholesky_vectors
+!
       procedure :: construct_complex_time_derivative             => construct_complex_time_derivative_ccs
 !
       procedure :: construct_complex_time_derivative_amplitudes  => construct_complex_time_derivative_amplitudes_ccs
@@ -461,6 +482,24 @@ module ccs_class
                 => construct_ntos_ccs
       procedure :: construct_ntos_or_cntos &
                 => construct_ntos_or_cntos_ccs
+!
+      procedure :: construct_t1_cholesky => construct_t1_cholesky_ccs
+      procedure :: construct_t1_cholesky_complex => construct_t1_cholesky_ccs_complex
+!
+      procedure :: construct_cholesky_t1_oo => construct_cholesky_t1_oo_ccs
+      procedure :: construct_cholesky_t1_oo_complex => construct_cholesky_t1_oo_ccs_complex
+!
+      procedure :: construct_cholesky_t1_vo  => construct_cholesky_t1_vo_ccs
+      procedure :: construct_cholesky_t1_vo_complex  => construct_cholesky_t1_vo_ccs_complex
+!
+      procedure :: construct_cholesky_t1_vv  => construct_cholesky_t1_vv_ccs
+      procedure :: construct_cholesky_t1_vv_complex  => construct_cholesky_t1_vv_ccs_complex
+!
+      procedure, private :: integral_factory
+      procedure, private :: integral_factory_complex
+      procedure, private :: cholesky_factory
+      procedure, private :: cholesky_factory_complex
+!
 !
    end type ccs
 !
@@ -531,6 +570,7 @@ contains
 !!    General CC preparations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!
       implicit none
 !
       class(ccs) :: wf
@@ -695,12 +735,17 @@ contains
       call wf%destruct_gs_density()
       call wf%destruct_frozen_CCT()
 !
-      call wf%eri%cleanup()
-!
       call wf%destruct_core_MOs()
 !
       deallocate(wf%ao)
       if (wf%embedded) deallocate(wf%embedding)
+!
+      if (allocated(wf%L_t1)) call wf%L_t1%remove_observer('eri t1')
+!
+!     To avoid memory leaks with intel, explicit deallocations
+      deallocate(wf%eri_t1)
+      deallocate(wf%L_mo)
+      deallocate(wf%L_t1)
 !
       call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
                          fs='(/t3,a)')
@@ -758,6 +803,7 @@ contains
                                fs='(/t3,a)')
 !
             call wf%read_amplitudes()
+            call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
 !
          else
 !
@@ -766,8 +812,6 @@ contains
          end if
 !
       end if
-!
-      call wf%eri%update_t1_integrals(wf%t1)
 !
    end subroutine set_initial_amplitudes_guess_ccs
 !
@@ -991,15 +1035,15 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core)
+         i = core_MOs(core)
 !
-        do a = 1, wf%n_v
+         do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = one
 !
-        enddo
-     enddo
+         enddo
+      enddo
 !
    end subroutine get_cvs_projector_ccs
 !
@@ -1028,15 +1072,15 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core)
+         i = core_MOs(core)
 !
-        do a = 1, wf%n_v
+         do a = 1, wf%n_v
 !
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = zero
+            ai = wf%n_v*(i - 1) + a
+            projector(ai) = zero
 !
-        enddo
-     enddo
+         enddo
+      enddo
 !
    end subroutine get_rm_core_projector_ccs
 !
@@ -1205,7 +1249,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp) :: overlap
 !
@@ -1436,19 +1480,19 @@ contains
 !
       call file_temp_1%open_('readwrite', 'rewind')
 !
-      call mem%alloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
-      call wf%eri%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+      call mem%alloc(L_Jkj, wf%eri_t1%n_J, wf%n_o, wf%n_o)
+      call wf%L_mo%get(L_Jkj, 1, wf%n_o, 1, wf%n_o)
 !
-      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
-      call sort_123_to_231(L_Jkj, L_kjJ, wf%eri%n_J, wf%n_o, wf%n_o)
-      call mem%dealloc(L_Jkj, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%alloc(L_kjJ, wf%n_o, wf%n_o, wf%eri_t1%n_J)
+      call sort_123_to_231(L_Jkj, L_kjJ, wf%eri_t1%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(L_Jkj, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
 !     Prepare for batching
 !
       req0 = 0
 !
-      req1_a = max(2*wf%n_o*wf%eri%n_J, & ! X_ai_J + L_ai_J  (term 1)
-                  wf%n_v*wf%eri%n_J + wf%n_o*wf%eri%n_J, & ! X_ai_J + L_ac_J term 2)
+      req1_a = max(2*wf%n_o*wf%eri_t1%n_J, & ! X_ai_J + L_ai_J  (term 1)
+                  wf%n_v*wf%eri_t1%n_J + wf%n_o*wf%eri_t1%n_J, & ! X_ai_J + L_ac_J term 2)
                   wf%n_o**2*wf%n_v) ! R_aibj no batching on b
 !
       req1_b = req1_a ! Not exactly true but we want equal batches of a and b
@@ -1469,15 +1513,15 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(L_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
-         call wf%eri%get_cholesky_mo(L_Jai, wf%n_o + batch_a%first, &
+         call mem%alloc(L_Jai, wf%eri_t1%n_J, batch_a%length, wf%n_o)
+         call wf%L_mo%get(L_Jai, wf%n_o + batch_a%first, &
                                              wf%n_o + batch_a%get_last(), 1, wf%n_o)
 !
-         call mem%alloc(X_aiJ, batch_a%length, wf%n_o, wf%eri%n_J)
+         call mem%alloc(X_aiJ, batch_a%length, wf%n_o, wf%eri_t1%n_J)
 !
          call dgemm('N', 'N',               &
                      batch_a%length,        &
-                     wf%n_o*wf%eri%n_J,     &
+                     wf%n_o*wf%eri_t1%n_J,  &
                      wf%n_o,                &
                      one,                   &
                      R_ai(batch_a%first,1), &
@@ -1494,11 +1538,11 @@ contains
 !
             call batch_b%determine_limits(current_b_batch)
 !
-            call mem%alloc(X_bjJ, batch_b%length, wf%n_o, wf%eri%n_J)
+            call mem%alloc(X_bjJ, batch_b%length, wf%n_o, wf%eri_t1%n_J)
 !
             call dgemm('N', 'N',               &
                         batch_b%length,        &
-                        wf%n_o*wf%eri%n_J,     &
+                        wf%n_o*wf%eri_t1%n_J,  &
                         wf%n_o,                &
                         one,                   &
                         R_ai(batch_b%first,1), &
@@ -1511,20 +1555,20 @@ contains
 !
             call mem%alloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
-            call dgemm('N', 'N', &
+            call dgemm('N', 'N',               &
                         batch_b%length*wf%n_o, &
                         batch_a%length*wf%n_o, &
-                        wf%eri%n_J,            &
+                        wf%eri_t1%n_J,         &
                         -one,                  &
                         X_bjJ,                 &
                         batch_b%length*wf%n_o, &
                         L_Jai,                 &
-                        wf%eri%n_J,            &
+                        wf%eri_t1%n_J,         &
                         zero,                  &
                         R_bjai,                &
                         batch_b%length*wf%n_o)
 !
-            call mem%dealloc(X_bjJ, batch_b%length, wf%n_o, wf%eri%n_J)
+            call mem%dealloc(X_bjJ, batch_b%length, wf%n_o, wf%eri_t1%n_J)
 !
             call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
 !
@@ -1532,25 +1576,25 @@ contains
 !
             call mem%dealloc(R_bjai, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
-            call mem%alloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
-            call wf%eri%get_cholesky_mo(L_Jbj, wf%n_o + batch_b%first, &
+            call mem%alloc(L_Jbj, wf%eri_t1%n_J, batch_b%length, wf%n_o)
+            call wf%L_mo%get(L_Jbj, wf%n_o + batch_b%first, &
                                                      wf%n_o + batch_b%get_last(),  &
                                                      1, wf%n_o)
 !
             call dgemm('N', 'N', &
                         batch_a%length*wf%n_o,  &
                         batch_b%length*wf%n_o,  &
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         -one,                   &
                         X_aiJ,                  &
                         batch_a%length*wf%n_o,  &
                         L_Jbj,                  &
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         one,                    &
                         R_aibj,                 &
                         batch_a%length*wf%n_o)
 !
-            call mem%dealloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
+            call mem%dealloc(L_Jbj, wf%eri_t1%n_J, batch_b%length, wf%n_o)
 !
 !           Divide by orbital differences and CCS excitation energy
 !
@@ -1583,21 +1627,21 @@ contains
 !
          call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_a%length, wf%n_o)
 !
-         call dgemm('N', 'N', &
+         call dgemm('N', 'N',                &
                      batch_a%length*wf%n_o,  &
                      batch_a%length*wf%n_o,  &
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      -one,                   &
                      X_aiJ,                  &
                      batch_a%length*wf%n_o,  &
                      L_Jai,                  &
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      zero,                   &
                      R_aibj,                 &
                      batch_a%length*wf%n_o)
 !
-         call mem%dealloc(L_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
-         call mem%dealloc(X_aiJ, batch_a%length, wf%n_o, wf%eri%n_J)
+         call mem%dealloc(L_Jai, wf%eri_t1%n_J, batch_a%length, wf%n_o)
+         call mem%dealloc(X_aiJ, batch_a%length, wf%n_o, wf%eri_t1%n_J)
 !
 !        Symmetrize
 !
@@ -1636,7 +1680,7 @@ contains
 !
       call mem%batch_finalize()
 !
-      call mem%dealloc(L_kjJ, wf%n_o, wf%n_o, wf%eri%n_J)
+      call mem%dealloc(L_kjJ, wf%n_o, wf%n_o, wf%eri_t1%n_J)
 !
 !     Prepare files
 !
@@ -1655,33 +1699,33 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(L_Jac, wf%eri%n_J, batch_a%length, wf%n_v)
-         call wf%eri%get_cholesky_mo(L_Jac,                                         &
-                                          batch_a%first + wf%n_o, batch_a%get_last() + wf%n_o,  &
-                                          1 + wf%n_o, wf%n_mo)
+         call mem%alloc(L_Jac, wf%eri_t1%n_J, batch_a%length, wf%n_v)
+         call wf%L_mo%get(L_Jac,                                         &
+                          batch_a%first + wf%n_o, batch_a%get_last() + wf%n_o,  &
+                          1 + wf%n_o, wf%n_mo)
 !
-         call mem%alloc(X_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
+         call mem%alloc(X_Jai, wf%eri_t1%n_J, batch_a%length, wf%n_o)
 !
 !        X_ai_J = sum_c R_ci L_ac_J
 !
-         call dgemm('N', 'N',                      &
-                     batch_a%length*(wf%eri%n_J),  &
-                     wf%n_o,                       &
-                     wf%n_v,                       &
-                     one,                          &
-                     L_Jac,                        & ! L_Ja_c
-                     batch_a%length*(wf%eri%n_J),  &
-                     R_ai,                         & ! R_c_i
-                     wf%n_v,                       &
-                     zero,                         &
-                     X_Jai,                        &
-                     batch_a%length*(wf%eri%n_J))
+         call dgemm('N', 'N',                         &
+                     batch_a%length*(wf%eri_t1%n_J),  &
+                     wf%n_o,                          &
+                     wf%n_v,                          &
+                     one,                             &
+                     L_Jac,                           & ! L_Ja_c
+                     batch_a%length*(wf%eri_t1%n_J),  &
+                     R_ai,                            & ! R_c_i
+                     wf%n_v,                          &
+                     zero,                            &
+                     X_Jai,                           &
+                     batch_a%length*(wf%eri_t1%n_J))
 !
-         call mem%dealloc(L_Jac, wf%eri%n_J, batch_a%length, wf%n_v)
+         call mem%dealloc(L_Jac, wf%eri_t1%n_J, batch_a%length, wf%n_v)
 !
-         call mem%alloc(L_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
-         call wf%eri%get_cholesky_mo(L_Jai, batch_a%first + wf%n_o, &
-                                             batch_a%get_last() + wf%n_o, 1, wf%n_o)
+         call mem%alloc(L_Jai, wf%eri_t1%n_J, batch_a%length, wf%n_o)
+         call wf%L_mo%get(L_Jai, batch_a%first + wf%n_o, &
+                       batch_a%get_last() + wf%n_o, 1, wf%n_o)
 !
          do current_b_batch = 1, batch_b%num_batches
 !
@@ -1691,64 +1735,64 @@ contains
 !
             call mem%alloc(R_aibj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
 !
-            call mem%alloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
-            call wf%eri%get_cholesky_mo(L_Jbj, batch_b%first + wf%n_o, &
-                                                batch_b%get_last() + wf%n_o, 1, wf%n_o)
+            call mem%alloc(L_Jbj, wf%eri_t1%n_J, batch_b%length, wf%n_o)
+            call wf%L_mo%get(L_Jbj, batch_b%first + wf%n_o, &
+                          batch_b%get_last() + wf%n_o, 1, wf%n_o)
 !
             call dgemm('T', 'N',                &
                         batch_a%length*wf%n_o,  &
                         batch_b%length*wf%n_o,  &
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         one,                    &
                         X_Jai,                  & ! X_J_ai
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         L_Jbj,                  &
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         zero,                   &
                         R_aibj,                 &
                         batch_a%length*wf%n_o)
 !
-            call mem%dealloc(L_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
+            call mem%dealloc(L_Jbj, wf%eri_t1%n_J, batch_b%length, wf%n_o)
 !
-            call mem%alloc(L_Jbc, wf%eri%n_J, batch_b%length, wf%n_v)
-            call wf%eri%get_cholesky_mo(L_Jbc,                                         &
-                                        batch_b%first + wf%n_o, batch_b%get_last() + wf%n_o, &
-                                        1 + wf%n_o, wf%n_mo)
+            call mem%alloc(L_Jbc, wf%eri_t1%n_J, batch_b%length, wf%n_v)
+            call wf%L_mo%get(L_Jbc,                                         &
+                          batch_b%first + wf%n_o, batch_b%get_last() + wf%n_o, &
+                          1 + wf%n_o, wf%n_mo)
 !
-            call mem%alloc(X_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
+            call mem%alloc(X_Jbj, wf%eri_t1%n_J, batch_b%length, wf%n_o)
 !
 !           X_bj_J = sum_c R_cj L_bc_J
 !
-            call dgemm('N', 'N',                      &
-                        batch_b%length*(wf%eri%n_J),  &
-                        wf%n_o,                       &
-                        wf%n_v,                       &
-                        one,                          &
-                        L_Jbc,                        & ! L_Jb_c
-                        batch_b%length*(wf%eri%n_J),  &
-                        R_ai,                         & ! R_c_j
-                        wf%n_v,                       &
-                        zero,                         &
-                        X_Jbj,                        &
-                        batch_b%length*(wf%eri%n_J))
+            call dgemm('N', 'N',                         &
+                        batch_b%length*(wf%eri_t1%n_J),  &
+                        wf%n_o,                          &
+                        wf%n_v,                          &
+                        one,                             &
+                        L_Jbc,                           & ! L_Jb_c
+                        batch_b%length*(wf%eri_t1%n_J),  &
+                        R_ai,                            & ! R_c_j
+                        wf%n_v,                          &
+                        zero,                            &
+                        X_Jbj,                           &
+                        batch_b%length*(wf%eri_t1%n_J))
 !
-            call mem%dealloc(L_Jbc, wf%eri%n_J, batch_b%length, wf%n_v)
+            call mem%dealloc(L_Jbc, wf%eri_t1%n_J, batch_b%length, wf%n_v)
 !
             call dgemm('T', 'N',                &
                         batch_a%length*wf%n_o,  &
                         batch_b%length*wf%n_o,  &
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         one,                    &
                         L_Jai,                  & ! L_J_ai
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         X_Jbj,                  & ! X_J_bj
-                        wf%eri%n_J,             &
+                        wf%eri_t1%n_J,          &
                         one,                    &
                         R_aibj,                 &
                         batch_a%length*wf%n_o)
 !
 !
-            call mem%dealloc(X_Jbj, wf%eri%n_J, batch_b%length, wf%n_o)
+            call mem%dealloc(X_Jbj, wf%eri_t1%n_J, batch_b%length, wf%n_o)
 !
 !           Divide by orbital differences and CCS excitation energy
 !
@@ -1795,18 +1839,18 @@ contains
          call dgemm('T', 'N',                &
                      batch_a%length*wf%n_o,  &
                      batch_a%length*wf%n_o,  &
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      one,                    &
                      L_Jai,                  &
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      X_Jai,                  & ! X_J_bj
-                     wf%eri%n_J,             &
+                     wf%eri_t1%n_J,          &
                      zero,                   &
                      R_aibj,                 &
                      batch_a%length*wf%n_o)
 !
-         call mem%dealloc(X_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
-         call mem%dealloc(L_Jai, wf%eri%n_J, batch_a%length, wf%n_o)
+         call mem%dealloc(X_Jai, wf%eri_t1%n_J, batch_a%length, wf%n_o)
+         call mem%dealloc(L_Jai, wf%eri_t1%n_J, batch_a%length, wf%n_o)
 !
 !        Symmetrize
 !
@@ -2026,6 +2070,124 @@ contains
       endif
 !
    end subroutine read_rm_core_settings_ccs
+!
+!
+   subroutine integral_preparations_ccs(wf, n_J)
+!!
+!!    Integral preparations
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_J
+!
+      call output%printf('m', '- Settings for integral handling:', fs='(/t3,a)')
+!
+      call wf%cholesky_factory(n_J)
+      call wf%integral_factory()
+!
+   end subroutine integral_preparations_ccs
+!
+!
+   subroutine cholesky_factory(wf, n_J)
+!!
+!!    Cholesky factory
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!
+      use eri_cholesky_disk_class,     only: eri_cholesky_disk
+      use eri_cholesky_memory_class,   only: eri_cholesky_memory
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_J
+!
+      character(len=200) :: cholesky_storage
+!
+      logical :: has_room_for_cholesky
+      logical :: cholesky_in_memory
+!
+      has_room_for_cholesky = 2*n_J*wf%n_mo**2*dp < mem%get_available()/5
+!
+      cholesky_storage = 'memory'
+      call input%get_keyword('cholesky storage', 'integrals', cholesky_storage)
+!
+      if (trim(cholesky_storage) /= 'memory' .and. trim(cholesky_storage) /= 'disk') &
+         call output%error_msg('illegal value for cholesky storage: (a0)', &
+                               chars=[trim(cholesky_storage)])
+!
+      cholesky_in_memory = trim(cholesky_storage) == 'memory' .and. has_room_for_cholesky
+!
+      if (cholesky_in_memory) then
+         wf%L_t1 = eri_cholesky_memory()
+         wf%L_mo = eri_cholesky_memory()
+      else
+         wf%L_t1 = eri_cholesky_disk('T1')
+         wf%L_mo = eri_cholesky_disk('MO')
+      endif
+!
+      call wf%L_mo%initialize(n_J, 2, [wf%n_o, wf%n_v])
+      call wf%L_t1%initialize(n_J, 2, [wf%n_o, wf%n_v])
+!
+      call output%printf('m', &
+                         'Cholesky vectors in memory: (l0)', &
+                         logs=[cholesky_in_memory],          &
+                         fs='(/t6,a)')
+!
+   end subroutine cholesky_factory
+!
+!
+   subroutine integral_factory(wf)
+!!
+!!    Integral factory
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!
+      use eri_memory_tool_class,       only: eri_memory_tool
+      use eri_tool_class,              only: eri_tool
+      use eri_adapter_class,           only: eri_adapter
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=200) :: integral_storage
+!
+      logical :: has_room_for_eri
+!
+      logical :: try_to_place_eri_in_memory, eri_in_memory
+!
+      integral_storage = 'memory'
+      call input%get_keyword('eri storage', 'integrals', integral_storage)
+!
+      if (trim(integral_storage) /= 'memory' .and. trim(integral_storage) /= 'none') &
+         call output%error_msg('illegal value for eri storage: (a0)', &
+                               chars=[trim(integral_storage)])
+!
+      try_to_place_eri_in_memory = (integral_storage == 'memory' .and. wf%need_g_abcd)
+!
+      has_room_for_eri = (wf%n_mo**4)*dp < mem%get_available()/5
+!
+      eri_in_memory = try_to_place_eri_in_memory .and. has_room_for_eri
+!
+      if (eri_in_memory) then
+         wf%eri_t1 = eri_adapter(eri_memory_tool(wf%L_t1), wf%n_o, wf%n_v)
+      else
+         wf%eri_t1 = eri_adapter(eri_tool(wf%L_t1), wf%n_o, wf%n_v)
+      endif
+!
+      call wf%L_t1%add_observer('eri t1', wf%eri_t1%eri)
+!
+      call output%printf('m', &
+                         'ERI matrix in memory:       (l0)', &
+                         logs=[eri_in_memory],               &
+                         fs='(t6,a)')
+!
+   end subroutine integral_factory
 !
 !
    subroutine mo_preparations_ccs(wf)
@@ -2698,5 +2860,53 @@ contains
 !
    end subroutine construct_ntos_or_cntos_ccs
 !
+!
+   subroutine cholesky_factory_complex(wf, n_J)
+!!
+!!    Cholesky factory complex
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!     NOTE:
+!     This routine is placed here for gcc-8 compatibility,
+!     should be moved to complex_ccs submodule when gcc-8 is no longer supported.
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_J
+!
+      character(len=200) :: cholesky_storage
+!
+      logical :: has_room_for_cholesky
+      logical :: cholesky_in_memory
+!
+      has_room_for_cholesky = 2*n_J*wf%n_mo**2*(2*dp) < mem%get_available()/5
+!
+      cholesky_storage = 'memory'
+      call input%get_keyword('cholesky storage', 'integrals', cholesky_storage)
+!
+      if (trim(cholesky_storage) /= 'memory' .and. trim(cholesky_storage) /= 'disk') &
+         call output%error_msg('illegal value for cholesky storage')
+!
+      cholesky_in_memory = trim(cholesky_storage) == 'memory' .and. has_room_for_cholesky
+!
+      if (cholesky_in_memory) then
+         wf%L_t1_c = eri_cholesky_memory_c()
+         wf%L_mo_c = eri_cholesky_memory_c()
+      else
+         wf%L_t1_c = eri_cholesky_disk_c('T1_complex')
+         wf%L_mo_c = eri_cholesky_disk_c('MO_complex')
+      endif
+!
+      call wf%L_mo_c%initialize(n_J, 2, [wf%n_o, wf%n_v])
+      call wf%L_t1_c%initialize(n_J, 2, [wf%n_o, wf%n_v])
+!
+      call output%printf('m', &
+                         'Cholesky vectors in memory: (l0)', &
+                         logs=[cholesky_in_memory],          &
+                         fs='(/t6,a)')
+!
+   end subroutine cholesky_factory_complex
 !
 end module ccs_class

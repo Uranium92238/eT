@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:30:57 UTC +02:00
+  Calculation started: 2022-02-01 16:08:30 UTC +01:00
 
 
   :: Input file
@@ -136,16 +136,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836361
@@ -158,6 +148,16 @@
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
   - DIIS tool settings:
 
@@ -176,13 +176,13 @@
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7487E-09
-     9           -78.843851693630     0.3151E-06     0.1028E-09
-    10           -78.843851693631     0.2637E-07     0.4405E-12
-    11           -78.843851693631     0.5634E-08     0.4263E-13
+     9           -78.843851693630     0.3151E-06     0.1027E-09
+    10           -78.843851693631     0.2637E-07     0.4690E-12
+    11           -78.843851693631     0.5634E-08     0.1421E-13
     12           -78.843851693631     0.1415E-08     0.4263E-13
-    13           -78.843851693631     0.6806E-09     0.2842E-13
-    14           -78.843851693631     0.1491E-09     0.0000E+00
-    15           -78.843851693631     0.2501E-10     0.5684E-13
+    13           -78.843851693631     0.6806E-09     0.4263E-13
+    14           -78.843851693631     0.1491E-09     0.2842E-13
+    15           -78.843851693631     0.2501E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -195,8 +195,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.88100
-     Total cpu time (sec):               1.49195
+     Total wall time (sec):              1.17800
+     Total cpu time (sec):               1.77551
 
 
   :: CC3 wavefunction
@@ -286,13 +286,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.41500
-     Total cpu time (sec):               0.61200
+     Total wall time (sec):              0.68800
+     Total cpu time (sec):               0.78918
 
 
   2) Preparation of MO basis and integrals
@@ -336,12 +335,12 @@
     9           -79.104388634767     0.4082E-05     0.4571E-06
    10           -79.104388457645     0.1665E-05     0.1771E-06
    11           -79.104388531274     0.6368E-06     0.7363E-07
-   12           -79.104388534800     0.2615E-06     0.3526E-08
+   12           -79.104388534799     0.2615E-06     0.3526E-08
    13           -79.104388539782     0.9950E-07     0.4982E-08
    14           -79.104388532668     0.3238E-07     0.7114E-08
    15           -79.104388532456     0.8372E-08     0.2118E-09
    16           -79.104388532883     0.2052E-08     0.4269E-09
-   17           -79.104388532983     0.6454E-09     0.9983E-10
+   17           -79.104388532982     0.6454E-09     0.9983E-10
    18           -79.104388533025     0.1406E-09     0.4209E-10
    19           -79.104388533030     0.4351E-10     0.5272E-11
   ---------------------------------------------------------------
@@ -387,22 +386,22 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.79300
-     Total cpu time (sec):               2.14882
+     Total wall time (sec):              2.68900
+     Total cpu time (sec):               2.48854
 
   - Timings for the CC3 ground state calculation
 
-     Total wall time (sec):              2.20800
-     Total cpu time (sec):               2.76155
+     Total wall time (sec):              3.38900
+     Total cpu time (sec):               3.30464
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 16.323960 MB
+  Peak memory usage during the execution of eT: 14.359216 MB
 
-  Total wall time in eT (sec):              3.14600
-  Total cpu time in eT (sec):               4.31055
+  Total wall time in eT (sec):              4.64700
+  Total cpu time in eT (sec):               5.15319
 
-  Calculation ended: 2021-10-06 10:31:00 UTC +02:00
+  Calculation ended: 2022-02-01 16:08:35 UTC +01:00
 
   - Implementation references:
 

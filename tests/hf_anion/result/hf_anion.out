@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:32:29 UTC +02:00
+  Calculation started: 2022-02-01 16:10:28 UTC +01:00
 
 
   :: Input file
@@ -119,22 +119,12 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
   Warning: mismatch in number of electrons from initial guess. It can 
            be beneficial to assign charges to atoms.
 
-     Energy of initial guess:              -457.074117301345
+     Energy of initial guess:              -457.074117301344
      Number of electrons in guess:           17.000000000000
      Overall charge:                                      -1
 
@@ -146,6 +136,16 @@
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -155,14 +155,14 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -457.320710253880     0.8118E-01     0.4573E+03
+     1          -457.320710253881     0.8118E-01     0.4573E+03
      2          -457.350696079980     0.2347E-01     0.2999E-01
-     3          -457.353583381418     0.6954E-03     0.2887E-02
+     3          -457.353583381417     0.6954E-03     0.2887E-02
      4          -457.353585322902     0.1735E-03     0.1941E-05
      5          -457.353585381269     0.3155E-05     0.5837E-07
-     6          -457.353585381287     0.3055E-07     0.1853E-10
-     7          -457.353585381288     0.9919E-09     0.3411E-12
-     8          -457.353585381288     0.5131E-12     0.1137E-12
+     6          -457.353585381287     0.3055E-07     0.1847E-10
+     7          -457.353585381287     0.9919E-09     0.1137E-12
+     8          -457.353585381287     0.4950E-12     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -170,24 +170,24 @@
 
      HOMO-LUMO gap:                  1.097920135568
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:           -457.353585381288
-     Total energy:                -457.353585381288
+     Electronic energy:           -457.353585381287
+     Total energy:                -457.353585381287
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.16500
-     Total cpu time (sec):               0.26749
+     Total wall time (sec):              0.17000
+     Total cpu time (sec):               0.26970
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 44.016 KB
+  Peak memory usage during the execution of eT: 44.744 KB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.17900
-  Total cpu time in eT (sec):               0.28074
+  Total wall time in eT (sec):              0.18600
+  Total cpu time in eT (sec):               0.28640
 
-  Calculation ended: 2021-10-06 10:32:30 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:28 UTC +01:00
 
   - Implementation references:
 

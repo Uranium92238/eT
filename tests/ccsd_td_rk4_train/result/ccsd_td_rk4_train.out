@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:30:33 UTC +02:00
+  Calculation started: 2022-02-01 16:06:48 UTC +01:00
 
 
   :: Input file
@@ -168,16 +168,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836361
@@ -190,6 +180,16 @@
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
 
   - DIIS tool settings:
 
@@ -207,14 +207,14 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.3695E-12
-    11           -78.843851693631     0.5634E-08     0.5684E-13
-    12           -78.843851693631     0.1415E-08     0.1421E-13
-    13           -78.843851693631     0.6806E-09     0.1421E-13
-    14           -78.843851693631     0.1491E-09     0.0000E+00
-    15           -78.843851693631     0.2501E-10     0.5684E-13
+    10           -78.843851693631     0.2637E-07     0.4832E-12
+    11           -78.843851693631     0.5634E-08     0.4263E-13
+    12           -78.843851693631     0.1415E-08     0.7105E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.5684E-13
+    15           -78.843851693631     0.2501E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -227,8 +227,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.92400
-     Total cpu time (sec):               1.41577
+     Total wall time (sec):              1.19800
+     Total cpu time (sec):               1.72046
 
 
   :: CCSD wavefunction
@@ -277,6 +277,9 @@
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
      5) Propagation from the ground state
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
 
 
   1) Cholesky decomposition of the electron repulsion integrals
@@ -335,13 +338,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.52200
-     Total cpu time (sec):               0.66846
+     Total wall time (sec):              0.64100
+     Total cpu time (sec):               0.79818
 
 
   2) Preparation of MO basis and integrals
@@ -436,8 +438,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.40700
-     Total cpu time (sec):               0.75240
+     Total wall time (sec):              0.68200
+     Total cpu time (sec):               0.94094
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -450,41 +452,40 @@
   the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
   (1975).
 
-  - Davidson CC multipliers solver settings:
-
-     Residual threshold:        0.10E-09
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                 9729
      Number of requested solutions:           1
      Max reduced space dimension:            50
 
-     Storage (multipliers_trials): file
-     Storage (multipliers_transforms): file
+     Storage (multipliers_davidson_trials): file
+     Storage (multipliers_davidson_transforms): file
 
-  Iteration     Residual norm
-  ---------------------------
-    1             0.3520E-01
-    2             0.6901E-02
-    3             0.1186E-02
-    4             0.6190E-03
-    5             0.1749E-03
-    6             0.4640E-04
-    7             0.1050E-04
-    8             0.3165E-05
-    9             0.1472E-05
-   10             0.6431E-06
-   11             0.2184E-06
-   12             0.5525E-07
-   13             0.1279E-07
-   14             0.2938E-08
-   15             0.7460E-09
-   16             0.2189E-09
-   17             0.7579E-10
-  ---------------------------
+  - Davidson solver settings
 
+     Residual threshold:              0.10E-09
+     Max number of iterations:             100
+
+   Iteration       Residual norm
+  -------------------------------
+     1               0.3520E-01
+     2               0.6901E-02
+     3               0.1186E-02
+     4               0.6190E-03
+     5               0.1749E-03
+     6               0.4640E-04
+     7               0.1050E-04
+     8               0.3165E-05
+     9               0.1472E-05
+    10               0.6431E-06
+    11               0.2184E-06
+    12               0.5525E-07
+    13               0.1279E-07
+    14               0.2938E-08
+    15               0.7460E-09
+    16               0.2189E-09
+    17               0.7579E-10
+  -------------------------------
   Convergence criterion met in 17 iterations!
 
   - Davidson CC multipliers solver summary:
@@ -495,7 +496,7 @@
      -----------------------------------
         1      5        0.022790118911
        14      4       -0.015907507086
-        7      4        0.014297181953
+        7      4        0.014297181952
         4      5        0.011712306731
        15      5       -0.010007216957
         6      2        0.009083547622
@@ -523,14 +524,13 @@
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.33700
-     Total cpu time (sec):                0.39767
+     Total wall time (sec):               0.83400
+     Total cpu time (sec):                0.71335
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
 
   5) Propagation from the ground state
@@ -575,17 +575,17 @@
 
   - Timings for the CCSD time dependent calculation
 
-     Total wall time (sec):              4.85300
-     Total cpu time (sec):              10.41689
+     Total wall time (sec):              8.06400
+     Total cpu time (sec):              14.33501
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 31.691840 MB
+  Peak memory usage during the execution of eT: 40.917184 MB
 
-  Total wall time in eT (sec):              5.83300
-  Total cpu time in eT (sec):              11.88875
+  Total wall time in eT (sec):              9.33800
+  Total cpu time in eT (sec):              16.12800
 
-  Calculation ended: 2021-10-06 10:30:39 UTC +02:00
+  Calculation ended: 2022-02-01 16:06:57 UTC +01:00
 
   - Implementation references:
 

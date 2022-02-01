@@ -175,7 +175,7 @@ contains
 !
       implicit none
 !
-      class(doubles) :: wf
+      class(doubles), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
@@ -691,7 +691,7 @@ contains
       integer :: i, a, j, b
 !
 !$omp parallel do private(a, i, b, j)
-       do j = 1, wf%n_o
+      do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
             do i = 1, wf%n_o
@@ -1198,8 +1198,8 @@ contains
                  etaX_ai,       &
                  wf%n_v*wf%n_o)
 !
-            call mem%dealloc(I_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-            call mem%dealloc(X_dl, wf%n_v, wf%n_o)
+      call mem%dealloc(I_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_dl, wf%n_v, wf%n_o)
 !
    end subroutine etaX_eom_doubles_a1_doubles
 !

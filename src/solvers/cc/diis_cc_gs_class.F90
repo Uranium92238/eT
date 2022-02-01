@@ -22,53 +22,50 @@ module diis_cc_gs_class
 !!
 !!	DIIS coupled cluster ground state solver class module
 !!	Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!  
+!!
 !! Solves the ground state coupled cluster equation (or, amplitude
 !! equations)
 !!
 !!    Omega_mu = < mu | H-bar | HF > = 0,     H-bar = e-T H eT,
 !!
-!! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The 
-!! cluster amplitude give the (right) coupled cluster ground state as 
+!! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The
+!! cluster amplitude give the (right) coupled cluster ground state as
 !!
-!!    | CC > = e^T | HF >.
+!!    |CC > = e^T | HF >.
 !!
-!! The equation is solved using the direct inversion of the iterative 
-!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
-!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
-!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
-!! and the errors and finds a least-squares solution to the error being 
-!! zero (see diis_tool solver tool for more details). 
+!! The equation is solved using the direct inversion of the iterative
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett.
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters
+!! and the errors and finds a least-squares solution to the error being
+!! zero (see diis_tool solver tool for more details).
 !!
 !
    use parameters
 !
-   use global_in,    only : input
-   use global_out,   only : output
+   use global_out,              only: output
+   use memory_manager_class,    only: mem
+   use ccs_class,               only: ccs
+   use diis_tool_class,         only: diis_tool
+   use timings_class,           only: timings
+   use convergence_tool_class,  only: convergence_tool
 !
-   use string_utilities,                  only : convert_to_uppercase
-   use array_utilities,                   only : get_l2_norm
-   use memory_manager_class,              only : mem
-   use ccs_class,                         only : ccs
-   use diis_tool_class,                   only : diis_tool
-   use timings_class,                     only : timings
-   use precondition_tool_class,           only : precondition_tool
-   use convergence_tool_class,            only : convergence_tool
+   use amplitude_updater_class, only: amplitude_updater
 !
-   use amplitude_updater_class,     only: amplitude_updater
+   use abstract_solver_class, only: abstract_solver
 !
    implicit none
 !
-   type :: diis_cc_gs
+   type, extends(abstract_solver) :: diis_cc_gs
 !
       character(len=100) :: name_ = 'DIIS coupled cluster ground state solver'
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
                                            &an extrapolation of previous quasi-Newton perturbation theory &
-                                           &estimates of the next amplitudes. See Helgaker et al., Molecular & 
+                                           &estimates of the next amplitudes. See Helgaker et al., Molecular &
                                            &Electronic Structure Theory, Chapter 13.'
 !
-      integer :: max_iterations 
+      integer :: max_iterations
 !
       logical :: restart
 !
@@ -80,8 +77,10 @@ module diis_cc_gs_class
 !
       type(diis_tool), allocatable :: diis
 !
+      class(ccs), pointer :: wf
+!
    contains
-!     
+!
       procedure :: run                      => run_diis_cc_gs
       procedure :: cleanup                  => cleanup_diis_cc_gs
 !
@@ -93,19 +92,19 @@ module diis_cc_gs_class
    end type diis_cc_gs
 !
 !
-   interface diis_cc_gs 
+   interface diis_cc_gs
 !
       procedure :: new_diis_cc_gs
 !
-   end interface diis_cc_gs 
+   end interface diis_cc_gs
 !
 !
 contains
 !
 !
-   function new_diis_cc_gs(wf, restart, t_updater, storage) result(solver)
+   function new_diis_cc_gs(wf, restart, t_updater, storage) result(this)
 !!
-!!    New DIIS CC GS 
+!!    New DIIS CC GS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    restart:   read amplitudes instead of generating an initial guess
@@ -113,68 +112,67 @@ contains
 !!
       implicit none
 !
-      type(diis_cc_gs) :: solver
+      type(diis_cc_gs) :: this
 !
-      class(ccs) :: wf
+      class(ccs), target :: wf
 !
       logical, intent(in) :: restart
 !
       class(amplitude_updater), intent(in) :: t_updater
 !
-      character(len=*), intent(in) :: storage 
+      character(len=*), intent(in) :: storage
 !
       integer :: diis_dimension
       logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
       logical :: records_in_memory
 !
-      solver%timer = timings('CC GS solver time', pl='minimal')
-      call solver%timer%turn_on()
+      this%wf => wf
+!
+      this%timer = timings('CC GS solver time', pl='minimal')
+      call this%timer%turn_on()
 !
 !     Print solver banner
 !
-      call solver%print_banner()
+      call this%print_banner()
 !
-!     Set standard settings 
+!     Set standard settings
 !
-      solver%max_iterations   = 100
-      solver%restart          = restart
-      solver%t_updater        = t_updater
+      this%max_iterations   = 100
+      this%restart          = restart
+      this%t_updater        = t_updater
 !
-      diis_dimension    = 8 
+      diis_dimension    = 8
       crop              = .false.
       records_in_memory = .false.
 !
 !     Initialize convergence checker with default threshols
 !
-      solver%convergence_checker = convergence_tool(energy_threshold   = 1.0d-5,   &
+      this%convergence_checker = convergence_tool(energy_threshold   = 1.0d-5,   &
                                                     residual_threshold = 1.0d-5,   &
                                                     energy_convergence = .false.)
 !
 !     Read & print settings (thresholds, etc.)
 !
-      call solver%read_settings(crop, diis_dimension)
-      call solver%print_settings()
+      call this%read_settings(crop, diis_dimension)
+      call this%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
 !
-      call wf%initialize_amplitudes()
+      call this%wf%initialize_amplitudes()
 !
-      call wf%eri%set_t1_to_mo()
-      call wf%eri%place_g_mo_in_memory()
-!
-      call wf%set_initial_amplitudes_guess(solver%restart)
+      call this%wf%set_initial_amplitudes_guess(this%restart)
 !
 !     Determine whether to store records in memory or on file
 !
-      if (trim(storage) == 'memory') then 
+      if (trim(storage) == 'memory') then
 !
          records_in_memory = .true.
 !
-      elseif (trim(storage) == 'disk') then 
+      elseif (trim(storage) == 'disk') then
 !
          records_in_memory = .false.
 !
-      else 
+      else
 !
          call output%error_msg('Could not recognize keyword storage in solver: ' // &
                                  trim(storage))
@@ -182,62 +180,62 @@ contains
       endif
 !
 !
-      solver%diis = diis_tool('cc_gs_diis',          &
-                        wf%n_gs_amplitudes,          &
-                        wf%n_gs_amplitudes,          &
+      this%diis = diis_tool('cc_gs_diis',          &
+                        this%wf%n_gs_amplitudes,          &
+                        this%wf%n_gs_amplitudes,          &
                         dimension_=diis_dimension,   &
                         crop=crop,                   &
                         records_in_memory=records_in_memory)
-! 
+!
    end function new_diis_cc_gs
 !
 !
-   subroutine print_settings_diis_cc_gs(solver)
+   subroutine print_settings_diis_cc_gs(this)
 !!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_gs) :: solver 
+      class(diis_cc_gs) :: this
 !
       call output%printf('m', '- CC ground state solver settings:', fs='(/t3,a)')
 !
-      call solver%convergence_checker%print_settings()
+      call this%convergence_checker%print_settings()
 !
       call output%printf('m', 'Max number of iterations: (i8)', &
-                         ints=[solver%max_iterations], fs='(t6, a)')
+                         ints=[this%max_iterations], fs='(t6, a)')
 !
    end subroutine print_settings_diis_cc_gs
 !
 !
-   subroutine run_diis_cc_gs(solver, wf)
+   subroutine run_diis_cc_gs(this)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
-      class(diis_cc_gs) :: solver
-!
-      class(ccs) :: wf
+      class(diis_cc_gs), intent(inout) :: this
 !
       logical :: converged
 !
       real(dp) :: energy, previous_energy
       real(dp) :: omega_norm
 !
-      real(dp), dimension(:), allocatable :: omega 
-      real(dp), dimension(:), allocatable :: amplitudes  
+      real(dp), dimension(:), allocatable :: omega
+      real(dp), dimension(:), allocatable :: amplitudes
 !
       integer :: iteration
 !
-      type(timings), allocatable :: iteration_timer 
+      type(timings), allocatable :: iteration_timer
 !
-      call solver%diis%initialize()
+      call this%diis%initialize()
 !
-      call mem%alloc(omega, wf%n_gs_amplitudes)
-      call mem%alloc(amplitudes, wf%n_gs_amplitudes)
+      call mem%alloc(omega, this%wf%n_gs_amplitudes)
+      call mem%alloc(amplitudes, this%wf%n_gs_amplitudes)
 !
       converged = .false.
 !
@@ -250,32 +248,32 @@ contains
       iteration = 0
       previous_energy = zero
 !
-      call wf%save_amplitudes()
+      call this%wf%save_amplitudes()
 !
-      do while (.not. converged .and. iteration .le. solver%max_iterations)
+      do while (.not. converged .and. iteration .le. this%max_iterations)
 !
          iteration = iteration + 1
-         call iteration_timer%turn_on()         
+         call iteration_timer%turn_on()
 !
-!        Calculate the energy and error vector omega 
+!        Calculate the energy and error vector omega
 !
-         call wf%construct_fock(task = 'gs')
+         call this%wf%construct_fock(task = 'gs')
 !
-         call wf%calculate_energy()
-         energy = wf%energy
+         call this%wf%calculate_energy()
+         energy = this%wf%energy
 !
-         call wf%construct_omega(omega)
+         call this%wf%construct_omega(omega)
 !
-         omega_norm = get_l2_norm(omega, wf%n_gs_amplitudes)
+         omega_norm = get_l2_norm(omega, this%wf%n_gs_amplitudes)
 !
          call output%printf('n', '(i3)  (f25.12)    (e11.4)    (e11.4)', &
-                            ints=[iteration], reals=[wf%energy, omega_norm, &
-                            abs(wf%energy-previous_energy)], fs='(t3, a)')
+                            ints=[iteration], reals=[this%wf%energy, omega_norm, &
+                            abs(this%wf%energy-previous_energy)], fs='(t3, a)')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
-         converged = solver%convergence_checker%has_converged(omega_norm,                    &
-                                                              wf%energy - previous_energy,   &
+         converged = this%convergence_checker%has_converged(omega_norm,                    &
+                                                              this%wf%energy - previous_energy,   &
                                                               iteration)
 !
          if (converged) then
@@ -290,91 +288,94 @@ contains
 !           Calculate the next guess for the amplitudes,
 !           and improve it with DIIS extrapolation
 !
-            call wf%get_amplitudes(amplitudes)
+            call this%wf%get_amplitudes(amplitudes)
+            call this%t_updater%update(this%wf, amplitudes, omega)
 !
-            call solver%t_updater%update(wf, amplitudes, omega)
+            call this%diis%update(omega, amplitudes)
 !
-            call solver%diis%update(omega, amplitudes)
-!
-            call wf%set_amplitudes(amplitudes)
+            call this%wf%set_amplitudes(amplitudes)
 !
 !           Update t1-transformed electron repulsion integrals
 !
-            call wf%eri%update_t1_integrals(wf%t1)
+            call this%wf%construct_t1_cholesky(this%wf%t1, this%wf%L_mo, this%wf%L_t1)
 !
          endif
 !
-         previous_energy = energy 
-         call wf%save_amplitudes()
+         previous_energy = energy
+         call this%wf%save_amplitudes()
 !
-         call iteration_timer%turn_off()         
-         call iteration_timer%reset()         
+         call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
       enddo
 !
-      call mem%dealloc(omega, wf%n_gs_amplitudes)
-      call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
+      call mem%dealloc(omega, this%wf%n_gs_amplitudes)
+      call mem%dealloc(amplitudes, this%wf%n_gs_amplitudes)
 !
       if (.not. converged) &
          call output%error_msg('Did not converge in the max number of iterations.')
 !
-      call wf%print_gs_summary()
+      call this%wf%print_gs_summary()
 !
-      call solver%diis%finalize()
+      call this%diis%finalize()
 !
    end subroutine run_diis_cc_gs
 !
 !
-   subroutine cleanup_diis_cc_gs(solver, wf)
+   subroutine cleanup_diis_cc_gs(this)
 !!
-!! 	Cleanup 
+!! 	Cleanup
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
-      class(diis_cc_gs) :: solver
-      class(ccs) :: wf
+      class(diis_cc_gs), intent(inout) :: this
 !
-      call wf%save_amplitudes()
+      call this%wf%save_amplitudes()
 !
-      call solver%timer%turn_off()
+      call this%timer%turn_off()
 !
       call output%printf('m', '- Finished solving the (a0) ground state equations', &
-                         chars=[convert_to_uppercase(wf%name_)], fs='(/t3, a)')
+                         chars=[convert_to_uppercase(this%wf%name_)], fs='(/t3, a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6, a)')
+                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6, a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6, a)')
+                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6, a)')
 !
    end subroutine cleanup_diis_cc_gs
 !
 !
-   subroutine print_banner_diis_cc_gs(solver)
+   subroutine print_banner_diis_cc_gs(this)
 !!
 !!    Print banner
 !!    Written by Rolf H. Myhre, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_gs) :: solver 
+      class(diis_cc_gs) :: this
 !
-      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+      call output%printf('m', ' - ' // trim(this%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(this%name_)) + 6, '-')
 !
-      call output%printf('m', solver%description1, ffs='(/t3,a)')
+      call output%printf('m', this%description1, ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_gs
 !
 !
-   subroutine read_settings_diis_cc_gs(solver, crop, diis_dimension)
+   subroutine read_settings_diis_cc_gs(this, crop, diis_dimension)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      use global_in, only: input
 !
-      class(diis_cc_gs)      :: solver 
+      implicit none
+!
+      class(diis_cc_gs)      :: this
+!
       logical, intent(inout) :: crop
       integer, intent(inout) :: diis_dimension
 !
@@ -383,18 +384,18 @@ contains
       if (input%is_keyword_present('energy threshold', 'solver cc gs')) then
 !
          call input%get_keyword('energy threshold', 'solver cc gs', energy_threshold)
-         call solver%convergence_checker%set_energy_threshold(energy_threshold)
+         call this%convergence_checker%set_energy_threshold(energy_threshold)
 !
       endif
 !
       if (input%is_keyword_present('omega threshold', 'solver cc gs')) then
 !
          call input%get_keyword('omega threshold', 'solver cc gs', omega_threshold)
-         call solver%convergence_checker%set_residual_threshold(omega_threshold)
+         call this%convergence_checker%set_residual_threshold(omega_threshold)
 !
       endif
-!      
-      call input%get_keyword('max iterations', 'solver cc gs', solver%max_iterations)
+!
+      call input%get_keyword('max iterations', 'solver cc gs', this%max_iterations)
 !
       crop = input%is_keyword_present('crop', 'solver cc gs')
       call input%get_keyword('diis dimension', 'solver cc gs', diis_dimension)

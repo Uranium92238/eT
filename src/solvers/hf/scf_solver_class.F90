@@ -37,27 +37,23 @@ module scf_solver_class
 !!
 !!    3. Convergence test on gradient
 !!
-!!    4. Extrapolation (convergence acceleration)    
+!!    4. Extrapolation (convergence acceleration)
 !!
 !!    5. Solving (*)
 !!
 !!    -----------------------------------
 !!
 !
-   use kinds
    use parameters
 !
-   use hf_class,                          only : hf
-   use memory_manager_class,              only : mem
-   use timings_class,                     only : timings 
-   use array_utilities,                   only : get_abs_max
-   use global_in,                         only : input
-   use global_out,                        only : output
-!     
-   use accelerator_factory_class,         only: accelerator_factory
-   use accelerator_tool_class,            only: accelerator_tool
+   use hf_class,                  only: hf
+   use memory_manager_class,      only: mem
+   use timings_class,             only: timings
+   use global_out,                only: output
 !
-   use convergence_tool_class,            only: convergence_tool
+   use accelerator_factory_class, only: accelerator_factory
+   use accelerator_tool_class,    only: accelerator_tool
+   use convergence_tool_class,    only: convergence_tool
 !
    implicit none
 !
@@ -68,7 +64,7 @@ module scf_solver_class
       logical, private            :: skip
 !
 !     Iterative loop
-      integer,  private :: max_iterations 
+      integer,  private :: max_iterations
 !
 !     Equation specifications
       integer, private :: dim_
@@ -114,10 +110,10 @@ module scf_solver_class
 !
    interface scf_solver
 !
-     procedure :: new_scf_solver
-     procedure :: new_scf_solver_from_parameters
+      procedure :: new_scf_solver
+      procedure :: new_scf_solver_from_parameters
 !
-   end interface scf_solver 
+   end interface scf_solver
 !
 !
 contains
@@ -144,7 +140,7 @@ contains
       integer, intent(in) :: dim_
       integer, intent(in) :: n_equations
       integer, intent(in) :: gradient_dimension, max_iterations
-! 
+!
 !     Set defaults
 !
       solver%restart             = restart
@@ -196,18 +192,18 @@ contains
 !
       solver%accelerator_creator = accelerator_factory('solver scf')
 !
-    if (present(energy_threshold)) then
+      if (present(energy_threshold)) then
 !
-       solver%convergence_checker = convergence_tool(energy_threshold  = energy_threshold,   &
-                                                    residual_threshold = gradient_threshold, &
-                                                    energy_convergence = .true.)
+         solver%convergence_checker = convergence_tool(energy_threshold  = energy_threshold,   &
+                                                       residual_threshold = gradient_threshold, &
+                                                       energy_convergence = .true.)
 !
-    else
+      else
 !
-       solver%convergence_checker = convergence_tool(energy_threshold  = gradient_threshold, &
-                                                    residual_threshold = gradient_threshold, &
-                                                    energy_convergence = .false.)
-    endif
+         solver%convergence_checker = convergence_tool(energy_threshold  = gradient_threshold, &
+                                                       residual_threshold = gradient_threshold, &
+                                                       energy_convergence = .false.)
+      endif
 !
       call solver%print_settings()
 !
@@ -219,6 +215,8 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2020
 !!
+      use array_utilities, only: get_abs_max
+!
       implicit none
 !
       class(scf_solver) :: solver
@@ -257,7 +255,7 @@ contains
 !
       converged = .false.
       iteration = 0
-      energy    = zero 
+      energy    = zero
 !
       call mem%alloc(F, solver%packed_F_dimension)
       call mem%alloc(C, solver%dim_, solver%dim_, solver%n_equations)
@@ -319,7 +317,7 @@ contains
 !!
 !!    Solves the equation
 !!
-!!       F(C_i) C_i+1 = e C_i+1   
+!!       F(C_i) C_i+1 = e C_i+1
 !
       use reordering, only: squareup
       use array_utilities, only: diagonalize_symmetric
@@ -340,10 +338,10 @@ contains
 !
       do i = 1, solver%n_equations
 !
-          offset = ((solver%dim_)*(solver%dim_ + 1)/2)*(i-1)
+         offset = ((solver%dim_)*(solver%dim_ + 1)/2)*(i-1)
 !
-          call squareup(F_packed(offset + 1 :), C(:,:,i), solver%dim_)
-          call diagonalize_symmetric(C(:,:,i), solver%dim_, e(:,i))
+         call squareup(F_packed(offset + 1 :), C(:,:,i), solver%dim_)
+         call diagonalize_symmetric(C(:,:,i), solver%dim_, e(:,i))
 !
       enddo
 !
@@ -457,9 +455,11 @@ contains
 !!
 !!    Prints the energy and maximal gradient element when SCF is skipped.
 !!
+      use array_utilities, only: get_abs_max
+!
       implicit none
 !
-      class(scf_solver), intent(in) :: solver  
+      class(scf_solver), intent(in) :: solver
       class(hf), intent(in)         :: wf
 !
       real(dp)                            :: energy, max_gradient
@@ -471,16 +471,16 @@ contains
       call wf%get_gradient(gradient)
 !
       energy          = wf%get_energy()
-      max_gradient    = get_abs_max(gradient, solver%gradient_dimension) 
+      max_gradient    = get_abs_max(gradient, solver%gradient_dimension)
 !
       call mem%dealloc(gradient, solver%gradient_dimension)
 
-      call solver%print_iteration_banner()  
+      call solver%print_iteration_banner()
       call solver%print_iteration(iteration = 1,            &
                                   energy = energy,          &
                                   previous_energy = zero,   &
-                                  max_gradient = max_gradient) 
-      call solver%print_summary(iteration = 1, converged = .true.) 
+                                  max_gradient = max_gradient)
+      call solver%print_summary(iteration = 1, converged = .true.)
 !
    end subroutine skip_scf_scf_solver
 !

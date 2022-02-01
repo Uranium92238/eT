@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:29:22 UTC +02:00
+  Calculation started: 2022-02-01 16:06:30 UTC +01:00
 
 
   :: Input file
@@ -147,15 +147,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.485136072343
@@ -168,6 +159,15 @@
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
 
   - DIIS tool settings:
 
@@ -186,13 +186,13 @@
      6           -78.806369659203     0.1193E-04     0.1355E-06
      7           -78.806369660762     0.3301E-05     0.1558E-08
      8           -78.806369660945     0.8317E-06     0.1829E-09
-     9           -78.806369660959     0.1352E-06     0.1413E-10
-    10           -78.806369660959     0.4496E-08     0.1279E-12
-    11           -78.806369660959     0.2386E-08     0.1421E-13
-    12           -78.806369660959     0.8987E-09     0.4263E-13
+     9           -78.806369660959     0.1352E-06     0.1414E-10
+    10           -78.806369660959     0.4496E-08     0.9948E-13
+    11           -78.806369660959     0.2386E-08     0.7105E-13
+    12           -78.806369660959     0.8987E-09     0.2842E-13
     13           -78.806369660959     0.1587E-09     0.1421E-13
     14           -78.806369660959     0.1518E-10     0.2842E-13
-    15           -78.806369660959     0.2112E-11     0.2842E-13
+    15           -78.806369660959     0.2113E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -205,8 +205,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.24600
-     Total cpu time (sec):               0.34268
+     Total wall time (sec):              0.28700
+     Total cpu time (sec):               0.40323
 
 
   :: CC3 wavefunction
@@ -300,13 +300,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.10300
-     Total cpu time (sec):               0.10759
+     Total wall time (sec):              0.07900
+     Total cpu time (sec):               0.11139
 
 
   2) Preparation of MO basis and integrals
@@ -399,8 +398,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.64500
-     Total cpu time (sec):               0.57657
+     Total wall time (sec):              0.69400
+     Total cpu time (sec):               0.59462
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -455,7 +454,12 @@
   ----------------------------
   Convergence criterion met in 22 iterations!
 
-  - DIIS CC multipliers solver summary:
+  - Finished solving the cc3 multipliers equations
+
+     Total wall time (sec):              1.78600
+     Total cpu time (sec):               1.31286
+
+  - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -489,10 +493,10 @@
         2      4       6      5        0.077222511765
      --------------------------------------------------
 
-  - Finished solving the cc3 multipliers equations
+  - Finished solving the CC3 multipliers equations
 
-     Total wall time (sec):              1.37200
-     Total cpu time (sec):               1.36947
+     Total wall time (sec):               1.78800
+     Total cpu time (sec):                1.31438
 
 
   5) Calculation of the excited states (non-linear davidson algorithm)
@@ -662,7 +666,7 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971448      0.3870E-08        0.7855E-08
+   1      19.710778971447      0.3870E-08        0.7855E-08
    2      19.778696975905      0.3983E-08        0.2986E-08
   ------------------------------------------------------------
 
@@ -676,8 +680,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971442      0.4290E-09        0.5649E-11
-   2      19.778696975878      0.2313E-09        0.2749E-10
+   1      19.710778971442      0.4289E-09        0.5627E-11
+   2      19.778696975878      0.2313E-09        0.2750E-10
   ------------------------------------------------------------
 
      Starting on microiterations
@@ -690,8 +694,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971513      0.2746E-10        0.7136E-10
-   2      19.778696975905      0.1759E-10        0.2665E-10
+   1      19.710778971513      0.2746E-10        0.7134E-10
+   2      19.778696975905      0.1758E-10        0.2665E-10
   ------------------------------------------------------------
 
   Warning: Linear dependence threshold was set to  0.50E-11, which is 
@@ -708,8 +712,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971514      0.5104E-11        0.4547E-12
-   2      19.778696975905      0.2476E-11        0.5045E-12
+   1      19.710778971514      0.5130E-11        0.4725E-12
+   2      19.778696975905      0.2487E-11        0.5080E-12
   ------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -802,8 +806,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              2.81100
-     Total cpu time (sec):               2.78478
+     Total wall time (sec):              4.39800
+     Total cpu time (sec):               3.34139
 
 
   5) Calculation of the excited states (non-linear davidson algorithm)
@@ -961,7 +965,7 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971338      0.1097E-08        0.8855E-09
+   1      19.710778971338      0.1097E-08        0.8856E-09
    2      19.778696975995      0.9155E-09        0.7810E-09
   ------------------------------------------------------------
 
@@ -975,8 +979,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971521      0.9685E-10        0.1828E-09
-   2      19.778696975891      0.9515E-10        0.1041E-09
+   1      19.710778971521      0.9686E-10        0.1828E-09
+   2      19.778696975891      0.9516E-10        0.1041E-09
   ------------------------------------------------------------
 
   Warning: Linear dependence threshold was set to  0.97E-11, which is 
@@ -993,8 +997,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971511      0.7134E-11        0.9329E-11
-   2      19.778696975906      0.6875E-11        0.1504E-10
+   1      19.710778971511      0.7135E-11        0.9329E-11
+   2      19.778696975906      0.6879E-11        0.1505E-10
   ------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -1087,8 +1091,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              2.86700
-     Total cpu time (sec):               2.53616
+     Total wall time (sec):              3.74800
+     Total cpu time (sec):               3.08733
 
 
   6) Calculation of excited state properties (EOM)
@@ -1167,19 +1171,19 @@
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):              8.26800
-     Total cpu time (sec):               7.83905
+     Total wall time (sec):             11.35500
+     Total cpu time (sec):               9.05252
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 1.462936 MB
+  Peak memory usage during the execution of eT: 1.430104 MB
 
   :: There were 2 warnings during the execution of eT. ::
 
-  Total wall time in eT (sec):              8.54000
-  Total cpu time in eT (sec):               8.20803
+  Total wall time in eT (sec):             11.67600
+  Total cpu time in eT (sec):               9.48727
 
-  Calculation ended: 2021-10-06 10:29:31 UTC +02:00
+  Calculation ended: 2022-02-01 16:06:42 UTC +01:00
 
   - Implementation references:
 

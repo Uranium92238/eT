@@ -127,6 +127,11 @@ module reordering
                    sort_1234_to_1324_complex
    end interface sort_1234_to_1324
 !
+   interface sort_1234_to_2143
+      procedure :: sort_1234_to_2143, &
+                   sort_1234_to_2143_complex
+   end interface
+!
    interface squareup_and_sort_1234_to_1324
       procedure :: squareup_and_sort_1234_to_1324, &
                    squareup_and_sort_1234_to_1324_complex
@@ -221,6 +226,11 @@ module reordering
       procedure :: sort_1234_to_1243, &
                    sort_1234_to_1243_complex
    end interface sort_1234_to_1243
+!
+   interface sort_1234_to_2341
+      procedure :: sort_1234_to_2341, &
+                   sort_1234_to_2341_complex
+   end interface sort_1234_to_2341
 !
    interface symmetrize_and_add_to_packed
       procedure :: symmetrize_and_add_to_packed_real, &
@@ -1702,6 +1712,40 @@ contains
    end subroutine sort_1234_to_2143
 !
 !
+   subroutine sort_1234_to_2143_complex(x_pqrs, x_qpsr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2143
+!!    Written by Sarai D. Folkestad,
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pqrs to x_qpsr (i.e., 1234 to 2143).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      complex(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in)  :: x_pqrs
+      complex(dp), dimension(dim_q, dim_p, dim_s, dim_r), intent(out) :: x_qpsr
+!
+      integer :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do r = 1, dim_r
+         do s = 1, dim_s
+            do p = 1, dim_p
+               do q = 1, dim_q
+!
+                  x_qpsr(q, p, s, r) = x_pqrs(p,q,r,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2143_complex
+!
+!
    subroutine sort_1234_to_2413(x_pqrs, x_qspr, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2413
@@ -2051,6 +2095,39 @@ contains
 !$omp end parallel do
 !
    end subroutine sort_1234_to_2341
+!
+!
+   subroutine sort_1234_to_2341_complex(x_pqrs, x_qrsp, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2341
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pqrs to x_qrsp (i.e., 1234 to 2341).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      complex(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in)  :: x_pqrs
+      complex(dp), dimension(dim_q, dim_r, dim_s, dim_p), intent(out) :: x_qrsp
+!
+      integer :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do s = 1, dim_s
+         do r = 1, dim_r
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  x_qrsp(q,r,s,p) = x_pqrs(p,q,r,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2341_complex
 !
 !
    subroutine sort_1234_to_1342(x_pqrs, x_prsq, dim_p, dim_q, dim_r, dim_s)

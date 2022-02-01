@@ -32,7 +32,6 @@ module qed_tool_class
    use global_out,            only: output
    use memory_manager_class,  only: mem
    use ao_tool_class,         only: ao_tool
-   use array_utilities,       only: zero_array, symmetric_sandwich
 !
    implicit none
 !
@@ -43,11 +42,12 @@ module qed_tool_class
       integer, public :: n_modes
 !
       real(dp), dimension(:), allocatable, public :: frequency
+      real(dp), dimension(:), allocatable, private :: coupling ! = (permittivity * V_eff)^(-0.5)
       real(dp), dimension(:), allocatable, private :: coupling_bilinear, coupling_self ! n_modes
       real(dp), dimension(:, :), allocatable, private :: polarizations ! 3, n_modes
-      real(dp), dimension(:), allocatable, private :: coherent_state ! n_modes
+      real(dp), dimension(:), allocatable, public :: coherent_state ! n_modes
 !
-      real(dp), dimension(:,:,:), allocatable, private :: ao_eri_wx !needed for fast AO eri
+      real(dp), dimension(:,:,:), allocatable, public :: ao_eri_wx !needed for eri
       real(dp), dimension(:,:), allocatable, private :: ao_overlap
       real(dp), dimension(:,:,:), allocatable, private :: ao_mu
       real(dp), dimension(:,:,:), allocatable, private :: ao_q
@@ -101,6 +101,7 @@ contains
       call mem%alloc(qed%frequency,             qed%n_modes)
       call mem%alloc(qed%polarizations,      3, qed%n_modes)
       call mem%alloc(qed%coherent_state,        qed%n_modes)
+      call mem%alloc(qed%coupling,              qed%n_modes)
       call mem%alloc(qed%coupling_bilinear,     qed%n_modes)
       call mem%alloc(qed%coupling_self,         qed%n_modes)
 !
@@ -159,6 +160,7 @@ contains
       call mem%dealloc(qed%frequency,         qed%n_modes)
       call mem%dealloc(qed%polarizations,  3, qed%n_modes)
       call mem%dealloc(qed%coherent_state,    qed%n_modes)
+      call mem%dealloc(qed%coupling,          qed%n_modes)
       call mem%dealloc(qed%coupling_bilinear, qed%n_modes)
       call mem%dealloc(qed%coupling_self,     qed%n_modes)
       call mem%dealloc(qed%ao_eri_wx, qed%n_ao, qed%n_ao, qed%n_modes)
@@ -179,11 +181,12 @@ contains
 !!
 !!    Designed to be overwritten by descendants.
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(qed_tool), intent(inout) :: qed
       real(dp), dimension(3) :: temp
-      real(dp), dimension(:), allocatable :: coupling
       integer :: k
 !
       if (input%is_keyword_present('frequency', 'qed')) then
@@ -216,20 +219,18 @@ contains
 !
 !     Either coupling or bilinear and self couplings must be specified
 !
-      call mem%alloc(coupling, qed%n_modes)
-      call zero_array(coupling, qed%n_modes)
+      call zero_array(qed%coupling, qed%n_modes)
 !
       if ( input%is_keyword_present('coupling', 'qed')) then
-         call input%get_array_for_keyword('coupling', 'qed', qed%n_modes, coupling)
+         call input%get_array_for_keyword('coupling', 'qed', qed%n_modes, qed%coupling)
       else
          call output%warning_msg("Coupling is not specified and is set to zero.")
       endif
 !
       do k = 1, qed%n_modes
-         qed%coupling_bilinear(k) = coupling(k) * sqrt(qed%frequency(k) * half)
-         qed%coupling_self(k) = coupling(k)**2 * half
+         qed%coupling_bilinear(k) = qed%coupling(k) * sqrt(qed%frequency(k) * half)
+         qed%coupling_self(k) = qed%coupling(k)**2 * half
       enddo
-      call mem%dealloc(coupling, qed%n_modes)
 !
       if ( input%is_keyword_present('coupling bilinear', 'qed')) &
          call input%get_array_for_keyword('coupling bilinear', 'qed', qed%n_modes, qed%coupling_bilinear)
@@ -273,6 +274,8 @@ contains
 !!       mu_wx = <w| (e dot mu_el) |x> + (e dot mu_nuc) S_wx / N_el
 !!          e : transversal polarization vector
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(qed_tool), intent(in) :: qed
@@ -309,6 +312,8 @@ contains
 !!    Q_wx = <w| (e^T dot Q dot e) |x>
 !!       e : transversal polarization vector
 !!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(qed_tool), intent(in) :: qed
@@ -367,7 +372,7 @@ contains
 !!    also known as the dipole self-energy.
 !!       g2_wx = sum_p g_wp g_px = lambda^2 / 2 * sum_p mu_wp mu_px
 !!
-      use array_utilities, only: invert
+      use array_utilities, only: invert, zero_array, symmetric_sandwich
 !
       implicit none
 !
@@ -510,6 +515,7 @@ contains
          call output%printf('m', ' Frequency          : (f17.12)', reals=[qed%frequency(mode)], ffs='(t6,a)')
          call output%printf('m', ' Polarization       : (f17.12) (f17.12) (f17.12)', reals=qed%polarizations(:,mode), ffs='(t6,a)')
          call output%printf('m', ' Coupling', ffs='(t6,a)')
+         call output%printf('m', '  sqrt(1/eps V)     : (f17.12)', reals=[qed%coupling(mode)], ffs='(t6,a)')
          call output%printf('m', '  Bilinear          : (f17.12)', reals=[qed%coupling_bilinear(mode)], ffs='(t6,a)')
          call output%printf('m', '  Quadratic         : (f17.12)', reals=[qed%coupling_self(mode)], ffs='(t6,a)')
          call output%printf('m', ' Coherent state     : (f17.12)', reals=[qed%coherent_state(mode)], ffs='(t6,a)')

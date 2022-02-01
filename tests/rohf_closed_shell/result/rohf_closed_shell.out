@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-29 09:08:10 UTC +02:00
-  Git branch:         cuhf-new-new
-  Git hash:           38de6a8dd84be43cf4032a3e02487c7346e26339
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-29 09:13:02 UTC +02:00
+  Calculation started: 2022-02-01 16:10:25 UTC +01:00
 
 
   :: Input file
@@ -57,18 +57,22 @@
         algorithm:          scf-diis
         energy threshold:   1.0d-10
         gradient threshold: 1.0d-10
+        print orbitals
      end solver scf
 
      method
-        cuhf
+        rohf
      end method
 
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
+  Warning: ROHF orbital energies are not uniquely defined,  and may not 
+           fulfill Koopmans theorem
 
-  :: CUHF wavefunction
+
+  :: ROHF wavefunction
   =======================
 
      ==============================================================================
@@ -115,7 +119,7 @@
 
   Drives the calculation of the Hartree-Fock state.
 
-  This is a CUHF ground state calculation.
+  This is a ROHF ground state calculation.
   The following tasks will be performed:
 
      1) Generate initial SAD density
@@ -165,19 +169,19 @@
      4          -176.449182641423     0.6916E-03     0.8693E-04
      5          -176.449192645236     0.1227E-03     0.1000E-04
      6          -176.449193031189     0.4894E-04     0.3860E-06
-     7          -176.449193080484     0.4074E-05     0.4930E-07
+     7          -176.449193080484     0.4074E-05     0.4929E-07
      8          -176.449193081522     0.5832E-06     0.1038E-08
-     9          -176.449193081558     0.1107E-06     0.3635E-10
-    10          -176.449193081560     0.4086E-07     0.1364E-11
-    11          -176.449193081559     0.1308E-07     0.8527E-13
-    12          -176.449193081560     0.3627E-08     0.5684E-13
-    13          -176.449193081560     0.2626E-09     0.2274E-12
-    14          -176.449193081560     0.1181E-09     0.2274E-12
-    15          -176.449193081560     0.3209E-10     0.5684E-13
+     9          -176.449193081558     0.1107E-06     0.3632E-10
+    10          -176.449193081560     0.4086E-07     0.1393E-11
+    11          -176.449193081560     0.1308E-07     0.1137E-12
+    12          -176.449193081560     0.3627E-08     0.0000E+00
+    13          -176.449193081560     0.2626E-09     0.2842E-13
+    14          -176.449193081560     0.1181E-09     0.5684E-13
+    15          -176.449193081560     0.3209E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
-  - Summary of CUHF wavefunction energetics (a.u.):
+  - Summary of ROHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap (alpha):          0.650262283399
      HOMO-LUMO gap (beta):           0.650262283399
@@ -185,26 +189,28 @@
      Electronic energy:           -224.967510701287
      Total energy:                -176.449193081560
 
-  - CUHF wavefunction spin expectation values:
+  - ROHF wavefunction spin expectation values:
 
      Sz:                   0.00000000
      Sz(Sz + 1):           0.00000000
      S^2:                 -0.00000000
      Spin contamination:  -0.00000000
 
-  - Timings for the CUHF ground state calculation
+  - Timings for the ROHF ground state calculation
 
-     Total wall time (sec):              0.15500
-     Total cpu time (sec):               0.22331
+     Total wall time (sec):              0.23800
+     Total cpu time (sec):               0.34353
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 179.316 KB
 
-  Total wall time in eT (sec):              0.17000
-  Total cpu time in eT (sec):               0.23718
+  :: There was 1 warning during the execution of eT. ::
 
-  Calculation ended: 2021-10-29 09:13:02 UTC +02:00
+  Total wall time in eT (sec):              0.25300
+  Total cpu time in eT (sec):               0.35779
+
+  Calculation ended: 2022-02-01 16:10:26 UTC +01:00
 
   - Implementation references:
 

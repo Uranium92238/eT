@@ -30,12 +30,26 @@ Combined in autogenerate_files.py by Alexander C. Paul, Nov 2020
 Cleaned and optimized by Rolf H. Myhre, Mar 2021
 """
 
-from re import sub, subn, findall
+from re import sub, findall, match, subn
 from pathlib import Path
 
 # Set of modules that can be complexified.
 # Add any new modules here and the script should handle the rest.
-complexifiable_modules = {"packed_array_utilities_r"}
+complexifiable_modules = {
+    "packed_array_utilities_r",
+    "rectangular_full_packed_utilities_r",
+}
+complexifiable_classes = {
+    "abstract_eri_cholesky_class",
+    "eri_cholesky_memory_class",
+    "eri_cholesky_disk_class",
+    "abstract_eri_tool_class",
+    "eri_memory_tool_class",
+    "eri_tool_class",
+    "cholesky_block_node_class",
+    "cholesky_block_list_class",
+    "eri_adapter_class",
+}
 
 
 def is_submodule(file_path):
@@ -374,6 +388,18 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
         if routines[0] in line:
             line = sub(r"\b" + routines[0] + r"\b", routines[1], line)
 
+    # class translations
+    class_translation = []
+    for class_ in complexifiable_classes:
+        class_name = class_.rsplit("_class", 1)[0]
+        class_translation.append((class_name, f"{class_name}_c"))
+        class_translation.append((class_, f"{class_name}_c_class"))
+
+    # Complexify class names
+    for class_ in class_translation:
+        if class_[0] in line:
+            line = sub(rf"\b{class_[0]}\b", class_[1], line)
+
     # Complexify parameters
     line = complexify_from_set(line, parameter_list)
 
@@ -385,9 +411,20 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
     if "Real" in line:
         line = sub(r"\b" + "Real" + r"\b", "Complex", line)
 
-    # Change wf%eri to wf%eri_c
-    if "wf%eri" in line:
-        line = sub(r"\b" + "wf%eri" + r"\b", "wf%eri_complex", line)
+    # Change wf%eri_t1 to wf%eri_t1_c
+    if "wf%eri_t1" in line:
+        line = sub(r"\b" + "wf%eri_t1" + r"\b", "wf%eri_t1_c", line)
+
+    # Change wf%L_mo to wf%L_mo_c
+    if "wf%L_mo" in line:
+        line = sub(r"\b" + "wf%L_mo" + r"\b", "wf%L_mo_c", line)
+
+    # Change wf%L_t1 to wf%Lt1_c
+    if "wf%L_t1" in line:
+        line = sub(r"\b" + "wf%L_t1" + r"\b", "wf%L_t1_c", line)
+
+    if r"w_size\s*=\s*dp":
+        line = sub(r"\b" + r"w_size\s*=\s*dp" + r"\b", "w_size=2*dp", line)
 
     # Correct element size in batch_setup
     # in case of complex double precision
@@ -614,6 +651,41 @@ def complexify_modules(src_dir, parameter_list):
                     c_file.write(line)
 
 
+def complexify_classes(src_dir, parameter_list):
+    """
+    Create complex versions of modules listed in complexifiable_modules.
+    """
+
+    # Get files in src and subdirectories
+    f_paths = set(src_dir.glob("**/*.F90"))
+
+    # Loop over all files and check if complexifiable
+    for f_path in f_paths:
+        if f_path.stem in complexifiable_classes:
+
+            # Get name of autodir and make it if it does not exist yet
+            dir_name = f_path.parent.name
+            auto_dir = f_path.parent / f"generated_{dir_name}"
+            auto_dir.mkdir(exist_ok=True)
+
+            # Generate _c name
+            file_name = (f_path.stem).rsplit("_class", 1)[0]
+            c_path = auto_dir / f"{file_name}_c_class.F90"
+
+            with f_path.open("r", encoding="utf-8") as r_file:
+                lines = r_file.readlines()
+
+            # Loop over lines, complexify if longer than 1 and write
+            with c_path.open("w", encoding="utf-8") as c_file:
+                for line in lines:
+
+                    if len(line.strip()) > 1:
+                        line, continuation_mem_batch_setup = complexify_line(
+                            line, parameter_list, False
+                        )
+                    c_file.write(line)
+
+
 def autogenerate(root_dir):
 
     source_directory = Path(root_dir / "src")
@@ -626,6 +698,7 @@ def autogenerate(root_dir):
 
     # Generate complex modules
     complexify_modules(source_directory, parameter_list)
+    complexify_classes(source_directory, parameter_list)
 
     # Generate complex wavefunction files
     autogenerate_complex_files(source_directory, parameter_list)

@@ -1,0 +1,205 @@
+
+
+
+                     eT 1.6 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.6.0 Galaxy
+  ------------------------------------------------------------
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2022-02-01 16:10:13 UTC +01:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+         name: He 5z visualization
+         charge: 0
+     end system
+
+     do
+        ground state
+     end do
+
+     method
+         hf
+     end method
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+        diis dimension: 1
+     end solver scf
+
+     visualization
+        plot hf orbitals: {1}
+        file format: cube
+        grid spacing: 0.4
+     end visualization
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pv5z
+        1 He     0.000000000000     0.000000000000     0.000000000000        1
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pv5z
+        1 He     0.000000000000     0.000000000000     0.000000000000        1
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               55
+     Number of orthonormal atomic orbitals:   55
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         1
+     Number of virtual orbitals:         54
+     Number of molecular orbitals:       55
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+     3) Plot orbitals and/or density
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:                -2.861624834582
+     Number of electrons in guess:            2.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - DIIS tool settings:
+
+     DIIS dimension:   1
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1            -2.861624834582     0.2565E-10     0.2862E+01
+  ---------------------------------------------------------------
+  Convergence criterion met in 1 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  1.324596180280
+     Nuclear repulsion energy:       0.000000000000
+     Electronic energy:             -2.861624834582
+     Total energy:                  -2.861624834582
+
+
+  3) Plot orbitals and/or density
+
+  :: Visualization of orbitals and density
+
+     Grid information              x             y             z
+     ------------------------------------------------------------------
+     First (A):                   -2.00         -2.00         -2.00
+     Last (A):                     1.60          1.60          1.60
+     Number of grid points:        10            10             10
+     ------------------------------------------------------------------
+
+  - Placing the AOs evaluated on the grid in memory
+
+  - Plotting orbitals
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.35500
+     Total cpu time (sec):               0.50931
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 760.696 KB
+
+  Total wall time in eT (sec):              0.42400
+  Total cpu time in eT (sec):               0.58203
+
+  Calculation ended: 2022-02-01 16:10:13 UTC +01:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

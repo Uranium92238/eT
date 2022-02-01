@@ -997,14 +997,14 @@ contains
 !
       class(mlhf) :: wf
 !
-     call output%printf('m', '- Active orbital space:', &
-            fs='(/t3, a)')
-     call output%printf('m', ' Number of active occupied orbitals: (i8)', &
-            ints=[wf%n_o], ffs='(/t6, a)')
-     call output%printf('m', ' Number of active virtual orbitals:  (i8)', &
-            ints=[wf%n_v], ffs='(t6, a)')
-     call output%printf('m', ' Number of active orbitals:          (i8)', &
-            ints=[wf%n_v+wf%n_o], ffs='(t6, a)')
+      call output%printf('m', '- Active orbital space:', &
+             fs='(/t3, a)')
+      call output%printf('m', ' Number of active occupied orbitals: (i8)', &
+             ints=[wf%n_o], ffs='(/t6, a)')
+      call output%printf('m', ' Number of active virtual orbitals:  (i8)', &
+             ints=[wf%n_v], ffs='(t6, a)')
+      call output%printf('m', ' Number of active orbitals:          (i8)', &
+             ints=[wf%n_v+wf%n_o], ffs='(t6, a)')
 !
    end subroutine print_orbital_space_info_mlhf
 !
@@ -1682,18 +1682,9 @@ contains
 !!    for a localized region of a large molecule
 !!    which has been treated at HF level of theory.
 !!
-!
-      use visualization_class, only : visualization
-!
       implicit none
 !
       class(mlhf) :: wf
-!
-      type(visualization), allocatable :: plotter
-!
-      character(len=200) :: label
-!
-      real(dp), dimension(:,:), allocatable :: D
 !
 !     Destruct MO quantities in the old MO dimension, if they are allocated,
 !     before n_mo changes
@@ -1720,32 +1711,7 @@ contains
 !
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
-      if (wf%plot_active_density) then
-!
-         plotter = visualization(wf%ao)
-!
-         call mem%alloc(D, wf%ao%n, wf%ao%n)
-!
-         call dgemm('N', 'T',                   &
-                     wf%ao%n,                   &
-                     wf%ao%n,                   &
-                     wf%n_o,                    &
-                     one,                       &
-                     wf%orbital_coefficients,   &
-                     wf%ao%n,                   &
-                     wf%orbital_coefficients,   &
-                     wf%ao%n,                   &
-                     zero,                      &
-                     D,                         &
-                     wf%ao%n)
-!
-         label = 'MLHF_density_for_CC'
-!
-         call plotter%plot_density(wf%ao, D, label)
-!
-         call mem%dealloc(D, wf%ao%n, wf%ao%n)
-!
-      endif
+      if (wf%plot_active_density) call wf%visualize_active_density()
 
    end subroutine prepare_mos_mlhf
 !

@@ -111,7 +111,6 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ji once at the beginning of the calculation
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234
 !
@@ -153,9 +152,9 @@ contains
 !
 !     req1_ used for Cholesky vectors
 !
-      req1_k = (wf%eri%n_J)*(wf%n_v)
+      req1_k = (wf%eri_t1%n_J)*(wf%n_v)
       req1_j = 0
-      req1_i = (wf%eri%n_J)*(wf%n_v)
+      req1_i = (wf%eri_t1%n_J)*(wf%n_v)
 !
       req2_kj = 2*(wf%n_v**2)
       req2_ki = (wf%n_v**2)
@@ -182,7 +181,7 @@ contains
 !
             call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('ovov', g_jckb,              &
+            call wf%eri_t1%get('ovov', g_jckb,              &
                                    batch_j%first, batch_j%get_last(), &
                                    1, wf%n_v,                   &
                                    batch_k%first, batch_k%get_last(), &
@@ -204,7 +203,7 @@ contains
 !
                call mem%alloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
 !
-               call wf%eri%get_eri_t1('vovo', g_ckbi, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
+               call wf%eri_t1%get('vovo', g_ckbi, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
                                                       1, wf%n_v, batch_i%first, batch_i%get_last())
 !
 !$omp parallel do private(i, b, k, c, eps_ik)
@@ -283,7 +282,6 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ab once at the beginning of the calculation
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234
 !
@@ -324,8 +322,8 @@ contains
 !
 !     req1_ used for Cholesky vectors
 !
-      req1_k = (wf%eri%n_J)*(wf%n_v)
-      req1_j = (wf%eri%n_J)*(wf%n_v)
+      req1_k = (wf%eri_t1%n_J)*(wf%n_v)
+      req1_j = (wf%eri_t1%n_J)*(wf%n_v)
 !
       req2 = 3*(wf%n_v)**2
 !
@@ -347,7 +345,7 @@ contains
 !
             call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('ovov', g_kcjb,              &
+            call wf%eri_t1%get('ovov', g_kcjb,              &
                                    batch_k%first, batch_k%get_last(), &
                                    1, wf%n_v,                   &
                                    batch_j%first, batch_j%get_last(), &
@@ -367,7 +365,7 @@ contains
 !
             call mem%alloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('vovo', g_ckaj, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
+            call wf%eri_t1%get('vovo', g_ckaj, 1, wf%n_v, batch_k%first, batch_k%get_last(), &
                                                    1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call mem%alloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
@@ -507,7 +505,6 @@ contains
 !!       X_ab  =  L_kcjb t^ac_kj
 !!       X_ji   = L_kcjb t^cb_ki
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !
@@ -553,8 +550,8 @@ contains
 !
       req0 = 0
 !
-      req1_j = (wf%eri%n_J)*(wf%n_v)
-      req1_k = (wf%eri%n_J)*(wf%n_v)
+      req1_j = (wf%eri_t1%n_J)*(wf%n_v)
+      req1_k = (wf%eri_t1%n_J)*(wf%n_v)
 !
       req2 = 2*(wf%n_v)**2
 !
@@ -576,7 +573,7 @@ contains
 !
             call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('ovov', g_kcjb,               &
+            call wf%eri_t1%get('ovov', g_kcjb,               &
                                    batch_k%first, batch_k%get_last(),  &
                                    1, wf%n_v,                    &
                                    batch_j%first, batch_j%get_last(),  &
@@ -632,8 +629,8 @@ contains
 !
       req0 = 0
 !
-      req1_a = (wf%eri%n_J)*(wf%n_o)
-      req1_c = (wf%eri%n_J)*(wf%n_o)
+      req1_a = (wf%eri_t1%n_J)*(wf%n_o)
+      req1_c = (wf%eri_t1%n_J)*(wf%n_o)
 !
       req2 = 2*(wf%n_o)**2
 !
@@ -655,7 +652,7 @@ contains
 !
             call mem%alloc(g_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('vovo', g_aick, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('vovo', g_aick, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
                                                    batch_c%first, batch_c%get_last(), 1, wf%n_o)
 !
             call mem%alloc(u_aikc, batch_a%length, wf%n_o, wf%n_o, batch_c%length)
@@ -794,7 +791,6 @@ contains
 !!    and adds it to rho_ai
 !!    The term is calculated in batches over the a and c indices.
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -829,8 +825,8 @@ contains
       call timer%turn_on()
 !
       req0   = 0
-      req1_a = wf%eri%n_J*wf%n_o + wf%n_o
-      req1_c = wf%eri%n_J*wf%n_v + wf%n_o
+      req1_a = wf%eri_t1%n_J*wf%n_o + wf%n_o
+      req1_c = wf%eri_t1%n_J*wf%n_v + wf%n_o
       req2   = wf%n_v*wf%n_o + wf%n_o**2
 !
       batch_a = batching_index(wf%n_v)
@@ -851,7 +847,7 @@ contains
 !
             call mem%alloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_aicd, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('vovv', g_aicd, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
                                                    batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
@@ -1009,7 +1005,6 @@ contains
 !!
 !!    and adds it to rho_ai
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -1040,8 +1035,8 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%eri%n_J)*(wf%n_v)
-      req1_k = (wf%eri%n_J)*(wf%n_o)
+      req1_i = (wf%eri_t1%n_J)*(wf%n_v)
+      req1_k = (wf%eri_t1%n_J)*(wf%n_o)
 !
       req2 = (wf%n_o)*(wf%n_v) + (wf%n_v)**2
 !
@@ -1063,7 +1058,7 @@ contains
 !
             call mem%alloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_lkai, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+            call wf%eri_t1%get('oovo', g_lkai, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
                                                    1, wf%n_v, batch_i%first, batch_i%get_last())
 !
             call mem%alloc(X_ckai, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
@@ -1165,7 +1160,6 @@ contains
 !!
 !!    Integrals, g_akbc and g_bjac, moved out of i batching loop
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1423_to_1234, add_2413_to_1234
 !
@@ -1200,9 +1194,9 @@ contains
 !
       req0 = 0
 !
-      req1_i = (wf%eri%n_J)*(wf%n_o)
-      req1_a = max((wf%eri%n_J)*(wf%n_o), (wf%eri%n_J)*(wf%n_v))
-      req1_b = max((wf%eri%n_J)*(wf%n_o), (wf%eri%n_J)*(wf%n_v))
+      req1_i = (wf%eri_t1%n_J)*(wf%n_o)
+      req1_a = max((wf%eri_t1%n_J)*(wf%n_o), (wf%eri_t1%n_J)*(wf%n_v))
+      req1_b = max((wf%eri_t1%n_J)*(wf%n_o), (wf%eri_t1%n_J)*(wf%n_v))
 !
       req2_ia = 0
       req2_ib = 2*(wf%n_o)**2
@@ -1228,12 +1222,12 @@ contains
 !
             call mem%alloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_akbc, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('vovv', g_akbc, batch_a%first, batch_a%get_last(), 1, wf%n_o, &
                                                    batch_b%first, batch_b%get_last(), 1, wf%n_v)
 !
             call mem%alloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bjac, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('vovv', g_bjac, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
                                                    batch_a%first, batch_a%get_last(), 1, wf%n_v)
 !
             do current_i_batch = 1, batch_i%num_batches
@@ -1302,7 +1296,7 @@ contains
 !
                call mem%alloc(g_kijb, wf%n_o, batch_i%length, wf%n_o, batch_b%length)
 !
-               call wf%eri%get_eri_t1('ooov', g_kijb, 1, wf%n_o, batch_i%first, batch_i%get_last(), &
+               call wf%eri_t1%get('ooov', g_kijb, 1, wf%n_o, batch_i%first, batch_i%get_last(), &
                                                       1, wf%n_o, batch_b%first, batch_b%get_last())
 !
                call mem%alloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
@@ -1362,7 +1356,6 @@ contains
 !!
 !!    and adds it to the rho_ai vector.
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -1399,8 +1392,8 @@ contains
 !     X_bjak = sum_l g_aklj * c_bl
 !
       req0 = 0
-      req1_j = max((wf%eri%n_J)*(wf%n_v), (wf%eri%n_J)*(wf%n_o))
-      req1_k = max((wf%eri%n_J)*(wf%n_v), (wf%eri%n_J)*(wf%n_o))
+      req1_j = max((wf%eri_t1%n_J)*(wf%n_v), (wf%eri_t1%n_J)*(wf%n_o))
+      req1_k = max((wf%eri_t1%n_J)*(wf%n_v), (wf%eri_t1%n_J)*(wf%n_o))
       req2 = max((wf%n_v)**2 + 2*(wf%n_v)*(wf%n_o), 3*(wf%n_v)**2)
 !
       batch_j = batching_index(wf%n_o)
@@ -1419,7 +1412,7 @@ contains
 !
             call mem%alloc(g_ljak, wf%n_o, (batch_j%length), wf%n_v, (batch_k%length))
 !
-            call wf%eri%get_eri_t1('oovo', g_ljak, 1, wf%n_o, batch_j%first, batch_j%get_last(), &
+            call wf%eri_t1%get('oovo', g_ljak, 1, wf%n_o, batch_j%first, batch_j%get_last(), &
                                                    1, wf%n_v, batch_k%first, batch_k%get_last())
 !
             call mem%alloc(X_bjak, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
@@ -1443,7 +1436,7 @@ contains
 !
             call mem%alloc(g_lkbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
 !
-            call wf%eri%get_eri_t1('oovo', g_lkbj, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+            call wf%eri_t1%get('oovo', g_lkbj, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
                                                    1, wf%n_v, batch_j%first, batch_j%get_last())
 !
             call mem%alloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
@@ -1491,7 +1484,7 @@ contains
 !
             call mem%alloc(g_jbki,batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
-            call wf%eri%get_eri_t1('ovoo', g_jbki, batch_j%first, batch_j%get_last(), 1, wf%n_v, &
+            call wf%eri_t1%get('ovoo', g_jbki, batch_j%first, batch_j%get_last(), 1, wf%n_v, &
                                                    batch_k%first, batch_k%get_last(), 1, wf%n_o)
 !
             call mem%alloc(L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
@@ -1503,7 +1496,7 @@ contains
 !
             call mem%alloc(g_jikb, batch_j%length, wf%n_o, batch_k%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('ooov', g_jikb, batch_j%first, batch_j%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('ooov', g_jikb, batch_j%first, batch_j%get_last(), 1, wf%n_o, &
                                                    batch_k%first, batch_k%get_last(), 1, wf%n_v)
 !
             call add_1432_to_1234(-one, g_jikb, L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
@@ -1552,7 +1545,6 @@ contains
 !!
 !!    and adds it to the rho_ai vector.
 !!
-      use batching_index_class, only: batching_index
       use reordering, only: add_3214_to_1234
 !
       implicit none
@@ -1586,8 +1578,8 @@ contains
       call timer%turn_on()
 !
       req0 = 0
-      req1_b = max((wf%eri%n_J)*(wf%n_v),(wf%eri%n_J)*(wf%n_o))
-      req1_c = max((wf%eri%n_J)*(wf%n_v),(wf%eri%n_J)*(wf%n_o))
+      req1_b = max((wf%eri_t1%n_J)*(wf%n_v),(wf%eri_t1%n_J)*(wf%n_o))
+      req1_c = max((wf%eri_t1%n_J)*(wf%n_v),(wf%eri_t1%n_J)*(wf%n_o))
       req2 = max((wf%n_o)**2 + 2*(wf%n_v)*(wf%n_o), 3*(wf%n_o)**2)
 !
       batch_b = batching_index(wf%n_v)
@@ -1608,7 +1600,7 @@ contains
 !
             call mem%alloc(g_bicd, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_bicd, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('vovv', g_bicd, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
                                                    batch_c%first, batch_c%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_bick, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
@@ -1632,7 +1624,7 @@ contains
 !
             call mem%alloc(g_ckbd, batch_c%length, wf%n_o, batch_b%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovv', g_ckbd, batch_c%first, batch_c%get_last(), 1, wf%n_o, &
+            call wf%eri_t1%get('vovv', g_ckbd, batch_c%first, batch_c%get_last(), 1, wf%n_o, &
                                                    batch_b%first, batch_b%get_last(), 1, wf%n_v)
 !
             call mem%alloc(X_ckbi, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
@@ -1680,7 +1672,7 @@ contains
 !
             call mem%alloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-            call wf%eri%get_eri_t1('vvov', g_abkc, 1, wf%n_v, batch_b%first, batch_b%get_last(), &
+            call wf%eri_t1%get('vvov', g_abkc, 1, wf%n_v, batch_b%first, batch_b%get_last(), &
                                                    1, wf%n_o, batch_c%first, batch_c%get_last())
 !
             call mem%alloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
@@ -1693,7 +1685,7 @@ contains
 !
             call mem%alloc(g_kbac, wf%n_o, batch_b%length, wf%n_v, batch_c%length)
 !
-            call wf%eri%get_eri_t1('ovvv', g_kbac, 1, wf%n_o, batch_b%first, batch_b%get_last(), &
+            call wf%eri_t1%get('ovvv', g_kbac, 1, wf%n_o, batch_b%first, batch_b%get_last(), &
                                                    1, wf%n_v, batch_c%first, batch_c%get_last())
 !
             call add_3214_to_1234(-one, g_kbac, L_abkc, &
@@ -1746,7 +1738,6 @@ contains
 !!
 !!    Integral, g_abkc, moved out of i batching loop
 !!
-      use batching_index_class, only: batching_index
       use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !
@@ -1779,9 +1770,9 @@ contains
 !
       req0 = 0
 !
-      req1_i = max((wf%eri%n_J)*(wf%n_o), (wf%eri%n_J)*(wf%n_v))
-      req1_k = max((wf%eri%n_J)*(wf%n_o), (wf%eri%n_J)*(wf%n_v))
-      req1_a = (wf%eri%n_J)*(wf%n_v)
+      req1_i = max((wf%eri_t1%n_J)*(wf%n_o), (wf%eri_t1%n_J)*(wf%n_v))
+      req1_k = max((wf%eri_t1%n_J)*(wf%n_o), (wf%eri_t1%n_J)*(wf%n_v))
+      req1_a = (wf%eri_t1%n_J)*(wf%n_v)
 !
       req2_ik = max(3*(wf%n_v)**2, 2*(wf%n_v)**2 + (wf%n_o)*(wf%n_v))
       req2_ia = 0
@@ -1807,7 +1798,7 @@ contains
 !
             call mem%alloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vvov', g_abkc, batch_a%first, batch_a%get_last(), 1, wf%n_v, &
+            call wf%eri_t1%get('vvov', g_abkc, batch_a%first, batch_a%get_last(), 1, wf%n_v, &
                                                    batch_k%first, batch_k%get_last(), 1, wf%n_v)
 !
             do current_i_batch = 1, batch_i%num_batches
@@ -1818,7 +1809,7 @@ contains
 !
                call mem%alloc(g_lkbi, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
-               call wf%eri%get_eri_t1('oovo', g_lkbi, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
+               call wf%eri_t1%get('oovo', g_lkbi, 1, wf%n_o, batch_k%first, batch_k%get_last(), &
                                                       1, wf%n_v, batch_i%first, batch_i%get_last())
 !
                call mem%alloc(X_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
@@ -1842,7 +1833,7 @@ contains
 !
                call mem%alloc(g_lick, wf%n_o, batch_i%length, wf%n_v, batch_k%length)
 !
-               call wf%eri%get_eri_t1('oovo', g_lick,                               &
+               call wf%eri_t1%get('oovo', g_lick,                               &
                                       1, wf%n_o, batch_i%first, batch_i%get_last(), &
                                       1, wf%n_v, batch_k%first, batch_k%get_last())
 !

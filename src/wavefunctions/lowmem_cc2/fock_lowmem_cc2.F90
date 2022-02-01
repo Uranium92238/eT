@@ -25,7 +25,7 @@ submodule (lowmem_cc2_class) fock_lowmem_cc2
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains
@@ -45,7 +45,6 @@ contains
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !
       use array_utilities, only: zero_array
-      use batching_index_class, only : batching_index
 !
       implicit none
 !

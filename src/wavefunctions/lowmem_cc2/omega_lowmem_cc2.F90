@@ -58,469 +58,659 @@ contains
 !
       call wf%omega_ccs_a1(omega)
 !
-      call wf%omega_cc2_a1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
-      call wf%omega_cc2_b1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
-      call wf%omega_cc2_c1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+      call wf%omega_cc2(omega)
 !
       call timer%turn_off()
 !
    end subroutine construct_omega_lowmem_cc2
 !
 !
-   module subroutine omega_cc2_a1_lowmem_cc2(wf, omega, eps_o, eps_v)
+   module subroutine setup_L_Jvo_lowmem_cc2(wf, L_J_vo, point, batch_o)
 !!
-!!    Omega CC2 A1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander C. Paul, Dec 2018
+!!    Setup L_Jvo
+!!    Written by Alexander C. Paul, Dec 2021
 !!
-!!    Calculates the A1 term,
+!!    Sets up the vo Cholesky vector and the pointer for a CC2 calculation
+!!    The Cholesky vector is given in batches over the occupied index
 !!
-!!       A1: sum_cjb u_bj_ci * g_abjc,
+!!    L_J_vo: final sorted Cholesky vector
+!!    point:  pointer to L_J_vo vector
 !!
-!!    with
-!!
-!!       u_bj_ci = 2*t_bj_ci - t_bi_cj
-!!
-!!    and
-!!
-!!       t_bj_ci = - g_bjci/ε^{bc}_{ji}
-!!
-!!    and adds it to the projection vector omega
-!!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_t1), intent(inout) :: omega
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+      type(batching_index), intent(in) :: batch_o
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_bicj
-      real(dp), dimension(:,:,:,:), allocatable :: u_bjci
-      real(dp), dimension(:,:,:,:), allocatable :: g_abjc
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_v, batch_o%length), target, intent(out) :: L_J_vo
+      real(dp), dimension(:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp) :: eps_ci
+      call wf%L_t1%get(L_J_vo, wf%n_o+1, wf%n_mo, batch_o%first, batch_o%get_last())
 !
-      integer :: b, j, c, i
+      point(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_o%length) => L_J_vo
 !
-      integer :: req0, req1_b, req1_c, req2
-!
-      integer :: current_b_batch, current_c_batch
-!
-      type(batching_index) :: batch_b, batch_c
-!
-      type(timings), allocatable :: timer
-!
-      timer = timings('omega cc2 a1 lowmem', pl='verbose')
-      call timer%turn_on()
-!
-      req0 = 0
-!
-      req1_b = (wf%eri%n_J)*(wf%n_v)
-      req1_c = (wf%eri%n_J)*(wf%n_o)
-!
-      req2 =  2*(wf%n_o**2) + (wf%n_o)*(wf%n_v)
-!
-      batch_b = batching_index(wf%n_v)
-      batch_c = batching_index(wf%n_v)
-!
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2, &
-                           tag='omega_cc2_a1_lowmem_cc2')
-!
-      do current_b_batch = 1, batch_b%num_batches
-!
-         call batch_b%determine_limits(current_b_batch)
-!
-         do current_c_batch = 1, batch_c%num_batches
-!
-            call batch_c%determine_limits(current_c_batch)
-!
-!           Construct u_bicj = -2g_bicj + g_bjci/(e_bjci), ordered as u_bjci
-!
-            call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
-            call mem%alloc(u_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
-!
-            call wf%eri%get_eri_t1('vovo', g_bicj, batch_b%first, batch_b%get_last(), 1, wf%n_o, &
-                                                   batch_c%first, batch_c%get_last(), 1, wf%n_o)
-!
-!$omp parallel do schedule(static) private(i, j, c, b, eps_ci) collapse(2)
-            do i = 1, wf%n_o
-               do c = 1, (batch_c%length)
-!
-                  eps_ci = eps_v(c + batch_c%first - 1) - eps_o(i)
-!
-                  do  j = 1, wf%n_o
-                     do b = 1, (batch_b%length)
-!
-                        u_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
-                                        /(eps_ci + eps_v(b + batch_b%first - 1) - eps_o(j))
-                      enddo
-                   enddo
-               enddo
-            enddo
-!$omp end parallel do
-!
-            call mem%dealloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
-!
-!           Omega_ai += sum_bjc u_bicj g_abjc
-!
-            call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
-!
-            call wf%eri%get_eri_t1('vvov', g_abjc, 1, wf%n_v, batch_b%first, batch_b%get_last(), &
-                                                   1, wf%n_o, batch_c%first, batch_c%get_last())
-!
-            call dgemm('N','N',                                   &
-                        wf%n_v,                                   &
-                        wf%n_o,                                   &
-                        (batch_b%length)*(batch_c%length)*wf%n_o, &
-                        one,                                      &
-                        g_abjc,                                   &
-                        wf%n_v,                                   &
-                        u_bjci,                                   &
-                        (batch_b%length)*(batch_c%length)*wf%n_o, &
-                        one,                                      &
-                        omega,                                    &
-                        wf%n_v)
-!
-            call mem%dealloc(g_abjc, batch_b%length, wf%n_v, batch_c%length, wf%n_o)
-            call mem%dealloc(u_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
-!
-         enddo
-      enddo
-!
-      call mem%batch_finalize()
-!
-      call timer%turn_off()
-!
-   end subroutine omega_cc2_a1_lowmem_cc2
+   end subroutine setup_L_Jvo_lowmem_cc2
 !
 !
-   module subroutine omega_cc2_b1_lowmem_cc2(wf, omega, eps_o, eps_v)
+   module subroutine setup_L_Jov_lowmem_cc2(wf, L_J_ov_reordered, point, &
+                                            L_Jov, batch_o)
 !!
-!!    Omega CC2 B1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander C. Paul, Dec 2018
+!!    Setup L_Jov
+!!    Written by Alexander C. Paul, Dec 2021
 !!
-!!    Calculates the B1 term,
+!!    Sets up the ov Cholesky vector and the pointer for a CC2 calculation
+!!    The Cholesky vector is given in batches over the occupied index
 !!
-!!       B1: - sum_ckl (2g_kb_ji - g_jb_ki) * t_aj_bk,
+!!    The Cholesky vector is returned in 132 order:
 !!
-!!    with
+!!    L_J_ov:          final sorted Cholesky vector
+!!    point:           pointer to L_J_ov vector
+!!    L_Jov: help array for reordering
 !!
-!!       t_aj_bk = - g_ajbk/ε^{ab}_{jk}
-!!
-!!    and adds it to the projection vector (omega) of
-!!    the wavefunction object wf.
-!!
-      use reordering, only: sort_1234_to_3214
-      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_132
 !
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_t1), intent(inout) :: omega
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+      type(batching_index), intent(in) :: batch_o
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ajbk
-      real(dp), dimension(:,:,:,:), allocatable :: g_jbki
-      real(dp), dimension(:,:,:,:), allocatable :: g_kbji
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_v, batch_o%length), &
+                                          target, intent(out) :: L_J_ov_reordered
+      real(dp), dimension(:,:,:), pointer, contiguous, intent(out) :: point
 !
-      integer :: a, b, j, k
+      real(dp), dimension(wf%eri_t1%n_J, batch_o%length, wf%n_v), intent(out) :: L_Jov
 !
-      integer :: req0, req1_b, req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3
+      call wf%L_t1%get(L_Jov, batch_o%first, batch_o%get_last(), &
+                                  wf%n_o+1, wf%n_mo)
 !
-      integer :: current_b_batch, current_j_batch, current_k_batch
+      call sort_123_to_132(L_Jov, L_J_ov_reordered, &
+                           wf%eri_t1%n_J, batch_o%length, wf%n_v)
 !
-      type(batching_index) :: batch_b, batch_j, batch_k
+      point(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_o%length) => L_J_ov_reordered
 !
-      type(timings), allocatable :: timer
-!
-      timer = timings('omega cc2 b1 lowmem', pl='verbose')
-      call timer%turn_on()
-!
-      req0 = 0
-!
-      req1_b = wf%eri%n_J
-      req1_j = wf%eri%n_J*(wf%n_v)
-      req1_k = wf%eri%n_J*(wf%n_o)
-!
-      req2_bj = wf%eri%n_J
-      req2_bk = wf%eri%n_J
-      req2_jk = 0
-!
-      req3 = (wf%n_v) + 2*(wf%n_o)
-!
-      batch_b = batching_index(wf%n_v)
-      batch_j = batching_index(wf%n_o)
-      batch_k = batching_index(wf%n_o)
-!
-      call mem%batch_setup(batch_b, batch_j, batch_k, req0, req1_b, &
-                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3, &
-                    tag='omega_cc2_b1_lowmem_cc2')
-!
-      do current_b_batch = 1, batch_b%num_batches
-!
-         call batch_b%determine_limits(current_b_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            do current_k_batch = 1, batch_k%num_batches
-!
-               call batch_k%determine_limits(current_k_batch)
-!
-!               Construct t_ajbk = - g_ajbk/e_ajbk,
-!               store in g_ajbk to avoid double memory requirement
-!
-               call mem%alloc(g_ajbk, wf%n_v, batch_j%length,&
-                              batch_b%length, batch_k%length)
-!
-               call wf%eri%get_eri_t1('vovo', g_ajbk, 1, wf%n_v, &
-                                                      batch_j%first, batch_j%get_last(), &
-                                                      batch_b%first, batch_b%get_last(), &
-                                                      batch_k%first, batch_k%get_last())
-!
-!$omp parallel do schedule(static) private(k, j, a, b)
-               do a = 1, wf%n_v
-                  do j = 1, (batch_j%length)
-                     do b = 1, (batch_b%length)
-                        do k = 1, (batch_k%length)
-!
-                           g_ajbk(a,j,b,k) = - g_ajbk(a,j,b,k)/(eps_v(a) &
-                                                   + eps_v(b + batch_b%first - 1)&
-                                                   - eps_o(j + batch_j%first - 1) &
-                                                   - eps_o(k + batch_k%first - 1))
-!
-                        enddo
-                     enddo
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
-                              batch_k%length, wf%n_o)
-!
-               call wf%eri%get_eri_t1('ovoo', g_jbki,              &
-                                      batch_j%first, batch_j%get_last(), &
-                                      batch_b%first, batch_b%get_last(), &
-                                      batch_k%first, batch_k%get_last(), &
-                                      1, wf%n_o)
-!
-!              Omega_ai += sum_jbk t_ajbk g_jbki
-!
-               call dgemm('N','N',                                             &
-                           wf%n_v,                                             &
-                           wf%n_o,                                             &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           one,                                                &
-                           g_ajbk,                                             &
-                           wf%n_v,                                             &
-                           g_jbki,                                             &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           one,                                                &
-                           omega,                                              &
-                           wf%n_v)
-!
-               call mem%dealloc(g_jbki, batch_j%length, batch_b%length, &
-                                batch_k%length, wf%n_o)
-!
-!              Construct g_kbij and reorder as g_jbki
-!
-               call mem%alloc(g_kbji, batch_k%length, batch_b%length, &
-                                      batch_j%length, wf%n_o)
-!
-               call wf%eri%get_eri_t1('ovoo', g_kbji,              &
-                                      batch_k%first, batch_k%get_last(), &
-                                      batch_b%first, batch_b%get_last(), &
-                                      batch_j%first, batch_j%get_last(), &
-                                      1, wf%n_o)
-!
-               call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
-                              batch_k%length, wf%n_o)
-!
-               call sort_1234_to_3214(g_kbji, g_jbki, (batch_k%length), &
-                     (batch_b%length), (batch_j%length), wf%n_o)
-!
-               call mem%dealloc(g_kbji, batch_k%length, batch_b%length, &
-                                        batch_j%length, wf%n_o)
-!
-!              Omega_ai += sum_bjk t_ajbk g_kbji
-!
-               call dgemm('N','N',                                             &
-                           wf%n_v,                                             &
-                           wf%n_o,                                             &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           -two,                                               &
-                           g_ajbk,                                             &
-                           wf%n_v,                                             &
-                           g_jbki,                                             &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           one,                                                &
-                           omega,                                              &
-                           wf%n_v)
-!
-               call mem%dealloc(g_jbki, batch_j%length, batch_b%length, &
-                                        batch_k%length, wf%n_o)
-               call mem%dealloc(g_ajbk, wf%n_v, batch_j%length,&
-                                      batch_b%length, batch_k%length)
-!
-            enddo
-         enddo
-      enddo
-!
-      call mem%batch_finalize()
-!
-      call timer%turn_off()
-!
-   end subroutine omega_cc2_b1_lowmem_cc2
+   end subroutine setup_L_Jov_lowmem_cc2
 !
 !
-   module subroutine omega_cc2_c1_lowmem_cc2(wf, omega, eps_o, eps_v)
+   module subroutine setup_L_Joo_lowmem_cc2(wf, L_J_oo_reordered, point, &
+                                            L_Joo, batch_o)
 !!
-!!    Omega CC2 C1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander C. Paul, Dec 2018
+!!    Setup L_Joo
+!!    Written by Alexander C. Paul, Dec 2021
 !!
-!!    Calculates the C1 term,
+!!    Sets up the oo Cholesky vector and the pointer for a CC2 calculation
+!!    The Cholesky vector is given in batches over the occupied index
 !!
-!!       C1: sum_bj u_ai_bj * F_{jb},
+!!    The Cholesky vector is returned in 132 order:
 !!
-!!    with
+!!    L_J_oo:          final sorted Cholesky vector
+!!    point:           pointer to L_J_oo vector
+!!    L_Joo: help array for reordering
 !!
-!!       u_ai_bj = 2*t_ai_bj - t_aj_bi
-!!
-!!    and
-!!
-!!       t_ai_bj = - g_aibj/ε^{ab}_{ij}
-!!
-!!    and adds it to the projection vector (omega) of
-!!    the wavefunction object wf.
-!!
-      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_132
 !
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_t1), intent(inout) :: omega
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+      type(batching_index), intent(in) :: batch_o
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
-      real(dp), dimension(:,:), allocatable :: F_bj
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_o, batch_o%length), &
+                                          target, intent(out) :: L_J_oo_reordered
+      real(dp), dimension(:,:,:), pointer, contiguous, intent(out) :: point
 !
-      integer :: i, j, a, b
+      real(dp), dimension(wf%eri_t1%n_J, batch_o%length, wf%n_o), intent(out) :: L_Joo
 !
-      integer :: req0, req1_j, req1_i, req2, omega_offset
+      call wf%L_t1%get(L_Joo, batch_o%first, batch_o%get_last(), 1, wf%n_o)
 !
-      integer :: current_j_batch, current_i_batch
+      call sort_123_to_132(L_Joo, L_J_oo_reordered, &
+                           wf%eri_t1%n_J, batch_o%length, wf%n_o)
 !
-      type(batching_index) :: batch_j, batch_i
+      point(1:wf%eri_t1%n_J, 1:wf%n_o, 1:batch_o%length) => L_J_oo_reordered
 !
-      type(timings), allocatable :: timer
+   end subroutine setup_L_Joo_lowmem_cc2
 !
-      timer = timings('omega cc2 c1 lowmem', pl='verbose')
-      call timer%turn_on()
 !
-      req0 = 0
+   module subroutine omega_cc2_lowmem_cc2(wf, omega1)
+!!
+!!    Omega CC2
+!!    Written by Alexander C. Paul, December 2021
+!!
+!!    Compute the CC2 contributions to omega
+!!    without storing the full t2 amplitudes
+!!
+!!    t^ab_ij = -(eps^ab_ij)^(-1) sum_J L_J_ai L_J_bj
+!!    u^ab_ij = 2 t^ab_ij - t^ba_ij
+!!
+!!    omega^a_i = sum_bj  u^ab_ij F_jb
+!!    omega^a_k = sum_bij u^ab_ij L_J_jb L_J_ik
+!!    omega^c_i = sum_abj u^ab_ij L_J_jb L_J_ca
+!!
+      use array_utilities, only: zero_array
+      use reordering, only: sort_12_to_21, sort_123_to_132
 !
-      req1_j = (wf%n_v)*(wf%eri%n_J)
-      req1_i = (wf%n_v)*(wf%eri%n_J)
+      implicit none
 !
-      req2 =  2*(wf%n_v)**2
+      class(lowmem_cc2), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
+!
+      real(dp), dimension(:,:), allocatable :: u_ab
+!
+      real(dp), dimension(:,:), allocatable :: F_ov_bj
+!
+      real(dp), dimension(:,:,:), allocatable, target :: L_J_vi
+      real(dp), dimension(:,:,:), allocatable, target :: L_J_vj
+      real(dp), dimension(:,:,:), contiguous, pointer :: L_J_vi_p => null()
+      real(dp), dimension(:,:,:), contiguous, pointer :: L_J_vj_p => null()
+!
+      real(dp), dimension(:,:,:), allocatable, target :: L_J_ib
+      real(dp), dimension(:,:,:), allocatable, target :: L_J_jb
+      real(dp), dimension(:,:,:), contiguous, pointer :: L_J_ib_p => null()
+      real(dp), dimension(:,:,:), contiguous, pointer :: L_J_jb_p => null()
+!
+      real(dp), dimension(:,:,:), allocatable, target :: X_J_ai
+      real(dp), dimension(:,:,:), allocatable, target :: X_J_aj
+      real(dp), dimension(:,:,:), contiguous, pointer :: X_J_ai_p => null()
+      real(dp), dimension(:,:,:), contiguous, pointer :: X_J_aj_p => null()
+!
+      real(dp), dimension(:,:,:), allocatable, target :: L_J_ik
+      real(dp), dimension(:,:,:), allocatable, target :: L_J_jk
+      real(dp), dimension(:,:,:), contiguous, pointer :: L_J_ik_p => null()
+      real(dp), dimension(:,:,:), contiguous, pointer :: L_J_jk_p => null()
+!
+      real(dp), dimension(:), allocatable  :: array_for_reordering
+      real(dp), dimension(:,:), allocatable :: temp_J_v
+!
+!
+      type(direct_stream_file) :: X_J_vo_file
+!
+      type(batching_index) :: batch_i, batch_j
+!
+      integer :: i_batch, j_batch
+      integer :: i, j, i_rel, j_rel
+      integer :: req_0, req_1, req_2, req_1_sort, req_single_batch
+!
+      X_J_vo_file = direct_stream_file('X_J_vo_cc2', wf%eri_t1%n_J*wf%n_v)
+      call X_J_vo_file%open_
+!
+      call mem%alloc(F_ov_bj, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_ov_bj, wf%n_o, wf%n_v)
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2, &
-                           tag='omega_cc2_c1_lowmem_cc2')
+      req_1_sort = max(wf%eri_t1%n_J, wf%n_v) * max(wf%n_v, wf%n_o)
 !
-      do current_i_batch = 1, batch_i%num_batches
+      req_0 = wf%n_v**2 + wf%eri_t1%n_J*wf%n_v
+      req_1 = 3*wf%eri_t1%n_J*wf%n_v + wf%eri_t1%n_J*wf%n_o
+      req_2 = 0
 !
-         call batch_i%determine_limits(current_i_batch)
+      req_single_batch = req_0 + (3*wf%eri_t1%n_J*wf%n_v + wf%eri_t1%n_J*wf%n_o + req_1_sort)*wf%n_o
 !
-         do current_j_batch = 1, batch_j%num_batches
+      call mem%batch_setup(batch_i, batch_j, req_0, req_1 + req_1_sort, req_1, req_2, &
+                           'omega_lowmem_cc2', req_single_batch=req_single_batch)
 !
-            call batch_j%determine_limits(current_j_batch)
+      call mem%alloc(u_ab, wf%n_v, wf%n_v)
+      call mem%alloc(temp_J_v, wf%eri_t1%n_J, wf%n_v)
 !
-!           Construct u_aibj = -(2g_aibj - g_ajbi)/e_aibj
+      if (batch_i%num_batches .eq. 1) then ! no batching
 !
-            call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
+         call mem%alloc(L_J_vi, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
-            call wf%eri%get_eri_t1('vovo', g_aibj, 1, wf%n_v, batch_i%first, batch_i%get_last(),  &
-                                                   1, wf%n_v, batch_j%first, batch_j%get_last())
+         call mem%alloc(L_J_ib, wf%eri_t1%n_J, wf%n_v, wf%n_o)
+         call mem%alloc(L_J_ik, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
-            call mem%alloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
+         call mem%alloc(X_J_ai, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
-!           Construct u_aibj
+         call mem%alloc(array_for_reordering, req_1_sort*wf%n_o)
 !
-!$omp parallel do schedule(static) private(i, j, a, b)
-            do b = 1, wf%n_v
-               do j = 1, batch_j%length
-                  do i = 1, batch_i%length
-                     do a = 1, wf%n_v
+      else ! batching
 !
-                        u_aibj(a,i,b,j) = (-two*g_aibj(a,i,b,j)+g_aibj(b,i,a,j))/(eps_v(a) &
-                                                             + eps_v(b) &
-                                                             - eps_o(i + batch_i%first - 1) &
-                                                             - eps_o(j + batch_j%first - 1))
+         call mem%alloc(L_J_vi, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+         call mem%alloc(L_J_vj, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
 !
-                     enddo
-                  enddo
-               enddo
-            enddo
-!$omp end parallel do
+         call mem%alloc(L_J_ib, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+         call mem%alloc(L_J_jb, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
 !
-            call mem%dealloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
+         call mem%alloc(L_J_ik, wf%eri_t1%n_J, wf%n_o, batch_i%max_length)
+         call mem%alloc(L_J_jk, wf%eri_t1%n_J, wf%n_o, batch_i%max_length)
 !
-!           Reorder F_jb as F_bj
+         call mem%alloc(X_J_ai, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+         call mem%alloc(X_J_aj, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
 !
-            call mem%alloc(F_bj, wf%n_v, batch_j%length)
+         call mem%alloc(array_for_reordering, req_1_sort*batch_i%max_length)
 !
-!$omp parallel do schedule(static) private(b,j)
-            do b = 1, wf%n_v
-               do j = 1, batch_j%length
+      endif
 !
-                     F_bj(b, j) = wf%fock_ia(j + batch_j%first - 1, b)
+      do i_batch = 1, batch_i%num_batches
 !
-               enddo
-            enddo
-!$omp end parallel do
+         call batch_i%determine_limits(i_batch)
 !
-!           Omega_ai += u_aibj F_jb
+         call wf%setup_L_Jvo(L_J_vi, L_J_vi_p, batch_i)
+         call wf%setup_L_Jov(L_J_ib, L_J_ib_p, array_for_reordering, batch_i)
+         call wf%setup_L_Joo(L_J_ik, L_J_ik_p, array_for_reordering, batch_i)
 !
-            omega_offset = wf%n_v*(batch_i%first - 1) + 1
+         call zero_array(X_J_ai, wf%eri_t1%n_J*wf%n_v*batch_i%length)
+         X_J_ai_p(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_i%length) => X_J_ai
 !
-            call dgemm('N', 'N',                     &
-                       (batch_i%length)*wf%n_v,      &
-                       1,                            &
-                       (batch_j%length)*wf%n_v,      &
-                       one,                          &
-                       u_aibj,                       &
-                       wf%n_v*(batch_i%length),      &
-                       F_bj,                         &
-                       wf%n_v*(batch_j%length),      &
-                       one,                          &
-                       omega(omega_offset),          &
-                       wf%n_v*wf%n_o)
+         do j_batch = 1, i_batch
 !
-            call mem%dealloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
-            call mem%dealloc(F_bj, wf%n_v, batch_j%length)
+            call batch_j%determine_limits(j_batch)
 !
-         enddo
-      enddo
+            if (j_batch .ne. i_batch) then
+!
+               call wf%setup_L_Jvo(L_J_vj, L_J_vj_p, batch_j)
+               call wf%setup_L_Jov(L_J_jb, L_J_jb_p, array_for_reordering, batch_j)
+               call wf%setup_L_Joo(L_J_jk, L_J_jk_p, array_for_reordering, batch_j)
+!
+               call X_J_vo_file%read_range(X_J_aj, batch_j)
+               X_J_aj_p(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_j%length) => X_J_aj
+!
+            else
+!
+               L_J_vj_p(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_j%length) => L_J_vi
+               L_J_jb_p(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_j%length) => L_J_ib
+               L_J_jk_p(1:wf%eri_t1%n_J, 1:wf%n_o, 1:batch_j%length) => L_J_ik
+!
+               X_J_aj_p(1:wf%eri_t1%n_J, 1:wf%n_v, 1:batch_j%length) => X_J_ai
+!
+            end if
+!
+            do i = batch_i%first, batch_i%get_last()
+!
+               i_rel = i - batch_i%first + 1
+!
+               do j = batch_j%first, min(batch_j%get_last(), i)
+!
+                  j_rel = j - batch_j%first + 1
+!
+                  call wf%construct_contravariant_t2_single_ij(i, j, array_for_reordering, &
+                                                               u_ab, &
+                                                               L_J_vi_p(:,:,i_rel), &
+                                                               L_J_vj_p(:,:,j_rel))
+!
+                  call wf%omega_cc2_fock(i, j, u_ab, omega1, F_ov_bj)
+!
+                  call wf%omega_cc2_v2o2J(i, j, u_ab, temp_J_v, &
+                                          omega1,              &
+                                          X_J_ai_p(:,:,i_rel), &
+                                          X_J_aj_p(:,:,j_rel), &
+                                          L_J_ib_p(:,:,i_rel), &
+                                          L_J_jb_p(:,:,j_rel), &
+                                          L_J_ik_p(:,:,i_rel), &
+                                          L_J_jk_p(:,:,j_rel))
+!
+               end do ! j
+            end do ! i
+               if (j_batch .ne. i_batch) call X_J_vo_file%write_range(X_J_aj, batch_j)
+         end do ! j_batch
+         call X_J_vo_file%write_range(X_J_ai, batch_i)
+      end do ! i_batch
+!
+      call mem%dealloc(u_ab, wf%n_v, wf%n_v)
+      call mem%dealloc(temp_J_v, wf%eri_t1%n_J, wf%n_v)
+      call mem%dealloc(F_ov_bj, wf%n_v, wf%n_o)
+!
+      if (batch_i%num_batches .eq. 1) then ! no batching
+!
+         call mem%dealloc(L_J_vi, wf%eri_t1%n_J, wf%n_v, wf%n_o)
+!
+         call mem%dealloc(L_J_ib, wf%eri_t1%n_J, wf%n_v, wf%n_o)
+         call mem%dealloc(L_J_ik, wf%eri_t1%n_J, wf%n_o, wf%n_o)
+!
+         call mem%dealloc(X_J_ai, wf%eri_t1%n_J, wf%n_v, wf%n_o)
+!
+         call mem%dealloc(array_for_reordering, req_1_sort*wf%n_o)
+!
+      else ! batching
+!
+         call mem%dealloc(L_J_vi, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+         call mem%dealloc(L_J_vj, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+!
+         call mem%dealloc(L_J_ib, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+         call mem%dealloc(L_J_jb, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+!
+         call mem%dealloc(L_J_ik, wf%eri_t1%n_J, wf%n_o, batch_i%max_length)
+         call mem%dealloc(L_J_jk, wf%eri_t1%n_J, wf%n_o, batch_i%max_length)
+!
+         call mem%dealloc(X_J_ai, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+         call mem%dealloc(X_J_aj, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+!
+         call mem%dealloc(array_for_reordering, req_1_sort*batch_i%max_length)
+!
+      endif
 !
       call mem%batch_finalize()
 !
-      call timer%turn_off()
+      call wf%omega_cc2_Jv2o(X_J_vo_file, omega1)
 !
-   end subroutine omega_cc2_c1_lowmem_cc2
+      call X_J_vo_file%close_('delete')
+!
+   end subroutine omega_cc2_lowmem_cc2
+!
+!
+   module subroutine construct_contravariant_t2_single_ij_lowmem_cc2(wf, i, j, v_ab, u_ab, &
+                                                                     L_J_vi, L_J_vj)
+!!
+!!    Construct contravariant t2 for single i,j
+!!    Written by Alexander C. Paul, Dec 2021
+!!
+!!    t^ab_ij = -(eps^ab_ij)^(-1) sum_J L_J_ai L_J_bj
+!!    u^ab_ij = 2 t^ab_ij - t^ba_ij
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      integer, intent(in) :: i, j
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: v_ab
+      real(dp), dimension(wf%n_v, wf%n_v), intent(out)   :: u_ab
+!
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_v), intent(in) :: L_J_vi, L_J_vj
+!
+      call dgemm('T', 'N',       &
+                  wf%n_v,        &
+                  wf%n_v,        &
+                  wf%eri_t1%n_J, &
+                  one,           &
+                  L_J_vi,        &
+                  wf%eri_t1%n_J, &
+                  L_J_vj,        &
+                  wf%eri_t1%n_J, &
+                  zero,          &
+                  v_ab,          &
+                  wf%n_v)
+!
+      call wf%make_contravariant_doubles_single_ij(i, j, v_ab, u_ab)
+!
+   end subroutine construct_contravariant_t2_single_ij_lowmem_cc2
+!
+!
+   module subroutine make_contravariant_doubles_single_ij_lowmem_cc2(wf, i, j, u_ab, v_ab)
+!!
+!!    Make contravariant doubles single i,j
+!!    Written by Alexander C. Paul, Dec 2021
+!!
+!!    Divide an array of lowmem_cc2 amplitudes (single i,j)
+!!    by the respective orbital energy differences eps^ab_ij
+!!    And construct the contravariant linear combination
+!!       u^ab_ij = 2 t^ab_ij - t^ba_ij
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      integer, intent(in) :: i, j
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)  :: u_ab
+      real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: v_ab
+!
+      integer a, b
+!
+      real(dp) :: epsilon_ij, epsilon_b
+!
+      epsilon_ij = wf%orbital_energies(i) + wf%orbital_energies(j)
+!
+!$omp parallel do schedule(static) private(a,b,epsilon_b)
+      do b = 1, wf%n_v
+!
+         epsilon_b = epsilon_ij - wf%orbital_energies(wf%n_o + b)
+!
+         do a = 1, wf%n_v
+!
+            v_ab(a,b) = (two*u_ab(a,b) - u_ab(b,a))&
+                        /(epsilon_b - wf%orbital_energies(wf%n_o + a))
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine make_contravariant_doubles_single_ij_lowmem_cc2
+!
+!
+   module subroutine omega_cc2_fock_lowmem_cc2(wf, i, j, t_ab, omega1, F_ov)
+!!
+!!    Omega CC2 Fock
+!!    Written by Alexander C. Paul, Dec 2021
+!!
+!!    Compute:
+!!       omega^a_i = sum_bj  u^ab_ij F_jb
+!!    for a given i and j
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      integer, intent(in) :: i, j
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: t_ab
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_ov
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
+!
+      call dgemv('N',           &
+                  wf%n_v,       &
+                  wf%n_v,       &
+                  one,          &
+                  t_ab,         &
+                  wf%n_v,       &
+                  F_ov(:,j), 1, &
+                  one,          &
+                  omega1(:,i), 1)
+!
+      if (i .ne. j) then
+!
+         call dgemv('T',           &
+                     wf%n_v,       &
+                     wf%n_v,       &
+                     one,          &
+                     t_ab,         &
+                     wf%n_v,       &
+                     F_ov(:,i), 1, &
+                     one,          &
+                     omega1(:,j), 1)
+!
+      end if
+!
+   end subroutine omega_cc2_fock_lowmem_cc2
+!
+!
+   module subroutine omega_cc2_v2o2J_lowmem_cc2(wf, i, j, t_ab, temp_J_v, omega1, &
+                                                X_J_ai, X_J_aj,           &
+                                                L_Jib, L_Jjb, L_Jik, L_Jjk)
+!!
+!!    Omega CC2 v2o2J
+!!    Written by Alexander C. Paul, Dec 2021
+!!
+!!    Compute:
+!!       X_J_ai = sum_bj u^ab_ij L_J_jb
+!!       omega^a_k = sum_Ji X_J_ai L_J_ik
+!!    for a given i and j
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      integer, intent(in) :: i, j
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: t_ab
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_v), intent(out) :: temp_J_v
+!
+      real(dp), dimension(wf%n_v, wf%n_o),     intent(inout) :: omega1
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_v), intent(inout) :: X_J_ai, X_J_aj
+!
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_v), intent(in) :: L_Jib, L_Jjb
+      real(dp), dimension(wf%eri_t1%n_J, wf%n_o), intent(in) :: L_Jik, L_Jjk
+!
+      call dgemm('N', 'T',       &
+                  wf%eri_t1%n_J, &
+                  wf%n_v,        &
+                  wf%n_v,        &
+                  one,           &
+                  L_Jjb,         & ! L_J_b,j
+                  wf%eri_t1%n_J, &
+                  t_ab,          & ! t_a_b,ij
+                  wf%n_v,        &
+                  zero,          &
+                  temp_J_v,      & ! X_J_a,i
+                  wf%eri_t1%n_J)
+!
+      call daxpy(wf%eri_t1%n_J*wf%n_v, one, temp_J_v, 1, X_J_ai, 1)
+!
+      call dgemm('T', 'N',       &
+                  wf%n_v,        &
+                  wf%n_o,        &
+                  wf%eri_t1%n_J, &
+                  -one,          &
+                  temp_J_v,      & ! X_J_a,i
+                  wf%eri_t1%n_J, &
+                  L_Jik,         & ! L_J_k,i
+                  wf%eri_t1%n_J, &
+                  one,           &
+                  omega1,        & ! omega_a_k
+                  wf%n_v)
+!
+      if (i .ne. j) then
+!
+         call dgemm('N', 'N',       &
+                     wf%eri_t1%n_J, &
+                     wf%n_v,        &
+                     wf%n_v,        &
+                     one,           &
+                     L_Jib,         & ! L_J_b,i
+                     wf%eri_t1%n_J, &
+                     t_ab,          & ! t_b_a,ij
+                     wf%n_v,        &
+                     zero,          &
+                     temp_J_v,      & ! X_J_a,j
+                     wf%eri_t1%n_J)
+!
+         call daxpy(wf%eri_t1%n_J*wf%n_v, one, temp_J_v, 1, X_J_aj, 1)
+!
+         call dgemm('T', 'N',       &
+                     wf%n_v,        &
+                     wf%n_o,        &
+                     wf%eri_t1%n_J, &
+                     -one,          &
+                     temp_J_v,      & ! X_J_a,j
+                     wf%eri_t1%n_J, &
+                     L_Jjk,         & ! L_J_k,j
+                     wf%eri_t1%n_J, &
+                     one,           &
+                     omega1,        & ! omega_a_k
+                     wf%n_v)
+!
+      end if
+!
+   end subroutine omega_cc2_v2o2J_lowmem_cc2
+!
+!
+   module subroutine omega_cc2_Jv2o_lowmem_cc2(wf, X_J_vo_file, omega1)
+!!
+!!    Omega cc2 Jv2o
+!!    Written by Alexander C. Paul, Dec 2021
+!!
+!!    Compute:
+!!       omega^c_i = sum_abj X_Jai L_J_ca
+!!
+!!    where X_J_ai is stored on file (s. omega_cc2_lowmem_cc2)
+!!
+      use reordering, only: sort_123_to_132
+!
+      implicit none
+!
+      class(lowmem_cc2), intent(inout) :: wf
+!
+      type(direct_stream_file), intent(inout) :: X_J_vo_file
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_ca, L_J_vv, X_J_vo
+      real(dp), dimension(:,:), allocatable :: temp
+!
+      type(batching_index) :: batch_c, batch_i
+!
+      integer :: c_batch, i_batch, req_0, req_c, req_i, req_2
+      integer :: c, i, c_rel, i_rel
+!
+      batch_i = batching_index(wf%n_o)
+      batch_c = batching_index(wf%n_v)
+!
+      req_0 = 0
+      req_i = wf%eri_t1%n_J*wf%n_v
+      req_c = 2*wf%eri_t1%n_J*wf%n_v
+      req_2 = 1
+!
+      call mem%batch_setup(batch_i, batch_c, req_0, req_i, req_c, req_2, 'omega_cc2_Jv2o')
+!
+      call mem%alloc(X_J_vo, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+!
+      do c_batch = 1, batch_c%num_batches
+!
+         call batch_c%determine_limits(c_batch)
+!
+         call mem%alloc(L_J_ca, wf%eri_t1%n_J, batch_c%length, wf%n_v)
+         call mem%alloc(L_J_vv, wf%eri_t1%n_J, wf%n_v, batch_c%length)
+!
+         call wf%L_t1%get(L_J_ca, &
+                          wf%n_o+batch_c%first, &
+                          wf%n_o+batch_c%get_last(), &
+                          wf%n_o+1, wf%n_mo)
+!
+         call sort_123_to_132(L_J_ca, L_J_vv, wf%eri_t1%n_J, batch_c%length, wf%n_v)
+         call mem%dealloc(L_J_ca, wf%eri_t1%n_J, wf%n_v, batch_c%length)
+!
+         do i_batch = 1, batch_i%num_batches
+!
+            call batch_i%determine_limits(i_batch)
+!
+            call mem%alloc(temp, batch_c%length, batch_i%length)
+!
+!           only need to read once if there is only a single batch in i
+            if (.not. (batch_i%num_batches == 1 .and. c_batch > 1)) then
+               call X_J_vo_file%read_range(X_J_vo, batch_i)
+            end if
+!
+            call dgemm('T', 'N',           &
+                        batch_c%length,    &
+                        batch_i%length,    &
+                        wf%eri_t1%n_J*wf%n_v, &
+                        one,               &
+                        L_J_vv,            & ! L_Ja_c
+                        wf%eri_t1%n_J*wf%n_v, &
+                        X_J_vo,            & ! X_Ja_i
+                        wf%eri_t1%n_J*wf%n_v, &
+                        zero,              &
+                        temp,              & ! omega_c_i
+                        batch_c%length)
+!
+            do i = batch_i%first, batch_i%get_last()
+               do c = batch_c%first, batch_c%get_last()
+!
+                  c_rel = c - batch_c%first + 1
+                  i_rel = i - batch_i%first + 1
+!
+                  omega1(c, i) = omega1(c, i) + temp(c_rel, i_rel)
+!
+               end do
+            end do
+!
+            call mem%dealloc(temp, batch_c%length, batch_i%length)
+!
+         end do ! i_batch
+!
+         call mem%dealloc(L_J_vv, wf%eri_t1%n_J, wf%n_v, batch_c%length)
+!
+      end do ! c_batch
+!
+      call mem%dealloc(X_J_vo, wf%eri_t1%n_J, wf%n_v, batch_i%max_length)
+!
+      call mem%batch_finalize
+!
+   end subroutine omega_cc2_Jv2o_lowmem_cc2
 !
 !
 end submodule omega_lowmem_cc2

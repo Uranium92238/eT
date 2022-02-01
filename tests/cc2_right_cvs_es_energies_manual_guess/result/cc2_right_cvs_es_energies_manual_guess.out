@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-20 16:25:36 UTC +02:00
-  Git branch:         start-vector-manual
-  Git hash:           3be1f42f2bbb6024bd9d65892cdcfcf4f160cf72
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-20 16:31:10 UTC +02:00
+  Calculation started: 2022-02-01 16:09:55 UTC +01:00
 
 
   :: Input file
@@ -80,11 +80,11 @@
         energy threshold:   1.0d-10
         right eigenvectors
         core excitation: {1}
-        state guesses: {1,2,1,3}
+        state guesses: {i=1,a=2}, {a=3,i=1}
      end solver cc es
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -182,12 +182,12 @@
      5           -75.989794771484     0.3945E-03     0.3595E-04
      6           -75.989795819016     0.5159E-04     0.1048E-05
      7           -75.989795840882     0.6200E-05     0.2187E-07
-     8           -75.989795841667     0.2170E-05     0.7852E-09
-     9           -75.989795841773     0.3084E-06     0.1057E-09
-    10           -75.989795841773     0.2613E-07     0.4263E-12
+     8           -75.989795841667     0.2170E-05     0.7853E-09
+     9           -75.989795841773     0.3084E-06     0.1056E-09
+    10           -75.989795841773     0.2613E-07     0.4547E-12
     11           -75.989795841773     0.5653E-08     0.2842E-13
-    12           -75.989795841773     0.9210E-09     0.4263E-13
-    13           -75.989795841773     0.9986E-10     0.5684E-13
+    12           -75.989795841773     0.9210E-09     0.1421E-13
+    13           -75.989795841773     0.9986E-10     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -200,8 +200,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.22500
-     Total cpu time (sec):               0.61384
+     Total wall time (sec):              0.65000
+     Total cpu time (sec):               1.08884
 
 
   :: CC2 wavefunction
@@ -292,12 +292,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11100
-     Total cpu time (sec):               0.25323
+     Total wall time (sec):              0.27100
+     Total cpu time (sec):               0.42376
 
 
   2) Preparation of MO basis and integrals
@@ -340,7 +339,7 @@
     8           -76.205653432845     0.2917E-07     0.3954E-09
     9           -76.205653432573     0.2980E-08     0.2727E-09
    10           -76.205653432578     0.5464E-09     0.5898E-11
-   11           -76.205653432578     0.6314E-10     0.3553E-12
+   11           -76.205653432578     0.6315E-10     0.3553E-12
   ---------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -368,8 +367,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.03800
-     Total cpu time (sec):               0.05455
+     Total wall time (sec):              0.05500
+     Total cpu time (sec):               0.06880
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -494,8 +493,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1  19.789956980530    0.000000000000     0.2384E-12   0.4224E-11
-     2  20.219406581301    0.000000000000     0.4981E-11   0.1776E-12
+     1  19.789956980530    0.000000000000     0.2426E-12   0.4292E-11
+     2  20.219406581301    0.000000000000     0.5210E-11   0.1741E-12
   ------------------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
@@ -549,29 +548,29 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.789956980530      538.512158716395
-        2                 20.219406581301      550.198077579109
+        1                 19.789956980530      538.512158716398
+        2                 20.219406581301      550.198077579110
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC2 excited state equations (right)
 
-     Total wall time (sec):              0.08900
-     Total cpu time (sec):               0.11386
+     Total wall time (sec):              0.13100
+     Total cpu time (sec):               0.13626
 
   - Timings for the CC2 excited state calculation
 
-     Total wall time (sec):              0.23800
-     Total cpu time (sec):               0.42247
+     Total wall time (sec):              0.45900
+     Total cpu time (sec):               0.63066
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 5.860008 MB
+  Peak memory usage during the execution of eT: 5.860024 MB
 
-  Total wall time in eT (sec):              0.50900
-  Total cpu time in eT (sec):               1.08258
+  Total wall time in eT (sec):              1.16100
+  Total cpu time in eT (sec):               1.77245
 
-  Calculation ended: 2021-10-20 16:31:11 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:56 UTC +01:00
 
   - Implementation references:
 

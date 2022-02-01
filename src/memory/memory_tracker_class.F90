@@ -35,6 +35,8 @@ module memory_tracker_class
       integer(i64), private :: current
       integer(i64), private :: max_allowed, max_used
 !
+      character(len=:), allocatable :: tag
+!
    contains
 !
       procedure, public :: update
@@ -54,7 +56,7 @@ module memory_tracker_class
 contains
 !
 !
-   function new_memory_tracker(max_allowed) result(this)
+   function new_memory_tracker(max_allowed, tag) result(this)
 !!
 !!    New memory tracker
 !!    Written by Eirik F. Kjønstad, June 2021
@@ -66,13 +68,15 @@ contains
       type(memory_tracker) :: this
 !
       integer(i64), intent(in) :: max_allowed
+      character(len=*), intent(in) :: tag
 !
       this%current = 0
       this%max_used = 0
       this%max_allowed = max_allowed
 !
-      call output%printf('debug', 'Memory tracker initialized - allowed memory: (i0) B', &
-                         ints=[int(this%max_allowed)])
+      this%tag = trim(tag)
+!
+      call output%printf('debug', 'Memory tracker initialized - ' // this%tag, ll=100)
 !
    end function new_memory_tracker
 !
@@ -111,9 +115,13 @@ contains
       implicit none
 !
       type(memory_tracker) :: this
+      integer :: difference
 !
-      call output%printf('debug', 'Memory tracker finalized - allowed: (i0) B  used: (i0) B', &
-                         ints=[int(this%max_allowed),int(this%max_used)])
+      difference = int(this%max_allowed) - int(this%max_used)
+!
+      call output%printf('debug', 'Memory tracker finalized - ' // this%tag // ':')
+      call output%printf('debug', 'allowed: (i0) B  used: (i0) B  difference: (i0) B', &
+                         ints=[int(this%max_allowed), int(this%max_used), difference], ll=100)
 !
    end subroutine destructor
 !

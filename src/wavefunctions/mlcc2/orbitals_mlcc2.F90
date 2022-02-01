@@ -46,8 +46,6 @@ submodule (mlcc2_class) orbitals_mlcc2
 !!    Note that step 1 and 2 happens at the same time, in the routines
 !!    which constructs the orbitals
 !!
-!!
-!!
 !
    implicit none
 !
@@ -1105,11 +1103,13 @@ contains
 !!    Performs CCS calculation for CNTO (and NTO)
 !!    construction.
 !!
-      use t1_eri_tool_class,           only: t1_eri_tool
-      use amplitude_updater_class,     only: amplitude_updater
-      use quasi_newton_updater_class,  only: quasi_newton_updater
-      use diis_cc_gs_class,            only: diis_cc_gs
-      use davidson_cc_es_class,        only: davidson_cc_es
+!
+      use amplitude_updater_class,        only: amplitude_updater
+      use quasi_newton_updater_class,     only: quasi_newton_updater
+      use diis_cc_gs_class,               only: diis_cc_gs
+      use davidson_cc_es_class,           only: davidson_cc_es
+      use eri_tool_class,                 only: eri_tool
+      use eri_cholesky_disk_class,        only: eri_cholesky_disk
       use global_in, only: input
 !
       implicit none
@@ -1157,11 +1157,12 @@ contains
       allocate(ccs::ccs_wf)
       call ccs_wf%initialize(wf)
 !
-      call ccs_wf%mo_preparations()
+      call ccs_wf%integral_preparations(wf%L_mo%n_J)
 !
-      ccs_wf%eri = t1_eri_tool(wf%eri)
-      call ccs_wf%eri%initialize()
-      call ccs_wf%eri%copy_from_t1(wf%eri)
+      call ccs_wf%L_mo%set_equal_to(wf%L_mo)
+      call ccs_wf%L_t1%set_equal_to(wf%L_mo)
+!
+      call ccs_wf%mo_preparations()
 !
 !     1. Ground state
 !
@@ -1180,8 +1181,8 @@ contains
                                      t_updater = t_updater, &
                                      storage   = storage)
 !
-      call cc_gs_solver_diis%run(ccs_wf)
-      call cc_gs_solver_diis%cleanup(ccs_wf)
+      call cc_gs_solver_diis%run()
+      call cc_gs_solver_diis%cleanup()
 !
       call timer_gs%turn_off()
 !
@@ -1193,8 +1194,8 @@ contains
       call ccs_wf%construct_fock('es')
 !
       cc_es_solver_davidson = davidson_cc_es(transformation, ccs_wf, restart=.false.)
-      call cc_es_solver_davidson%run(ccs_wf)
-      call cc_es_solver_davidson%cleanup(ccs_wf)
+      call cc_es_solver_davidson%run()
+      call cc_es_solver_davidson%cleanup()
 !
       call timer_es%turn_off()
 !

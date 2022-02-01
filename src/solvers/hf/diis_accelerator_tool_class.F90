@@ -23,11 +23,10 @@ module diis_accelerator_tool_class
 !! DIIS accelerator tool,
 !! Written by Sarai D. Folkestad, 2020
 !!
-!! Handles DIIS (or CROP) acceleration by use of the 
+!! Handles DIIS (or CROP) acceleration by use of the
 !! DIIS tool.
 !!
 !
-   use kinds
    use parameters
 !
    use global_out, only: output
@@ -51,7 +50,7 @@ module diis_accelerator_tool_class
 !
    interface diis_accelerator_tool
 !
-     procedure :: new_diis_accelerator_tool
+      procedure :: new_diis_accelerator_tool
 !
    end interface diis_accelerator_tool
 !
@@ -100,7 +99,7 @@ contains
 !!    Initialize
 !!    Written by Sarai D. Folkestad, 2020
 !!
-!!    Initializes records (on disk or memory) 
+!!    Initializes records (on disk or memory)
 !!    of the DIIS history.
 !!
       implicit none

@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:31:56 UTC +02:00
+  Calculation started: 2022-02-01 16:09:35 UTC +01:00
 
 
   :: Input file
@@ -141,19 +141,9 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -128.496443872333
+     Energy of initial guess:              -128.496443872332
      Number of electrons in guess:           10.000000000000
 
   - Screening and integral thresholds:
@@ -164,6 +154,16 @@
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -173,7 +173,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -128.496443872332     0.5960E-10     0.1285E+03
+     1          -128.496443872333     0.5959E-10     0.1285E+03
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -181,13 +181,13 @@
 
      HOMO-LUMO gap:                  1.140324587556
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:           -128.496443872332
-     Total energy:                -128.496443872332
+     Electronic energy:           -128.496443872333
+     Total energy:                -128.496443872333
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.84700
-     Total cpu time (sec):               3.46442
+     Total wall time (sec):              2.20000
+     Total cpu time (sec):               3.57953
 
 
   :: CCS wavefunction
@@ -272,18 +272,17 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4407E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.5597E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.6642E-15
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.34700
-     Total cpu time (sec):               0.52163
+     Total wall time (sec):              0.37000
+     Total cpu time (sec):               0.52058
 
 
   2) Preparation of MO basis and integrals
@@ -316,14 +315,14 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -128.496443872332     0.1491E-09     0.1285E+03
-    2          -128.496443872332     0.2069E-10     0.0000E+00
+    1          -128.496443872333     0.1491E-09     0.1285E+03
+    2          -128.496443872333     0.2069E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 2 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -128.496443872332
+     Final ground state energy (a.u.):  -128.496443872333
 
      Correlation energy (a.u.):            0.000000000000
 
@@ -331,22 +330,22 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        4      5        0.000000000017
-       12      5        0.000000000017
-       11      4        0.000000000017
-       10      3        0.000000000017
-        3      3        0.000000000016
-       10      4       -0.000000000014
-       12      3        0.000000000014
-       11      5       -0.000000000014
-        2      4        0.000000000014
+        3      3        0.000000000020
+        2      4        0.000000000019
+        4      5       -0.000000000019
+       12      3        0.000000000018
+       10      5        0.000000000017
+       11      4        0.000000000016
+       10      4        0.000000000015
+       11      3        0.000000000014
        13      2        0.000000000013
+       12      5        0.000000000013
      ------------------------------------
 
   - Finished solving the CCS ground state equations
 
      Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.00862
+     Total cpu time (sec):               0.00836
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -410,7 +409,7 @@
   Warning: Residual norm for root 1 smaller than linear dependence threshold, 
            but energy and residual  thresholds have not yet been met. 
            No new trial added for this root.
-     1  32.648311839222    0.000000000000     0.3713E-13   0.6817E-05
+     1  32.648311839222    0.000000000000     0.2569E-13   0.6817E-05
   ------------------------------------------------------------------------
   Note: all residuals are converged and have norms that are smaller than 
   linear dependence threshold. Energy convergence therefore not tested 
@@ -431,13 +430,13 @@
         1      1        0.994433476432
        13      1       -0.105365006912
        19      1        0.000525613315
+        4      1       -0.000000000000
         3      1        0.000000000000
        12      1       -0.000000000000
-       11      1       -0.000000000000
-        4      1       -0.000000000000
-       10      1       -0.000000000000
         2      1       -0.000000000000
-       20      1        0.000000000000
+       11      1        0.000000000000
+       10      1       -0.000000000000
+       20      1       -0.000000000000
      ------------------------------------
 
      - Electronic excitation energies:
@@ -446,30 +445,30 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 32.648311839222      888.405816358417
+        1                 32.648311839222      888.405816358419
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.01330
+     Total wall time (sec):              0.01400
+     Total cpu time (sec):               0.01285
 
   - Timings for the CCS excited state calculation
 
-     Total wall time (sec):              0.36900
-     Total cpu time (sec):               0.54506
+     Total wall time (sec):              0.39400
+     Total cpu time (sec):               0.54465
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 6.603204 MB
+  Peak memory usage during the execution of eT: 6.603220 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              2.25500
-  Total cpu time in eT (sec):               4.04838
+  Total wall time in eT (sec):              2.63800
+  Total cpu time in eT (sec):               4.16519
 
-  Calculation ended: 2021-10-06 10:31:58 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:37 UTC +01:00
 
   - Implementation references:
 

@@ -30,6 +30,15 @@ module triples_class
    use ccsd_class, only: ccsd
    use parameters
 !
+
+   use eri_cholesky_disk_class, only: eri_cholesky_disk
+   use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+   use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
+   use eri_tool_class, only: eri_tool
+   use eri_adapter_class, only: eri_adapter
+!
+   use memory_manager_class, only: mem
+!
    implicit none
 !
    type, abstract, extends(ccsd) :: triples
@@ -417,8 +426,7 @@ contains
    end subroutine divide_by_orbital_differences_triples
 !
 !
-   subroutine setup_vvvo_triples(wf, g_vvvo, point, unordered_g_vvvo, batch_s, &
-                                 c_ai, mo, left)
+   subroutine setup_vvvo_triples(wf, eri, reordered_g_vvvo, point, g_vvvo, batch_s, left)
 !!
 !!    Setup vvvo
 !!    Written by Alexander C. Paul, Oct 2020
@@ -428,12 +436,13 @@ contains
 !!
 !!    The integral is returned in 2134 order:
 !!
-!!    g_vvvo:           final sorted integral array
+!!    reordered_g_vvvo: final sorted integral array
 !!    point:            pointer to g_vvvo integral
-!!    unordered_g_vvvo: help array for reordering
-!!    c_ai:             use the c1-transformed integral
-!!    mo:               use the "normal" MO integral (for CCSD(T))
+!!    g_vvvo:           help array to get the integral and reorder from
 !!    left:             return integral in 1324 order (for the transpose Jacobian)
+!!
+!!    Note: Depending on the eri adapter we can obtain integrals in mo basis,
+!!          t1 transformed integrals or c1 transformed integrals
 !!
       use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_1324, sort_1234_to_2134
@@ -442,57 +451,42 @@ contains
 !
       class(triples) :: wf
 !
+      type(eri_adapter), intent(inout) :: eri
+!
       type(batching_index), intent(in) :: batch_s
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_s%length), target, intent(out)  :: g_vvvo
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_s%length), &
+                                                 target, intent(out) :: reordered_g_vvvo
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_vvvo
-      real(dp), dimension(wf%n_v, wf%n_o), optional, intent(in)  :: c_ai
+      real(dp), dimension(:,:,:,:), intent(out)  :: g_vvvo
 !
-      logical, optional, intent(in) :: mo, left
-      logical :: mo_, left_
+      logical, optional, intent(in) :: left
+      logical :: left_
 !
-      mo_   = .false.
       left_ = .false.
-      if (present(mo)) mo_ = mo
       if (present(left)) left_ = left
 !
-      if (.not. (mo_ .or. present(c_ai))) then
-!
-         call wf%eri%get_eri_t1('vvvo', unordered_g_vvvo, &
-                                 first_s=batch_s%first, last_s=batch_s%get_last())
-!
-      else if(present(c_ai)) then
-!
-         call wf%eri%get_eri_c1('vvvo', unordered_g_vvvo, c_ai, &
-                                 first_s=batch_s%first, last_s=batch_s%get_last())
-!
-      else if(mo_) then
-!
-         call wf%eri%get_eri_mo('vvvo', unordered_g_vvvo, &
-                                 first_s=batch_s%first, last_s=batch_s%get_last())
-!
-      end if
+      call eri%get('vvvo', g_vvvo, first_s=batch_s%first, last_s=batch_s%get_last())
 !
       if (.not. left_) then
 !
-         call sort_1234_to_2134(unordered_g_vvvo, g_vvvo, wf%n_v, wf%n_v, &
+         call sort_1234_to_2134(g_vvvo, reordered_g_vvvo, wf%n_v, wf%n_v, &
                                                           wf%n_v, batch_s%length)
 !
       else
 !
-         call sort_1234_to_1324(unordered_g_vvvo, g_vvvo, wf%n_v, wf%n_v, &
+         call sort_1234_to_1324(g_vvvo, reordered_g_vvvo, wf%n_v, wf%n_v, &
                                                           wf%n_v, batch_s%length)
 !
       end if
 !
-      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_s%length) => g_vvvo
+      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_s%length) => reordered_g_vvvo
 !
    end subroutine setup_vvvo_triples
 !
 !
-   subroutine setup_vvov_triples(wf, g_vvov, point, unordered_g_vvov, batch_r, left)
+   subroutine setup_vvov_triples(wf, reordered_g_vvov, point, g_vvov, batch_r, left)
 !!
 !!    Setup vvov
 !!    Written by Alexander C. Paul, Oct 2020
@@ -502,9 +496,9 @@ contains
 !!
 !!    The integral is returned in 2413 order
 !!
-!!    g_vvov:           final sorted integral array
+!!    reordered_g_vvov: final sorted integral array
 !!    point:            pointer to g_vvov integral
-!!    unordered_g_vvov: help array for reordering
+!!    g_vvov:           help array to get the integral and reorder
 !!    left:             The integral is returned in 1243 order
 !!                      (for the transpose Jacobian)
 !!
@@ -517,10 +511,11 @@ contains
 !
       type(batching_index), intent(in) :: batch_r
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_r%length), target, intent(out)  :: g_vvov
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_r%length), &
+                                                 target, intent(out) :: reordered_g_vvov
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), optional, intent(out) :: unordered_g_vvov
+      real(dp), dimension(:,:,:,:), optional, intent(out) :: g_vvov
 !
       logical, optional, intent(in) :: left
       logical :: left_
@@ -528,30 +523,26 @@ contains
       left_ = .false.
       if(present(left)) left_ = left
 !
+      call wf%eri_t1%get('vvov', g_vvov, first_r=batch_r%first, last_r=batch_r%get_last())
+!
       if (.not. left_) then ! Omega and Jacobian
 !
-         call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
-                                 first_r=batch_r%first, last_r=batch_r%get_last())
-!
-         call sort_1234_to_2413(unordered_g_vvov, g_vvov, &
+         call sort_1234_to_2413(g_vvov, reordered_g_vvov, &
                                 wf%n_v, wf%n_v, batch_r%length, wf%n_v)
 !
       else ! transpose Jacobian
 !
-         call wf%eri%get_eri_t1('vvov', unordered_g_vvov, &
-                                 first_r=batch_r%first, last_r=batch_r%get_last())
-!
-         call sort_1234_to_1243(unordered_g_vvov, g_vvov, &
+         call sort_1234_to_1243(g_vvov, reordered_g_vvov, &
                                 wf%n_v, wf%n_v, batch_r%length, wf%n_v)
 !
       end if
 !
-      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_r%length) => g_vvov
+      point(1:wf%n_v, 1:wf%n_v, 1:wf%n_v, 1:batch_r%length) => reordered_g_vvov
 !
    end subroutine setup_vvov_triples
 !
 !
-   subroutine setup_ovov_triples(wf, g_ovov, point, unordered_g_ovov, batch_p, batch_r, mo)
+   subroutine setup_ovov_triples(wf, eri, reordered_g_ovov, point, g_ovov, batch_p, batch_r)
 !!
 !!    Setup ovov
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
@@ -561,10 +552,12 @@ contains
 !!
 !!    The integral is returned in 2413 order:
 !!
-!!    g_ovov:           final sorted integral array
+!!    reordered_g_ovov: final sorted integral array
 !!    point:            pointer to g_ovov integral
-!!    unordered_g_ovov: help array for reordering
-!!    mo:               if present and true use the "normal" MO integral
+!!    g_ovov:           help array to get the integral and reorder
+!!
+!!    Note: Depending on the eri adapter we can obtain integrals in mo basis,
+!!          t1 transformed integrals or c1 transformed integrals
 !!
       use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2413
@@ -573,45 +566,30 @@ contains
 !
       class(triples) :: wf
 !
+      type(eri_adapter), intent(inout) :: eri
+!
       type(batching_index), intent(in) :: batch_p, batch_r
 !
       real(dp), dimension(wf%n_v, wf%n_v, batch_p%length, batch_r%length), &
-                                                         target, intent(out) :: g_ovov
+                                                 target, intent(out) :: reordered_g_ovov
 !
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ovov
+      real(dp), dimension(:,:,:,:), intent(out) :: g_ovov
 !
-      logical, optional, intent(in) :: mo
-      logical :: mo_
+      call eri%get('ovov', g_ovov, &
+                   first_p=batch_p%first, last_p=batch_p%get_last(), &
+                   first_r=batch_r%first, last_r=batch_r%get_last())
 !
-      mo_ = .false.
-      if (present(mo)) mo_ = mo
-!
-      if(.not. mo_) then
-!
-         call wf%eri%get_eri_t1('ovov', unordered_g_ovov, &
-                                first_p=batch_p%first, last_p=batch_p%get_last(), &
-                                first_r=batch_r%first, last_r=batch_r%get_last())
-!
-      else
-!
-         call wf%eri%get_eri_mo('ovov', unordered_g_ovov, &
-                                first_p=batch_p%first, last_p=batch_p%get_last(), &
-                                first_r=batch_r%first, last_r=batch_r%get_last())
-!
-      end if
-!
-      call sort_1234_to_2413(unordered_g_ovov, g_ovov, batch_p%length, wf%n_v, &
+      call sort_1234_to_2413(g_ovov, reordered_g_ovov, batch_p%length, wf%n_v, &
                                                        batch_r%length, wf%n_v)
 !
-      point(1:wf%n_v, 1:wf%n_v, 1:batch_p%length, 1:batch_r%length) => g_ovov
+      point(1:wf%n_v, 1:wf%n_v, 1:batch_p%length, 1:batch_r%length) => reordered_g_ovov
 !
    end subroutine setup_ovov_triples
 !
 !
-   subroutine setup_oovo_triples(wf, g_oovo, point, unordered_g_oovo, batch_q, batch_s, &
-                                 c_ai, mo)
+   subroutine setup_oovo_triples(wf, eri, reordered_g_oovo, point, g_oovo, batch_q, batch_s)
 !!
 !!    Setup oovo
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
@@ -621,65 +599,44 @@ contains
 !!
 !!    The integral is returned in 3124 order:
 !!
-!!    g_oovo:           final sorted integral array
+!!    reordered_g_oovo: final sorted integral array
 !!    point:            pointer to g_oovo integral
-!!    unordered_g_oovo: help array for reordering
-!!    c_ai:             if present and true use the c1-transformed integral
-!!    mo:               if present and true use the "normal" MO integral
+!!    g_oovo:           help array to get integral and reorder
+!!
+!!    Note: Depending on the eri adapter we can obtain integrals in mo basis,
+!!          t1 transformed integrals or c1 transformed integrals
 !!
       use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_3124
 !
       implicit none
 !
-      class(triples) :: wf
+      class(triples), intent(in) :: wf
+!
+      type(eri_adapter), intent(inout) :: eri
 !
       type(batching_index), intent(in) :: batch_q, batch_s
 !
       real(dp), dimension(wf%n_v, wf%n_o, batch_q%length, batch_s%length), &
-                                                         target, intent(out) :: g_oovo
+                                                         target, intent(out) :: reordered_g_oovo
 !
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_oovo
+      real(dp), dimension(:,:,:,:), intent(out) :: g_oovo
 !
-      real(dp), dimension(wf%n_v, wf%n_o), optional, intent(in)  :: c_ai
+      call eri%get('oovo', g_oovo, &
+                   first_q=batch_q%first, last_q=batch_q%get_last(), &
+                   first_s=batch_s%first, last_s=batch_s%get_last())
 !
-      logical, optional, intent(in) :: mo
-      logical :: mo_
-!
-      mo_ = .false.
-      if (present(mo)) mo_ = mo
-!
-      if(.not. (mo_ .or. present(c_ai))) then
-!
-         call wf%eri%get_eri_t1('oovo', unordered_g_oovo, &
-                                first_q=batch_q%first, last_q=batch_q%get_last(), &
-                                first_s=batch_s%first, last_s=batch_s%get_last())
-!
-      else if(present(c_ai)) then
-!
-         call wf%eri%get_eri_c1('oovo', unordered_g_oovo, c_ai, &
-                                first_q=batch_q%first, last_q=batch_q%get_last(), &
-                                first_s=batch_s%first, last_s=batch_s%get_last())
-!
-      else if(mo_) then
-!
-         call wf%eri%get_eri_mo('oovo', unordered_g_oovo, &
-                                first_q=batch_q%first, last_q=batch_q%get_last(), &
-                                first_s=batch_s%first, last_s=batch_s%get_last())
-!
-      end if
-!
-      call sort_1234_to_3124(unordered_g_oovo, g_oovo, wf%n_o, batch_q%length, &
+      call sort_1234_to_3124(g_oovo, reordered_g_oovo, wf%n_o, batch_q%length, &
                                                        wf%n_v, batch_s%length)
 !
-      point(1:wf%n_v, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => g_oovo
+      point(1:wf%n_v, 1:wf%n_o, 1:batch_q%length, 1:batch_s%length) => reordered_g_oovo
 !
    end subroutine setup_oovo_triples
 !
 !
-   subroutine setup_ooov_triples(wf, g_ooov, point, unordered_g_ooov, batch_p, batch_r)
+   subroutine setup_ooov_triples(wf, reordered_g_ooov, point, g_ooov, batch_p, batch_r)
 !!
 !!    Setup ooov
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Dec 2020
@@ -689,9 +646,9 @@ contains
 !!
 !!    The integral is returned in 4213 order
 !!
-!!    g_oovo:           final sorted integral array
+!!    reordered_g_oovo: final sorted integral array
 !!    point:            pointer to g_ooov integral
-!!    unordered_g_ooov: help array for reordering
+!!    g_ooov:           help array to get the integral and reorder
 !!
       use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_4213
@@ -703,20 +660,20 @@ contains
       type(batching_index), intent(in) :: batch_p, batch_r
 !
       real(dp), dimension(wf%n_v, wf%n_o, batch_p%length, batch_r%length), &
-                                                         target, intent(out) :: g_ooov
+                                                 target, intent(out) :: reordered_g_ooov
 !
       real(dp), dimension(:,:,:,:), pointer, contiguous, intent(out) :: point
 !
-      real(dp), dimension(:,:,:,:), intent(out) :: unordered_g_ooov
+      real(dp), dimension(:,:,:,:), intent(out) :: g_ooov
 !
-      call wf%eri%get_eri_t1('ooov', unordered_g_ooov, &
-                             first_p=batch_p%first, last_p=batch_p%get_last(), &
-                             first_r=batch_r%first, last_r=batch_r%get_last())
+      call wf%eri_t1%get('ooov', g_ooov, &
+                         first_p=batch_p%first, last_p=batch_p%get_last(), &
+                         first_r=batch_r%first, last_r=batch_r%get_last())
 !
-      call sort_1234_to_4213(unordered_g_ooov, g_ooov, batch_p%length, wf%n_o, &
+      call sort_1234_to_4213(g_ooov, reordered_g_ooov, batch_p%length, wf%n_o, &
                                                        batch_r%length, wf%n_v)
 !
-      point(1:wf%n_v, 1:wf%n_o, 1:batch_p%length, 1:batch_r%length) => g_ooov
+      point(1:wf%n_v, 1:wf%n_o, 1:batch_p%length, 1:batch_r%length) => reordered_g_ooov
 !
    end subroutine setup_ooov_triples
 !

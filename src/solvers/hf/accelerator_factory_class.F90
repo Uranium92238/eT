@@ -30,16 +30,12 @@ module accelerator_factory_class
 !!    - None
 !!
 !
-   use kinds
    use parameters
 !
    use accelerator_tool_class,      only: accelerator_tool
    use null_accelerator_tool_class, only: null_accelerator_tool
    use diis_accelerator_tool_class, only: diis_accelerator_tool
    use diis_tool_class,             only: diis_tool
-!
-   use global_out,                  only: output
-   use global_in,                   only: input
 !
    implicit none
 !
@@ -58,7 +54,7 @@ module accelerator_factory_class
 !
    interface accelerator_factory
 !
-     procedure :: new_accelerator_factory
+      procedure :: new_accelerator_factory
 !
    end interface accelerator_factory
 !
@@ -87,8 +83,10 @@ contains
 !!    Create
 !!    Written by Sarai D. Folkestad, 2020
 !!
-!!    Constructs the accelerator     
+!!    Constructs the accelerator
 !!
+      use global_out, only: output
+!
       implicit none
 !
       class(accelerator_factory), intent(in) :: this
@@ -138,6 +136,8 @@ contains
 !!    Read DIIS settings
 !!    Written by Sarai D. Folkestad
 !!
+      use global_in, only: input
+!
       implicit none
 !
       class(accelerator_factory),   intent(in)    :: this

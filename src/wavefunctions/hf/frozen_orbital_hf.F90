@@ -25,7 +25,7 @@ submodule (hf_class) frozen_orbital_hf
 !!    Submodule containing routines for frozen orbitals
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains
@@ -45,18 +45,9 @@ contains
 !!    for a localized region of a large molecule
 !!    which has been treated at HF level of theory.
 !!
-!
-      use visualization_class, only : visualization
-!
       implicit none
 !
       class(hf) :: wf
-!
-      type(visualization), allocatable :: plotter
-!
-      character(len=200) :: label
-!
-      real(dp), dimension(:,:), allocatable :: D
 !
 !     Destruct MO quantities in the old MO dimension, if they are allocated,
 !     before n_mo changes
@@ -65,7 +56,7 @@ contains
 !
 !     Eliminate the core orbitals if frozen core requested
 !
-!     MO coefficients for core orbitals are placed in 
+!     MO coefficients for core orbitals are placed in
 !     wf%orbital_coefficients_fc and removed from wf%orbital_coefficients
 !     the number of frozen core orbitals is wf%n_frozen_core_orbitals
 !
@@ -73,43 +64,68 @@ contains
 !
 !     Cholesky decomposition of density for reduced space CC calculation
 !
-!     MO coefficients for frozen hf orbitals now placed in 
+!     MO coefficients for frozen hf orbitals now placed in
 !     wf%orbital_coefficients_frozen_hf and removed from wf%orbital_coefficients
 !     the number of frozen hf orbitals is wf%n_frozen_hf_orbitals
 !
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
-      if (wf%plot_active_density) then
-!
-         plotter = visualization(wf%ao)
-         call plotter%initialize(wf%ao)
-!
-         call mem%alloc(D, wf%ao%n, wf%ao%n)
-!
-         call dgemm('N', 'T',                   &
-                     wf%ao%n,                   &
-                     wf%ao%n,                   &
-                     wf%n_o,                    &
-                     one,                       &
-                     wf%orbital_coefficients,   &
-                     wf%ao%n,                   &
-                     wf%orbital_coefficients,   &
-                     wf%ao%n,                   &
-                     zero,                      &
-                     D,                         &
-                     wf%ao%n)
-!
-         label = 'HF_density_for_CC'
-!
-         call plotter%plot_density(wf%ao, D, label)
-!
-         call mem%dealloc(D, wf%ao%n, wf%ao%n)
-!
-         call plotter%cleanup()
-!
-      endif
+      if (wf%plot_active_density) call wf%visualize_active_density
 !
    end subroutine prepare_mos_hf
+!
+!
+   module subroutine visualize_active_density_hf(wf)
+!!
+!!    Visualize active density
+!!    Written by Ida-Marie Høyvik, Oct 2019
+!!
+      use visualization_class, only: visualization
+!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: D
+!
+      character(len=:), allocatable :: label
+!
+      type(visualization), allocatable :: plotter
+      type(timings) :: timer
+!
+      label = "Plotting active " // wf%name_ // " density"
+      timer = timings(label)
+      call timer%turn_on
+!
+      deallocate(label)
+!
+      plotter = visualization(wf%ao)
+      call plotter%initialize(wf%ao)
+!
+      call mem%alloc(D, wf%ao%n, wf%ao%n)
+!
+      call dgemm('N', 'T',                   &
+                  wf%ao%n,                   &
+                  wf%ao%n,                   &
+                  wf%n_o,                    &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%ao%n,                   &
+                  wf%orbital_coefficients,   &
+                  wf%ao%n,                   &
+                  zero,                      &
+                  D,                         &
+                  wf%ao%n)
+!
+      label = "active_" // wf%name_ // '_density'
+!
+      call plotter%plot_density(wf%ao, D, label)
+!
+      call mem%dealloc(D, wf%ao%n, wf%ao%n)
+!
+      call timer%turn_off
+!
+   end subroutine visualize_active_density_hf
 !
 !
    module subroutine remove_core_orbitals_hf(wf)
@@ -125,7 +141,7 @@ contains
 !!    - The core orbitals are stored in wf%orbital_coefficients_fc
 !!    - The number of frozen core orbitals is wf%n_frozen_core_orbitals on exit
 !!    - On exit wf%n_mo and wf%n_o are updated to not include the core orbitals
-!!    
+!!
 !
       use array_utilities, only : get_abs_max_w_index
 !
@@ -183,7 +199,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !     Check for crossover:
 !
@@ -217,10 +233,10 @@ contains
       enddo
 !$omp end parallel do
 !
-     call mem%dealloc(orbital_energies_copy, wf%n_mo)
+      call mem%dealloc(orbital_energies_copy, wf%n_mo)
 !
       wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
-      wf%n_o  = wf%n_o  - wf%n_frozen_core_orbitals    
+      wf%n_o  = wf%n_o  - wf%n_frozen_core_orbitals
 !
       call output%printf('m', '- Preparation for frozen core approximation', &
                          fs='(/t3,a)')
@@ -242,7 +258,7 @@ contains
 !!      and places them in wf%orbital_coefficients_frozen_hf
 !!    - The number of frozen occupied HF orbitals is wf%n_frozen_hf_o
 !!      on exit
-!!    - On exit wf%n_mo, wf%n_o and wf%n_v are updated not to include 
+!!    - On exit wf%n_mo, wf%n_o and wf%n_v are updated not to include
 !!      frozen hf orbitals
 !!
       use cholesky_orbital_tool_class, only: cholesky_orbital_tool
@@ -255,7 +271,7 @@ contains
 !
       integer :: first_ao, last_ao, i, n_active_aos, a, first_inactive_ao
 !
-      integer :: ao, rank, n_inactive_centers, n_hf_centers 
+      integer :: ao, rank, n_inactive_centers, n_hf_centers
 !
       type(cholesky_orbital_tool), allocatable :: cd_tool_o
 !
@@ -289,13 +305,13 @@ contains
 !
       if (wf%ao%is_center_subset('hf')) then
 !
-!        First inactive is in the 'hf' subset 
+!        First inactive is in the 'hf' subset
 !
          call wf%ao%get_aos_in_subset('hf', first=first_inactive_ao)
 !
          last_ao = first_inactive_ao - 1
 !
-      elseif (wf%ao%is_center_subset('unclassified')) then 
+      elseif (wf%ao%is_center_subset('unclassified')) then
 !
 !        First inactive is in the 'unclassified' subset
 !
@@ -303,11 +319,11 @@ contains
 !
          last_ao = first_inactive_ao - 1
 !
-      else 
-!     
+      else
+!
 !        No inactive; last active AO is equal to the full number of AOs
 !
-         last_ao = wf%ao%n 
+         last_ao = wf%ao%n
 !
       endif
 !
@@ -352,7 +368,7 @@ contains
 !
 !     Virtual orbitals
 !
-      call wf%get_full_idempotent_density(D)  
+      call wf%get_full_idempotent_density(D)
 !
 !     1. Construct PAOs for active atoms
 !
@@ -372,7 +388,7 @@ contains
 !
       call mem%dealloc(S, n_active_aos, n_active_aos)
 !
-      wf%n_v = rank  
+      wf%n_v = rank
 !
 !     Update orbital_coefficients and place orbital_coefficients_frozen_hf
 !
@@ -429,7 +445,7 @@ contains
 !     Diagonalize MO Fock matrix for the new
 !     HF basis.
 !
-      call wf%diagonalize_fock_frozen_hf_orbitals() 
+      call wf%diagonalize_fock_frozen_hf_orbitals()
 !
       call output%printf('m', '- Preparation for frozen Hartree-Fock orbitals', &
                          fs='(/t3,a)')
@@ -483,20 +499,20 @@ contains
 !
 !     Add to CC^T inactive virtual density to frozen CC^T
 !
-     call dgemm('N', 'T',       &
-                 wf%ao%n,       &
-                 wf%ao%n,       &
-                 rank,          &
-                 one,           &
-                 PAO_coeff,     &
-                 wf%ao%n,       &
-                 PAO_coeff,     &
-                 wf%ao%n,       &
-                 one,           &
-                 wf%frozen_CCT, &
-                 wf%ao%n)
+      call dgemm('N', 'T',       &
+                  wf%ao%n,       &
+                  wf%ao%n,       &
+                  rank,          &
+                  one,           &
+                  PAO_coeff,     &
+                  wf%ao%n,       &
+                  PAO_coeff,     &
+                  wf%ao%n,       &
+                  one,           &
+                  wf%frozen_CCT, &
+                  wf%ao%n)
 !
-     call mem%dealloc(PAO_coeff, wf%ao%n, wf%ao%n)      
+      call mem%dealloc(PAO_coeff, wf%ao%n, wf%ao%n)
 !
    end subroutine remove_frozen_hf_orbitals_hf
 !
@@ -506,11 +522,11 @@ contains
 !!    Diagonalize Fock frozen HF orbitals
 !!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
 !!
-!!    Does a diagonalization of the Fock matrix in the 
+!!    Does a diagonalization of the Fock matrix in the
 !!    MO basis where the frozen HF orbitals have been removed
 !!
 !!    Fock matrix is no longer diagonal, because determining
-!!    the frozen HF orbitals entails mixing of occupied orbitals 
+!!    the frozen HF orbitals entails mixing of occupied orbitals
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
@@ -524,7 +540,7 @@ contains
       integer, dimension(2)                  :: block_dim
       integer                                :: n_blocks
 !
-!     We do one Roothan-Hall step to get a diagonal Fock matrix 
+!     We do one Roothan-Hall step to get a diagonal Fock matrix
 !     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
 !
       call wf%initialize_mo_fock()
@@ -555,7 +571,7 @@ contains
                   wf%n_mo,                &
                   one,                    &
                   wf%orbital_coefficients,&
-                  wf%ao%n) 
+                  wf%ao%n)
 !
       call dgemm('N', 'N',                                &
                   wf%ao%n,                                &
@@ -568,7 +584,7 @@ contains
                   wf%n_mo,                                &
                   one,                                    &
                   wf%orbital_coefficients(1, wf%n_o + 1), &
-                  wf%ao%n)    
+                  wf%ao%n)
 !
       call mem%dealloc(C_copy, wf%ao%n, wf%n_mo)
 !
@@ -694,11 +710,11 @@ contains
 !!    Get number of active hf atoms
 !!    Written by Sarai D. Folkestad and Linda Goletto, Dec 2019
 !!
-!!    Sets the number of active hf atoms in the system 
+!!    Sets the number of active hf atoms in the system
 !!
 !!    NOTE: modified in mlhf
 !!
-      implicit none 
+      implicit none
 !
       class(hf), intent(in) :: wf
 !
@@ -734,7 +750,7 @@ contains
 !!    Calculate frozen dipole moment
 !!    Written by Sarai D. Folkestad, 2020
 !!
-!!    Calculates the constribution to the dipole 
+!!    Calculates the constribution to the dipole
 !!    moment from the frozen orbitals
 !!
       use array_utilities, only: symmetric_sandwich
@@ -759,7 +775,7 @@ contains
 !
          do i = 1, 3
             call symmetric_sandwich(mu_mo, mu_ao(:,:,i), &
-                                    wf%orbital_coefficients_fc, &                                    
+                                    wf%orbital_coefficients_fc, &
                                     wf%ao%n, wf%n_frozen_core_orbitals)
 !
             do j = 1, wf%n_frozen_core_orbitals
@@ -806,7 +822,7 @@ contains
 !!    Calculate frozen quadrupole moment
 !!    Written by Sarai D. Folkestad, 2020
 !!
-!!    Calculates the constribution to the quadrupole 
+!!    Calculates the constribution to the quadrupole
 !!    moment from the frozen orbitals
 !!
       use array_utilities, only: symmetric_sandwich

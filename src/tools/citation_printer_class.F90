@@ -21,7 +21,7 @@ module citation_printer_class
 !
 !!
 !!    Citation printer
-!!    Written by Eirik F. Kjønstad, 2021 
+!!    Written by Eirik F. Kjønstad, 2021
 !!
 !!    Class for a citation printer.
 !!
@@ -33,26 +33,28 @@ module citation_printer_class
 !!       Add more citations if you wish...
 !!
 !!       call citation_printer%print_(file)
-!!        
+!!
 !
-   use citation_class,     only: citation
-   use output_file_class,  only: output_file
-   use global_in,          only: input
+   use eT_references_class, only: eT_references
+   use output_file_class,   only: output_file
+   use global_in,           only: input
 !
    implicit none
 !
    type :: citation_printer
 !
-      integer, private :: n_citations 
-      type(citation), dimension(100), private :: citations ! Assumes that no calculation will ask  
-                                                           ! the user to cite more than 100 paper
+      integer, private :: n_citations
 !
-      logical :: print_apa ! If true, prints full APA-style references;
-                           ! Otherwise, only the DOI is printed.
+      character(len=40), dimension(50), private :: implementation_labels
+!
+      type(eT_references), private :: references
+!
+      logical, private :: print_apa ! If true, prints full APA-style references;
+                                    ! Otherwise, only the DOI is printed.
 !
    contains
 !
-      procedure, public :: add & 
+      procedure, public :: add &
                         => add_citation_printer
 !
       procedure, public :: print_ &
@@ -82,96 +84,83 @@ contains
 !
       type(citation_printer) :: this
 !
-      class(citation), allocatable :: eT_reference
+      this%references = eT_references()
 !
-      eT_reference = citation(implementation = 'eT',                                        &
-                              journal        = 'J. Chem. Phys.',                                &
-                              title_         = 'eT 1.0: An open source electronic structure &
-                                                &program with emphasis on coupled cluster &
-                                                &and multilevel methods',                       &
-                              volume         = '152',                                           &
-                              issue          = '18',                                            &
-                              pages          = '184103',                                        &
-                              year           = '2020',                                          &
-                              doi            = '10.1063/5.0004713',                             &
-                              authors        = [character(len=25) :: 'Sarai D. Folkestad',      &
-                                                                     'Eirik F. Kjønstad',       &
-                                                                     'Rolf H. Myhre',           &
-                                                                     'Josefine H. Andersen',    &
-                                                                     'Alice Balbi',             &
-                                                                     'Sonia Coriani',           &
-                                                                     'Tommaso Giovannini',      &
-                                                                     'Linda Goletto',           &
-                                                                     'Tor S. Haugland',         & 
-                                                                     'Anders Hutcheson',        &
-                                                                     'Ida-Marie Høyvik',        &
-                                                                     'Torsha Moitra',           &
-                                                                     'Alexander C. Paul',       &
-                                                                     'Marco Scavino',           &
-                                                                     'Andreas S. Skeidsvoll',   &
-                                                                     'Åsmund H. Tveten',        &
-                                                                     'Henrik Koch'])
+      this%implementation_labels = ''
 !
-      call this%add(eT_reference)
-!
-      this%n_citations = 1 ! Initially, there is just the eT reference
+!     Initially, there is just the eT reference
+      this%n_citations = 1
+      this%implementation_labels(1) = 'eT'
 !
       this%print_apa = input%is_keyword_present('full references', 'print')
 !
    end function new_citation_printer
 !
 !
-   subroutine add_citation_printer(this, citation_)
+   subroutine add_citation_printer(this, label)
 !!
 !!    Add
 !!    Written by Eirik F. Kjønstad, 2021
 !!
 !!    Adds a citation.
 !!
-      implicit none 
+      implicit none
 !
-      class(citation_printer), intent(inout) :: this 
+      class(citation_printer), intent(inout) :: this
 !
-      class(citation), intent(in) :: citation_ 
+      character(len=*), intent(in) :: label
 !
-      this%n_citations = this%n_citations + 1
+      integer :: l
+      logical :: new_label
 !
-      this%citations(this%n_citations) = citation_
+      new_label = .true.
+!
+      do l = 1, this%n_citations
+!
+         if (trim(label) == trim(this%implementation_labels(l))) then
+            new_label = .false.
+            exit
+         end if
+!
+      end do
+!
+      if (new_label) then
+         this%n_citations = this%n_citations + 1
+         this%implementation_labels(this%n_citations) = label
+      end if
 !
    end subroutine add_citation_printer
 !
 !
    subroutine print_citation_printer(this, file)
 !!
-!!    Print 
+!!    Print
 !!    Written by Eirik F. Kjønstad, 2021
 !!
 !!    Prints all citations to the output file named 'file'
 !!
-      implicit none 
+      implicit none
 !
-      class(citation_printer), intent(inout) :: this 
+      class(citation_printer), intent(inout) :: this
 !
-      class(output_file), intent(inout) :: file 
+      class(output_file), intent(inout) :: file
 !
-      integer :: k 
+      integer :: k
 !
-      character(len=600) :: apa_citation, doi, implementation, doi_citation
+      character(len=:), allocatable :: doi_citation
+      character(len=600) :: apa_citation
 !
       call file%printf('m', '- Implementation references:', fs='(/t3,a/)')
 !
       do k = 1, this%n_citations
 !
-         doi            = this%citations(k)%get_doi()
-         implementation = this%citations(k)%get_implementation()
-!
-         doi_citation = trim(implementation) // ": https://doi.org/" // trim(doi)
+         doi_citation = this%references%get_doi_citation(this%implementation_labels(k))
 !
          call file%printf('m', doi_citation, fs='(t6,a)')
 !
-         if (this%print_apa) then 
+         if (this%print_apa) then
 !
-            apa_citation = this%citations(k)%get_apa_citation_string()
+            apa_citation = this%references%get_apa_citation(this%implementation_labels(k))
 !
             call file%printf('m', apa_citation, ffs='(/t9,a)', fs='(t9,a)')
 !

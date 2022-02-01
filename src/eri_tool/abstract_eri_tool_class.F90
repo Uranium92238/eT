@@ -20,405 +20,161 @@
 module abstract_eri_tool_class
 !
 !!
-!!    abstract eri tool class module
+!! Abstract ERI tool class
+!! Writtan by Sarai D. Folkestad, Sep 2021
 !!
-!!    Written by Rolf H. Myhre, Sep 2020
+!! Interface definition for the ERI tools
 !!
-!!    Abstract tool with some general routines for real and complex eri tools
 !!
 !
    use parameters
-   use global_out,           only : output
-   use global_in,            only : input
-   use memory_manager_class, only : mem
+!
+   use abstract_eri_cholesky_class, only: abstract_eri_cholesky
+   use observer_class, only: observer
 !
    implicit none
 !
+   type, extends(observer), abstract :: abstract_eri_tool
 !
-   type, abstract :: abstract_eri_tool
-!
-!     The number of Cholesky vectors, occupied, virtual and total mos
-!
-      integer :: n_J
-      integer :: n_o
-      integer :: n_v
-      integer :: n_mo
-!
-!     Keep Cholesky vectors in memory
-!
-      logical :: cholesky_mem
-      logical :: mo_eri_mem
+      class(abstract_eri_cholesky), pointer :: L
 !
    contains
 !
-      procedure :: read_general_settings => read_general_settings_abstract_eri_tool
+      procedure (get_abstract),                         deferred, public :: get
+      procedure (get_symmetric_packed_abstract),        deferred, public :: get_symmetric_packed
+      procedure (get_memory_estimate_abstract),         deferred, public :: get_memory_estimate
+      procedure (get_memory_estimate_packed_abstract),  deferred, public :: get_memory_estimate_packed
 !
-!     Get ERI mem
-!
-      procedure :: get_eri_mem           => get_eri_mem_abstract_eri_tool
-      procedure :: get_packed_eri_mem    => get_packed_eri_mem_abstract_eri_tool
-!
-!     Various routines
-!
-      procedure :: room_for_cholesky     => room_for_cholesky_abstract_eri_tool
-      procedure :: room_for_g_pqrs       => room_for_g_pqrs_abstract_eri_tool
-!
-      procedure :: is_pq_in_block        => is_pq_in_block_abstract_eri_tool
-      procedure :: is_pq_contiguous      => is_pq_contiguous_abstract_eri_tool
-!
-      procedure :: index_setup           => index_setup_abstract_eri_tool
+      procedure, nopass :: set_alpha_and_beta
 !
    end type abstract_eri_tool
 !
+   abstract interface
+!
+      subroutine get_abstract(this, g_pqrs,    &
+                              first_p, last_p, &
+                              first_q, last_q, &
+                              first_r, last_r, &
+                              first_s, last_s, &
+                              alpha, beta)
+!
+         use parameters
+         import abstract_eri_tool
+!
+         implicit none
+!
+         class(abstract_eri_tool), intent(inout) :: this
+!
+         integer, intent(in) :: first_p, last_p
+         integer, intent(in) :: first_q, last_q
+         integer, intent(in) :: first_r, last_r
+         integer, intent(in) :: first_s, last_s
+!
+         real(dp), dimension(first_p:last_p, &
+                             first_q:last_q, &
+                             first_r:last_r, &
+                             first_s:last_s), intent(inout) :: g_pqrs
+!
+         real(dp), optional, intent(in) :: alpha, beta
+!
+      end subroutine get_abstract
+!
+      subroutine get_symmetric_packed_abstract(this, g_pqpq,      &
+                                               first_p, last_p,   &
+                                               first_q, last_q,   &
+                                               alpha, beta)
+!
+         use parameters
+         import abstract_eri_tool
+!
+         implicit none
+!
+         class(abstract_eri_tool), intent(inout) :: this
+!
+         integer, intent(in) :: first_q, last_q
+         integer, intent(in) :: first_p, last_p
+!
+!        g_pqpq in rectangular full packed (RFP) format.
+         real(dp), dimension((last_p - first_p + 1)            &
+                              *(last_q - first_q + 1)          &
+                              + mod((last_p - first_p + 1)     &
+                              *(last_q - first_q + 1)+1, 2),   &
+                             ((last_p - first_p + 1)           &
+                              *(last_q - first_q + 1)+1)/2), intent(inout) :: g_pqpq
+!
+         real(dp), optional, intent(in) :: alpha, beta
+
+      end subroutine get_symmetric_packed_abstract
+!
+      subroutine update_abstract(this)
+!
+         import abstract_eri_tool
+!
+         implicit none
+!
+         class(abstract_eri_tool), intent(inout) :: this
+!
+      end subroutine update_abstract
+!
+      function get_memory_estimate_abstract(this,  &
+                                                first_p, last_p, &
+                                                first_q, last_q, &
+                                                first_r, last_r, &
+                                                first_s, last_s) result(memory)
+!
+         import abstract_eri_tool
+!
+         implicit none
+!
+         class(abstract_eri_tool), intent(in) :: this
+!
+         integer, intent(in) :: first_p, last_p
+         integer, intent(in) :: first_q, last_q
+         integer, intent(in) :: first_r, last_r
+         integer, intent(in) :: first_s, last_s
+!
+         integer, dimension(2) :: memory
+!
+      end function get_memory_estimate_abstract
+!
+!
+      function get_memory_estimate_packed_abstract(this,  &
+                                                first_p, last_p, &
+                                                first_q, last_q) result(memory)
+!
+         import abstract_eri_tool
+!
+         implicit none
+!
+         class(abstract_eri_tool), intent(in) :: this
+!
+         integer, intent(in) :: first_p, last_p
+         integer, intent(in) :: first_q, last_q
+!
+         integer :: memory
+!
+      end function get_memory_estimate_packed_abstract
+!
+   end interface
 !
 contains
 !
-!
-   subroutine read_general_settings_abstract_eri_tool(eri, eri_mem)
+   subroutine set_alpha_and_beta(alpha, beta, alpha_, beta_)
 !!
-!!    general settings
-!!    Written by Eirik F. Kjønstad, Dec 2019
-!!
-      implicit none
-!
-      class(abstract_eri_tool) :: eri
-!
-      logical, intent(out) :: eri_mem
-!
-      character(len=200) :: cholesky_storage
-      character(len=200) :: eri_storage
-!
-      if (input%is_keyword_present('cholesky storage', 'integrals')) then
-!
-         call input%get_keyword('cholesky storage', &
-                                           'integrals',        &
-                                           cholesky_storage)
-!
-         if (cholesky_storage == 'memory') then
-!
-            eri%cholesky_mem = .true.
-!
-         elseif (cholesky_storage == 'disk') then
-!
-            eri%cholesky_mem = .false.
-!
-         else
-!
-            call output%error_msg('Did not recognize keyword value ' // trim(cholesky_storage) // &
-                                  ' for cholesky storage.')
-!
-         endif
-!
-      endif
-!
-      if (input%is_keyword_present('eri storage', 'integrals')) then
-!
-         call input%get_keyword('eri storage',     &
-                                           'integrals',       &
-                                            eri_storage)
-!
-        if (eri_storage == 'memory') then
-!
-            eri_mem = .true.
-!
-         elseif (eri_storage == 'none') then
-!
-            eri_mem = .false.
-!
-         else
-!
-            call output%error_msg('Did not recognize keyword value ' // trim(eri_storage) // &
-                                  ' for eri storage.')
-!
-         endif
-!
-      endif
-!
-      if (input%is_keyword_present('mo eri in memory', 'integrals')) then
-!
-            eri%mo_eri_mem = .true.
-!
-      endif
-!
-   end subroutine read_general_settings_abstract_eri_tool
-!
-!
-   pure subroutine get_eri_mem_abstract_eri_tool(eri, string, req_pq, req_rs, &
-                                                 dim_p, dim_q, dim_r, dim_s,  &
-                                                 qp, sr)
-!!
-!!    Get ERI mem
-!!    Written by Rolf H. Myhre Jun 2020
-!!
-!!    Estimates the memory required to construct ERIs from block determined by string 
-!!    and size (dim_p, dim_q, dim_r, dim_s), and adds it to req_pq and req_rs, 
-!!    corresponding to the Cholesky vectors that may be allocated.
-!!    Memory requirements will depend on whether the cholesky blocks are reordered, 
-!!    so the optional reordering logicals qp and sr arerequired.
-!!
-!!    This routine is meant for estimates for the batching manager.
-!!    If you are batching over index r, dim_r will typically be 1
-!!    and the other dimensions should be full.
-!!
-!!    Temporary arrays needed for reordering, triggered by optional qp and sr
-!!    are not allocated simultaneously in construct_eri, so this routine may
-!!    overestimate total memory usage
-!!
-!!    See get_eri_mo for additional documentation
+!!    Set alpha and beta
+!!    Written by Sarai D. Folkestad, Oct 2021
 !!
       implicit none
 !
-      class(abstract_eri_tool), intent(in) :: eri
+      real(dp), intent(in), optional :: alpha, beta
+      real(dp), intent(out)          :: alpha_, beta_
 !
-      character(len=4), intent(in) :: string
+      beta_ = zero
+      if (present(beta)) beta_ = beta
 !
-      integer, intent(inout) :: req_pq, req_rs
+      alpha_ = one
+      if (present(alpha)) alpha_ = alpha
 !
-      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
-!
-      logical, optional, intent(in) :: qp, sr
-!
-      logical :: full_p, full_r
-!
-!     Is the middle index complete, i.e., we need a contiguous L_Jpq vector?
-      full_p = ((string(1:1) .eq. 'v' .and. dim_p .eq. eri%n_v) .or. &
-                (string(1:1) .eq. 'o' .and. dim_p .eq. eri%n_o))
-!
-      full_r = ((string(3:3) .eq. 'v' .and. dim_r .eq. eri%n_v) .or. &
-                (string(3:3) .eq. 'o' .and. dim_r .eq. eri%n_o))
-!
-!     Can we use vectors in mem directly
-      if(.not. (eri%cholesky_mem .and. full_p)) req_pq = req_pq + eri%n_J*dim_p*dim_q
-      if(.not. (eri%cholesky_mem .and. full_r)) req_rs = req_rs + eri%n_J*dim_r*dim_s
-!
-!     Do we need temporary arrays for reordering
-      if(present(qp)) then
-         if(qp) req_pq = req_pq + eri%n_J*dim_p*dim_q
-      endif
-      if(present(sr)) then
-         if(sr) req_rs = req_rs + eri%n_J*dim_r*dim_s
-      endif
-!
-   end subroutine get_eri_mem_abstract_eri_tool
-!
-!
-   pure subroutine get_packed_eri_mem_abstract_eri_tool(eri, string, req_pq, &
-                                                        dim_p, dim_q, qp)
-!!
-!!    Get packed ERI mem
-!!    Written by Rolf H. Myhre Jun 2020
-!!
-!!    Estimates the memory required to construct the packed symmetric ERIs 
-!!    from block determined by string 
-!!    and size (dim_p, dim_q, dim_p, dim_q), and adds it to req_pq, 
-!!    corresponding to the Cholesky vector that may be allocated.
-!!    Memory requirements will depend on whether the cholesky blocks are reordered, 
-!!    so the optional reordering logical qp is required.
-!!
-!!    This routine is meant for estimates for the batching manager.
-!!    If you are batching over index q, dim_q will typically be 1
-!!    and the other dimensions should be full.
-!!
-!!    See get_eri_mo for additional documentation
-!!
-      implicit none
-!
-      class(abstract_eri_tool), intent(in) :: eri
-!
-      character(len=2), intent(in) :: string
-!
-      integer, intent(inout) :: req_pq
-!
-      integer, intent(in) :: dim_p, dim_q
-!
-      logical, optional, intent(in) :: qp
-!
-      logical :: full_p
-!
-!     Is the middle index complete, i.e., we need a contiguous L_Jpq vector?
-      full_p = ((string(1:1) .eq. 'v' .and. dim_p .eq. eri%n_v) .or. &
-                (string(1:1) .eq. 'o' .and. dim_p .eq. eri%n_o))
-!
-!     Can we use vectors in mem directly
-      if(.not. (eri%cholesky_mem .and. full_p)) req_pq = req_pq + eri%n_J*dim_p*dim_q
-!
-!     Do we need temporary arrays for reordering
-      if(present(qp)) then
-         if(qp) req_pq = req_pq + eri%n_J*dim_p*dim_q
-      endif
-!
-   end subroutine get_packed_eri_mem_abstract_eri_tool
-!
-!
-   pure function room_for_cholesky_abstract_eri_tool(eri, float_size) result(is_room)
-!!
-!!    Room for Cholesky
-!!    Written by Eirik F. Kjønstad, Dec 2019
-!!
-!!    This routine is called to check whether the Cholesky vectors can be held in
-!!    memory safely (< 20% of total available). If this is the case, the
-!!    manager will keep a copy of them in memory.
-!!
-      implicit none
-!
-      class(abstract_eri_tool), intent(in) :: eri
-!
-      integer, intent(in) :: float_size
-!
-      integer(i64) :: required_mem
-!
-      integer, parameter :: fraction_of_total_mem = 5
-!
-      logical :: is_room
-!
-      is_room = .false.
-!
-      required_mem = int((eri%n_J)*(eri%n_mo)**2*float_size, kind=i64)
-!
-      if (required_mem .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
-!
-   end function room_for_cholesky_abstract_eri_tool
-!
-!
-   pure function room_for_g_pqrs_abstract_eri_tool(eri, float_size) result(is_room)
-!!
-!!    Room for g_pqrs
-!!    Written by Eirik F. Kjønstad, Jan 2019
-!!
-!!    This routine is called to check whether the T1-ERIs can be held in
-!!    memory safely (< 20% of total available). If this is the case, the
-!!    tool will keep a copy of g_pqrs in memory.
-!!
-      implicit none
-!
-      class(abstract_eri_tool), intent(in) :: eri
-!
-      integer, intent(in) :: float_size
-!
-      integer(i64) :: required_mem
-!
-      integer, parameter :: fraction_of_total_mem = 5
-!
-      logical :: is_room
-!
-      is_room = .false.
-!
-      required_mem = int((eri%n_mo**4)*float_size, kind=i64)
-!
-      if (required_mem .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
-!
-   end function room_for_g_pqrs_abstract_eri_tool
-!
-!
-   pure function is_pq_in_block_abstract_eri_tool(eri, first_p, last_p, first_q, last_q) &
-                 result(is_in_block)
-!!
-!!    is pq in block
-!!    written by Rolf H. Myhre, Jun 2020
-!!
-!!    Check if all pq indices belong in a single block oo, vo, ov or vv
-!!
-      implicit none
-!
-      class(abstract_eri_tool), intent(in) :: eri
-      integer, intent(in) :: first_p, last_p, first_q, last_q
-!
-      logical :: is_in_block
-!
-      if ((last_p .le. eri%n_o .or. first_p .gt. eri%n_o) .and. &
-          (last_q .le. eri%n_o .or. first_q .gt. eri%n_o)) then
-         is_in_block = .true.
-      else
-         is_in_block = .false.
-      endif
-!
-   end function is_pq_in_block_abstract_eri_tool
-!
-!
-   pure function is_pq_contiguous_abstract_eri_tool(eri, first_p, last_p, first_q, last_q) &
-                 result(is_contiguous)
-!!
-!!    is pq contiguous
-!!    written by Rolf H. Myhre, Jun 2020
-!!
-!!    Check if all pq in block and contiguous, i.e. full p index
-!!
-      implicit none
-!
-      class(abstract_eri_tool), intent(in) :: eri
-      integer, intent(in) :: first_p, last_p, first_q, last_q
-!
-      logical :: is_contiguous
-!
-      if(eri%is_pq_in_block(first_p, last_p, first_q, last_q) .and. &
-        (first_p .eq. 1 .or. first_p .eq. eri%n_o+1)          .and. &
-        (last_p .eq. eri%n_o .or. last_p .eq. eri%n_mo)) then
-         is_contiguous = .true.
-      else
-         is_contiguous = .false.
-      endif
-!
-   end function is_pq_contiguous_abstract_eri_tool
-!
-!
-   pure subroutine index_setup_abstract_eri_tool(eri, x, first_index, last_index, opt_first, opt_last)
-!!
-!!    index setup
-!!    written by Rolf H. Myhre, Sep 2020
-!!
-!!    Sets first and last index based on the character x
-!!
-!!    x: character to determine type of index
-!!       o: occupied
-!!       v: virtual
-!!       f: full space
-!!
-!!    opt_first, opt_last : optional indices relative to range set by x
-!!
-!!    example: x='v' and opt_first = 1 results in first_index = n_o + 1
-!!
-      implicit none
-!
-      class(abstract_eri_tool), intent(in) :: eri
-!
-      character(len=1), intent(in) :: x
-!
-      integer, intent(out) :: first_index, last_index
-      integer, optional, intent(in) :: opt_first, opt_last
-!
-      integer :: offset, default_first, default_last
-!
-      if (x .eq. 'o') then !occupied
-         offset = 0
-         default_first = 1
-         default_last  = eri%n_o
-      elseif (x .eq. 'f') then !full
-         offset = 0
-         default_first = 1
-         default_last  = eri%n_mo
-      elseif (x .eq. 'v') then !virtual
-         offset = eri%n_o
-         default_first = eri%n_o + 1
-         default_last  = eri%n_mo
-      else
-         offset = -eri%n_mo - 1
-         default_first = -1
-         default_last  = -1
-      endif
-!
-      if(present(opt_first)) then
-         first_index = opt_first + offset
-      else
-         first_index = default_first
-      endif
-!
-      if(present(opt_last)) then
-         last_index = opt_last + offset
-      else
-         last_index = default_last
-      endif
-!
-   end subroutine index_setup_abstract_eri_tool
-!
+   end subroutine set_alpha_and_beta
 !
 end module abstract_eri_tool_class

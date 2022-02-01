@@ -324,22 +324,22 @@ contains
 !
       integer :: i, j
 !
-     E = zero
+      E = zero
 !
-     do i = 1, this%n_charges 
-        do j = 1, i - 1
+      do i = 1, this%n_charges 
+         do j = 1, i - 1
 !
-           r_ij = (this%r(:,i) - this%r(:,j)) * angstrom_to_bohr
+            r_ij = (this%r(:,i) - this%r(:,j)) * angstrom_to_bohr
 !
-           r_ij_3 = sqrt(r_ij(1)**2 + r_ij(2)**2 + r_ij(3)**2)**3
+            r_ij_3 = sqrt(r_ij(1)**2 + r_ij(2)**2 + r_ij(3)**2)**3
 !
-           ZiZj = this%q(i) * this%q(j)
+            ZiZj = this%q(i) * this%q(j)
 !
-           E(:, i) = E(:, i) - r_ij(:) * ZiZj / r_ij_3
-           E(:, j) = E(:, j) + r_ij(:) * ZiZj / r_ij_3
+            E(:, i) = E(:, i) - r_ij(:) * ZiZj / r_ij_3
+            E(:, j) = E(:, j) + r_ij(:) * ZiZj / r_ij_3
 !
-        enddo
-     enddo
+         enddo
+      enddo
 !
    end function get_coulomb_interaction_1der_point_charges
 !

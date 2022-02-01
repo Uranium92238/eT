@@ -20,14 +20,14 @@
 submodule (cc2_class) mean_value_cc2
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
@@ -53,33 +53,38 @@ contains
 !
    module subroutine calculate_energy_cc2(wf)
 !!
-!!    Calculate energy 
+!!    Calculate energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
 !!    E = E_HF + sum_aibj (t_i^a*t_j^b + t_ij^ab) L_iajb
 !!
-      implicit none 
+      implicit none
 !
-      class(cc2), intent(inout) :: wf 
+      class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb
 !
       real(dp) :: omp_correlation_energy
 !
       integer :: a, i, b, j
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj)
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('vovo', g_aibj)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
-      omp_correlation_energy = zero 
+      omp_correlation_energy = zero
 !
 !$omp parallel do private(a,i,b,j) reduction(+:omp_correlation_energy)
       do b = 1, wf%n_v
-         do i = 1, wf%n_o 
-            do j = 1, wf%n_o 
+         do i = 1, wf%n_o
+            do j = 1, wf%n_o
                do a = 1, wf%n_v
 !
                   omp_correlation_energy = omp_correlation_energy +                            &
@@ -94,7 +99,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -102,6 +107,8 @@ contains
       wf%correlation_energy = omp_correlation_energy
 !
       wf%energy = wf%hf_energy + wf%correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_cc2
 !

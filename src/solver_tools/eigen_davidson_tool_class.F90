@@ -118,11 +118,8 @@ module eigen_davidson_tool_class
       procedure :: update_reduced_space &
                 => update_reduced_space_eigen_davidson_tool
 !
-      procedure, public :: get_omega_re &
-                        => get_omega_re_eigen_davidson_tool
-!
-      procedure, public :: get_omega_im &
-                        => get_omega_im_eigen_davidson_tool
+      procedure, public :: get_omega &
+                        => get_omega_eigen_davidson_tool
 !
       final :: destructor_eigen_davidson_tool
 !
@@ -801,9 +798,9 @@ contains
    end subroutine update_reduced_space_eigen_davidson_tool
 !
 !
-   function get_omega_re_eigen_davidson_tool(davidson, n_solutions) result(omega_re)
+   function get_omega_eigen_davidson_tool(davidson, n_solutions) result(omega)
 !!
-!!    Get omega re
+!!    Get omega
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       implicit none
@@ -811,34 +808,14 @@ contains
       class(eigen_davidson_tool), intent(in) :: davidson
       integer, intent(in) :: n_solutions
 !
-      real(dp), dimension(n_solutions) :: omega_re
+      complex(dp), dimension(n_solutions) :: omega
 !
       if (n_solutions > davidson%dim_red) &
-            call output%error_msg('can not get more solutions that the reduced dimension')
+            call output%error_msg('cannot get more solutions than the reduced dimension')
 !
-      omega_re(:) = davidson%omega_re(1:n_solutions)
+      omega = cmplx(davidson%omega_re(1:n_solutions), davidson%omega_im(1:n_solutions), dp)
 !
-   end function get_omega_re_eigen_davidson_tool
-!
-!
-   function get_omega_im_eigen_davidson_tool(davidson, n_solutions) result(omega_im)
-!!
-!!    Get omega im
-!!    Written by Sarai D. Folkestad, May 2021
-!!
-      implicit none
-!
-      class(eigen_davidson_tool), intent(in) :: davidson
-      integer, intent(in) :: n_solutions
-!
-      real(dp), dimension(n_solutions) :: omega_im
-!
-      if (n_solutions > davidson%dim_red) &
-            call output%error_msg('can not get more solutions that the reduced dimension')
-!
-      omega_im(:) = davidson%omega_im(1:n_solutions)
-!
-   end function get_omega_im_eigen_davidson_tool
+   end function get_omega_eigen_davidson_tool
 !
 !
 end module eigen_davidson_tool_class

@@ -181,7 +181,7 @@ contains
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj)
+      call wf%eri_t1%get('vovo', g_aibj)
 !
 !$omp parallel do private(a, i, b, j)
       do j = 1, wf%n_o
@@ -236,7 +236,7 @@ contains
       call symmetric_sum(t2bar, wf%n_t1)
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
 !     t2bar += η_aibj
 !
@@ -306,7 +306,7 @@ contains
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%eri%get_eri_t1('vovo', g_aibj)
+      call wf%eri_t1%get('vovo', g_aibj)
 !
 !$omp parallel do private(a, i, b, j, eps)
       do j = 1, wf%n_o

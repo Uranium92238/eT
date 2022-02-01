@@ -25,8 +25,6 @@ module ri_basis_class
 !!
 !
    use kinds
-   use iso_c_binding
-!
    use shell_class, only : shell
 !
    implicit none

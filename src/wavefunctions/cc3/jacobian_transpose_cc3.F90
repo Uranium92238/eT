@@ -29,7 +29,7 @@ submodule (cc3_class) jacobian_transpose
 !!
 !!    where
 !!
-!!    A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >.
+!!    A_mu,nu = < mu|exp(-T) [H, tau_nu] exp(T)|R >.
 !!
 !
    implicit none
@@ -374,19 +374,19 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i)
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j)
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
 !
             else
 !
@@ -402,12 +402,12 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
 !
                else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
@@ -423,7 +423,7 @@ contains
 !
                   call wf%point_vvvo(g_bdck_p, g_bdcj, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
@@ -624,76 +624,76 @@ contains
 !
 !     sigma_dl += sum_ai 2X_ai L^J_ia L^J_ld - sum_ai X_ai L^J_la L^J_id
 !
-      call mem%alloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
-      call mem%alloc(L_J_ov_ai, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%alloc(L_J_ov, wf%eri_t1%n_J, wf%n_o, wf%n_v)
+      call mem%alloc(L_J_ov_ai, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
-      call wf%eri%get_cholesky_t1(L_J_ov, 1, wf%n_o, wf%n_o+1, wf%n_mo)
+      call wf%L_t1%get(L_J_ov, 1, wf%n_o, wf%n_o+1, wf%n_mo)
 !
-      call sort_123_to_132(L_J_ov, L_J_ov_ai, wf%eri%n_J, wf%n_o, wf%n_v)
+      call sort_123_to_132(L_J_ov, L_J_ov_ai, wf%eri_t1%n_J, wf%n_o, wf%n_v)
 !
-      call mem%alloc(temp, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%alloc(temp, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
 !     First term
 !
-      call dgemv('N',        &
-                 wf%eri%n_J, &
-                 wf%n_t1,    &
-                 two,        &
-                 L_J_ov_ai,  & ! L_J_ai
-                 wf%eri%n_J, &
-                 X_ai, 1,    & ! X_ai
-                 zero,       &
+      call dgemv('N',            &
+                 wf%eri_t1%n_J,  &
+                 wf%n_t1,        &
+                 two,            &
+                 L_J_ov_ai,      & ! L_J_ai
+                 wf%eri_t1%n_J,  &
+                 X_ai, 1,        & ! X_ai
+                 zero,           &
                  temp, 1)      ! L_J
 !
-      call dgemv('T',        &
-                 wf%eri%n_J, &
-                 wf%n_t1,    &
-                 one,        &
-                 L_J_ov_ai,  & ! L_dl_J
-                 wf%eri%n_J, &
-                 temp, 1,    & ! L_J
-                 one,        &
+      call dgemv('T',            &
+                 wf%eri_t1%n_J,  &
+                 wf%n_t1,        &
+                 one,            &
+                 L_J_ov_ai,      & ! L_dl_J
+                 wf%eri_t1%n_J,  &
+                 temp, 1,        & ! L_J
+                 one,            &
                  sigma_ai, 1)
 
-      call mem%dealloc(L_J_ov_ai, wf%eri%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(L_J_ov_ai, wf%eri_t1%n_J, wf%n_v, wf%n_o)
 !
 !     Second term
 !
-      call dgemm('N', 'N',          &
-                 wf%eri%n_J*wf%n_o, &
-                 wf%n_o,            &
-                 wf%n_v,            &
-                 one,               &
-                 L_J_ov,            & ! L_J_la
-                 wf%eri%n_J*wf%n_o, &
-                 X_ai,              & ! X_ai
-                 wf%n_v,            &
-                 zero,              &
-                 temp,              & ! L_J_li
-                 wf%eri%n_J*wf%n_o)
+      call dgemm('N', 'N',             &
+                 wf%eri_t1%n_J*wf%n_o, &
+                 wf%n_o,               &
+                 wf%n_v,               &
+                 one,                  &
+                 L_J_ov,               & ! L_J_la
+                 wf%eri_t1%n_J*wf%n_o, &
+                 X_ai,                 & ! X_ai
+                 wf%n_v,               &
+                 zero,                 &
+                 temp,                 & ! L_J_li
+                 wf%eri_t1%n_J*wf%n_o)
 !
-      call mem%alloc(L_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%alloc(L_J_oo, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
 !     L_J_li -> L_J_il
-      call sort_123_to_132(temp, L_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
+      call sort_123_to_132(temp, L_J_oo, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 
-      call mem%dealloc(temp, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(temp, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
-      call dgemm('T', 'N',          &
-                 wf%n_v,            &
-                 wf%n_o,            &
-                 wf%eri%n_J*wf%n_o, &
-                 -one,              &
-                 L_J_ov,            & ! L_Ji_d
-                 wf%eri%n_J*wf%n_o, &
-                 L_J_oo,            & ! L_Ji_l
-                 wf%eri%n_J*wf%n_o, &
-                 one,               &
-                 sigma_ai,          &
+      call dgemm('T', 'N',             &
+                 wf%n_v,               &
+                 wf%n_o,               &
+                 wf%eri_t1%n_J*wf%n_o, &
+                 -one,                 &
+                 L_J_ov,               & ! L_Ji_d
+                 wf%eri_t1%n_J*wf%n_o, &
+                 L_J_oo,               & ! L_Ji_l
+                 wf%eri_t1%n_J*wf%n_o, &
+                 one,                  &
+                 sigma_ai,             &
                  wf%n_v)
 !
-      call mem%dealloc(L_J_ov, wf%eri%n_J, wf%n_o, wf%n_v)
-      call mem%dealloc(L_J_oo, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(L_J_ov, wf%eri_t1%n_J, wf%n_o, wf%n_v)
+      call mem%dealloc(L_J_oo, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_b1_x_ai_cc3
 !
@@ -919,7 +919,7 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorting, batch_i, left=.true.)
+         call wf%setup_vvvo(wf%eri_t1, g_bdci, g_bdci_p, sorting, batch_i, left=.true.)
 !
          call wf%setup_vvov(g_dbic, g_dbic_p, sorting, batch_i, left=.true.)
 !
@@ -930,22 +930,22 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorting, batch_j, batch_i)
+            call wf%setup_oovo(wf%eri_t1, g_ljci, g_ljci_p, sorting, batch_j, batch_i)
 !
             call wf%setup_ooov(g_jlic, g_jlic_p, sorting, batch_j, batch_i)
 !
-            call wf%setup_ovov(g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
+            call wf%setup_ovov(wf%eri_t1, g_ibjc, g_ibjc_p, sorting, batch_i, batch_j)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorting, batch_j, left=.true.)
+               call wf%setup_vvvo(wf%eri_t1, g_bdcj, g_bdcj_p, sorting, batch_j, left=.true.)
 !
                call wf%setup_vvov(g_dbjc, g_dbjc_p, sorting, batch_j, left=.true.)
 !
                call wf%Y_ebck%read_range(Y_ebcj, batch_j)
                Y_ebcj_p => Y_ebcj
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorting, batch_i, batch_j)
+               call wf%setup_oovo(wf%eri_t1, g_licj, g_licj_p, sorting, batch_i, batch_j)
 !
                call wf%setup_ooov(g_iljc, g_iljc_p, sorting, batch_i, batch_j)
 !
@@ -969,25 +969,25 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorting, batch_k, left=.true.)
+                  call wf%setup_vvvo(wf%eri_t1, g_bdck, g_bdck_p, sorting, batch_k, left=.true.)
 !
                   call wf%setup_vvov(g_dbkc, g_dbkc_p, sorting, batch_k, left=.true.)
 !
                   call wf%Y_ebck%read_range(Y_ebck, batch_k)
                   Y_ebck_p => Y_ebck
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorting, batch_i, batch_k)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorting, batch_j, batch_k)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorting, batch_k, batch_i)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lick, g_lick_p, sorting, batch_i, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_ljck, g_ljck_p, sorting, batch_j, batch_k)
+                  call wf%setup_oovo(wf%eri_t1, g_lkci, g_lkci_p, sorting, batch_k, batch_i)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
 !
                   call wf%setup_ooov(g_ilkc, g_ilkc_p, sorting, batch_i, batch_k)
                   call wf%setup_ooov(g_jlkc, g_jlkc_p, sorting, batch_j, batch_k)
                   call wf%setup_ooov(g_klic, g_klic_p, sorting, batch_k, batch_i)
                   call wf%setup_ooov(g_kljc, g_kljc_p, sorting, batch_k, batch_j)
 !
-                  call wf%setup_ovov(g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_ibkc, g_ibkc_p, sorting, batch_i, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
@@ -1018,7 +1018,7 @@ contains
 !
                   Y_ebck_p => Y_ebcj
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
+                  call wf%setup_oovo(wf%eri_t1, g_lkcj, g_lkcj_p, sorting, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
@@ -1028,7 +1028,7 @@ contains
                   call wf%point_vooo(g_jlkc_p, g_kljc, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_klic_p, g_jlic, batch_k%length, batch_i%length)
 !
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
+                  call wf%setup_ovov(wf%eri_t1, g_jbkc, g_jbkc_p, sorting, batch_j, batch_k)
                   call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
 !
                endif
@@ -1075,7 +1075,7 @@ contains
                         call wf%divide_by_orbital_differences(i, j, k, u_abc, omega)
 !
                         call wf%jacobian_transpose_cc3_contractions(i, j, k, t_abij,           &
-                                                                    u_abc, sorting,             &
+                                                                    u_abc, sorting,            &
                                                                     sigma_abij, Y_cmjk,        &
                                                                     Y_ebci_p(:,:,:,i_rel),     &
                                                                     Y_ebcj_p(:,:,:,j_rel),     &
@@ -1435,22 +1435,22 @@ contains
       batch_v = batching_index(wf%n_v)
 !
       req_0 = 0
-      req_k = wf%n_v*wf%n_o**2 + (2*wf%n_v + wf%n_o)*wf%eri%n_J
-      req_v = max(wf%n_v,wf%n_o)*wf%eri%n_J
+      req_k = wf%n_v*wf%n_o**2 + (2*wf%n_v + wf%n_o)*wf%eri_t1%n_J
+      req_v = max(wf%n_v,wf%n_o)*wf%eri_t1%n_J
       req_2 = 0
 !
-      call mem%alloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
-      call mem%alloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%alloc(X_J_lk, wf%eri_t1%n_J, wf%n_o, wf%n_o)
+      call mem%alloc(X_J_kl, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
       call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2, &
                            'jacobian_transpose_cc3_c3_a1_y_o')
 !
       call mem%alloc(Y_mjck, wf%n_v, batch_k%max_length, wf%n_o, wf%n_o)
 !
-      call mem%alloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
-      call mem%alloc(X_Jk_c, wf%eri%n_J, batch_k%max_length, wf%n_v)
+      call mem%alloc(X_J_ck, wf%eri_t1%n_J, wf%n_v, batch_k%max_length)
+      call mem%alloc(X_Jk_c, wf%eri_t1%n_J, batch_k%max_length, wf%n_v)
 !
-      call mem%alloc(L_J_vv, wf%eri%n_J, max(wf%n_v, wf%n_o), batch_v%max_length)
+      call mem%alloc(L_J_vv, wf%eri_t1%n_J, max(wf%n_v, wf%n_o), batch_v%max_length)
 !
       do k_batch = 1, batch_k%num_batches
 !
@@ -1459,20 +1459,20 @@ contains
          call sort_1234_to_2314(Y_cmjk(:,:,:,batch_k%first:), Y_mjck, &
                                 wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
-         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, 1, wf%n_o)
+         call wf%L_t1%get(X_J_lk, 1, wf%n_o, 1, wf%n_o)
 !
          call dgemm('N', 'N',              &
-                    wf%eri%n_J,            &
+                    wf%eri_t1%n_J,         &
                     wf%n_v*batch_k%length, &
                     wf%n_o**2,             &
                     one,                   &
                     X_J_lk,                & ! L_J_mj
-                    wf%eri%n_J,            &
+                    wf%eri_t1%n_J,         &
                     Y_mjck,                & ! Y_mj_c#k
                     wf%n_o**2,             &
                     zero,                  &
                     X_J_ck,                & ! X_J_c#k
-                    wf%eri%n_J)
+                    wf%eri_t1%n_J)
 !
 !        :: Term 1: sigma_dk -= sum_cmj Y_cmjk * g_cdmj  ::
 !
@@ -1480,18 +1480,18 @@ contains
 !
             call batch_v%determine_limits(v_batch)
 !
-            call wf%eri%get_cholesky_t1(L_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
+            call wf%L_t1%get(L_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
                                         wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                                 &
                         batch_v%length,                         &
                         batch_k%length,                         &
-                        wf%n_v*wf%eri%n_J,                      &
+                        wf%n_v*wf%eri_t1%n_J,                   &
                         -one,                                   &
                         L_J_vv,                                 & ! L_Jc_#d
-                        wf%n_v*wf%eri%n_J,                      &
+                        wf%n_v*wf%eri_t1%n_J,                   &
                         X_J_ck,                                 & ! X_Jc_#k
-                        wf%n_v*wf%eri%n_J,                      &
+                        wf%n_v*wf%eri_t1%n_J,                   &
                         one,                                    &
                         sigma_ai(batch_v%first:,batch_k%first), & ! sigma_#d_#k
                         wf%n_v)
@@ -1500,58 +1500,58 @@ contains
 !
 !        :: Term 2: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
 !
-         call wf%eri%get_cholesky_t1(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
+         call wf%L_t1%get(X_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
 !
-         call sort_123_to_132(X_J_lk, X_J_kl, wf%eri%n_J, wf%n_o, batch_k%length)
-         call sort_123_to_132(X_J_ck, X_Jk_c, wf%eri%n_J, wf%n_v, batch_k%length)
+         call sort_123_to_132(X_J_lk, X_J_kl, wf%eri_t1%n_J, wf%n_o, batch_k%length)
+         call sort_123_to_132(X_J_ck, X_Jk_c, wf%eri_t1%n_J, wf%n_v, batch_k%length)
 !
-         call dgemm('T', 'N',                  &
-                    wf%n_v,                    &
-                    wf%n_o,                    &
-                    wf%eri%n_J*batch_k%length, &
-                    one,                       &
-                    X_Jk_c,                    & ! X_J#k_c
-                    wf%eri%n_J*batch_k%length, &
-                    X_J_kl,                    & ! L_J#k_l
-                    wf%eri%n_J*batch_k%length, &
-                    one,                       &
-                    sigma_ai,                  & ! sigma_c_l
+         call dgemm('T', 'N',                      &
+                    wf%n_v,                        &
+                    wf%n_o,                        &
+                    wf%eri_t1%n_J*batch_k%length,  &
+                    one,                           &
+                    X_Jk_c,                        & ! X_J#k_c
+                    wf%eri_t1%n_J*batch_k%length,  &
+                    X_J_kl,                        & ! L_J#k_l
+                    wf%eri_t1%n_J*batch_k%length,  &
+                    one,                           &
+                    sigma_ai,                      & ! sigma_c_l
                     wf%n_v)
 !
 !        :: Term 3: sigma_dj -= sum_cmj Y_cmjk * g_ckmd ::
 !
-         call wf%eri%get_cholesky_t1(X_J_ck, wf%n_o+1, wf%n_o+wf%n_v, &
+         call wf%L_t1%get(X_J_ck, wf%n_o+1, wf%n_o+wf%n_v, &
                                      batch_k%first, batch_k%get_last())
 !
          call dgemm('N', 'T',              &
-                    wf%eri%n_J,            &
+                    wf%eri_t1%n_J,         &
                     wf%n_o**2,             &
                     wf%n_v*batch_k%length, &
                     one,                   &
                     X_J_ck,                & ! L_J_c#k
-                    wf%eri%n_J,            &
+                    wf%eri_t1%n_J,         &
                     Y_mjck,                & ! Y_mj_c#k
                     wf%n_o**2,             &
                     zero,                  &
                     X_J_lk,                & ! X_J_mj
-                    wf%eri%n_J)
+                    wf%eri_t1%n_J)
 !
          do v_batch = 1, batch_v%num_batches
 !
             call batch_v%determine_limits(v_batch)
 !
-            call wf%eri%get_cholesky_t1(L_J_vv, 1, wf%n_o, &
+            call wf%L_t1%get(L_J_vv, 1, wf%n_o, &
                                         wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                     &
                         batch_v%length,             &
                         wf%n_o,                     &
-                        wf%n_o*wf%eri%n_J,          &
+                        wf%n_o*wf%eri_t1%n_J,       &
                         -one,                       &
                         L_J_vv,                     & ! L_Jm_#d
-                        wf%n_o*wf%eri%n_J,          &
+                        wf%n_o*wf%eri_t1%n_J,       &
                         X_J_lk,                     & ! X_Jm_j
-                        wf%n_o*wf%eri%n_J,          &
+                        wf%n_o*wf%eri_t1%n_J,       &
                         one,                        &
                         sigma_ai(batch_v%first:,1), & ! sigma_#dj
                         wf%n_v)
@@ -1559,15 +1559,15 @@ contains
          enddo
       enddo
 !
-      call mem%dealloc(L_J_vv, wf%eri%n_J, max(wf%n_v,wf%n_o), batch_v%max_length)
+      call mem%dealloc(L_J_vv, wf%eri_t1%n_J, max(wf%n_v,wf%n_o), batch_v%max_length)
 !
-      call mem%dealloc(X_Jk_c, wf%eri%n_J, batch_k%max_length, wf%n_v)
-      call mem%dealloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
+      call mem%dealloc(X_Jk_c, wf%eri_t1%n_J, batch_k%max_length, wf%n_v)
+      call mem%dealloc(X_J_ck, wf%eri_t1%n_J, wf%n_v, batch_k%max_length)
 !
       call mem%dealloc(Y_mjck, wf%n_v, batch_k%max_length, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(X_J_kl, wf%eri%n_J, wf%n_o, wf%n_o)
-      call mem%dealloc(X_J_lk, wf%eri%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(X_J_kl, wf%eri_t1%n_J, wf%n_o, wf%n_o)
+      call mem%dealloc(X_J_lk, wf%eri_t1%n_J, wf%n_o, wf%n_o)
 !
       call mem%batch_finalize()
 !
@@ -1614,8 +1614,8 @@ contains
       batch_v = batching_index(wf%n_v)
 !
       req_0 = 0
-      req_k = 2*wf%n_v**3 + 2*wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
-      req_v = wf%n_v*wf%eri%n_J + 2*wf%n_o*wf%eri%n_J
+      req_k = 2*wf%n_v**3 + 2*wf%n_v*wf%eri_t1%n_J + 2*wf%n_o*wf%eri_t1%n_J
+      req_v = wf%n_v*wf%eri_t1%n_J + 2*wf%n_o*wf%eri_t1%n_J
       req_2 = 0
 !
       call mem%batch_setup(batch_k, batch_v, req_0, req_k, req_v, req_2, &
@@ -1624,16 +1624,16 @@ contains
       call mem%alloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
       call mem%alloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
 !
-      call mem%alloc(L_Jk_l, wf%eri%n_J, batch_k%max_length, wf%n_o)
-      call mem%alloc(L_J_lk, wf%eri%n_J, wf%n_o, batch_k%max_length)
+      call mem%alloc(L_Jk_l, wf%eri_t1%n_J, batch_k%max_length, wf%n_o)
+      call mem%alloc(L_J_lk, wf%eri_t1%n_J, wf%n_o, batch_k%max_length)
 !
-      call mem%alloc(L_J_le, wf%eri%n_J, wf%n_o, batch_v%max_length)
-      call mem%alloc(L_eJ_l, batch_v%max_length, wf%eri%n_J, wf%n_o)
+      call mem%alloc(L_J_le, wf%eri_t1%n_J, wf%n_o, batch_v%max_length)
+      call mem%alloc(L_eJ_l, batch_v%max_length, wf%eri_t1%n_J, wf%n_o)
 !
-      call mem%alloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
-      call mem%alloc(X_J_kc, wf%eri%n_J, batch_k%max_length, wf%n_v)
+      call mem%alloc(X_J_ck, wf%eri_t1%n_J, wf%n_v, batch_k%max_length)
+      call mem%alloc(X_J_kc, wf%eri_t1%n_J, batch_k%max_length, wf%n_v)
 !
-      call mem%alloc(X_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
+      call mem%alloc(X_J_vv, wf%eri_t1%n_J, wf%n_v, batch_v%max_length)
 !
       do k_batch = 1, batch_k%num_batches
 !
@@ -1642,27 +1642,27 @@ contains
          call wf%Y_ebck%read_range(Y_ebck, batch_k)
          call sort_1234_to_2134(Y_ebck, Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-         call zero_array(X_J_ck, wf%eri%n_J*wf%n_v*batch_k%length)
+         call zero_array(X_J_ck, wf%eri_t1%n_J*wf%n_v*batch_k%length)
 !
          do v_batch = 1, batch_v%num_batches
 !
             call batch_v%determine_limits(v_batch)
 !
-            call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
+            call wf%L_t1%get(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
                                         wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('N','N',                      &
-                        wf%eri%n_J,                  &
+                        wf%eri_t1%n_J,               &
                         wf%n_v*batch_k%length,       &
                         wf%n_v*batch_v%length,       &
                         one,                         &
                         X_J_vv,                      & ! L_J_b#e
-                        wf%eri%n_J,                  &
+                        wf%eri_t1%n_J,               &
                         Y_beck(:,batch_v%first,1,1), & ! Y_b#e_c#k
                         wf%n_v**2,                   &
                         one,                         &
                         X_J_ck,                      & ! X_J_c#k
-                        wf%eri%n_J)
+                        wf%eri_t1%n_J)
 !
          enddo ! v_batch
 !
@@ -1672,18 +1672,18 @@ contains
 !
             call batch_v%determine_limits(v_batch)
 !
-            call wf%eri%get_cholesky_t1(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
+            call wf%L_t1%get(X_J_vv, wf%n_o+1, wf%n_o+wf%n_v, &
                                         wf%n_o+batch_v%first, wf%n_o+batch_v%get_last())
 !
             call dgemm('T','N',                                 &
                         batch_v%length,                         &
                         batch_k%length,                         &
-                        wf%n_v*wf%eri%n_J,                      &
+                        wf%n_v*wf%eri_t1%n_J,                   &
                         one,                                    &
                         X_J_vv,                                 & ! L_Jc_#d
-                        wf%n_v*wf%eri%n_J,                      &
+                        wf%n_v*wf%eri_t1%n_J,                   &
                         X_J_ck,                                 & ! X_Jc_#k
-                        wf%n_v*wf%eri%n_J,                      &
+                        wf%n_v*wf%eri_t1%n_J,                   &
                         one,                                    &
                         sigma_ai(batch_v%first:,batch_k%first), & ! sigma_#d#k
                         wf%n_v)
@@ -1692,27 +1692,27 @@ contains
 !
 !        :: Term 2: sigma_cl -= sum_bek Y_ebck * g_belk ::
 !
-         call sort_123_to_132(X_J_ck, X_J_kc, wf%eri%n_J, wf%n_v, batch_k%length)
+         call sort_123_to_132(X_J_ck, X_J_kc, wf%eri_t1%n_J, wf%n_v, batch_k%length)
 !
-         call wf%eri%get_cholesky_t1(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
-         call sort_123_to_132(L_J_lk, L_Jk_l, wf%eri%n_J, wf%n_o, batch_k%length)
+         call wf%L_t1%get(L_J_lk, 1, wf%n_o, batch_k%first, batch_k%get_last())
+         call sort_123_to_132(L_J_lk, L_Jk_l, wf%eri_t1%n_J, wf%n_o, batch_k%length)
 !
-         call dgemm('T', 'N',                  &
-                    wf%n_v, wf%n_o,            &
-                    wf%eri%n_J*batch_k%length, &
-                    -one,                      &
-                    X_J_kc,                    & !X_J#k_c
-                    wf%eri%n_J*batch_k%length, &
-                    L_Jk_l,                    & !L_J#k_l
-                    wf%eri%n_J*batch_k%length, &
-                    one,                       &
-                    sigma_ai,                  & !sigma_cl
+         call dgemm('T', 'N',                      &
+                    wf%n_v, wf%n_o,                &
+                    wf%eri_t1%n_J*batch_k%length,  &
+                    -one,                          &
+                    X_J_kc,                        & !X_J#k_c
+                    wf%eri_t1%n_J*batch_k%length,  &
+                    L_Jk_l,                        & !L_J#k_l
+                    wf%eri_t1%n_J*batch_k%length,  &
+                    one,                           &
+                    sigma_ai,                      & !sigma_cl
                     wf%n_v)
 !
 !
 !        :: Term 3: sigma_bl += - sum_cek Y_ebck * g_ckle ::
 !
-         call wf%eri%get_cholesky_t1(X_J_ck, 1+wf%n_o, wf%n_v+wf%n_o, &
+         call wf%L_t1%get(X_J_ck, 1+wf%n_o, wf%n_v+wf%n_o, &
                                      batch_k%first, batch_k%get_last())
 !
          do v_batch = 1, batch_v%num_batches
@@ -1721,48 +1721,48 @@ contains
 !
             call dgemm('N','T',                      &
                         wf%n_v*batch_v%length,       &
-                        wf%eri%n_J,                  &
+                        wf%eri_t1%n_J,               &
                         wf%n_v*batch_k%length,       &
                         one,                         &
                         Y_beck(:,batch_v%first,1,1), & ! Y_b#e_c#k
                         wf%n_v**2,                   &
                         X_J_ck,                      & ! L_J_c#k
-                        wf%eri%n_J,                  &
+                        wf%eri_t1%n_J,               &
                         zero,                        &
                         X_J_vv,                      & ! X_b#e_J
                         wf%n_v*batch_v%length)
 !
-            call wf%eri%get_cholesky_t1(L_J_le, 1, wf%n_o, &
+            call wf%L_t1%get(L_J_le, 1, wf%n_o, &
                                         batch_v%first+wf%n_o, batch_v%get_last()+wf%n_o)
 !
-            call sort_123_to_312(L_J_le, L_eJ_l, wf%eri%n_J, wf%n_o, batch_v%length)
+            call sort_123_to_312(L_J_le, L_eJ_l, wf%eri_t1%n_J, wf%n_o, batch_v%length)
 !
-            call dgemm('N','N',                    &
-                        wf%n_v, wf%n_o,            &
-                        wf%eri%n_J*batch_v%length, &
-                        -one,                      &
-                        X_J_vv,                    & ! X_b_#eJ
-                        wf%n_v,                    &
-                        L_eJ_l,                    & ! L_#eJ_l
-                        wf%eri%n_J*batch_v%length, &
-                        one,                       &
-                        sigma_ai,                  & ! sigma_bl
+            call dgemm('N','N',                       &
+                        wf%n_v, wf%n_o,               &
+                        wf%eri_t1%n_J*batch_v%length, &
+                        -one,                         &
+                        X_J_vv,                       & ! X_b_#eJ
+                        wf%n_v,                       &
+                        L_eJ_l,                       & ! L_#eJ_l
+                        wf%eri_t1%n_J*batch_v%length, &
+                        one,                          &
+                        sigma_ai,                     & ! sigma_bl
                         wf%n_v)
 !
          enddo
 !
       enddo ! k_batch
 !
-      call mem%dealloc(X_J_vv, wf%eri%n_J, wf%n_v, batch_v%max_length)
+      call mem%dealloc(X_J_vv, wf%eri_t1%n_J, wf%n_v, batch_v%max_length)
 !
-      call mem%dealloc(X_J_kc, wf%eri%n_J, batch_k%max_length, wf%n_v)
-      call mem%dealloc(X_J_ck, wf%eri%n_J, wf%n_v, batch_k%max_length)
+      call mem%dealloc(X_J_kc, wf%eri_t1%n_J, batch_k%max_length, wf%n_v)
+      call mem%dealloc(X_J_ck, wf%eri_t1%n_J, wf%n_v, batch_k%max_length)
 !
-      call mem%dealloc(L_eJ_l, wf%eri%n_J, batch_v%max_length, wf%n_o)
-      call mem%dealloc(L_J_le, wf%eri%n_J, wf%n_o, batch_v%max_length)
+      call mem%dealloc(L_eJ_l, wf%eri_t1%n_J, batch_v%max_length, wf%n_o)
+      call mem%dealloc(L_J_le, wf%eri_t1%n_J, wf%n_o, batch_v%max_length)
 !
-      call mem%dealloc(L_J_lk, wf%eri%n_J, wf%n_o, batch_k%max_length)
-      call mem%dealloc(L_Jk_l, wf%eri%n_J, batch_k%max_length, wf%n_o)
+      call mem%dealloc(L_J_lk, wf%eri_t1%n_J, wf%n_o, batch_k%max_length)
+      call mem%dealloc(L_Jk_l, wf%eri_t1%n_J, batch_k%max_length, wf%n_o)
 !
       call mem%dealloc(Y_beck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)
       call mem%dealloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_k%max_length)

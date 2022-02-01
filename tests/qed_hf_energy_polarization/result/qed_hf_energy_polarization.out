@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-20 15:53:52 UTC +02:00
-  Git branch:         QEDHF_get_integrals
-  Git hash:           293f91b11c377cab08a6e0100968e5934a214577
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          MKL
-  64-bit integers:    ON
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-20 15:58:08 UTC +02:00
+  Calculation started: 2022-02-01 16:09:15 UTC +01:00
 
 
   :: Input file
@@ -47,10 +47,6 @@
      do
         ground state
      end do
-
-     print
-        output print level: debug
-     end print
 
      memory
         available: 8
@@ -74,14 +70,12 @@
      end qed
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: QED-RHF wavefunction
   ==========================
-
-  Libint electron repulsion integral precision:  0.1000E-23
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -133,10 +127,6 @@
 
 
   1) Generate initial SAD density
-     Generated atomic density for H  using UHF/cc-pvdz
-     Generated atomic density for F  using UHF/cc-pvdz
-     Generated atomic density for O  using UHF/cc-pvdz
-     Generated atomic density for He using UHF/cc-pvdz
 
 
   2) Calculation of reference state (SCF-DIIS algorithm)
@@ -152,7 +142,7 @@
      Exchange screening threshold:   0.1000E-13
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
-     Cumulative Fock threshold:      0.0000E+00
+     Cumulative Fock threshold:      0.1000E+01
 
   - SCF solver settings:
 
@@ -171,135 +161,66 @@
      Storage (solver scf_errors): memory
      Storage (solver scf_parameters): memory
 
-  Doing preparations for storer solver scf_errors
-
-  Doing preparations for storer solver scf_parameters
-
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.447420702376     0.7569E-01     0.1774E+03
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      2          -177.474059643563     0.1129E-01     0.2664E-01
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      3          -177.475058215822     0.4151E-02     0.9986E-03
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      4          -177.475186650355     0.1381E-02     0.1284E-03
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      5          -177.475200535567     0.4333E-03     0.1389E-04
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-     6          -177.475201896693     0.8204E-04     0.1361E-05
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
+     6          -177.475201896694     0.8204E-04     0.1361E-05
      7          -177.475201980410     0.2303E-04     0.8372E-07
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
      8          -177.475201990841     0.4854E-05     0.1043E-07
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-     9          -177.475201991684     0.1044E-05     0.8428E-09
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    10          -177.475201991715     0.2420E-06     0.3098E-10
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    11          -177.475201991716     0.5280E-07     0.8527E-12
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    12          -177.475201991716     0.9688E-08     0.1137E-12
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
+     9          -177.475201991684     0.1044E-05     0.8429E-09
+    10          -177.475201991715     0.2420E-06     0.3095E-10
+    11          -177.475201991716     0.5280E-07     0.8242E-12
+    12          -177.475201991716     0.9688E-08     0.8527E-13
     13          -177.475201991716     0.3259E-08     0.1137E-12
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    14          -177.475201991716     0.1590E-08     0.2842E-13
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    15          -177.475201991716     0.6614E-09     0.5684E-13
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    16          -177.475201991716     0.1439E-09     0.2842E-13
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-  Memory tracker initialized - allowed memory: 0 B
-  Memory tracker finalized - allowed: 0 B  used: 0 B
-    17          -177.475201991716     0.4903E-10     0.2842E-13
+    14          -177.475201991716     0.1590E-08     0.0000E+00
+    15          -177.475201991716     0.6614E-09     0.1990E-12
+    16          -177.475201991716     0.1439E-09     0.1421E-12
+    17          -177.475201991716     0.4902E-10     0.2558E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
-
-  Doing finalizations for storer solver scf_errors
-
-  Doing finalizations for storer solver scf_parameters
 
   - Summary of QED-RHF wavefunction energetics (a.u.):
 
      HOMO-LUMO gap:                  0.601016121918
      Nuclear repulsion energy:      48.518317619727
-     Electronic energy:           -225.993519611443
+     Electronic energy:           -225.993519611444
      Total energy:                -177.475201991716
 
   - QED Parameters and properties
 
      Optimize photons?   :    True
+     Complete basis?     :    False
 
      Mode 1
       Frequency          :    0.500000000000
       Polarization       :    0.000000000000    0.000000000000    1.000000000000
-      Coupling           :    0.050000000000
-         Bilinear        :    0.025000000000
-         Self            :    0.001250000000
+      Coupling
+       sqrt(1/eps V)     :    0.050000000000
+       Bilinear          :    0.025000000000
+       Quadratic         :    0.001250000000
       Coherent state     :   -0.000149060920
 
   - Timings for the QED-RHF ground state calculation
 
-     Total wall time (sec):              3.20161
-     Total cpu time (sec):              12.33802
+     Total wall time (sec):              3.04800
+     Total cpu time (sec):               5.25572
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 333.288 KB
+  Peak memory usage during the execution of eT: 365.476 KB
 
-  Total wall time in eT (sec):              3.26970
-  Total cpu time in eT (sec):              12.44322
+  Total wall time in eT (sec):              3.09500
+  Total cpu time in eT (sec):               5.30428
 
-  Calculation ended: 2021-10-20 15:58:11 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:18 UTC +01:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
+     QED-HF: https://doi.org/10.1103/PhysRevX.10.041043
 
   eT terminated successfully!

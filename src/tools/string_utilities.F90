@@ -235,7 +235,7 @@ contains
 !
 !     Replace the character by the (possibly) uppercased letter
 !
-     char_out = char(char_int)
+      char_out = char(char_int)
 !
    end function convert_char_to_uppercase
 !

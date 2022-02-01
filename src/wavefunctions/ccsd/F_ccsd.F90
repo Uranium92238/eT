@@ -209,7 +209,7 @@ contains
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ovov',g_iajb)
+      call wf%eri_t1%get('ovov',g_iajb)
 !
       call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -413,7 +413,7 @@ contains
       call mem%alloc(L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call mem%alloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ovov',g_iakc)
+      call wf%eri_t1%get('ovov',g_iakc)
 !
       call copy_and_scale(two, g_iakc, L_iakc, wf%n_o**2*wf%n_v**2)
       call add_1432_to_1234(-one, g_iakc, L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -623,7 +623,7 @@ contains
 !     :: Term 1: - g_ckib * tbar_ajck * c_bj
 !
       call mem%alloc(g_ckib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('voov',g_ckib)
+      call wf%eri_t1%get('voov',g_ckib)
 !
 !     X_ckij = - g_ckib * c_bj
 !
@@ -742,7 +742,7 @@ contains
 !     Term 1: - g_ikcb * tbar_akcj * c_bj
 !
       call mem%alloc(g_ikcb, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-      call wf%eri%get_eri_t1('oovv',g_ikcb)
+      call wf%eri_t1%get('oovv',g_ikcb)
 !
 !     X_ikcj = g_ikcb * c_bj
 !
@@ -881,7 +881,7 @@ contains
       call mem%dealloc(X_jlak, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-      call wf%eri%get_eri_t1('oooo',g_ikjl)
+      call wf%eri_t1%get('oooo',g_ikjl)
 !
 !     rho_ai += X_akjl * g_ikjl^T
 !
@@ -905,8 +905,8 @@ contains
 !
       req0 = 0
 !
-      req1_c =  wf%eri%n_J*wf%n_v
-      req1_d =  wf%eri%n_J*wf%n_v
+      req1_c =  wf%eri_t1%n_J*wf%n_v
+      req1_d =  wf%eri_t1%n_J*wf%n_v
 !
       req2 = (wf%n_o)*(wf%n_v) + wf%n_v**2
 !
@@ -968,7 +968,7 @@ contains
             call mem%dealloc(X_bcdi, wf%n_v, batch_c%length, batch_d%length, wf%n_o)
 !
             call mem%alloc(g_dbca, batch_d%length, wf%n_v, batch_c%length, wf%n_v)
-            call wf%eri%get_eri_t1('vvvv',g_dbca,                               &
+            call wf%eri_t1%get('vvvv',g_dbca,                               &
                                    batch_d%first, batch_d%get_last(),           &
                                    1, wf%n_v,                                   &
                                    batch_c%first, batch_c%get_last(),           &
@@ -1039,7 +1039,7 @@ contains
       call sort_1234_to_4132(c_aibj, c_jcbk , wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(g_iljc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ooov',g_iljc)
+      call wf%eri_t1%get('ooov',g_iljc)
 !
 !     X_ilbk = g_iljc * c_jcbk
 !
@@ -1225,8 +1225,8 @@ contains
       call mem%alloc(X_jkid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call zero_array(X_jkid, wf%n_v*(wf%n_o**3))
 !
-      req0 = (wf%eri%n_J)*(wf%n_o)*(wf%n_v)
-      req1 = (wf%eri%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2
+      req0 = (wf%eri_t1%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%eri_t1%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2
 !
       batch_d = batching_index(wf%n_v)
 !
@@ -1238,7 +1238,7 @@ contains
 !
          call mem%alloc(g_ibdc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%eri%get_eri_t1('ovvv',g_ibdc,                       &
+         call wf%eri_t1%get('ovvv',g_ibdc,                       &
                                 1, wf%n_o,                           &
                                 1, wf%n_v,                           &
                                 batch_d%first, batch_d%get_last(),   &
@@ -1324,8 +1324,8 @@ contains
 !
 !     rho_ai += X_idcj * g_jadc
 !
-      req0 = (wf%eri%n_J)*(wf%n_o)*(wf%n_v)
-      req1 = (wf%eri%n_J)*(wf%n_v) + (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2
+      req0 = (wf%eri_t1%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%eri_t1%n_J)*(wf%n_v) + (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2
 !
       batch_d = batching_index(wf%n_v)
 !
@@ -1337,7 +1337,7 @@ contains
 !
          call mem%alloc(g_dcja, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov',g_dcja,                       &
+         call wf%eri_t1%get('vvov',g_dcja,                       &
                                 batch_d%first, batch_d%get_last(),   &
                                 1, wf%n_v,                           &
                                 1, wf%n_o,                           &
@@ -1405,8 +1405,8 @@ contains
 !
 !     rho_ai += X_kbdi * g_kbda
 !
-      req0 = (wf%eri%n_J)*(wf%n_o)*(wf%n_v)
-      req1 = (wf%eri%n_J)*(wf%n_v) + (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2
+      req0 = (wf%eri_t1%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%eri_t1%n_J)*(wf%n_v) + (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2
 !
       batch_d = batching_index(wf%n_v)
 !
@@ -1418,7 +1418,7 @@ contains
 !
          call mem%alloc(g_kbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%eri%get_eri_t1('ovvv',g_kbda,                       &
+         call wf%eri_t1%get('ovvv',g_kbda,                       &
                                 1, wf%n_o,                           &
                                 1, wf%n_v,                           &
                                 batch_d%first, batch_d%get_last(),   &
@@ -1592,7 +1592,7 @@ contains
 !
       call mem%alloc(g_iljb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ooov',g_iljb)
+      call wf%eri_t1%get('ooov',g_iljb)
 !
       call zero_array(L_ilbj, wf%n_v*(wf%n_o**3))
 !
@@ -1750,8 +1750,8 @@ contains
       call mem%alloc(rho_ia, wf%n_o, wf%n_v)
       call zero_array(rho_ia, wf%n_o*wf%n_v)
 !
-      req0 = (wf%eri%n_J)*(wf%n_o)*(wf%n_v)
-      req1 = (wf%eri%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2          &
+      req0 = (wf%eri_t1%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%eri_t1%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2          &
             + (wf%n_v)*(wf%n_o)**2 + wf%n_v
 !
       batch_d = batching_index(wf%n_v)
@@ -1764,7 +1764,7 @@ contains
 !
          call mem%alloc(g_jbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%eri%get_eri_t1('ovvv',g_jbda,                       &
+         call wf%eri_t1%get('ovvv',g_jbda,                       &
                                 1, wf%n_o,                           &
                                 1, wf%n_v,                           &
                                 batch_d%first, batch_d%get_last(),   &
@@ -1889,7 +1889,7 @@ contains
 !     Construct L_ldic = 2 * g_ldic - g_lcid (ordered as L_dlci)
 !
       call mem%alloc(g_ldic, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov',g_ldic)
+      call wf%eri_t1%get('ovov',g_ldic)
 !
       call mem%alloc(L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(L_dlci, (wf%n_v**2)*(wf%n_o**2))
@@ -2255,7 +2255,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: Y_ijcl, Y_ijdk, Y_ijkl, Y_kdji, Y_lcji, Y_klji
 !
       call mem%alloc(g_idkb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov',g_idkb)
+      call wf%eri_t1%get('ovov',g_idkb)
 !
 !     :: Term 1: g_idkb * tbar_alcj * t_ckdl * c_bj
 !
@@ -2657,7 +2657,7 @@ contains
 !
       call mem%alloc(g_iljc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ooov',g_iljc)
+      call wf%eri_t1%get('ooov',g_iljc)
 !
 !     X_iljk = g_iljc * c_ck
 !
@@ -2851,8 +2851,8 @@ contains
       call zero_array(Y_dbik, (wf%n_v**2)*(wf%n_o**2))
       call zero_array(rho_abij, (wf%n_v**2)*(wf%n_o**2))
 !
-      req0 = (wf%n_o)*(wf%n_v)*(wf%eri%n_J)
-      req1 = max((wf%n_v)*(wf%eri%n_J) + (wf%n_o)*(wf%n_v)**2,       & ! L_dc^J, g_ibdc
+      req0 = (wf%n_o)*(wf%n_v)*(wf%eri_t1%n_J)
+      req1 = max((wf%n_v)*(wf%eri_t1%n_J) + (wf%n_o)*(wf%n_v)**2,       & ! L_dc^J, g_ibdc
                   2*(wf%n_o)*(wf%n_v)**2,                            & ! 2 x g_ibdc
                   (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2)         ! g_ibdc, Y_dbik
 !
@@ -2866,7 +2866,7 @@ contains
 !
          call mem%alloc(g_ibdc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%eri%get_eri_t1('ovvv',g_ibdc,                       &
+         call wf%eri_t1%get('ovvv',g_ibdc,                       &
                                 1, wf%n_o,                           &
                                 1, wf%n_v,                           &
                                 batch_d%first, batch_d%get_last(),   &
@@ -2938,7 +2938,7 @@ contains
 !
          call mem%dealloc(red_Y_dbik, batch_d%length, wf%n_v, wf%n_o, wf%n_o)
 !
-!        For term 2: contruct rho_abij += g_kbda * Z_kjdi
+!        For term 2: construct rho_abij += g_kbda * Z_kjdi
 !
          call mem%alloc(g_abkd, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
          call sort_1234_to_2431(g_dbic, g_abkd, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
@@ -3167,7 +3167,7 @@ contains
 !     L_jlkc = 2 g_jlkc - g_kljc (ordered as L_ljck)
 !
       call mem%alloc(g_jlkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ooov',g_jlkc)
+      call wf%eri_t1%get('ooov',g_jlkc)
 !
       call mem%alloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(L_ljck, wf%n_v*(wf%n_o**3))
@@ -3298,8 +3298,8 @@ contains
       call mem%alloc(X_ad, wf%n_v, wf%n_v)
       call zero_array(X_ad, wf%n_v**2)
 !
-      req0 = (wf%eri%n_J)*(wf%n_v)*(wf%n_o)
-      req1 = max((wf%eri%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
+      req0 = (wf%eri_t1%n_J)*(wf%n_v)*(wf%n_o)
+      req1 = max((wf%eri_t1%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
 !
       batch_d = batching_index(wf%n_v)
 !
@@ -3313,7 +3313,7 @@ contains
 !
          call mem%alloc(g_dakc, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call wf%eri%get_eri_t1('vvov',g_dakc,                       &
+         call wf%eri_t1%get('vvov',g_dakc,                       &
                                 batch_d%first, batch_d%get_last(),   &
                                 1, wf%n_v,                           &
                                 1, wf%n_o,                           &
@@ -3369,8 +3369,8 @@ contains
       call mem%alloc(X_aidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(X_aidk, (wf%n_v**2)*(wf%n_o**2))
 !
-      req0 = (wf%eri%n_J)*(wf%n_v)*(wf%n_o)
-      req1 = max((wf%eri%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
+      req0 = (wf%eri_t1%n_J)*(wf%n_v)*(wf%n_o)
+      req1 = max((wf%eri_t1%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
 !
       batch_d = batching_index(wf%n_v)
 !
@@ -3384,7 +3384,7 @@ contains
 !
          call mem%alloc(g_iadc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-         call wf%eri%get_eri_t1('ovvv',g_iadc,                       &
+         call wf%eri_t1%get('ovvv',g_iadc,                       &
                                 1, wf%n_o,                           &
                                 1, wf%n_v,                           &
                                 batch_d%first, batch_d%get_last(),   &
@@ -3488,7 +3488,7 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
       call mem%alloc(g_ibkd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov',g_ibkd)
+      call wf%eri_t1%get('ovov',g_ibkd)
 !
 !     Reorder g_ibkd to g_bidk
 !
@@ -3600,7 +3600,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_ijkl
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov',g_iajb)
+      call wf%eri_t1%get('ovov',g_iajb)
 !
 !     Reorder g_aibj to g_abij
 !
@@ -3725,7 +3725,7 @@ contains
       call mem%alloc(g_jbld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call mem%alloc(L_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%eri%get_eri_t1('ovov',g_jbld)
+      call wf%eri_t1%get('ovov',g_jbld)
 !
       call zero_array(L_bjdl, (wf%n_v**2)*(wf%n_o**2))
 !

@@ -815,7 +815,6 @@ contains
 !!    Performs CC2 calculation for CNTO
 !!    construction.
 !!
-      use t1_eri_tool_class, only: t1_eri_tool
       use quasi_newton_updater_class, only: quasi_newton_updater
       use diis_cc_gs_class, only: diis_cc_gs
       use davidson_cc_es_class, only: davidson_cc_es
@@ -860,11 +859,12 @@ contains
       allocate(cc2::cc2_wf)
       call cc2_wf%initialize(wf)
 !
-      call cc2_wf%mo_preparations()
+      call cc2_wf%integral_preparations(wf%L_mo%n_J)
 !
-      cc2_wf%eri = t1_eri_tool(wf%eri)
-      call cc2_wf%eri%initialize()
-      call cc2_wf%eri%copy_from_t1(wf%eri)
+      call cc2_wf%L_mo%set_equal_to(wf%L_mo)
+      call cc2_wf%L_t1%set_equal_to(wf%L_mo)
+!
+      call cc2_wf%mo_preparations()
 !
 !     1. Ground state
 !
@@ -883,8 +883,8 @@ contains
                                      t_updater=t_updater, &
                                      storage = storage)
 !
-      call cc_gs_solver_diis%run(cc2_wf)
-      call cc_gs_solver_diis%cleanup(cc2_wf)
+      call cc_gs_solver_diis%run()
+      call cc_gs_solver_diis%cleanup()
       call timer_gs%turn_off()
 !
 !     Excited states
@@ -895,8 +895,8 @@ contains
       call cc2_wf%construct_fock('es')
 !
       cc_es_solver_davidson = davidson_cc_es(transformation, cc2_wf, restart=.false.)
-      call cc_es_solver_davidson%run(cc2_wf)
-      call cc_es_solver_davidson%cleanup(cc2_wf)
+      call cc_es_solver_davidson%run()
+      call cc_es_solver_davidson%cleanup()
 !
       call timer_es%turn_off()
 !
@@ -992,7 +992,9 @@ contains
 !
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
-      call wf%eri%set_t1_to_mo()
+!
+      call wf%L_t1%set_equal_to(wf%L_mo)
+      !call wf%eri_t1%update()
 !
       call wf%construct_fock()
       call wf%destruct_t1()

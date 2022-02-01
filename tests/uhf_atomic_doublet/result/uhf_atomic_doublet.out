@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:32:26 UTC +02:00
+  Calculation started: 2022-02-01 16:10:12 UTC +01:00
 
 
   :: Input file
@@ -121,16 +121,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-11
-     Energy threshold:              0.1000E-11
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -99.127338116611
@@ -144,6 +134,16 @@
      One-electron integral  cutoff:  0.1000E-22
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -153,18 +153,18 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -99.369431839295     0.3171E-01     0.9937E+02
-     2           -99.374748397856     0.7289E-02     0.5317E-02
-     3           -99.375172207481     0.2867E-02     0.4238E-03
-     4           -99.375232270176     0.7662E-03     0.6006E-04
-     5           -99.375239767664     0.1642E-03     0.7497E-05
-     6           -99.375240293420     0.2367E-04     0.5258E-06
+     1           -99.369431839295     0.3076E-01     0.9937E+02
+     2           -99.374748397856     0.7796E-02     0.5317E-02
+     3           -99.375172207481     0.3115E-02     0.4238E-03
+     4           -99.375232270176     0.8450E-03     0.6006E-04
+     5           -99.375239767664     0.1785E-03     0.7497E-05
+     6           -99.375240293420     0.3343E-04     0.5258E-06
      7           -99.375240303117     0.1456E-05     0.9697E-08
-     8           -99.375240303129     0.3574E-07     0.1241E-10
-     9           -99.375240303129     0.2199E-08     0.2842E-13
-    10           -99.375240303129     0.3928E-09     0.2842E-13
-    11           -99.375240303129     0.1792E-10     0.1421E-13
-    12           -99.375240303129     0.2350E-12     0.2842E-13
+     8           -99.375240303129     0.3574E-07     0.1234E-10
+     9           -99.375240303129     0.2199E-08     0.4263E-13
+    10           -99.375240303129     0.3928E-09     0.1421E-13
+    11           -99.375240303129     0.1792E-10     0.0000E+00
+    12           -99.375240303129     0.2359E-12     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -185,17 +185,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              0.68700
-     Total cpu time (sec):               1.24129
+     Total wall time (sec):              0.72700
+     Total cpu time (sec):               1.29215
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 70.428 KB
+  Peak memory usage during the execution of eT: 71.268 KB
 
-  Total wall time in eT (sec):              0.72500
-  Total cpu time in eT (sec):               1.27918
+  Total wall time in eT (sec):              0.76800
+  Total cpu time in eT (sec):               1.33316
 
-  Calculation ended: 2021-10-06 10:32:26 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:13 UTC +01:00
 
   - Implementation references:
 

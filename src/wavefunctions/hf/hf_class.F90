@@ -221,6 +221,10 @@ module hf_class
 !
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
 !
+      procedure :: visualize_active_density &
+                => visualize_active_density_hf
+!
+!
       procedure :: prepare_for_scf => prepare_for_scf_hf
       procedure :: get_energy => get_energy_hf
 !
@@ -688,18 +692,18 @@ contains
 !
       class(hf) :: wf
 !
-     call dgemm('N', 'T',                   &
-                 wf%ao%n,                   &
-                 wf%ao%n,                   &
-                 wf%n_o,                    &
-                 two,                       &
-                 wf%orbital_coefficients,   &
-                 wf%ao%n,                   &
-                 wf%orbital_coefficients,   &
-                 wf%ao%n,                   &
-                 zero,                      &
-                 wf%ao_density,             &
-                 wf%ao%n)
+      call dgemm('N', 'T',                   &
+                  wf%ao%n,                   &
+                  wf%ao%n,                   &
+                  wf%n_o,                    &
+                  two,                       &
+                  wf%orbital_coefficients,   &
+                  wf%ao%n,                   &
+                  wf%orbital_coefficients,   &
+                  wf%ao%n,                   &
+                  zero,                      &
+                  wf%ao_density,             &
+                  wf%ao%n)
 !
    end subroutine construct_ao_density_hf
 !
@@ -1072,7 +1076,7 @@ contains
 !
    subroutine construct_molecular_gradient_hf(wf, E_qk)
 !!
-!!    Contruct molecular gradient
+!!    Construct molecular gradient
 !!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
 !!
 !!    Constructs the molecular gradient,
@@ -1148,8 +1152,8 @@ contains
 
          do q = 1, 3
 
-           call symmetric_sum(G_wxqk(:,:,q,k), wf%ao%n)
-           call dscal(wf%ao%n**2, quarter, G_wxqk(:,:,q,k), 1)
+            call symmetric_sum(G_wxqk(:,:,q,k), wf%ao%n)
+            call dscal(wf%ao%n**2, quarter, G_wxqk(:,:,q,k), 1)
 
          enddo
 
@@ -1437,15 +1441,15 @@ contains
 !
       if (wf%embedded) then
 !
-        call mem%alloc(mo_mm_fock, wf%n_mo, wf%n_mo)
+         call mem%alloc(mo_mm_fock, wf%n_mo, wf%n_mo)
 !
-        call wf%mo_transform(wf%ao%v, mo_mm_fock)
+         call wf%mo_transform(wf%ao%v, mo_mm_fock)
 !
-        call daxpy(wf%n_mo**2, one, mo_mm_fock, 1, wf%mo_fock_frozen, 1)
+         call daxpy(wf%n_mo**2, one, mo_mm_fock, 1, wf%mo_fock_frozen, 1)
 !
-        call mem%dealloc(mo_mm_fock, wf%n_mo, wf%n_mo)
+         call mem%dealloc(mo_mm_fock, wf%n_mo, wf%n_mo)
 !
-     endif
+      endif
 !
    end subroutine prepare_frozen_fock_terms_hf
 !
@@ -1473,16 +1477,11 @@ contains
 !
       class(hf) :: wf
 !
-      wf%frozen_core    = .false.
-      wf%frozen_hf_mos  = .false.
-!
-      wf%plot_active_density = .false.
-!
       wf%frozen_core = input%is_keyword_present('core', 'frozen orbitals')
       wf%frozen_hf_mos = input%is_keyword_present('hf', 'frozen orbitals')
 !
       wf%plot_active_density = input%is_keyword_present('plot hf active density', &
-            'visualization')
+                                                        'visualization')
 !
       if (wf%plot_active_density .and. .not.  (wf%frozen_core .or. wf%frozen_hf_mos)) &
          call output%warning_msg('no active density for CC to plot in HF, no plots produced.')

@@ -25,7 +25,7 @@ submodule (mlcc2_class) fock_mlcc2
 !!    Submodule containing routines that can be used to construct the t1-transformed Fock matrix.
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains

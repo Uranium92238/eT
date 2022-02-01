@@ -144,8 +144,8 @@ module wavefunction_class
       procedure :: prepare_embedding &
                 => prepare_embedding_wavefunction
 !
-      procedure :: contruct_mo_basis_transformation &
-                => contruct_mo_basis_transformation_wavefunction
+      procedure :: construct_mo_basis_transformation &
+                => construct_mo_basis_transformation_wavefunction
 !
       procedure :: get_nuclear_dipole &
                 => get_nuclear_dipole_wavefunction
@@ -794,7 +794,7 @@ contains
    end subroutine prepare_embedding_wavefunction
 !
 !
-   subroutine contruct_mo_basis_transformation_wavefunction(wf, C1, C2, T)
+   subroutine construct_mo_basis_transformation_wavefunction(wf, C1, C2, T)
 !!
 !!    Construct MO basis transformation
 !!    Written by Sarai D. Folekstad, Nov 2019
@@ -862,7 +862,7 @@ contains
 !
       call mem%dealloc(X, wf%n_mo, wf%ao%n)
 !
-   end subroutine contruct_mo_basis_transformation_wavefunction
+   end subroutine construct_mo_basis_transformation_wavefunction
 !
 !
    function get_nuclear_dipole_wavefunction(wf) result(d)

@@ -1,7 +1,32 @@
+# eT v1.6.0
+### Features
+- Print tool for eigen and linear Davidson solvers. eT-program/eT!983
+- Added timers for calculate energy. eT-program/eT!993
+- Memory tracker now prints the batching tag and memory difference. eT-program/eT!1000
+- References are now collected in eT_references.F90. eT-program/eT!1019
+- Added timers for visualization. eT-program/eT!1024
+
+### Optimization
+- Coupled cluster Fock matrix construction is N^4 scaling. eT-program/eT!973
+- Reduce memory usage for MLCC energy calculation (reusing CCS routine). eT-program/eT!974
+- Optimized omega lowmemory CC2 using a similar algorithm as for CC3. eT-program/eT!986
+- New Cholesky tools can now load blocks into memory to be used in e.g. integral construction. eT-program/eT!1015
+
+### Structure
+- New ERI and Cholesky vector tools. Autogeneration of complex tools. eT-program/eT!902
+- Cleanup of use statements in solvers, molecule and observer. eT-program/eT!1012
+- Fix typo in `construct_mo_basis_transformation`. eT-program/eT!1020
+- Removed unused routines and added unit tests for `range_class` and `memory_manager`. eT-program/eT!1022
+- Added abstract solver class. eT-program/eT!1018
+
+### Tests
+- Code quality pipeline now detects unexpected indentation level in Fortran source files. eT-program/eT!1017
+- QED-HF tests are now run with default print level. eT-program/eT!1023
+
 # eT v1.5.15
 ### Bugfixes
 - Fixed bug where LR polarizabilities would be incorrect in cases where non-diagonal contributions are requested without the associated diagonal contributions. eT-program/eT!1025
-### CI 
+### CI
 - Now using Black version 22.1.0. eT-program/eT!1028
 
 # eT v1.5.14

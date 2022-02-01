@@ -42,9 +42,12 @@ module davidson_cc_linear_equations_class
 !!    as well as the solvers for response made by Josefine H. Andersen, spring 2019.
 !!
 !
-   use kinds
+   use parameters
    use ccs_class, only: ccs
-   use linear_davidson_tool_class
+   use global_out, only: output
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use linear_davidson_tool_class, only: linear_davidson_tool
 !
    implicit none
 !
@@ -228,6 +231,7 @@ contains
 !!       transformation:   Whether to use A or A^T ("right" or "left", respectively).
 !!
       use sequential_file_class, only: sequential_file
+      use array_utilities, only: get_l2_norm
 !
       implicit none
 !

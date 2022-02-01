@@ -20,14 +20,14 @@
 submodule (ccsd_class) mean_value_ccsd
 !
 !!
-!!    Mean-value submodule 
+!!    Mean-value submodule
 !!
-!!    Contains routines related to the mean values, i.e. 
-!!    the construction of density matrices as well as expectation 
+!!    Contains routines related to the mean values, i.e.
+!!    the construction of density matrices as well as expectation
 !!    value calculation.
 !!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
@@ -48,15 +48,20 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
       real(dp) :: omp_correlation_energy
 !
       integer :: a, i, b, j, ai, bj, aibj
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%eri%get_eri_t1('ovov', g_iajb)
+      call wf%eri_t1%get('ovov', g_iajb)
 !
       omp_correlation_energy = zero
 !
@@ -85,9 +90,11 @@ contains
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      wf%correlation_energy = omp_correlation_energy 
+      wf%correlation_energy = omp_correlation_energy
 !
       wf%energy = wf%hf_energy + wf%correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_ccsd
 !

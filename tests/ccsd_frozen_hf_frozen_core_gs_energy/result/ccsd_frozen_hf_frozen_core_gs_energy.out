@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:32:20 UTC +02:00
+  Calculation started: 2022-02-01 16:09:55 UTC +01:00
 
 
   :: Input file
@@ -149,16 +149,6 @@
 
   2) Calculation of reference state (SCF algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   none
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -166.757656556164
@@ -171,6 +161,16 @@
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   none
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
@@ -194,36 +194,36 @@
     18          -166.674599119340     0.4363E-04     0.1329E-07
     19          -166.674599124291     0.2773E-04     0.4951E-08
     20          -166.674599126136     0.1631E-04     0.1844E-08
-    21          -166.674599126823     0.1031E-04     0.6871E-09
-    22          -166.674599127079     0.6094E-05     0.2560E-09
-    23          -166.674599127174     0.3832E-05     0.9521E-10
-    24          -166.674599127210     0.2276E-05     0.3578E-10
-    25          -166.674599127223     0.1425E-05     0.1305E-10
-    26          -166.674599127228     0.8499E-06     0.5031E-11
-    27          -166.674599127230     0.5301E-06     0.1933E-11
-    28          -166.674599127230     0.3172E-06     0.5400E-12
-    29          -166.674599127231     0.1972E-06     0.3411E-12
-    30          -166.674599127231     0.1184E-06     0.8527E-13
-    31          -166.674599127231     0.7341E-07     0.1421E-12
-    32          -166.674599127231     0.4417E-07     0.1137E-12
-    33          -166.674599127231     0.2733E-07     0.8527E-13
-    34          -166.674599127231     0.1648E-07     0.5684E-13
-    35          -166.674599127231     0.1017E-07     0.0000E+00
-    36          -166.674599127231     0.6146E-08     0.2842E-13
-    37          -166.674599127231     0.3788E-08     0.0000E+00
-    38          -166.674599127231     0.2292E-08     0.1137E-12
-    39          -166.674599127231     0.1411E-08     0.1137E-12
-    40          -166.674599127231     0.8547E-09     0.0000E+00
-    41          -166.674599127231     0.5254E-09     0.2842E-13
-    42          -166.674599127231     0.3187E-09     0.2842E-13
-    43          -166.674599127231     0.1957E-09     0.2274E-12
+    21          -166.674599126823     0.1031E-04     0.6870E-09
+    22          -166.674599127079     0.6094E-05     0.2561E-09
+    23          -166.674599127174     0.3832E-05     0.9533E-10
+    24          -166.674599127210     0.2276E-05     0.3556E-10
+    25          -166.674599127223     0.1425E-05     0.1322E-10
+    26          -166.674599127228     0.8499E-06     0.5002E-11
+    27          -166.674599127230     0.5301E-06     0.1762E-11
+    28          -166.674599127230     0.3172E-06     0.5684E-12
+    29          -166.674599127231     0.1972E-06     0.4547E-12
+    30          -166.674599127231     0.1184E-06     0.1705E-12
+    31          -166.674599127231     0.7341E-07     0.5684E-13
+    32          -166.674599127231     0.4417E-07     0.5684E-13
+    33          -166.674599127231     0.2733E-07     0.2842E-13
+    34          -166.674599127231     0.1648E-07     0.8527E-13
+    35          -166.674599127231     0.1017E-07     0.1137E-12
+    36          -166.674599127231     0.6146E-08     0.1137E-12
+    37          -166.674599127231     0.3788E-08     0.1137E-12
+    38          -166.674599127231     0.2292E-08     0.2842E-13
+    39          -166.674599127231     0.1411E-08     0.2842E-13
+    40          -166.674599127231     0.8547E-09     0.1137E-12
+    41          -166.674599127231     0.5254E-09     0.3126E-12
+    42          -166.674599127231     0.3187E-09     0.1137E-12
+    43          -166.674599127231     0.1957E-09     0.2842E-13
     44          -166.674599127231     0.1188E-09     0.1137E-12
-    45          -166.674599127231     0.7290E-10     0.1137E-12
-    46          -166.674599127231     0.4430E-10     0.0000E+00
-    47          -166.674599127231     0.2716E-10     0.1137E-12
-    48          -166.674599127231     0.1651E-10     0.1137E-12
-    49          -166.674599127231     0.1012E-10     0.5684E-13
-    50          -166.674599127231     0.6152E-11     0.5684E-13
+    45          -166.674599127231     0.7290E-10     0.5684E-13
+    46          -166.674599127231     0.4430E-10     0.5684E-13
+    47          -166.674599127231     0.2716E-10     0.2842E-13
+    48          -166.674599127231     0.1652E-10     0.5684E-13
+    49          -166.674599127231     0.1012E-10     0.1421E-12
+    50          -166.674599127231     0.6157E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 50 iterations!
 
@@ -236,14 +236,14 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.17600
-     Total cpu time (sec):               2.17440
+     Total wall time (sec):              1.16200
+     Total cpu time (sec):               2.11003
 
   - Preparation for frozen core approximation
 
      There are 3 frozen core orbitals.
 
-     The smallest diagonal after decomposition is:  -0.1859E-15
+     The smallest diagonal after decomposition is:  -0.2128E-15
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -337,13 +337,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25400
-     Total cpu time (sec):               0.39622
+     Total wall time (sec):              0.22900
+     Total cpu time (sec):               0.37745
 
 
   2) Preparation of MO basis and integrals
@@ -379,11 +378,11 @@
     1          -166.764536146195     0.6750E-01     0.1668E+03
     2          -166.780354354757     0.2427E-01     0.1582E-01
     3          -166.787423492652     0.4111E-02     0.7069E-02
-    4          -166.787823189133     0.1017E-02     0.3997E-03
-    5          -166.787771294821     0.1406E-03     0.5189E-04
-    6          -166.787760503360     0.3679E-04     0.1079E-04
+    4          -166.787823189134     0.1017E-02     0.3997E-03
+    5          -166.787771294822     0.1406E-03     0.5189E-04
+    6          -166.787760503361     0.3679E-04     0.1079E-04
     7          -166.787760863291     0.8490E-05     0.3599E-06
-    8          -166.787760648487     0.1960E-05     0.2148E-06
+    8          -166.787760648488     0.1960E-05     0.2148E-06
     9          -166.787760483604     0.4174E-06     0.1649E-06
    10          -166.787760465038     0.1315E-06     0.1857E-07
    11          -166.787760466948     0.3060E-07     0.1910E-08
@@ -436,22 +435,22 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.11900
-     Total cpu time (sec):               0.14035
+     Total wall time (sec):              0.09800
+     Total cpu time (sec):               0.11112
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.37400
-     Total cpu time (sec):               0.53761
+     Total wall time (sec):              0.32900
+     Total cpu time (sec):               0.49033
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 866.920 KB
+  Peak memory usage during the execution of eT: 786.936 KB
 
-  Total wall time in eT (sec):              1.61800
-  Total cpu time in eT (sec):               2.82089
+  Total wall time in eT (sec):              1.55500
+  Total cpu time in eT (sec):               2.70088
 
-  Calculation ended: 2021-10-06 10:32:21 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:57 UTC +01:00
 
   - Implementation references:
 

@@ -592,7 +592,7 @@ contains
 !
       integer :: element
 !
-       if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
+      if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
 !
          call output%error_msg('Attempted to get an element not in the list.')
 !
@@ -696,7 +696,7 @@ contains
 !
       integer :: element
 !
-       if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
+      if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
 !
          call output%error_msg('Attempted to remove an element not in the list.')
 !

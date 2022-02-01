@@ -42,7 +42,6 @@ contains
 !!     Calculates the lowmem CC2 energy. This is only equal to the actual
 !!     energy when the ground state equations are solved, of course.
 !!
-      use batching_index_class, only: batching_index
 !
       implicit none
 !
@@ -61,10 +60,15 @@ contains
 !
       type(batching_index) :: batch_i, batch_j
 !
+      type(timings) :: timer
+!
+      timer = timings('Calculate energy', pl='n')
+      call timer%turn_on()
+!
       req0 = 0
 !
-      req1_i = (wf%n_v)*(wf%eri%n_J)
-      req1_j = (wf%n_v)*(wf%eri%n_J)
+      req1_i = (wf%n_v)*(wf%eri_t1%n_J)
+      req1_j = (wf%n_v)*(wf%eri_t1%n_J)
 !
       req2 = 2*(wf%n_v**2)
 !
@@ -87,13 +91,13 @@ contains
             call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
             call mem%alloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
 !
-            call wf%eri%get_eri_t1('vovo', g_aibj, &
+            call wf%eri_t1%get('vovo', g_aibj, &
                                    1, wf%n_v, &
                                    batch_i%first, batch_i%get_last(), &
                                    1, wf%n_v, &
                                    batch_j%first, batch_j%get_last())
 !
-            call wf%eri%get_eri_t1('ovov', g_iajb, &
+            call wf%eri_t1%get('ovov', g_iajb, &
                                    batch_i%first, batch_i%get_last(), &
                                    1, wf%n_v, &
                                    batch_j%first, batch_j%get_last(), &
@@ -130,6 +134,8 @@ contains
       wf%correlation_energy = correlation_energy
 !
       wf%energy = wf%hf_energy + correlation_energy
+!
+      call timer%turn_off()
 !
    end subroutine calculate_energy_lowmem_cc2
 !

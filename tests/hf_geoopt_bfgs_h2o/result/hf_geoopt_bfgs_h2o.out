@@ -1,27 +1,27 @@
 
 
 
-                     eT 1.4 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.4.0 Eos (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-05 16:05:36 UTC +02:00
-  Git branch:         new-geometry-optimization-solver
-  Git hash:           bdccac1d1e373b8311b3b4b455eab9b94bf69eac
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-05 16:18:40 UTC +02:00
+  Calculation started: 2022-02-01 16:07:52 UTC +01:00
 
 
   :: Input file
@@ -110,14 +110,10 @@
   This is a RHF geometry optimization calculation.
   The following tasks will be performed:
 
-     1) Generate initial SAD density
-     2) Calculation of optimized geometry (bfgs algorithm)
+     1) Calculation of optimized geometry (bfgs algorithm)
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of optimized geometry (bfgs algorithm)
+  1) Calculation of optimized geometry (bfgs algorithm)
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
@@ -132,19 +128,27 @@
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
 
-  - SCF solver settings:
 
-     Maximum iterations:                   100
-     Acceleration type:                   diis
+  :: Hartree-Fock engine
+  =========================
 
-  - Convergence thresholds
+  Drives the calculation of the Hartree-Fock state.
 
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -76.056183347535
+     Energy of initial guess:               -76.056183347533
      Number of electrons in guess:           10.000000000000
 
   - Screening and integral thresholds:
@@ -155,6 +159,16 @@
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -164,36 +178,41 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.927025878238     0.7870E-01     0.7593E+02
-     2           -75.962436213885     0.5572E-01     0.3541E-01
-     3           -75.973342984940     0.5644E-02     0.1091E-01
-     4           -75.973520067354     0.1782E-02     0.1771E-03
-     5           -75.973546032645     0.2928E-03     0.2597E-04
-     6           -75.973547220291     0.5927E-04     0.1188E-05
-     7           -75.973547248734     0.6832E-05     0.2844E-07
-     8           -75.973547249115     0.1306E-05     0.3813E-09
-     9           -75.973547249129     0.1683E-06     0.1432E-10
-    10           -75.973547249130     0.1575E-07     0.2842E-12
-    11           -75.973547249130     0.2006E-08     0.0000E+00
-    12           -75.973547249130     0.5846E-09     0.2842E-13
-    13           -75.973547249130     0.1217E-09     0.1421E-13
-    14           -75.973547249130     0.8553E-11     0.4263E-13
+     1           -75.927025878232     0.9340E-01     0.7593E+02
+     2           -75.962436213883     0.6439E-01     0.3541E-01
+     3           -75.973357769075     0.4549E-02     0.1092E-01
+     4           -75.973523900950     0.1684E-02     0.1661E-03
+     5           -75.973545621149     0.3143E-03     0.2172E-04
+     6           -75.973547208921     0.7011E-04     0.1588E-05
+     7           -75.973547248457     0.9063E-05     0.3954E-07
+     8           -75.973547249108     0.2161E-05     0.6502E-09
+     9           -75.973547249129     0.1574E-06     0.2184E-10
+    10           -75.973547249130     0.1197E-07     0.2558E-12
+    11           -75.973547249130     0.2880E-08     0.1421E-13
+    12           -75.973547249130     0.3934E-09     0.4263E-13
+    13           -75.973547249130     0.4613E-10     0.2842E-13
+    14           -75.973547249130     0.9020E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.683360943001
+     HOMO-LUMO gap:                  0.683360943002
      Nuclear repulsion energy:       9.819476509782
      Electronic energy:            -85.793023758912
      Total energy:                 -75.973547249130
 
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.87800
+     Total cpu time (sec):               1.38051
+
      Molecular gradient (Hartree/bohr)
   =============================================
           1             2             3
-   1    0.03100325   -0.00000000   -0.00000000
-   2   -0.01550162   -0.00000000   -0.12540956
-   3   -0.01550162    0.00000000    0.12540956
+   1    0.03100325    0.00000000    0.00000000
+   2   -0.01550162    0.00000000   -0.12540956
+   3   -0.01550162   -0.00000000    0.12540956
   =============================================
 
   - Geometry optimization iteration 1:
@@ -206,9 +225,9 @@
 
      Geometry not yet converged. Updating geometry via BFGS-RFO step.
 
-     First iteration: no update of the Hessian
+     First iteration: no update of the hessian
 
-     RF level shift:     -0.110044310621
+     Rational function level shift:     -0.110044310621
 
      BFGS step exceeds max. Scaling down to max_step.
 
@@ -227,9 +246,9 @@
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
-     R(1,2)              1.840748623910
-     R(1,3)              1.840748623910
-     A(2,1,3)            1.644002239164
+     R(1,2)              1.840748623913
+     R(1,3)              1.840748623913
+     A(2,1,3)            1.644002239162
      ------------------------------------------------------------
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
@@ -244,9 +263,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.063659312832     0.000000000000     0.000000000000        1
-        2  H     0.726772343584     0.000000000000     0.713524551247        2
-        3  H     0.726772343584     0.000000000000    -0.713524551247        3
+        1  O     0.063659312831     0.000000000000    -0.000000000000        1
+        2  H     0.726772343584     0.000000000000     0.713524551248        2
+        3  H     0.726772343584     0.000000000000    -0.713524551248        3
      ==============================================================================
 
      ==============================================================================
@@ -255,9 +274,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.120298666531     0.000000000000     0.000000000000        1
-        2  H     1.373400684282     0.000000000000     1.348365985011        2
-        3  H     1.373400684282     0.000000000000    -1.348365985011        3
+        1  O     0.120298666529     0.000000000000    -0.000000000000        1
+        2  H     1.373400684283     0.000000000000     1.348365985012        2
+        3  H     1.373400684283     0.000000000000    -1.348365985012        3
      ==============================================================================
 
   - Molecular orbital details:
@@ -265,6 +284,37 @@
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -75.874966538419
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - SCF solver settings:
 
@@ -276,19 +326,6 @@
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
-  - Setting initial AO density to sad
-
-     Energy of initial guess:               -75.874966538422
-     Number of electrons in guess:           10.000000000000
-
-  - Screening and integral thresholds:
-
-     Coulomb screening threshold:    0.1000E-16
-     Exchange screening threshold:   0.1000E-14
-     ERI cutoff:                     0.1000E-16
-     One-electron integral  cutoff:  0.1000E-21
-     Cumulative Fock threshold:      0.1000E+01
-
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -298,36 +335,41 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.981304588282     0.8093E-01     0.7598E+02
-     2           -76.012406510634     0.5705E-01     0.3110E-01
-     3           -76.022658827777     0.6298E-02     0.1025E-01
-     4           -76.022885679870     0.1734E-02     0.2269E-03
-     5           -76.022910078995     0.2986E-03     0.2440E-04
-     6           -76.022910769929     0.5166E-04     0.6909E-06
-     7           -76.022910794554     0.7282E-05     0.2462E-07
-     8           -76.022910795165     0.1355E-05     0.6117E-09
-     9           -76.022910795187     0.1258E-06     0.2183E-10
-    10           -76.022910795187     0.1202E-07     0.1421E-12
-    11           -76.022910795187     0.1789E-08     0.2842E-13
-    12           -76.022910795187     0.2266E-09     0.1421E-13
-    13           -76.022910795187     0.7098E-10     0.4263E-13
-    14           -76.022910795187     0.8080E-11     0.2842E-13
+     1           -75.981304588275     0.8346E-01     0.7598E+02
+     2           -76.012406510632     0.6586E-01     0.3110E-01
+     3           -76.022680667858     0.5374E-02     0.1027E-01
+     4           -76.022888882194     0.2032E-02     0.2082E-03
+     5           -76.022909857410     0.3330E-03     0.2098E-04
+     6           -76.022910764930     0.5312E-04     0.9075E-06
+     7           -76.022910794307     0.7193E-05     0.2938E-07
+     8           -76.022910795147     0.2260E-05     0.8404E-09
+     9           -76.022910795187     0.1486E-06     0.3941E-10
+    10           -76.022910795187     0.9132E-08     0.1137E-12
+    11           -76.022910795187     0.2488E-08     0.0000E+00
+    12           -76.022910795187     0.4845E-09     0.0000E+00
+    13           -76.022910795187     0.6980E-10     0.1421E-13
+    14           -76.022910795187     0.9888E-11     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.675775768024
-     Nuclear repulsion energy:       9.062934895654
-     Electronic energy:            -85.085845690841
+     HOMO-LUMO gap:                  0.675775768023
+     Nuclear repulsion energy:       9.062934895640
+     Electronic energy:            -85.085845690827
      Total energy:                 -76.022910795187
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              1.04900
+     Total cpu time (sec):               1.49935
 
      Molecular gradient (Hartree/bohr)
   =============================================
           1             2             3
-   1   -0.05769652   -0.00000000    0.00000000
-   2    0.02884826    0.00000000    0.00561935
-   3    0.02884826   -0.00000000   -0.00561935
+   1   -0.05769652    0.00000000    0.00000000
+   2    0.02884826   -0.00000000    0.00561935
+   3    0.02884826    0.00000000   -0.00561935
   =============================================
 
   - Geometry optimization iteration 2:
@@ -340,7 +382,7 @@
 
      Geometry not yet converged. Updating geometry via BFGS-RFO step.
 
-     RF level shift:     -0.007252846888
+     Rational function level shift:     -0.007252846888
 
      Converting internal step to cartesian step:
 
@@ -349,7 +391,7 @@
      1             0.45520E-01
      2             0.30332E-02
      3             0.34401E-05
-     4             0.18618E-10
+     4             0.18617E-10
      -------------------------------------
      Converged in 4 iterations!
 
@@ -357,9 +399,9 @@
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
-     R(1,2)              1.788615913568
-     R(1,3)              1.788615913568
-     A(2,1,3)            1.793926148332
+     R(1,2)              1.788615913567
+     R(1,3)              1.788615913567
+     A(2,1,3)            1.793926148333
      ------------------------------------------------------------
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
@@ -374,7 +416,7 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.112001669502     0.000000000000    -0.000000000000        1
+        1  O     0.112001669503     0.000000000000    -0.000000000000        1
         2  H     0.702601165249     0.000000000000     0.739624638063        2
         3  H     0.702601165249     0.000000000000    -0.739624638063        3
      ==============================================================================
@@ -385,9 +427,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.211652480853     0.000000000000    -0.000000000000        1
-        2  H     1.327723777121     0.000000000000     1.397688000920        2
-        3  H     1.327723777121     0.000000000000    -1.397688000920        3
+        1  O     0.211652480854     0.000000000000    -0.000000000000        1
+        2  H     1.327723777120     0.000000000000     1.397688000920        2
+        3  H     1.327723777120     0.000000000000    -1.397688000920        3
      ==============================================================================
 
   - Molecular orbital details:
@@ -396,15 +438,23 @@
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
 
-  - SCF solver settings:
 
-     Maximum iterations:                   100
-     Acceleration type:                   diis
+  :: Hartree-Fock engine
+  =========================
 
-  - Convergence thresholds
+  Drives the calculation of the Hartree-Fock state.
 
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
 
   - Setting initial AO density to sad
 
@@ -419,6 +469,16 @@
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -428,35 +488,40 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.987627278805     0.8033E-01     0.7599E+02
-     2           -76.017631699819     0.5339E-01     0.3000E-01
-     3           -76.026747042358     0.5672E-02     0.9115E-02
-     4           -76.026944589088     0.1361E-02     0.1975E-03
-     5           -76.026960493698     0.2519E-03     0.1590E-04
-     6           -76.026960887159     0.4797E-04     0.3935E-06
-     7           -76.026960900015     0.3106E-05     0.1286E-07
-     8           -76.026960900183     0.9703E-06     0.1681E-09
-     9           -76.026960900195     0.1373E-06     0.1185E-10
-    10           -76.026960900195     0.1114E-07     0.1563E-12
-    11           -76.026960900195     0.1467E-08     0.0000E+00
-    12           -76.026960900195     0.9751E-10     0.4263E-13
-    13           -76.026960900195     0.2649E-10     0.4263E-13
-    14           -76.026960900195     0.4013E-11     0.7105E-13
+     1           -75.987627278799     0.8828E-01     0.7599E+02
+     2           -76.017631699817     0.6170E-01     0.3000E-01
+     3           -76.026763991611     0.4995E-02     0.9132E-02
+     4           -76.026946347270     0.1616E-02     0.1824E-03
+     5           -76.026960365161     0.2948E-03     0.1402E-04
+     6           -76.026960885331     0.4262E-04     0.5202E-06
+     7           -76.026960899951     0.3867E-05     0.1462E-07
+     8           -76.026960900179     0.1183E-05     0.2274E-09
+     9           -76.026960900195     0.1833E-06     0.1620E-10
+    10           -76.026960900195     0.1152E-07     0.1990E-12
+    11           -76.026960900195     0.2306E-08     0.2842E-13
+    12           -76.026960900195     0.6206E-09     0.1421E-13
+    13           -76.026960900195     0.7367E-10     0.1421E-13
+    14           -76.026960900195     0.6326E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681513142150
-     Nuclear repulsion energy:       9.303198039571
-     Electronic energy:            -85.330158939766
+     HOMO-LUMO gap:                  0.681513142151
+     Nuclear repulsion energy:       9.303198039575
+     Electronic energy:            -85.330158939770
      Total energy:                 -76.026960900195
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.94300
+     Total cpu time (sec):               1.37723
 
      Molecular gradient (Hartree/bohr)
   =============================================
           1             2             3
    1   -0.00418818   -0.00000000   -0.00000000
-   2    0.00209409    0.00000000   -0.00262130
+   2    0.00209409   -0.00000000   -0.00262130
    3    0.00209409    0.00000000    0.00262130
   =============================================
 
@@ -470,7 +535,7 @@
 
      Geometry not yet converged. Updating geometry via BFGS-RFO step.
 
-     RF level shift:     -0.000158694278
+     Rational function level shift:     -0.000158694278
 
      Converting internal step to cartesian step:
 
@@ -486,9 +551,9 @@
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
-     R(1,2)              1.786919690942
-     R(1,3)              1.786919690942
-     A(2,1,3)            1.821472003734
+     R(1,2)              1.786919690940
+     R(1,3)              1.786919690940
+     A(2,1,3)            1.821472003730
      ------------------------------------------------------------
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
@@ -503,9 +568,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.119196914891     0.000000000000     0.000000000000        1
-        2  H     0.699003542554     0.000000000000     0.746979449463        2
-        3  H     0.699003542554     0.000000000000    -0.746979449463        3
+        1  O     0.119196914890     0.000000000000     0.000000000000        1
+        2  H     0.699003542555     0.000000000000     0.746979449461        2
+        3  H     0.699003542555     0.000000000000    -0.746979449461        3
      ==============================================================================
 
      ==============================================================================
@@ -514,9 +579,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.225249524037     0.000000000000     0.000000000000        1
-        2  H     1.320925255529     0.000000000000     1.411586580163        2
-        3  H     1.320925255529     0.000000000000    -1.411586580163        3
+        1  O     0.225249524036     0.000000000000     0.000000000000        1
+        2  H     1.320925255529     0.000000000000     1.411586580160        2
+        3  H     1.320925255529     0.000000000000    -1.411586580160        3
      ==============================================================================
 
   - Molecular orbital details:
@@ -525,15 +590,23 @@
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
 
-  - SCF solver settings:
 
-     Maximum iterations:                   100
-     Acceleration type:                   diis
+  :: Hartree-Fock engine
+  =========================
 
-  - Convergence thresholds
+  Drives the calculation of the Hartree-Fock state.
 
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
 
   - Setting initial AO density to sad
 
@@ -548,6 +621,16 @@
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -557,36 +640,41 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.987950352164     0.8042E-01     0.7599E+02
-     2           -76.017800381805     0.5317E-01     0.2985E-01
-     3           -76.026839139065     0.5626E-02     0.9039E-02
-     4           -76.027034874115     0.1323E-02     0.1957E-03
-     5           -76.027050008041     0.2445E-03     0.1513E-04
-     6           -76.027050372836     0.4710E-04     0.3648E-06
-     7           -76.027050384487     0.2441E-05     0.1165E-07
-     8           -76.027050384613     0.8527E-06     0.1257E-09
-     9           -76.027050384623     0.1402E-06     0.9805E-11
-    10           -76.027050384623     0.1217E-07     0.9948E-13
-    11           -76.027050384623     0.1433E-08     0.0000E+00
-    12           -76.027050384623     0.9049E-10     0.5684E-13
-    13           -76.027050384623     0.2374E-10     0.8527E-13
-    14           -76.027050384623     0.5929E-11     0.4263E-13
+     1           -75.987950352158     0.8827E-01     0.7599E+02
+     2           -76.017800381803     0.6144E-01     0.2985E-01
+     3           -76.026856093752     0.4969E-02     0.9056E-02
+     4           -76.027036490755     0.1584E-02     0.1804E-03
+     5           -76.027049887882     0.2937E-03     0.1340E-04
+     6           -76.027050371390     0.4067E-04     0.4835E-06
+     7           -76.027050384439     0.3695E-05     0.1305E-07
+     8           -76.027050384610     0.9604E-06     0.1708E-09
+     9           -76.027050384622     0.1872E-06     0.1219E-10
+    10           -76.027050384623     0.1304E-07     0.2984E-12
+    11           -76.027050384623     0.2292E-08     0.1421E-13
+    12           -76.027050384623     0.6592E-09     0.4263E-13
+    13           -76.027050384623     0.7751E-10     0.5684E-13
+    14           -76.027050384623     0.6242E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681535940308
-     Nuclear repulsion energy:       9.308167197062
-     Electronic energy:            -85.335217581684
+     HOMO-LUMO gap:                  0.681535940313
+     Nuclear repulsion energy:       9.308167197068
+     Electronic energy:            -85.335217581691
      Total energy:                 -76.027050384623
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.83700
+     Total cpu time (sec):               1.30132
 
      Molecular gradient (Hartree/bohr)
   =============================================
           1             2             3
-   1    0.00038063   -0.00000000    0.00000000
-   2   -0.00019031   -0.00000000   -0.00104194
-   3   -0.00019031    0.00000000    0.00104194
+   1    0.00038063    0.00000000    0.00000000
+   2   -0.00019031    0.00000000   -0.00104194
+   3   -0.00019031   -0.00000000    0.00104194
   =============================================
 
   - Geometry optimization iteration 4:
@@ -599,7 +687,7 @@
 
      Geometry not yet converged. Updating geometry via BFGS-RFO step.
 
-     RF level shift:     -0.000006014157
+     Rational function level shift:     -0.000006014157
 
      Converting internal step to cartesian step:
 
@@ -615,9 +703,9 @@
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
-     R(1,2)              1.788129174747
-     R(1,3)              1.788129174747
-     A(2,1,3)            1.825757120290
+     R(1,2)              1.788129174743
+     R(1,3)              1.788129174743
+     A(2,1,3)            1.825757120284
      ------------------------------------------------------------
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
@@ -633,8 +721,8 @@
      ==============================================================================
         Basis: cc-pvdz
         1  O     0.120003859096     0.000000000000    -0.000000000000        1
-        2  H     0.698600070452     0.000000000000     0.748726439206        2
-        3  H     0.698600070452     0.000000000000    -0.748726439206        3
+        2  H     0.698600070452     0.000000000000     0.748726439203        2
+        3  H     0.698600070452     0.000000000000    -0.748726439203        3
      ==============================================================================
 
      ==============================================================================
@@ -643,9 +731,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.226774427583     0.000000000000    -0.000000000000        1
-        2  H     1.320162803756     0.000000000000     1.414887912320        2
-        3  H     1.320162803756     0.000000000000    -1.414887912320        3
+        1  O     0.226774427582     0.000000000000    -0.000000000000        1
+        2  H     1.320162803756     0.000000000000     1.414887912315        2
+        3  H     1.320162803756     0.000000000000    -1.414887912315        3
      ==============================================================================
 
   - Molecular orbital details:
@@ -653,6 +741,37 @@
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -75.916777181590
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - SCF solver settings:
 
@@ -664,19 +783,6 @@
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
-  - Setting initial AO density to sad
-
-     Energy of initial guess:               -75.916777181587
-     Number of electrons in guess:           10.000000000000
-
-  - Screening and integral thresholds:
-
-     Coulomb screening threshold:    0.1000E-16
-     Exchange screening threshold:   0.1000E-14
-     ERI cutoff:                     0.1000E-16
-     One-electron integral  cutoff:  0.1000E-21
-     Cumulative Fock threshold:      0.1000E+01
-
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -686,36 +792,41 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.987967337461     0.8047E-01     0.7599E+02
-     2           -76.017797535009     0.5320E-01     0.2983E-01
-     3           -76.026841933655     0.5635E-02     0.9044E-02
-     4           -76.027038024723     0.1322E-02     0.1961E-03
-     5           -76.027053132071     0.2439E-03     0.1511E-04
-     6           -76.027053494721     0.4701E-04     0.3627E-06
-     7           -76.027053506242     0.2474E-05     0.1152E-07
-     8           -76.027053506362     0.8351E-06     0.1203E-09
-     9           -76.027053506372     0.1409E-06     0.9479E-11
-    10           -76.027053506372     0.1241E-07     0.1137E-12
-    11           -76.027053506372     0.1435E-08     0.1421E-13
-    12           -76.027053506372     0.8956E-10     0.1421E-13
-    13           -76.027053506372     0.2469E-10     0.2842E-13
-    14           -76.027053506372     0.7126E-11     0.4263E-13
+     1           -75.987967337455     0.8828E-01     0.7599E+02
+     2           -76.017797535007     0.6148E-01     0.2983E-01
+     3           -76.026859051744     0.4977E-02     0.9062E-02
+     4           -76.027039631105     0.1587E-02     0.1806E-03
+     5           -76.027053012441     0.2948E-03     0.1338E-04
+     6           -76.027053493336     0.4038E-04     0.4809E-06
+     7           -76.027053506196     0.3670E-05     0.1286E-07
+     8           -76.027053506360     0.9268E-06     0.1635E-09
+     9           -76.027053506372     0.1880E-06     0.1182E-10
+    10           -76.027053506372     0.1337E-07     0.2132E-12
+    11           -76.027053506372     0.2301E-08     0.4263E-13
+    12           -76.027053506372     0.6695E-09     0.1421E-13
+    13           -76.027053506372     0.7850E-10     0.1421E-13
+    14           -76.027053506372     0.6310E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681349048138
-     Nuclear repulsion energy:       9.301284300325
-     Electronic energy:            -85.328337806697
+     HOMO-LUMO gap:                  0.681349048144
+     Nuclear repulsion energy:       9.301284300343
+     Electronic energy:            -85.328337806715
      Total energy:                 -76.027053506372
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              1.03500
+     Total cpu time (sec):               1.53150
 
      Molecular gradient (Hartree/bohr)
   =============================================
           1             2             3
-   1    0.00005429    0.00000000   -0.00000000
-   2   -0.00002714   -0.00000000   -0.00005436
-   3   -0.00002714    0.00000000    0.00005436
+   1    0.00005429   -0.00000000    0.00000000
+   2   -0.00002714    0.00000000   -0.00005436
+   3   -0.00002714   -0.00000000    0.00005436
   =============================================
 
   - Geometry optimization iteration 5:
@@ -728,7 +839,7 @@
 
      Geometry not yet converged. Updating geometry via BFGS-RFO step.
 
-     RF level shift:     -0.000000012636
+     Rational function level shift:     -0.000000012636
 
      Converting internal step to cartesian step:
 
@@ -743,9 +854,9 @@
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
-     R(1,2)              1.788219607727
-     R(1,3)              1.788219607727
-     A(2,1,3)            1.825845300182
+     R(1,2)              1.788219607723
+     R(1,3)              1.788219607723
+     A(2,1,3)            1.825845300177
      ------------------------------------------------------------
 
   - Cholesky decomposition of AO overlap to get linearly independent AOs:
@@ -760,9 +871,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.120006360144     0.000000000000     0.000000000000        1
-        2  H     0.698598819928     0.000000000000     0.748789816192        2
-        3  H     0.698598819928     0.000000000000    -0.748789816192        3
+        1  O     0.120006360144     0.000000000000    -0.000000000000        1
+        2  H     0.698598819928     0.000000000000     0.748789816189        2
+        3  H     0.698598819928     0.000000000000    -0.748789816189        3
      ==============================================================================
 
      ==============================================================================
@@ -771,9 +882,9 @@
         Atom           X                  Y                  Z         # in input
      ==============================================================================
         Basis: cc-pvdz
-        1  O     0.226779153878     0.000000000000     0.000000000000        1
-        2  H     1.320160440608     0.000000000000     1.415007677466        2
-        3  H     1.320160440608     0.000000000000    -1.415007677466        3
+        1  O     0.226779153877     0.000000000000    -0.000000000000        1
+        2  H     1.320160440609     0.000000000000     1.415007677460        2
+        3  H     1.320160440609     0.000000000000    -1.415007677460        3
      ==============================================================================
 
   - Molecular orbital details:
@@ -781,6 +892,37 @@
      Number of occupied orbitals:         5
      Number of virtual orbitals:         19
      Number of molecular orbitals:       24
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -75.916678651844
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
 
   - SCF solver settings:
 
@@ -792,19 +934,6 @@
      Residual threshold:            0.1000E-10
      Energy threshold:              0.1000E-10
 
-  - Setting initial AO density to sad
-
-     Energy of initial guess:               -75.916678651841
-     Number of electrons in guess:           10.000000000000
-
-  - Screening and integral thresholds:
-
-     Coulomb screening threshold:    0.1000E-16
-     Exchange screening threshold:   0.1000E-14
-     ERI cutoff:                     0.1000E-16
-     One-electron integral  cutoff:  0.1000E-21
-     Cumulative Fock threshold:      0.1000E+01
-
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -814,36 +943,41 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.987966668392     0.8048E-01     0.7599E+02
-     2           -76.017796627208     0.5321E-01     0.2983E-01
-     3           -76.026841900765     0.5636E-02     0.9045E-02
-     4           -76.027038027686     0.1322E-02     0.1961E-03
-     5           -76.027053138417     0.2439E-03     0.1511E-04
-     6           -76.027053501112     0.4701E-04     0.3627E-06
-     7           -76.027053512632     0.2475E-05     0.1152E-07
-     8           -76.027053512753     0.8349E-06     0.1203E-09
-     9           -76.027053512762     0.1410E-06     0.9507E-11
-    10           -76.027053512762     0.1242E-07     0.1279E-12
-    11           -76.027053512762     0.1436E-08     0.9948E-13
-    12           -76.027053512762     0.8954E-10     0.1421E-13
-    13           -76.027053512762     0.2472E-10     0.4263E-13
-    14           -76.027053512762     0.7161E-11     0.0000E+00
+     1           -75.987966668386     0.8828E-01     0.7599E+02
+     2           -76.017796627206     0.6149E-01     0.2983E-01
+     3           -76.026859029570     0.4977E-02     0.9062E-02
+     4           -76.027039634338     0.1587E-02     0.1806E-03
+     5           -76.027053018768     0.2949E-03     0.1338E-04
+     6           -76.027053499729     0.4037E-04     0.4810E-06
+     7           -76.027053512587     0.3670E-05     0.1286E-07
+     8           -76.027053512750     0.9263E-06     0.1633E-09
+     9           -76.027053512762     0.1881E-06     0.1177E-10
+    10           -76.027053512762     0.1338E-07     0.2558E-12
+    11           -76.027053512762     0.2302E-08     0.0000E+00
+    12           -76.027053512762     0.6699E-09     0.2842E-13
+    13           -76.027053512762     0.7853E-10     0.5684E-13
+    14           -76.027053512762     0.6312E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.681336848902
-     Nuclear repulsion energy:       9.300801881247
-     Electronic energy:            -85.327855394010
+     HOMO-LUMO gap:                  0.681336848908
+     Nuclear repulsion energy:       9.300801881267
+     Electronic energy:            -85.327855394029
      Total energy:                 -76.027053512762
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.98700
+     Total cpu time (sec):               1.55173
 
      Molecular gradient (Hartree/bohr)
   =============================================
           1             2             3
-   1    0.00000160    0.00000000    0.00000000
+   1    0.00000160    0.00000000   -0.00000000
    2   -0.00000080   -0.00000000   -0.00000065
-   3   -0.00000080    0.00000000    0.00000065
+   3   -0.00000080   -0.00000000    0.00000065
   =============================================
 
   - Geometry optimization iteration 6:
@@ -869,24 +1003,24 @@
 
      Molecular geometry (in redundant internal coordinates):
      ------------------------------------------------------------
-     R(1,2)              1.788219607727
-     R(1,3)              1.788219607727
-     A(2,1,3)            1.825845300182
+     R(1,2)              1.788219607723
+     R(1,3)              1.788219607723
+     A(2,1,3)            1.825845300177
      ------------------------------------------------------------
 
   - Timings for the RHF geometry optimization calculation
 
-     Total wall time (sec):              1.09800
-     Total cpu time (sec):               1.97778
+     Total wall time (sec):              6.72500
+     Total cpu time (sec):              10.16828
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 269.528 KB
 
-  Total wall time in eT (sec):              1.12300
-  Total cpu time in eT (sec):               2.00338
+  Total wall time in eT (sec):              6.76800
+  Total cpu time in eT (sec):              10.21004
 
-  Calculation ended: 2021-10-05 16:18:42 UTC +02:00
+  Calculation ended: 2022-02-01 16:07:59 UTC +01:00
 
   - Implementation references:
 

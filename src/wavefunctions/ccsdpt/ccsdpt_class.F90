@@ -116,6 +116,8 @@ contains
 !!
       use batching_index_class, only: batching_index
       use reordering, only: squareup_and_sort_1234_to_1324
+      use eri_tool_class, only: eri_tool
+      use eri_adapter_class, only: eri_adapter
 !
       implicit none
 !
@@ -163,10 +165,14 @@ contains
       integer :: req_0, req_i, req_1, req_2, req_3, req_1_eri
       integer :: req_single_batch
 !
+      type(eri_adapter), allocatable :: eri
+!
       type(timings) :: ccsdpt_timer
 !
       ccsdpt_timer = timings('CCSD(T) correction', pl='m')
       call ccsdpt_timer%turn_on()
+!
+      eri = eri_adapter(eri_tool(wf%L_mo), wf%n_o, wf%n_v)
 !
       wf%ccsdpt_energy_correction = zero
 !
@@ -248,21 +254,21 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call wf%setup_vvvo(g_bdci, g_bdci_p, sorted, batch_i, mo=.true.)
+         call wf%setup_vvvo(eri, g_bdci, g_bdci_p, sorted, batch_i)
 !
          do j_batch = 1, i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%setup_oovo(g_ljci, g_ljci_p, sorted, batch_j, batch_i, mo=.true.)
+            call wf%setup_oovo(eri, g_ljci, g_ljci_p, sorted, batch_j, batch_i)
 !
-            call wf%setup_ovov(g_ibjc, g_ibjc_p, sorted, batch_i, batch_j, mo=.true.)
+            call wf%setup_ovov(eri, g_ibjc, g_ibjc_p, sorted, batch_i, batch_j)
 !
             if (j_batch .ne. i_batch) then
 !
-               call wf%setup_vvvo(g_bdcj, g_bdcj_p, sorted, batch_j, mo=.true.)
+               call wf%setup_vvvo(eri, g_bdcj, g_bdcj_p, sorted, batch_j)
 !
-               call wf%setup_oovo(g_licj, g_licj_p, sorted, batch_i, batch_j, mo=.true.)
+               call wf%setup_oovo(eri, g_licj, g_licj_p, sorted, batch_i, batch_j)
 !
             else
 !
@@ -278,15 +284,15 @@ contains
 !
                if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
-                  call wf%setup_vvvo(g_bdck, g_bdck_p, sorted, batch_k, mo=.true.)
+                  call wf%setup_vvvo(eri, g_bdck, g_bdck_p, sorted, batch_k)
 !
-                  call wf%setup_oovo(g_lick, g_lick_p, sorted, batch_i, batch_k, mo=.true.)
-                  call wf%setup_oovo(g_ljck, g_ljck_p, sorted, batch_j, batch_k, mo=.true.)
-                  call wf%setup_oovo(g_lkci, g_lkci_p, sorted, batch_k, batch_i, mo=.true.)
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorted, batch_k, batch_j, mo=.true.)
+                  call wf%setup_oovo(eri, g_lick, g_lick_p, sorted, batch_i, batch_k)
+                  call wf%setup_oovo(eri, g_ljck, g_ljck_p, sorted, batch_j, batch_k)
+                  call wf%setup_oovo(eri, g_lkci, g_lkci_p, sorted, batch_k, batch_i)
+                  call wf%setup_oovo(eri, g_lkcj, g_lkcj_p, sorted, batch_k, batch_j)
 !
-                  call wf%setup_ovov(g_ibkc, g_ibkc_p, sorted, batch_i, batch_k, mo=.true.)
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorted, batch_j, batch_k, mo=.true.)
+                  call wf%setup_ovov(eri, g_ibkc, g_ibkc_p, sorted, batch_i, batch_k)
+                  call wf%setup_ovov(eri, g_jbkc, g_jbkc_p, sorted, batch_j, batch_k)
 !
                else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
@@ -304,12 +310,12 @@ contains
 !
                   call wf%point_vvvo(g_bdck_p, g_bdcj, batch_k%length)
 !
-                  call wf%setup_oovo(g_lkcj, g_lkcj_p, sorted, batch_k, batch_j, mo=.true.)
+                  call wf%setup_oovo(eri, g_lkcj, g_lkcj_p, sorted, batch_k, batch_j)
                   call wf%point_vooo(g_lick_p, g_licj, batch_i%length, batch_k%length)
                   call wf%point_vooo(g_ljck_p, g_lkcj, batch_j%length, batch_k%length)
                   call wf%point_vooo(g_lkci_p, g_ljci, batch_k%length, batch_i%length)
 !
-                  call wf%setup_ovov(g_jbkc, g_jbkc_p, sorted, batch_j, batch_k, mo=.true.)
+                  call wf%setup_ovov(eri, g_jbkc, g_jbkc_p, sorted, batch_j, batch_k)
                   call wf%point_vvoo(g_ibkc_p, g_ibjc, batch_i%length, batch_k%length)
 !
                endif
@@ -632,18 +638,14 @@ contains
 !
       integer, intent(out) :: req0, req1
 !
-      integer :: req_vvvo, req_ovov, req_oovo
+      integer, dimension(2) :: req_vvvo, req_ovov, req_oovo
 !
-      req0  = 0
-      req_vvvo = 0
-      req_ovov = 0
-      req_oovo = 0
+      req_vvvo = wf%eri_t1%get_memory_estimate('vvvo', wf%n_v, wf%n_v, wf%n_v, 1)
+      req_ovov = wf%eri_t1%get_memory_estimate('ovov', 1, wf%n_v, 1, wf%n_v)
+      req_oovo = wf%eri_t1%get_memory_estimate('oovo', wf%n_o, 1, wf%n_v, 1)
 !
-      call wf%eri%get_eri_mo_mem('vvvo', req0, req_vvvo, wf%n_v, wf%n_v, wf%n_v, 1)
-      call wf%eri%get_eri_mo_mem('ovov', req_ovov, req_ovov, 1, wf%n_v, 1, wf%n_v)
-      call wf%eri%get_eri_mo_mem('oovo', req_oovo, req_oovo, wf%n_o, 1, wf%n_v, 1)
-!
-      req1 = max(req_vvvo, req_ovov, req_oovo)
+      req0 = req_vvvo(1)
+      req1 = max(req_vvvo(2), sum(req_ovov), sum(req_oovo))
 !
    end subroutine estimate_mem_integral_setup_ccsdpt
 !

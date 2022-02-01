@@ -270,7 +270,7 @@ contains
 !
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
 !
@@ -881,7 +881,7 @@ contains
 !
          if (state_l .ne. 0) then
 !
-!           "left" GS -> ES Densities < L| E_pq |CC >
+!           "left" GS -> ES Densities < L| E_pq|CC >
 !           -----------------------------------------
 !
             call wf%read_excited_state(L, state_l, state_l, 'left')
@@ -921,7 +921,7 @@ contains
 !
             if (state_l == 0) then
 !
-!              "right" GS -> ES Densities < Lambda| E_pq |R >
+!              "right" GS -> ES Densities < Lambda| E_pq|R >
 !              ----------------------------------------------
 !
                call wf%read_excited_state(R, state_r, state_r, 'right')
@@ -935,7 +935,7 @@ contains
 !
                call wf%read_excited_state(R, state_r, state_r, 'right')
 !
-!              ES -> ES Densities < L| E_pq |R >
+!              ES -> ES Densities < L| E_pq|R >
 !              ---------------------------------
 !
                call wf%construct_es_density(density, state_l, L, &

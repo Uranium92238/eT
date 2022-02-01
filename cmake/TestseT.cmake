@@ -26,12 +26,12 @@ macro(add_eT_runtest _name _labels)
     add_test(
         ${_name}
         python3 ${PROJECT_BINARY_DIR}/tests/${_name}/test --binary-dir=${PROJECT_BINARY_DIR} --work-dir=${PROJECT_BINARY_DIR}/tests/${_name} --verbose)
-   
+
     # add "integration-test" as a label for all integration tests
     string(CONCAT labels "${_labels}" "; integration-test")
-    
+
     set_tests_properties(${_name} PROPERTIES LABELS "${labels}")
-    
+
 endmacro()
 
 # All tests here should contain the label "eT"
@@ -77,6 +77,7 @@ add_eT_runtest(restart_hf                                   "eT;short;hf;restart
 #
 add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
 add_eT_runtest(plot_benzene_mos                             "eT;short;hf;visualization")
+add_eT_runtest(plot_He_orbitals                             "eT;short;hf;visualization;5z")
 add_eT_runtest(plot_ntos_ccs                                "eT;short;ccs;visualization")
 add_eT_runtest(plot_ntos_ccsd                               "eT;short;ccsd;visualization")
 add_eT_runtest(plot_cntos_ccsd                              "eT;short;ccsd;visualization")
@@ -120,6 +121,7 @@ add_eT_runtest(restart_mlhf                                 "eT;short;mlhf;sad;p
 add_eT_runtest(mlhf_active_inactive_basis                   "eT;short;mlhf;basis")
 #
 add_eT_runtest(qed_hf_energy_polarization                   "eT;short;qed_hf")
+add_eT_runtest(qed_hf_energy_no_coherent_state              "eT;short;qed_hf")
 add_eT_runtest(qed_hf_energy_polarization_quadrupole        "eT;short;qed_hf")
 add_eT_runtest(qed_hf_energy_wavevector                     "eT;short;qed_hf")
 add_eT_runtest(qed_hf_energy_wavevector_modes               "eT;short;qed_hf")
@@ -206,7 +208,7 @@ add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eo
 add_eT_runtest(ccsd_cvs_lanczos                             "eT;short;ccsd;es;eom;lanczos;cvs")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_lr_polarizability_transition_moments_nosym "eT;short;ccsd;es;eom")
-add_eT_runtest(ccsd_lr_polarizability_transition_moments       "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_lr_polarizability_transition_moments    "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
@@ -214,6 +216,9 @@ add_eT_runtest(ccsd_es_transition_strengths                 "eT;short;ccsd;es;eo
 add_eT_runtest(ccsd_es_dipole_moments                       "eT;short;ccsd;es;eom;dipole")
 add_eT_runtest(ccsd_es_cvs_properties                       "eT;short;ccsd;es;eom;cvs;dipole")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
+add_eT_runtest(ccsd_cholesky_disk_eri_none                  "eT;short;ccsd;es;eom;disk")
+add_eT_runtest(ccsd_eri_none                                "eT;short;ccsd;es;eom;disk")
+add_eT_runtest(ccsd_cholesky_disk                           "eT;short;ccsd;es;eom;disk")
 add_eT_runtest(ccsd_td_rk4                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_rk4_train                            "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_rk4_many_pulses                      "eT;short;ccsd;complex;td")
@@ -223,6 +228,9 @@ add_eT_runtest(ccsd_td_gl2                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_gl2_gaussian_envelope                "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_cholesky_disk_eri_none               "eT;short;ccsd;complex;td:disk")
+add_eT_runtest(ccsd_td_eri_none                             "eT;short;ccsd;complex;td;disk")
+add_eT_runtest(ccsd_td_cholesky_disk                        "eT;short;ccsd;complex;td;disk")
 add_eT_runtest(ri_ccsd                                      "eT;short;ccsd;ri")
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 add_eT_runtest(restart_ccsd_eom                             "eT;short;ccsd;eom;restart")
@@ -320,4 +328,3 @@ if (NOT ENABLE_FORCED_BATCHING)
    add_eT_runtest(cc3_gs_energy_multimodel_nr               "eT;short;cc3;gs;newton-raphson;multimodel")
    add_eT_runtest(cc3_dipole_nr                             "eT;short;cc3;gs;newton-raphson;dipole")
 endif()
-

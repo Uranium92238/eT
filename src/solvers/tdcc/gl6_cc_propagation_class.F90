@@ -35,7 +35,6 @@ module gl6_cc_propagation_class
    use butcher_tables
    use continuous_output_coefficients
    use memory_manager_class, only: mem
-   use global_out, only: output
    use ccs_class, only: ccs
    use electric_field_class, only: electric_field
    use cc_propagation_class, only: cc_propagation
@@ -108,16 +107,16 @@ contains
 !
    subroutine initializations_gl6_cc_propagation(solver)
 !!
-!!    Initializations 
+!!    Initializations
 !!    Written by Andreas Skedsvoll, Sep 2019
 !!
 !!    Allocates z1, z2, z3 guess and sets them to zero.
 !!
 !!    Moved from constructor, Eirik F. Kjønstad, Jan 2020.
 !!
-      implicit none 
+      implicit none
 !
-      class(gl6_cc_propagation), intent(inout) :: solver 
+      class(gl6_cc_propagation), intent(inout) :: solver
 !
       call mem%alloc(solver%z1_guess, solver%vector_length)
       call mem%alloc(solver%z2_guess, solver%vector_length)
@@ -125,7 +124,7 @@ contains
 !
       solver%z1_guess = zero_complex
       solver%z2_guess = zero_complex
-      solver%z3_guess = zero_complex 
+      solver%z3_guess = zero_complex
 !
    end subroutine initializations_gl6_cc_propagation
 !
@@ -137,6 +136,8 @@ contains
 !!
 !!    Takes one forward gl6 step
 !!
+      use global_out, only: output
+!
       implicit none
 !
       class(gl6_cc_propagation), intent(inout) :: solver
@@ -268,7 +269,7 @@ contains
 !
 !     Calculate guess of next z vectors
 !
-!     solver%z1_guess = ui - uf + dt*beta11_gl6*ddt_u1 + dt*beta12_gl6*ddt_u2 
+!     solver%z1_guess = ui - uf + dt*beta11_gl6*ddt_u1 + dt*beta12_gl6*ddt_u2
 !     + dt*beta13_gl6*ddt_u3
 !
       call zcopy(n, ui, 1, solver%z1_guess, 1)
@@ -277,7 +278,7 @@ contains
       call zaxpy(n, cmplx(dt*beta12_gl6, zero, dp), ddt_u2, 1, solver%z1_guess, 1)
       call zaxpy(n, cmplx(dt*beta13_gl6, zero, dp), ddt_u3, 1, solver%z1_guess, 1)
 !
-!     solver%z2_guess = ui - uf + dt*beta21_gl6*ddt_u1 + dt*beta22_gl6*ddt_u2 
+!     solver%z2_guess = ui - uf + dt*beta21_gl6*ddt_u1 + dt*beta22_gl6*ddt_u2
 !     + dt*beta23_gl6*ddt_u3
 !
       call zcopy(n, ui, 1, solver%z2_guess, 1)

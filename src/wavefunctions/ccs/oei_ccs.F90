@@ -26,7 +26,7 @@ submodule (ccs_class) oei_ccs
 !!    construct t1-transformed one-electron integrals.
 !!
 !
-      implicit none
+   implicit none
 !
 !
 contains

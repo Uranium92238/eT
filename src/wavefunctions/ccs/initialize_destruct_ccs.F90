@@ -112,15 +112,15 @@ contains
 !
    module subroutine destruct_multipliers_ccs(wf)
 !!
-!!    Destruct multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Destruct multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Deallocates the multipliers. This routine must be overwritten in 
-!!    descendants which have more multipliers. 
+!!    Deallocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%destruct_t1bar()
 !
@@ -274,7 +274,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
 !
@@ -288,7 +288,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
 !
@@ -297,7 +297,7 @@ contains
 !
    module subroutine initialize_right_excitation_energies_ccs(wf)
 !!
-!!    Initialize right excitation energies 
+!!    Initialize right excitation energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
@@ -312,7 +312,7 @@ contains
 !
    module subroutine destruct_right_excitation_energies_ccs(wf)
 !!
-!!    Destruct right excitation energies 
+!!    Destruct right excitation energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
@@ -327,7 +327,7 @@ contains
 !
    module subroutine initialize_left_excitation_energies_ccs(wf)
 !!
-!!    Initialize left excitation energies 
+!!    Initialize left excitation energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
@@ -342,7 +342,7 @@ contains
 !
    module subroutine destruct_left_excitation_energies_ccs(wf)
 !!
-!!    Destruct left excitation energies 
+!!    Destruct left excitation energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
@@ -428,7 +428,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       call mem%alloc(wf%r0, wf%n_singlet_states)
 !
@@ -442,7 +442,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       call mem%dealloc(wf%r0, wf%n_singlet_states)
 !

@@ -35,7 +35,6 @@ module gl4_cc_propagation_class
    use butcher_tables
    use continuous_output_coefficients
    use memory_manager_class, only: mem
-   use global_out, only: output
    use ccs_class, only: ccs
    use electric_field_class, only: electric_field
    use cc_propagation_class, only: cc_propagation
@@ -107,22 +106,22 @@ contains
 !
    subroutine initializations_gl4_cc_propagation(solver)
 !!
-!!    Initializations 
+!!    Initializations
 !!    Written by Andreas Skedsvoll, Sep 2019
 !!
 !!    Allocates z1 and z2 guess and sets them to zero.
 !!
 !!    Moved from constructor, Eirik F. Kjønstad, Jan 2020.
 !!
-      implicit none 
+      implicit none
 !
-      class(gl4_cc_propagation), intent(inout) :: solver 
+      class(gl4_cc_propagation), intent(inout) :: solver
 !
       call mem%alloc(solver%z1_guess, solver%vector_length)
       call mem%alloc(solver%z2_guess, solver%vector_length)
 !
       solver%z1_guess = zero_complex
-      solver%z2_guess = zero_complex   
+      solver%z2_guess = zero_complex
 !
    end subroutine initializations_gl4_cc_propagation
 !
@@ -134,6 +133,8 @@ contains
 !!
 !!    Takes one forward gl4 step
 !!
+      use global_out, only: output
+!
       implicit none
 !
       class(gl4_cc_propagation), intent(inout) :: solver
@@ -213,7 +214,7 @@ contains
             converged = .true.
 !
          endif
-! 
+!
 !        Update z vectors
 !
          call zcopy(n, z1_next, 1, z1, 1)

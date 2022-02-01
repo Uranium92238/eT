@@ -22,32 +22,32 @@ module diis_cc_multipliers_class
 !!
 !! DIIS coupled cluster multipliers solver class module
 !! Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!  
-!! Solves the multiplier or left CC ground state equation 
+!!
+!! Solves the multiplier or left CC ground state equation
 !!
 !!    tbar^T A = - eta^T
 !!
-!! for t-bar. Here, A is the coupled cluster Jacobian 
+!! for t-bar. Here, A is the coupled cluster Jacobian
 !!
-!!    A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT,
+!!    A_mu,nu = < mu |[H-bar, tau_nu] | HF >,    H-bar = e-T H eT,
 !!
-!! and 
+!! and
 !!
 !!    eta_mu = < HF | [H-bar, tau_nu] | HF >.
 !!
-!! The multipliers are tbar and give the left CC ground state as 
+!! The multipliers are tbar and give the left CC ground state as
 !!
-!!    < Lambda | = < HF | e-T + sum_mu tbar_mu < mu | e-T 
+!!    < Lambda |= < HF | e-T + sum_mu tbar_mu < mu | e-T
 !!
-!! The equation is solved using the direct inversion of the iterative 
-!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
-!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
-!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
-!! and the errors and finds a least-squares solution to the error being 
-!! zero (see diis_tool solver tool for more details). 
+!! The equation is solved using the direct inversion of the iterative
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett.
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters
+!! and the errors and finds a least-squares solution to the error being
+!! zero (see diis_tool solver tool for more details).
 !!
-!! The update estimates used in DIIS extrapolation are the ones 
-!! resulting from the orbital differences approximation of A 
+!! The update estimates used in DIIS extrapolation are the ones
+!! resulting from the orbital differences approximation of A
 !! (See davidson_cc_es solver for more details.),
 !!
 !!    tbar_mu <- tbar_mu - R_mu/epsilon_mu,
@@ -55,28 +55,25 @@ module diis_cc_multipliers_class
 !! where R_mu = (tbar^T A + eta^T)_mu is the residual vector.
 !!
 !
-   use kinds
-   use parameters 
+   use parameters
+   use ccs_class, only: ccs
    use global_out, only: output
    use timings_class, only: timings
-   use global_in, only: input
-   use array_utilities, only: get_l2_norm
-   use string_utilities, only: convert_to_uppercase
-   use ccs_class, only: ccs 
-   use diis_tool_class, only: diis_tool 
-   use precondition_tool_class, only: precondition_tool 
+   use diis_tool_class, only: diis_tool
+   use precondition_tool_class, only: precondition_tool
    use memory_manager_class, only: mem
+   use abstract_solver_class, only: abstract_solver
    use amplitude_updater_class, only: amplitude_updater
 !
    implicit none
 !
-   type :: diis_cc_multipliers
+   type, extends(abstract_solver) :: diis_cc_multipliers
 !
       character(len=100) :: name_ = 'DIIS coupled cluster multipliers solver'
 !
       character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
                                            &perturbation theory estimate of the next multipliers, using &
-                                           &least square fitting to find an an optimal combination of &  
+                                           &least square fitting to find an an optimal combination of &
                                            &previous estimates such that the update is minimized.'
 !
       character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
@@ -92,19 +89,20 @@ module diis_cc_multipliers_class
 !
       class(amplitude_updater), allocatable :: tbar_updater
 !
-      class(precondition_tool), allocatable :: preconditioner 
+      class(precondition_tool), allocatable :: preconditioner
 !
       type(diis_tool), allocatable :: diis
 !
+      class(ccs), pointer :: wf
+!
    contains
-!     
+!
       procedure :: run                      => run_diis_cc_multipliers
       procedure :: cleanup                  => cleanup_diis_cc_multipliers
 !
       procedure :: read_settings            => read_settings_diis_cc_multipliers
 !
       procedure :: print_banner             => print_banner_diis_cc_multipliers
-      procedure, nopass :: print_summary    => print_summary_diis_cc_multipliers
 !
       procedure :: print_settings           => print_settings_diis_cc_multipliers
 !
@@ -121,16 +119,18 @@ module diis_cc_multipliers_class
 contains
 !
 !
-   function new_diis_cc_multipliers(wf, restart, tbar_updater) result(solver)
+   function new_diis_cc_multipliers(wf, restart, tbar_updater) result(this)
 !!
-!!    Prepare 
+!!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
-      type(diis_cc_multipliers) :: solver
+      type(diis_cc_multipliers) :: this
 !
-      class(ccs) :: wf
+      class(ccs), target :: wf
 !
       logical, intent(in) :: restart
 !
@@ -139,97 +139,99 @@ contains
       logical :: records_in_memory, crop
       integer :: diis_dimension
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
-      call solver%timer%turn_on()
+      this%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
+      call this%timer%turn_on()
 !
 !     Print solver banner
 !
-      call solver%print_banner()
+      call this%print_banner()
 !
 !     Set default settings
 !
-      solver%max_iterations      = 100
-      solver%residual_threshold  = 1.0d-5
-      solver%restart             = restart
+      this%max_iterations      = 100
+      this%residual_threshold  = 1.0d-5
+      this%restart             = restart
 !
       records_in_memory   = .false.
       diis_dimension      = 8
       crop                = .false.
 !
-      call solver%read_settings(records_in_memory, crop, diis_dimension)
-      call solver%print_settings()
+      call this%read_settings(records_in_memory, crop, diis_dimension)
+      call this%print_settings()
 !
-      solver%tbar_updater = tbar_updater
+      this%tbar_updater = tbar_updater
 !
-      solver%diis = diis_tool('cc_multipliers_diis',      &
-                               wf%n_gs_amplitudes,        &
-                               wf%n_gs_amplitudes,        &
-                               dimension_=diis_dimension, &
-                               crop=crop,                 &
-                               records_in_memory=records_in_memory)
+      this%diis = diis_tool('cc_multipliers_diis',     &
+                            wf%n_gs_amplitudes,        &
+                            wf%n_gs_amplitudes,        &
+                            dimension_=diis_dimension, &
+                            crop=crop,                 &
+                            records_in_memory=records_in_memory)
+!
+      this%wf => wf
 !
    end function new_diis_cc_multipliers
 !
 !
-   subroutine print_settings_diis_cc_multipliers(solver)
+   subroutine print_settings_diis_cc_multipliers(this)
 !!
-!!    Print settings    
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_multipliers) :: solver 
+      class(diis_cc_multipliers) :: this
 !
       call output%printf('m', '- DIIS CC multipliers solver settings:', fs='(/t3,a)')
 !
       call output%printf('m', 'Residual threshold:       (e9.2)', &
-                         reals=[solver%residual_threshold], fs='(/t6,a)')
+                         reals=[this%residual_threshold], fs='(/t6,a)')
 !
       call output%printf('m', 'Max number of iterations: (i9)', &
-                         ints=[solver%max_iterations], fs='(t6,a)')
+                         ints=[this%max_iterations], fs='(t6,a)')
 !
    end subroutine print_settings_diis_cc_multipliers
 !
 !
-   subroutine run_diis_cc_multipliers(solver, wf)
+   subroutine run_diis_cc_multipliers(this)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use array_utilities, only: get_l2_norm
+!
       implicit none
 !
-      class(diis_cc_multipliers) :: solver
+      class(diis_cc_multipliers), intent(inout) :: this
 !
-      class(ccs) :: wf
-!
-      logical :: converged_residual 
+      logical :: converged_residual
 !
       real(dp) :: residual_norm
 !
-      real(dp), dimension(:), allocatable :: residual  
+      real(dp), dimension(:), allocatable :: residual
       real(dp), dimension(:), allocatable :: multipliers
-      real(dp), dimension(:), allocatable :: epsilon  
+      real(dp), dimension(:), allocatable :: epsilon
 !
       integer :: iteration
 !
-      call wf%initialize_multipliers()
-      call wf%prepare_for_multiplier_equation()
+      call this%wf%initialize_multipliers()
+      call this%wf%prepare_for_multiplier_equation()
 !
-      call solver%diis%initialize()
+      call this%diis%initialize()
 !
-      call mem%alloc(residual, wf%n_gs_amplitudes)
-      call mem%alloc(multipliers, wf%n_gs_amplitudes)
-      call mem%alloc(epsilon, wf%n_gs_amplitudes)
+      call mem%alloc(residual, this%wf%n_gs_amplitudes)
+      call mem%alloc(multipliers, this%wf%n_gs_amplitudes)
+      call mem%alloc(epsilon, this%wf%n_gs_amplitudes)
 !
-      call wf%get_orbital_differences(epsilon, wf%n_gs_amplitudes)
+      call this%wf%get_orbital_differences(epsilon, this%wf%n_gs_amplitudes)
 !
-!     Initialize preconditioner 
+!     Initialize preconditioner
 !
-      solver%preconditioner = precondition_tool(wf%n_gs_amplitudes)
-      call solver%preconditioner%initialize_and_set_precondition_vector(epsilon)
+      this%preconditioner = precondition_tool(this%wf%n_gs_amplitudes)
+      call this%preconditioner%initialize_and_set_precondition_vector(epsilon)
 !
-      call wf%set_initial_multipliers_guess(solver%restart)
-      call wf%get_multipliers(multipliers) 
+      call this%wf%set_initial_multipliers_guess(this%restart)
+      call this%wf%get_multipliers(multipliers)
 !
       converged_residual = .false.
 !
@@ -238,18 +240,18 @@ contains
 !
       iteration   = 1
 !
-      do while (.not. converged_residual .and. iteration .le. solver%max_iterations)         
+      do while (.not. converged_residual .and. iteration .le. this%max_iterations)
 !
-!        Construct the multiplier equations 
+!        Construct the multiplier equations
 !
-         call wf%construct_multiplier_equation(residual)
-         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
+         call this%wf%construct_multiplier_equation(residual)
+         residual_norm = get_l2_norm(residual, this%wf%n_gs_amplitudes)
 !
          call output%printf('n', '(i3)         (e11.4)', ints=[iteration], reals=[residual_norm])
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
-         converged_residual = residual_norm .lt. solver%residual_threshold
+         converged_residual = residual_norm .lt. this%residual_threshold
 !
          if (converged_residual) then
 !
@@ -259,16 +261,16 @@ contains
 !
          else
 !
-!           Get next guess for multipliers, and perform DIIS extrapolation on it 
+!           Get next guess for multipliers, and perform DIIS extrapolation on it
 !
-            call wf%get_multipliers(multipliers)
+            call this%wf%get_multipliers(multipliers)
 !
-            call solver%tbar_updater%update(wf, multipliers, residual)
+            call this%tbar_updater%update(this%wf, multipliers, residual)
 !
-            call solver%diis%update(residual, multipliers)
+            call this%diis%update(residual, multipliers)
 !
-            call wf%set_multipliers(multipliers)
-            call wf%save_multipliers()
+            call this%wf%set_multipliers(multipliers)
+            call this%wf%save_multipliers()
 !
          endif
 !
@@ -276,107 +278,86 @@ contains
 !
       enddo
 !
-      if (.not. converged_residual) then 
-!   
+      if (.not. converged_residual) then
+!
          call output%print_separator('m', 63,'-', fs='(t3,a)')
          call output%error_msg('was not able to converge the equations      &
                                  &in the given number of maximum iterations.')
 !
-      else
+      endif
 !
-         call solver%print_summary(wf, multipliers)
+      call mem%dealloc(residual, this%wf%n_gs_amplitudes)
+      call mem%dealloc(multipliers, this%wf%n_gs_amplitudes)
+      call mem%dealloc(epsilon, this%wf%n_gs_amplitudes)
 !
-      endif 
-!
-      call mem%dealloc(residual, wf%n_gs_amplitudes)
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
-!
-      call solver%diis%finalize()
+      call this%diis%finalize()
 !
    end subroutine run_diis_cc_multipliers
 !
 !
-   subroutine cleanup_diis_cc_multipliers(solver, wf)
+   subroutine cleanup_diis_cc_multipliers(this)
 !!
-!! 	Cleanup 
+!! 	Cleanup
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_multipliers) :: solver
-      class(ccs) :: wf
+      class(diis_cc_multipliers), intent(inout) :: this
 !
-      call solver%preconditioner%destruct_precondition_vector()
-      call wf%save_multipliers()
+      call this%preconditioner%destruct_precondition_vector()
+      call this%wf%save_multipliers()
 !
-      call solver%timer%turn_off()
+      call this%timer%turn_off()
 !
-      call output%printf('n', '- Finished solving the ' // trim(wf%name_) // &
+      call output%printf('n', '- Finished solving the ' // trim(this%wf%name_) // &
                          ' multipliers equations', fs='(/t3, a)')
 !
       call output%printf('n', 'Total wall time (sec): (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('n', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_diis_cc_multipliers
 !
 !
-   subroutine print_banner_diis_cc_multipliers(solver)
+   subroutine print_banner_diis_cc_multipliers(this)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(diis_cc_multipliers) :: solver 
+      class(diis_cc_multipliers) :: this
 !
-      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+      call output%printf('m', ' - ' // trim(this%name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(this%name_)) + 6, '-')
 !
-      call output%printf('m', solver%description1, ffs='(/t3,a)')
-      call output%printf('m', solver%description2, ffs='(/t3,a)')
+      call output%printf('m', this%description1, ffs='(/t3,a)')
+      call output%printf('m', this%description2, ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_multipliers
 !
 !
-   subroutine print_summary_diis_cc_multipliers(wf, X)
+   subroutine read_settings_diis_cc_multipliers(this, records_in_memory, crop, diis_dimension)
 !!
-!!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      use global_in, only: input
 !
-      class(ccs), intent(in) :: wf 
+      implicit none
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: X
-!
-      call output%printf('m', '- DIIS CC multipliers solver summary:', fs='(/t3,a)')
-!
-      call wf%print_dominant_x_amplitudes(X, 'tbar')
-!
-   end subroutine print_summary_diis_cc_multipliers
-!
-!
-   subroutine read_settings_diis_cc_multipliers(solver, records_in_memory, crop, diis_dimension)
-!!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-      implicit none 
-!
-      class(diis_cc_multipliers) :: solver 
+      class(diis_cc_multipliers) :: this
       logical, intent(inout)     :: records_in_memory, crop
       integer, intent(inout)     :: diis_dimension
 !
-      call input%get_keyword('threshold',                         & 
+      call input%get_keyword('threshold',                         &
                                         'solver cc multipliers',  &
-                                        solver%residual_threshold)
+                                        this%residual_threshold)
 !
       call input%get_keyword('max iterations',                    &
                                         'solver cc multipliers',  &
-                                        solver%max_iterations)   
+                                        this%max_iterations)
 !
       call input%get_keyword('diis dimension',                    &
                                         'solver cc multipliers',  &

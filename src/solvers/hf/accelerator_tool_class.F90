@@ -27,7 +27,6 @@ module accelerator_tool_class
 !!    convergence acceleration to solve equations
 !!
 !
-   use kinds
    use parameters
 !
    implicit none
@@ -70,6 +69,6 @@ module accelerator_tool_class
 !
       end subroutine
 !
-  end interface
+   end interface
 !
 end module accelerator_tool_class

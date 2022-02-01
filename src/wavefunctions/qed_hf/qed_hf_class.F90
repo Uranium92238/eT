@@ -77,39 +77,22 @@ contains
 !
    function new_qed_hf() result(wf)
 !!
-!!    New HF
+!!    New qed hf
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!    Adapted by Tor S. Haugland, Jan 2020
 !!
-      use citation_class,           only : citation
       use citation_printer_class,   only : eT_citations
 !
       implicit none
 !
       type(qed_hf) :: wf
-      class(citation), allocatable :: reference
 !
       wf%name_ = 'qed-rhf'
 !
       call wf%read_settings()
       call wf%print_banner()
 !
-      reference = citation(implementation = 'QED-HF',                               &
-                           journal        = 'Phys. Rev. X',                                   &
-                           title_         = 'Coupled Cluster Theory for Molecular Polaritons: &
-                                            &Changing ground and Excited States',             &
-                           volume         = '10',                                             &
-                           issue          = '4',                                              &
-                           pages          = '041043',                                         &
-                           year           = '2020',                                           &
-                           doi            = '10.1103/PhysRevX.10.041043',                     &
-                           authors        = [character(len=25) :: 'Tor S. Haugland',          &
-                                                                  'Enrico Ronca',             &
-                                                                  'Eirik F. Kjønstad',        &
-                                                                  'Angel Rubio',              &
-                                                                  'Henrik Koch'])
-!
-      call eT_citations%add(reference)
+      call eT_citations%add('QED-HF')
 !
    end function new_qed_hf
 !

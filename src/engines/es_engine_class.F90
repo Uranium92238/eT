@@ -40,7 +40,7 @@ module es_engine_class
 !
       logical :: es_restart
 !
-       logical :: plot_ntos, plot_cntos
+      logical :: plot_ntos, plot_cntos
 !
    contains
 !
@@ -121,11 +121,11 @@ contains
 !!    Set default ES algorithm
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine), intent(inout) :: engine 
+      class(es_engine), intent(inout) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       if (wf%name_ .eq. 'ccsd(t)' .or. &
           wf%name_ .eq. 'mp2') then
@@ -295,8 +295,8 @@ contains
 !
          call engine%do_multipliers(wf)
          cc_es_solver_asymmetric_lanczos = asymmetric_lanczos_cc_es(wf)
-         call cc_es_solver_asymmetric_lanczos%run(wf)
-         call cc_es_solver_asymmetric_lanczos%cleanup(wf)
+         call cc_es_solver_asymmetric_lanczos%run()
+         call cc_es_solver_asymmetric_lanczos%cleanup()
 !
       else
 !
@@ -308,7 +308,7 @@ contains
 !
             if (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
 !
-                call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
+               call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
 !
             end if
 !
@@ -328,8 +328,8 @@ contains
 !
          call wf%construct_fock(task = 'es')
 !
-         call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%run()
+         call cc_es_solver%cleanup()
 !
       endif
 !
@@ -430,6 +430,11 @@ contains
 !
       real(dp) :: threshold
 !
+      type(timings) :: timer
+!
+      timer = timings('Plotting NTOs')
+      call timer%turn_on
+!
       threshold = 0.1d0
 !
       call input%get_keyword('nto threshold', 'visualization', threshold)
@@ -455,6 +460,8 @@ contains
 !
       call mem%dealloc(orbitals, wf%ao%n, wf%n_mo)
 !
+      call timer%turn_off
+!
    end subroutine do_nto_visualization_es_engine
 !
 !
@@ -476,13 +483,13 @@ contains
       if (input%is_keyword_present('energy threshold', 'solver cc es') .and. &
           input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
-        call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
-        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+         call input%get_keyword('energy threshold', 'solver cc es', energy_threshold)
+         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
 !
       else if (input%is_keyword_present('residual threshold', 'solver cc es')) then
 !
-        call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
-        energy_threshold = residual_threshold
+         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
+         energy_threshold = residual_threshold
 !
       else if (input%is_keyword_present('energy threshold', 'solver cc es')) then
 !

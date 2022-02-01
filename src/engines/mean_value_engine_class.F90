@@ -154,6 +154,8 @@ contains
 !
       type(visualization), allocatable :: visualizer
 !
+      type(timings) :: timer
+!
       real(dp), dimension(:,:), allocatable :: c_D_ct
 !
 !     Determine ground state | CC >
@@ -174,6 +176,9 @@ contains
 !
       if (engine%plot_density) then
 !
+         timer = timings('Plotting GS density')
+         call timer%turn_on
+!
 !        Transform the density to AO basis and plot
 !
          visualizer = visualization(wf%ao)
@@ -187,6 +192,8 @@ contains
          call visualizer%cleanup()
 !
          call mem%dealloc(c_D_ct, wf%ao%n, wf%ao%n)
+!
+         call timer%turn_off
 !
       endif
 !

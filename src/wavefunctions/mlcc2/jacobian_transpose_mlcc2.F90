@@ -29,7 +29,7 @@ submodule (mlcc2_class) jacobian_transpose_mlcc2
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
+!!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!    Note that all routines are adapted from jacobian_transpose_cc2.F90
 !!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
@@ -203,14 +203,14 @@ contains
       call mem%dealloc(c_bj_active, n_cc2_v, n_cc2_o)
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%eri%get_eri_t1('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
+      call wf%eri_t1%get('ovov', g_iajb, 1, wf%n_o, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
 !
 !     L_iakc = 2 g_iakc - g_icka
 !
       call mem%alloc(L_aick, wf%n_v, wf%n_o, n_cc2_v, n_cc2_o)
 !
 !$omp parallel do private(k, c, i, a) collapse(2)
-       do k = 1, n_cc2_o
+      do k = 1, n_cc2_o
          do c = 1, n_cc2_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
@@ -309,7 +309,7 @@ contains
             do b = 1, n_cc2_v
                do j = 1, n_cc2_o
 !
-                 g_jbka(j, b, k, a) = g_iajb(j + first_o - 1, b + first_v - 1, k + first_o - 1, a)
+                  g_jbka(j, b, k, a) = g_iajb(j + first_o - 1, b + first_v - 1, k + first_o - 1, a)
 !
                enddo
             enddo
@@ -418,8 +418,8 @@ contains
 !
 !        a : unretricted
 !
-      req0 = (n_cc2_v)*(n_cc2_o)*(wf%eri%n_j)
-      req1 = (n_cc2_v)*(wf%eri%n_j) + (n_cc2_o)*(n_cc2_v**2)
+      req0 = (n_cc2_v)*(n_cc2_o)*(wf%eri_t1%n_j)
+      req1 = (n_cc2_v)*(wf%eri_t1%n_j) + (n_cc2_o)*(n_cc2_v**2)
 !
       batch_a = batching_index(wf%n_v)
 !
@@ -431,7 +431,7 @@ contains
 !
          call mem%alloc(g_bjca, n_cc2_v, n_cc2_o, n_cc2_v, batch_a%length)
 !
-         call wf%eri%get_eri_t1('vovv', g_bjca, first_v, last_v, first_o, last_o, &
+         call wf%eri_t1%get('vovv', g_bjca, first_v, last_v, first_o, last_o, &
                                                 first_v, last_v, batch_a%first, batch_a%get_last())
 !
 !        sigma_ai =+ sum_bjc g_abjc c_bjci
@@ -463,7 +463,7 @@ contains
 !
       call mem%alloc(g_ikbj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
 !
-      call wf%eri%get_eri_t1('oovo', g_ikbj, 1, wf%n_o, first_o, last_o, &
+      call wf%eri_t1%get('oovo', g_ikbj, 1, wf%n_o, first_o, last_o, &
                                              first_v, last_v, first_o, last_o)
 !
 !     - sum_bjk c_akbj g_ikbj
@@ -579,7 +579,7 @@ contains
 !
       call mem%alloc(g_ikjb, n_cc2_o, wf%n_o, n_cc2_o, n_cc2_v)
 !
-      call wf%eri%get_eri_t1('ooov', g_ikjb, first_o, last_o, 1, wf%n_o, &
+      call wf%eri_t1%get('ooov', g_ikjb, first_o, last_o, 1, wf%n_o, &
                                              first_o, last_o, first_v, last_v)
 !
       call mem%alloc(L_kibj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
@@ -614,8 +614,8 @@ contains
       call mem%alloc(sigma_iajb, n_cc2_o, n_cc2_v, n_cc2_o, n_cc2_v)
       call zero_array(sigma_iajb, (n_cc2_o**2)*(n_cc2_v**2))
 !
-      req0 = (n_cc2_v)*(n_cc2_o)*(wf%eri%n_j)
-      req1 = max((n_cc2_v)*(wf%eri%n_j) + (n_cc2_o)*(n_cc2_v)**2, 2*(n_cc2_o)*(n_cc2_v)**2)
+      req0 = (n_cc2_v)*(n_cc2_o)*(wf%eri_t1%n_j)
+      req1 = max((n_cc2_v)*(wf%eri_t1%n_j) + (n_cc2_o)*(n_cc2_v)**2, 2*(n_cc2_o)*(n_cc2_v)**2)
 !
       batch_c = batching_index(wf%n_v)
 !
@@ -629,7 +629,7 @@ contains
 !
          call mem%alloc(g_cajb, batch_c%length, n_cc2_v, n_cc2_o, n_cc2_v)
 !
-         call wf%eri%get_eri_t1('vvov', g_cajb, batch_c%first, batch_c%get_last(),  &
+         call wf%eri_t1%get('vvov', g_cajb, batch_c%first, batch_c%get_last(),  &
                                                 first_v, last_v,                    &
                                                 first_o, last_o,                    &
                                                 first_v, last_v)
