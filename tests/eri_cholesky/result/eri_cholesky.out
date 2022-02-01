@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:32:25 UTC +02:00
+  Calculation started: 2022-02-01 16:10:11 UTC +01:00
 
 
   :: Input file
@@ -142,17 +142,17 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.28900
-     Total cpu time (sec):               0.46672
+     Total wall time (sec):              0.28000
+     Total cpu time (sec):               0.45266
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 2.124120 MB
 
-  Total wall time in eT (sec):              0.32800
-  Total cpu time in eT (sec):               0.50589
+  Total wall time in eT (sec):              0.31700
+  Total cpu time in eT (sec):               0.48984
 
-  Calculation ended: 2021-10-06 10:32:25 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:12 UTC +01:00
 
   - Implementation references:
 

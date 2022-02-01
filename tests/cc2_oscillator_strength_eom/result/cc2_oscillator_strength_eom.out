@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:29:41 UTC +02:00
+  Calculation started: 2022-02-01 16:06:22 UTC +01:00
 
 
   :: Input file
@@ -143,15 +143,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -178.316435989155
@@ -165,6 +156,15 @@
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -175,23 +175,23 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.452460025510     0.7565E-01     0.1775E+03
-     2          -177.479057956534     0.1129E-01     0.2660E-01
+     2          -177.479057956533     0.1129E-01     0.2660E-01
      3          -177.480052448592     0.4142E-02     0.9945E-03
      4          -177.480180104061     0.1387E-02     0.1277E-03
      5          -177.480194080187     0.4312E-03     0.1398E-04
      6          -177.480195433667     0.8262E-04     0.1353E-05
      7          -177.480195516708     0.2289E-04     0.8304E-07
      8          -177.480195527015     0.4801E-05     0.1031E-07
-     9          -177.480195527843     0.1045E-05     0.8288E-09
-    10          -177.480195527874     0.2388E-06     0.3067E-10
-    11          -177.480195527875     0.5236E-07     0.9095E-12
-    12          -177.480195527875     0.9618E-08     0.1421E-12
+     9          -177.480195527843     0.1045E-05     0.8286E-09
+    10          -177.480195527874     0.2388E-06     0.3089E-10
+    11          -177.480195527875     0.5236E-07     0.8242E-12
+    12          -177.480195527875     0.9618E-08     0.5684E-13
     13          -177.480195527875     0.4310E-08     0.1137E-12
-    14          -177.480195527875     0.1983E-08     0.2842E-13
-    15          -177.480195527875     0.6772E-09     0.2274E-12
-    16          -177.480195527875     0.1634E-09     0.1990E-12
-    17          -177.480195527875     0.4727E-10     0.1990E-12
-    18          -177.480195527875     0.8075E-11     0.8527E-13
+    14          -177.480195527875     0.1983E-08     0.1137E-12
+    15          -177.480195527875     0.6772E-09     0.3126E-12
+    16          -177.480195527875     0.1634E-09     0.2274E-12
+    17          -177.480195527875     0.4727E-10     0.1705E-12
+    18          -177.480195527875     0.8073E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -204,8 +204,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              2.75000
-     Total cpu time (sec):               5.09334
+     Total wall time (sec):              3.47200
+     Total cpu time (sec):               6.02904
 
 
   :: CC2 wavefunction
@@ -300,12 +300,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.28700
-     Total cpu time (sec):               2.16341
+     Total wall time (sec):              1.40600
+     Total cpu time (sec):               2.36060
 
 
   2) Preparation of MO basis and integrals
@@ -352,7 +351,7 @@
    13          -177.879146248424     0.5290E-09     0.2515E-10
    14          -177.879146248423     0.6468E-10     0.1307E-11
    15          -177.879146248424     0.1009E-10     0.1108E-11
-   16          -177.879146248424     0.2177E-11     0.2842E-13
+   16          -177.879146248424     0.2176E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -380,8 +379,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.39800
-     Total cpu time (sec):               0.58917
+     Total wall time (sec):              0.47200
+     Total cpu time (sec):               0.69128
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -429,7 +428,12 @@
   ----------------------------
   Convergence criterion met in 15 iterations!
 
-  - DIIS CC multipliers solver summary:
+  - Finished solving the cc2 multipliers equations
+
+     Total wall time (sec):              0.52500
+     Total cpu time (sec):               0.63921
+
+  - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -447,10 +451,10 @@
         5      4       -0.008015599057
      ------------------------------------
 
-  - Finished solving the cc2 multipliers equations
+  - Finished solving the CC2 multipliers equations
 
-     Total wall time (sec):              0.52300
-     Total cpu time (sec):               0.64478
+     Total wall time (sec):               0.52600
+     Total cpu time (sec):                0.64001
 
 
   5) Calculation of the excited states (davidson algorithm)
@@ -653,7 +657,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.9305E-10   0.8618E-13
+     1   0.201127277039    0.000000000000     0.9305E-10   0.8732E-13
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -661,7 +665,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.2108E-10   0.3320E-12
+     1   0.201127277039    0.000000000000     0.2108E-10   0.3311E-12
   ------------------------------------------------------------------------
 
   Iteration:                 23
@@ -669,7 +673,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.5972E-11   0.3483E-13
+     1   0.201127277039    0.000000000000     0.5972E-11   0.3464E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 23 iterations!
 
@@ -708,8 +712,8 @@
 
   - Finished solving the CC2 excited state equations (right)
 
-     Total wall time (sec):              0.95100
-     Total cpu time (sec):               1.06172
+     Total wall time (sec):              1.35100
+     Total cpu time (sec):               1.36217
 
 
   5) Calculation of the excited states (davidson algorithm)
@@ -905,7 +909,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.4953E-10   0.4137E-12
+     1   0.201127277039    0.000000000000     0.4953E-10   0.4158E-12
   ------------------------------------------------------------------------
 
   Iteration:                 21
@@ -913,7 +917,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.1321E-10   0.1403E-12
+     1   0.201127277039    0.000000000000     0.1321E-10   0.1406E-12
   ------------------------------------------------------------------------
 
   Iteration:                 22
@@ -921,7 +925,7 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.201127277039    0.000000000000     0.4218E-11   0.9659E-13
+     1   0.201127277039    0.000000000000     0.4218E-11   0.9626E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 22 iterations!
 
@@ -960,8 +964,8 @@
 
   - Finished solving the CC2 excited state equations (left)
 
-     Total wall time (sec):              0.90500
-     Total cpu time (sec):               1.05177
+     Total wall time (sec):              1.09600
+     Total cpu time (sec):               1.17553
 
 
   6) Calculation of excited state properties (EOM)
@@ -989,17 +993,17 @@
 
   - Timings for the CC2 response calculation
 
-     Total wall time (sec):              4.11400
-     Total cpu time (sec):               5.57100
+     Total wall time (sec):              4.90200
+     Total cpu time (sec):               6.29368
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 28.066668 MB
+  Peak memory usage during the execution of eT: 28.066684 MB
 
-  Total wall time in eT (sec):              6.92200
-  Total cpu time in eT (sec):              10.72398
+  Total wall time in eT (sec):              8.45600
+  Total cpu time in eT (sec):              12.39804
 
-  Calculation ended: 2021-10-06 10:29:48 UTC +02:00
+  Calculation ended: 2022-02-01 16:06:31 UTC +01:00
 
   - Implementation references:
 

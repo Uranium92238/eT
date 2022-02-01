@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:29:19 UTC +02:00
+  Calculation started: 2022-02-01 16:05:55 UTC +01:00
 
 
   :: Input file
@@ -163,16 +163,6 @@
 
   2) Calculation of reference state (MO-SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -227.729972242003
@@ -192,6 +182,16 @@
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -201,24 +201,24 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -227.947946434469     0.3831E+00     0.2279E+03
+     1          -227.947946434470     0.3831E+00     0.2279E+03
      2          -227.998626638343     0.1450E+00     0.5068E-01
-     3          -228.013710247463     0.2730E-01     0.1508E-01
+     3          -228.013710247464     0.2730E-01     0.1508E-01
      4          -228.014085259024     0.4193E-02     0.3750E-03
      5          -228.014102788344     0.9764E-03     0.1753E-04
-     6          -228.014103753623     0.2336E-03     0.9653E-06
-     7          -228.014103782709     0.6086E-04     0.2909E-07
+     6          -228.014103753624     0.2336E-03     0.9653E-06
+     7          -228.014103782710     0.6086E-04     0.2909E-07
      8          -228.014103785290     0.1272E-04     0.2580E-08
-     9          -228.014103785425     0.3241E-05     0.1356E-09
-    10          -228.014103785437     0.7938E-06     0.1208E-10
-    11          -228.014103785438     0.5573E-07     0.7674E-12
-    12          -228.014103785438     0.1882E-07     0.1137E-12
-    13          -228.014103785438     0.6103E-08     0.5684E-13
+     9          -228.014103785426     0.3241E-05     0.1355E-09
+    10          -228.014103785438     0.7938E-06     0.1199E-10
+    11          -228.014103785439     0.5573E-07     0.7958E-12
+    12          -228.014103785438     0.1882E-07     0.2274E-12
+    13          -228.014103785439     0.6103E-08     0.1990E-12
     14          -228.014103785438     0.1608E-08     0.3695E-12
-    15          -228.014103785438     0.2295E-09     0.8527E-13
-    16          -228.014103785438     0.7702E-10     0.0000E+00
-    17          -228.014103785438     0.2646E-10     0.0000E+00
-    18          -228.014103785438     0.7167E-11     0.5684E-13
+    15          -228.014103785438     0.2295E-09     0.1705E-12
+    16          -228.014103785438     0.7702E-10     0.8527E-13
+    17          -228.014103785438     0.2646E-10     0.2842E-13
+    18          -228.014103785439     0.7170E-11     0.1421E-12
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -226,19 +226,19 @@
 
      HOMO-LUMO gap:                  0.699236376531
      Nuclear repulsion energy:      84.733460047369
-     Electronic energy:           -312.747563832806
-     Total energy:                -228.014103785438
+     Electronic energy:           -312.747563832807
+     Total energy:                -228.014103785439
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -227.773825996349
+     Active energy:               -227.773825996350
      Active-inactive energy:        38.567634665092
      Inactive energy:             -123.541372501549
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              4.47700
-     Total cpu time (sec):               8.35029
+     Total wall time (sec):              5.66500
+     Total cpu time (sec):               9.63508
 
 
   :: MLCC2 wavefunction
@@ -324,12 +324,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              3.17400
-     Total cpu time (sec):               5.52427
+     Total wall time (sec):              4.14600
+     Total cpu time (sec):               6.96232
 
 
   2) Preparation of MO basis and integrals
@@ -374,30 +373,30 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -228.204739307127     0.2898E-01     0.2282E+03
-    2          -228.205406024202     0.6057E-02     0.6667E-03
-    3          -228.205561633969     0.8949E-03     0.1556E-03
-    4          -228.205581302872     0.2680E-03     0.1967E-04
-    5          -228.205581813782     0.5613E-04     0.5109E-06
-    6          -228.205581907914     0.1909E-04     0.9413E-07
-    7          -228.205581962263     0.5119E-05     0.5435E-07
-    8          -228.205581970484     0.1339E-05     0.8221E-08
-    9          -228.205581969773     0.2985E-06     0.7105E-09
-   10          -228.205581970054     0.8529E-07     0.2807E-09
-   11          -228.205581969958     0.2262E-07     0.9550E-10
-   12          -228.205581970016     0.7352E-08     0.5755E-10
-   13          -228.205581970021     0.2394E-08     0.4860E-11
-   14          -228.205581970027     0.6433E-09     0.6168E-11
-   15          -228.205581970028     0.2247E-09     0.1393E-11
-   16          -228.205581970029     0.7611E-10     0.4547E-12
-   17          -228.205581970029     0.1941E-10     0.5684E-13
-   18          -228.205581970029     0.4958E-11     0.2842E-13
+    1          -228.204739307128     0.2898E-01     0.2282E+03
+    2          -228.205406024203     0.6057E-02     0.6667E-03
+    3          -228.205561633970     0.8949E-03     0.1556E-03
+    4          -228.205581302873     0.2680E-03     0.1967E-04
+    5          -228.205581813783     0.5613E-04     0.5109E-06
+    6          -228.205581907915     0.1909E-04     0.9413E-07
+    7          -228.205581962264     0.5119E-05     0.5435E-07
+    8          -228.205581970485     0.1339E-05     0.8221E-08
+    9          -228.205581969774     0.2985E-06     0.7106E-09
+   10          -228.205581970055     0.8529E-07     0.2807E-09
+   11          -228.205581969959     0.2262E-07     0.9550E-10
+   12          -228.205581970017     0.7352E-08     0.5758E-10
+   13          -228.205581970022     0.2394E-08     0.4860E-11
+   14          -228.205581970028     0.6433E-09     0.6168E-11
+   15          -228.205581970029     0.2247E-09     0.1393E-11
+   16          -228.205581970030     0.7612E-10     0.4547E-12
+   17          -228.205581970030     0.1941E-10     0.5684E-13
+   18          -228.205581970030     0.4958E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -228.205581970029
+     Final ground state energy (a.u.):  -228.205581970030
 
      Correlation energy (a.u.):           -0.191478184591
 
@@ -405,36 +404,36 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        3      4       -0.007987291909
-        6      5        0.006860269520
+        3      4       -0.007987291916
+        6      5        0.006860269538
         2      4        0.005872160691
-       11      3        0.004425176860
-        9      3        0.004319058019
-        1      4        0.004241184193
-        3      2        0.004038688433
+       11      3        0.004425176859
+        9      3        0.004319058033
+        1      4        0.004241184190
+        3      2        0.004038688437
        17      3       -0.003410476388
         2      3        0.003178980769
-       18      2        0.002890272695
+       18      2        0.002890272696
      ------------------------------------
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.64000
-     Total cpu time (sec):               0.92959
+     Total wall time (sec):              0.79600
+     Total cpu time (sec):               1.08255
 
   - Timings for the MLCC2 ground state calculation
 
-     Total wall time (sec):              3.92400
-     Total cpu time (sec):               6.58813
+     Total wall time (sec):              5.07600
+     Total cpu time (sec):               8.21984
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 66.202300 MB
+  Peak memory usage during the execution of eT: 66.202316 MB
 
-  Total wall time in eT (sec):              8.43000
-  Total cpu time in eT (sec):              14.96966
+  Total wall time in eT (sec):             10.78700
+  Total cpu time in eT (sec):              17.90070
 
-  Calculation ended: 2021-10-06 10:29:28 UTC +02:00
+  Calculation ended: 2022-02-01 16:06:06 UTC +01:00
 
   - Implementation references:
 

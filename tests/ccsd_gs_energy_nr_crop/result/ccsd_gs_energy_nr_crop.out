@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:29:08 UTC +02:00
+  Calculation started: 2022-02-01 16:08:56 UTC +01:00
 
 
   :: Input file
@@ -136,15 +136,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-08
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -224.529180242355
@@ -157,6 +148,15 @@
      ERI cutoff:                     0.1000E-14
      One-electron integral  cutoff:  0.1000E-19
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-08
 
   - DIIS tool settings:
 
@@ -173,7 +173,7 @@
   Fock matrix construction using density differences
      2          -224.129918926026     0.1379E+00     0.3335E-01
   Fock matrix construction using density differences
-     3          -224.263401531487     0.8692E-02     0.1335E+00
+     3          -224.263401531486     0.8692E-02     0.1335E+00
   Fock matrix construction using density differences
      4          -224.265088430954     0.4649E-02     0.1687E-02
   Fock matrix construction using density differences
@@ -185,39 +185,39 @@
   Fock matrix construction using density differences
      8          -224.265595555115     0.1830E-03     0.8806E-05
   Fock matrix construction using density differences
-     9          -224.265596119041     0.6676E-04     0.5639E-06
+     9          -224.265596119040     0.6676E-04     0.5639E-06
   Fock matrix construction using density differences
-    10          -224.265596146741     0.1907E-04     0.2770E-07
+    10          -224.265596146742     0.1907E-04     0.2770E-07
   Fock matrix construction using density differences
     11          -224.265596149759     0.5826E-05     0.3017E-08
   Fock matrix construction using density differences
-    12          -224.265596150162     0.2565E-05     0.4038E-09
+    12          -224.265596150163     0.2565E-05     0.4040E-09
   Fock matrix construction using density differences
-    13          -224.265596150268     0.1295E-05     0.1054E-09
+    13          -224.265596150268     0.1295E-05     0.1052E-09
   Fock matrix construction using density differences
-    14          -224.265596150306     0.6215E-06     0.3820E-10
+    14          -224.265596150306     0.6215E-06     0.3834E-10
   Fock matrix construction using density differences
-    15          -224.265596150314     0.3151E-06     0.7589E-11
+    15          -224.265596150314     0.3151E-06     0.7674E-11
   Fock matrix construction using density differences
-    16          -224.265596150315     0.1212E-06     0.1023E-11
+    16          -224.265596150315     0.1212E-06     0.8527E-12
   Fock matrix construction using density differences
-    17          -224.265596150315     0.4099E-07     0.4832E-12
+    17          -224.265596150315     0.4099E-07     0.5116E-12
   Fock matrix construction using density differences
-    18          -224.265596150315     0.3185E-07     0.5684E-13
+    18          -224.265596150315     0.3185E-07     0.1137E-12
   Fock matrix construction using density differences
-    19          -224.265596150315     0.2288E-07     0.1137E-12
+    19          -224.265596150315     0.2288E-07     0.5684E-13
   Fock matrix construction using density differences
-    20          -224.265596150315     0.1098E-07     0.0000E+00
+    20          -224.265596150315     0.1098E-07     0.5684E-13
   Fock matrix construction using density differences
-    21          -224.265596150315     0.7963E-08     0.2274E-12
+    21          -224.265596150315     0.7963E-08     0.2842E-13
   Fock matrix construction using density differences
-    22          -224.265596150315     0.6392E-08     0.2842E-13
+    22          -224.265596150315     0.6392E-08     0.2558E-12
   Fock matrix construction using density differences
-    23          -224.265596150315     0.1258E-08     0.0000E+00
+    23          -224.265596150315     0.1258E-08     0.3411E-12
   Fock matrix construction using density differences
-    24          -224.265596150315     0.1267E-08     0.1421E-12
+    24          -224.265596150315     0.1267E-08     0.5684E-13
   Fock matrix construction using density differences
-    25          -224.265596150315     0.7460E-09     0.8527E-13
+    25          -224.265596150315     0.7460E-09     0.5116E-12
   ---------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -230,8 +230,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              5.69600
-     Total cpu time (sec):              10.35076
+     Total wall time (sec):              7.35600
+     Total cpu time (sec):              11.64553
 
   No frozen fock contributions!
 
@@ -270,7 +270,6 @@
 
 
   1) Cholesky decomposition of the electron repulsion integrals
-  Doing Cholesky decomposition of the ERIs.
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -327,13 +326,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.93900
-     Total cpu time (sec):               3.36608
+     Total wall time (sec):              2.35800
+     Total cpu time (sec):               3.93047
 
 
   2) Preparation of MO basis and integrals
@@ -377,7 +375,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -224.905904866253     0.1977E+00     0.2249E+03
+    1          -224.905904866254     0.1977E+00     0.2249E+03
 
      Iteration     Residual norm
      -----------------------------
@@ -468,24 +466,24 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              3.31700
-     Total cpu time (sec):               4.54469
+     Total wall time (sec):              4.91200
+     Total cpu time (sec):               5.71753
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              5.25600
-     Total cpu time (sec):               7.91196
+     Total wall time (sec):              7.31900
+     Total cpu time (sec):               9.78558
 
   - Cleaning up ccsd wavefunction
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 60.852224 MB
+  Peak memory usage during the execution of eT: 59.286296 MB
 
-  Total wall time in eT (sec):             11.01500
-  Total cpu time in eT (sec):              18.32829
+  Total wall time in eT (sec):             14.75300
+  Total cpu time in eT (sec):              21.51150
 
-  Calculation ended: 2021-10-06 10:29:19 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:11 UTC +01:00
 
   - Implementation references:
 

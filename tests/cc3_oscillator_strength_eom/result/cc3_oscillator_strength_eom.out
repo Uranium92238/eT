@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:28:32 UTC +02:00
+  Calculation started: 2022-02-01 16:04:49 UTC +01:00
 
 
   :: Input file
@@ -145,15 +145,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836321
@@ -166,6 +157,15 @@
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
 
   - DIIS tool settings:
 
@@ -183,15 +183,15 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4832E-12
-    11           -78.843851693631     0.5634E-08     0.1421E-13
-    12           -78.843851693631     0.1415E-08     0.1421E-12
-    13           -78.843851693631     0.6806E-09     0.7105E-13
-    14           -78.843851693631     0.1491E-09     0.1421E-13
-    15           -78.843851693631     0.2501E-10     0.4263E-13
-    16           -78.843851693631     0.5169E-11     0.1421E-13
+    10           -78.843851693631     0.2637E-07     0.4690E-12
+    11           -78.843851693631     0.5634E-08     0.2842E-13
+    12           -78.843851693631     0.1415E-08     0.7105E-13
+    13           -78.843851693631     0.6806E-09     0.4263E-13
+    14           -78.843851693631     0.1491E-09     0.2842E-13
+    15           -78.843851693631     0.2501E-10     0.5684E-13
+    16           -78.843851693631     0.5168E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -204,8 +204,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.90900
-     Total cpu time (sec):               1.56620
+     Total wall time (sec):              1.63900
+     Total cpu time (sec):               2.02406
 
 
   :: CC3 wavefunction
@@ -299,13 +299,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.42200
-     Total cpu time (sec):               0.59854
+     Total wall time (sec):              0.79800
+     Total cpu time (sec):               0.75529
 
 
   2) Preparation of MO basis and integrals
@@ -398,8 +397,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.50100
-     Total cpu time (sec):               1.76481
+     Total wall time (sec):              3.11700
+     Total cpu time (sec):               2.59347
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -454,7 +453,12 @@
   ----------------------------
   Convergence criterion met in 22 iterations!
 
-  - DIIS CC multipliers solver summary:
+  - Finished solving the cc3 multipliers equations
+
+     Total wall time (sec):              6.35300
+     Total cpu time (sec):               4.92520
+
+  - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -488,10 +492,10 @@
         1      5       1      5       -0.071730388538
      --------------------------------------------------
 
-  - Finished solving the cc3 multipliers equations
+  - Finished solving the CC3 multipliers equations
 
-     Total wall time (sec):              4.45800
-     Total cpu time (sec):               4.41299
+     Total wall time (sec):               6.35400
+     Total cpu time (sec):                4.92668
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -779,8 +783,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              6.06300
-     Total cpu time (sec):               5.78159
+     Total wall time (sec):              8.35000
+     Total cpu time (sec):               6.59468
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -919,7 +923,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247341124124       0.4976E-07
+     1      0.247341124123       0.4976E-07
   -----------------------------------------------
 
   Iteration:                 16
@@ -1049,14 +1053,14 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247341124690        6.730494822564
+        1                  0.247341124690        6.730494822563
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              6.22700
-     Total cpu time (sec):               5.11707
+     Total wall time (sec):              6.95700
+     Total cpu time (sec):               5.98491
 
 
   6) Calculation of excited state properties (EOM)
@@ -1084,17 +1088,17 @@
 
   - Timings for the CC3 response calculation
 
-     Total wall time (sec):             19.67800
-     Total cpu time (sec):              18.60663
+     Total wall time (sec):             26.66700
+     Total cpu time (sec):              21.97718
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 17.741508 MB
+  Peak memory usage during the execution of eT: 16.281492 MB
 
-  Total wall time in eT (sec):             20.64100
-  Total cpu time in eT (sec):              20.22799
+  Total wall time in eT (sec):             28.44700
+  Total cpu time in eT (sec):              24.07713
 
-  Calculation ended: 2021-10-06 10:28:52 UTC +02:00
+  Calculation ended: 2022-02-01 16:05:17 UTC +01:00
 
   - Implementation references:
 
