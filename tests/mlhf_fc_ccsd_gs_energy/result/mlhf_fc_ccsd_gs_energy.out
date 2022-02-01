@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:30:22 UTC +02:00
+  Calculation started: 2022-02-01 16:09:57 UTC +01:00
 
 
   :: Input file
@@ -155,16 +155,6 @@
 
   2) Calculation of reference state (MO-SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -151.796506244373
@@ -184,6 +174,16 @@
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -193,22 +193,22 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -151.986254697202     0.3356E+00     0.1520E+03
+     1          -151.986254697203     0.3356E+00     0.1520E+03
      2          -152.011877032057     0.1366E+00     0.2562E-01
      3          -152.018448490303     0.2167E-01     0.6571E-02
      4          -152.018690017977     0.5645E-02     0.2415E-03
      5          -152.018703912212     0.1006E-02     0.1389E-04
      6          -152.018704702590     0.1890E-03     0.7904E-06
-     7          -152.018704720001     0.2445E-04     0.1741E-07
+     7          -152.018704720002     0.2445E-04     0.1741E-07
      8          -152.018704720373     0.5552E-05     0.3712E-09
-     9          -152.018704720397     0.1150E-05     0.2422E-10
-    10          -152.018704720398     0.2301E-06     0.7958E-12
-    11          -152.018704720398     0.7198E-07     0.1421E-12
+     9          -152.018704720397     0.1150E-05     0.2416E-10
+    10          -152.018704720398     0.2301E-06     0.7674E-12
+    11          -152.018704720398     0.7198E-07     0.2842E-13
     12          -152.018704720398     0.1570E-07     0.5684E-13
     13          -152.018704720398     0.2151E-08     0.2842E-13
     14          -152.018704720398     0.5725E-09     0.5684E-13
     15          -152.018704720398     0.4648E-10     0.2842E-13
-    16          -152.018704720398     0.8082E-11     0.5684E-13
+    16          -152.018704720398     0.8081E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -227,8 +227,8 @@
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              3.53500
-     Total cpu time (sec):               6.62238
+     Total wall time (sec):              3.58200
+     Total cpu time (sec):               6.46414
 
   - Preparation for frozen core approximation
 
@@ -322,13 +322,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              2.36000
-     Total cpu time (sec):               4.02879
+     Total wall time (sec):              2.58800
+     Total cpu time (sec):               4.38320
 
 
   2) Preparation of MO basis and integrals
@@ -372,12 +371,12 @@
     9          -152.231441886853     0.1668E-05     0.8229E-07
    10          -152.231441801596     0.5943E-06     0.8526E-07
    11          -152.231441829117     0.2010E-06     0.2752E-07
-   12          -152.231441830580     0.7015E-07     0.1463E-08
+   12          -152.231441830581     0.7015E-07     0.1463E-08
    13          -152.231441834046     0.1956E-07     0.3465E-08
    14          -152.231441833561     0.4143E-08     0.4847E-09
    15          -152.231441833470     0.8359E-09     0.9135E-10
-   16          -152.231441833469     0.2756E-09     0.5684E-13
-   17          -152.231441833477     0.4608E-10     0.7532E-11
+   16          -152.231441833470     0.2756E-09     0.2842E-13
+   17          -152.231441833477     0.4608E-10     0.7503E-11
    18          -152.231441833476     0.1211E-10     0.1421E-11
    19          -152.231441833475     0.3064E-11     0.5969E-12
   ---------------------------------------------------------------
@@ -423,22 +422,22 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.56700
-     Total cpu time (sec):               1.15278
+     Total wall time (sec):              0.49300
+     Total cpu time (sec):               1.06207
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              2.92800
-     Total cpu time (sec):               5.18263
+     Total wall time (sec):              3.09200
+     Total cpu time (sec):               5.47832
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 27.063236 MB
+  Peak memory usage during the execution of eT: 22.811724 MB
 
-  Total wall time in eT (sec):              6.71800
-  Total cpu time in eT (sec):              12.23671
+  Total wall time in eT (sec):              6.93200
+  Total cpu time in eT (sec):              12.37660
 
-  Calculation ended: 2021-10-06 10:30:28 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:04 UTC +01:00
 
   - Implementation references:
 

@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:28:52 UTC +02:00
+  Calculation started: 2022-02-01 16:05:17 UTC +01:00
 
 
   :: Input file
@@ -150,15 +150,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -178.316435989366
@@ -171,6 +162,15 @@
      ERI cutoff:                     0.1000E-15
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
 
   - DIIS tool settings:
 
@@ -191,15 +191,15 @@
      6          -177.480195433217     0.7552E-04     0.1333E-05
      7          -177.480195516154     0.2127E-04     0.8294E-07
      8          -177.480195526844     0.4990E-05     0.1069E-07
-     9          -177.480195527826     0.1544E-05     0.9821E-09
-    10          -177.480195527872     0.5606E-06     0.4641E-10
-    11          -177.480195527875     0.1718E-06     0.2871E-11
-    12          -177.480195527875     0.2537E-07     0.2558E-12
-    13          -177.480195527875     0.9499E-08     0.2274E-12
-    14          -177.480195527875     0.3900E-08     0.5684E-13
-    15          -177.480195527875     0.1805E-08     0.5684E-13
-    16          -177.480195527875     0.4213E-09     0.5684E-13
-    17          -177.480195527875     0.9108E-10     0.5684E-13
+     9          -177.480195527826     0.1544E-05     0.9820E-09
+    10          -177.480195527872     0.5606E-06     0.4644E-10
+    11          -177.480195527875     0.1718E-06     0.2899E-11
+    12          -177.480195527875     0.2537E-07     0.1705E-12
+    13          -177.480195527875     0.9499E-08     0.5684E-13
+    14          -177.480195527875     0.3900E-08     0.0000E+00
+    15          -177.480195527875     0.1805E-08     0.1137E-12
+    16          -177.480195527875     0.4213E-09     0.1137E-12
+    17          -177.480195527875     0.9108E-10     0.1705E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -212,8 +212,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              2.81400
-     Total cpu time (sec):               4.67452
+     Total wall time (sec):              3.56000
+     Total cpu time (sec):               5.83092
 
 
   :: CCSD wavefunction
@@ -307,13 +307,12 @@
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.30500
-     Total cpu time (sec):               2.03648
+     Total wall time (sec):              1.77600
+     Total cpu time (sec):               2.60930
 
 
   2) Preparation of MO basis and integrals
@@ -348,10 +347,10 @@
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -177.877001409673     0.1168E+00     0.1779E+03
-    2          -177.886677470623     0.3120E-01     0.9676E-02
+    2          -177.886677470622     0.3120E-01     0.9676E-02
     3          -177.894835530802     0.8696E-02     0.8158E-02
     4          -177.896138458909     0.2772E-02     0.1303E-02
-    5          -177.895894970645     0.9274E-03     0.2435E-03
+    5          -177.895894970644     0.9274E-03     0.2435E-03
     6          -177.895939855361     0.4302E-03     0.4488E-04
     7          -177.895997325385     0.1161E-03     0.5747E-04
     8          -177.895984484102     0.3848E-04     0.1284E-04
@@ -409,8 +408,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.24000
-     Total cpu time (sec):               2.60853
+     Total wall time (sec):              1.68700
+     Total cpu time (sec):               3.36837
 
 
   4) Calculation of the multipliers (diis algorithm)
@@ -464,7 +463,12 @@
   ----------------------------
   Convergence criterion met in 19 iterations!
 
-  - DIIS CC multipliers solver summary:
+  - Finished solving the ccsd multipliers equations
+
+     Total wall time (sec):              2.55500
+     Total cpu time (sec):               2.73779
+
+  - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -498,10 +502,10 @@
         6      9       4     10        0.052190751159
      --------------------------------------------------
 
-  - Finished solving the ccsd multipliers equations
+  - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):              1.45000
-     Total cpu time (sec):               1.57291
+     Total wall time (sec):               2.55700
+     Total cpu time (sec):                2.74019
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -773,7 +777,7 @@
         a       i         R(a,i)
      -----------------------------------
         1     10        0.960302407238
-        3     10        0.136219055682
+        3     10        0.136219055683
         2     10        0.045809047315
         1      7        0.045498210684
        13     10       -0.024180057795
@@ -850,8 +854,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              2.90800
-     Total cpu time (sec):               3.25046
+     Total wall time (sec):              6.24000
+     Total cpu time (sec):               6.54762
 
 
   5) Calculation of the excited states (diis algorithm)
@@ -1187,15 +1191,15 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.204566001089        5.566524422209
+        1                  0.204566001089        5.566524422210
         2                  0.321008275574        8.735080102262
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              3.35100
-     Total cpu time (sec):               3.87258
+     Total wall time (sec):              6.22500
+     Total cpu time (sec):               6.48859
 
 
   6) Calculation of excited state properties (EOM)
@@ -1240,17 +1244,17 @@
 
   - Timings for the CCSD response calculation
 
-     Total wall time (sec):             10.27800
-     Total cpu time (sec):              13.36965
+     Total wall time (sec):             18.55600
+     Total cpu time (sec):              21.90028
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 44.747756 MB
+  Peak memory usage during the execution of eT: 40.964356 MB
 
-  Total wall time in eT (sec):             13.16000
-  Total cpu time in eT (sec):              18.10693
+  Total wall time in eT (sec):             22.20100
+  Total cpu time in eT (sec):              27.80562
 
-  Calculation ended: 2021-10-06 10:29:05 UTC +02:00
+  Calculation ended: 2022-02-01 16:05:39 UTC +01:00
 
   - Implementation references:
 

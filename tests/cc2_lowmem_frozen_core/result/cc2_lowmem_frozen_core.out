@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:28:07 UTC +02:00
+  Calculation started: 2022-02-01 16:05:57 UTC +01:00
 
 
   :: Input file
@@ -144,16 +144,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:              -178.316362504257
@@ -166,6 +156,16 @@
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   - DIIS tool settings:
 
@@ -185,15 +185,15 @@
      7          -177.480176366015     0.2291E-04     0.8317E-07
      8          -177.480176376348     0.4810E-05     0.1033E-07
      9          -177.480176377178     0.1046E-05     0.8308E-09
-    10          -177.480176377209     0.2394E-06     0.3087E-10
-    11          -177.480176377210     0.5253E-07     0.9948E-12
-    12          -177.480176377210     0.9777E-08     0.1137E-12
-    13          -177.480176377210     0.2792E-08     0.2842E-12
-    14          -177.480176377210     0.1441E-08     0.1421E-12
-    15          -177.480176377210     0.6293E-09     0.1137E-12
+    10          -177.480176377209     0.2394E-06     0.3101E-10
+    11          -177.480176377210     0.5253E-07     0.5116E-12
+    12          -177.480176377210     0.9777E-08     0.3411E-12
+    13          -177.480176377210     0.2792E-08     0.1137E-12
+    14          -177.480176377210     0.1441E-08     0.0000E+00
+    15          -177.480176377210     0.6293E-09     0.1705E-12
     16          -177.480176377210     0.1436E-09     0.1705E-12
     17          -177.480176377210     0.4657E-10     0.5684E-13
-    18          -177.480176377210     0.7421E-11     0.2842E-12
+    18          -177.480176377210     0.7426E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -201,13 +201,13 @@
 
      HOMO-LUMO gap:                  0.600136348385
      Nuclear repulsion energy:      48.518317619727
-     Electronic energy:           -225.998493996938
+     Electronic energy:           -225.998493996937
      Total energy:                -177.480176377210
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              3.05700
-     Total cpu time (sec):               5.45831
+     Total wall time (sec):              3.51400
+     Total cpu time (sec):               5.86243
 
   - Preparation for frozen core approximation
 
@@ -301,12 +301,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.34500
-     Total cpu time (sec):               2.11522
+     Total wall time (sec):              1.42700
+     Total cpu time (sec):               2.30528
 
 
   2) Preparation of MO basis and integrals
@@ -341,19 +340,19 @@
   ---------------------------------------------------------------
     1          -177.872596608752     0.4576E-01     0.1779E+03
     2          -177.874258138480     0.9200E-02     0.1662E-02
-    3          -177.874680603188     0.1662E-02     0.4225E-03
-    4          -177.874735607238     0.5182E-03     0.5500E-04
+    3          -177.874680603187     0.1662E-02     0.4225E-03
+    4          -177.874735607237     0.5182E-03     0.5500E-04
     5          -177.874731846966     0.9100E-04     0.3760E-05
-    6          -177.874731646441     0.1120E-04     0.2005E-06
+    6          -177.874731646440     0.1120E-04     0.2005E-06
     7          -177.874731622626     0.3641E-05     0.2381E-07
     8          -177.874731607510     0.1541E-05     0.1512E-07
     9          -177.874731618480     0.3015E-06     0.1097E-07
    10          -177.874731617192     0.6419E-07     0.1288E-08
    11          -177.874731617160     0.1201E-07     0.3172E-10
-   12          -177.874731617130     0.2276E-08     0.3052E-10
-   13          -177.874731617107     0.5137E-09     0.2294E-10
+   12          -177.874731617129     0.2276E-08     0.3052E-10
+   13          -177.874731617106     0.5137E-09     0.2294E-10
    14          -177.874731617106     0.6177E-10     0.8527E-12
-   15          -177.874731617107     0.9770E-11     0.9948E-12
+   15          -177.874731617107     0.9769E-11     0.9948E-12
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -381,8 +380,8 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.44100
-     Total cpu time (sec):               0.58074
+     Total wall time (sec):              0.49900
+     Total cpu time (sec):               0.58468
 
 
   4) Calculation of the excited state (diis algorithm)
@@ -582,7 +581,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.200926846220       0.4770E-11
-     2      0.313754908469       0.4357E-11
+     2      0.313754908469       0.4356E-11
   -----------------------------------------------
   Convergence criterion met in 20 iterations!
 
@@ -647,22 +646,22 @@
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              4.04200
-     Total cpu time (sec):               3.83045
+     Total wall time (sec):              4.16100
+     Total cpu time (sec):               4.16973
 
   - Timings for the LOW MEMORY CC2 excited state calculation
 
-     Total wall time (sec):              5.82900
-     Total cpu time (sec):               6.52816
+     Total wall time (sec):              6.09100
+     Total cpu time (sec):               7.06616
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 25.503272 MB
+  Peak memory usage during the execution of eT: 25.503288 MB
 
-  Total wall time in eT (sec):              9.06200
-  Total cpu time in eT (sec):              12.25524
+  Total wall time in eT (sec):              9.81300
+  Total cpu time in eT (sec):              13.22805
 
-  Calculation ended: 2021-10-06 10:28:16 UTC +02:00
+  Calculation ended: 2022-02-01 16:06:07 UTC +01:00
 
   - Implementation references:
 

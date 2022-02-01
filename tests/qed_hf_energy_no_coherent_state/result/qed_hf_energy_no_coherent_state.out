@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2022-01-25 08:49:03 UTC +01:00
-  Git branch:         qed_tests_print_level
-  Git hash:           4d864f799adcee7936740aea8eebe8fe8b2f57c4
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     ON
+  Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-25 08:50:33 UTC +01:00
+  Calculation started: 2022-02-01 16:09:21 UTC +01:00
 
 
   :: Input file
@@ -71,7 +71,7 @@
      end qed
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -164,23 +164,23 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.447420684369     0.7569E-01     0.1774E+03
+     1          -177.447420684370     0.7569E-01     0.1774E+03
      2          -177.474059634300     0.1129E-01     0.2664E-01
-     3          -177.475058205026     0.4151E-02     0.9986E-03
-     4          -177.475186639358     0.1381E-02     0.1284E-03
+     3          -177.475058205025     0.4151E-02     0.9986E-03
+     4          -177.475186639359     0.1381E-02     0.1284E-03
      5          -177.475200524554     0.4333E-03     0.1389E-04
      6          -177.475201885677     0.8204E-04     0.1361E-05
      7          -177.475201969394     0.2303E-04     0.8372E-07
-     8          -177.475201979826     0.4854E-05     0.1043E-07
-     9          -177.475201980668     0.1044E-05     0.8429E-09
-    10          -177.475201980699     0.2420E-06     0.3081E-10
-    11          -177.475201980700     0.5280E-07     0.9663E-12
-    12          -177.475201980700     0.9673E-08     0.5684E-13
-    13          -177.475201980700     0.3445E-08     0.1137E-12
-    14          -177.475201980700     0.1661E-08     0.1705E-12
-    15          -177.475201980700     0.6708E-09     0.8527E-13
-    16          -177.475201980700     0.1430E-09     0.1137E-12
-    17          -177.475201980700     0.4939E-10     0.1421E-12
+     8          -177.475201979825     0.4854E-05     0.1043E-07
+     9          -177.475201980668     0.1044E-05     0.8428E-09
+    10          -177.475201980699     0.2420E-06     0.3087E-10
+    11          -177.475201980700     0.5280E-07     0.1052E-11
+    12          -177.475201980700     0.9673E-08     0.0000E+00
+    13          -177.475201980700     0.3445E-08     0.1705E-12
+    14          -177.475201980700     0.1661E-08     0.2842E-12
+    15          -177.475201980700     0.6708E-09     0.1137E-12
+    16          -177.475201980700     0.1430E-09     0.0000E+00
+    17          -177.475201980700     0.4939E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -188,7 +188,7 @@
 
      HOMO-LUMO gap:                  0.601016247373
      Nuclear repulsion energy:      48.518317619727
-     Electronic energy:           -225.993519600428
+     Electronic energy:           -225.993519600427
      Total energy:                -177.475201980700
 
   - QED Parameters and properties
@@ -207,17 +207,17 @@
 
   - Timings for the QED-RHF ground state calculation
 
-     Total wall time (sec):              1.09036
-     Total cpu time (sec):               4.23589
+     Total wall time (sec):              2.91400
+     Total cpu time (sec):               5.15350
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 367.968 KB
+  Peak memory usage during the execution of eT: 365.476 KB
 
-  Total wall time in eT (sec):              1.11330
-  Total cpu time in eT (sec):               4.29486
+  Total wall time in eT (sec):              2.96100
+  Total cpu time in eT (sec):               5.20340
 
-  Calculation ended: 2022-01-25 08:50:34 UTC +01:00
+  Calculation ended: 2022-02-01 16:09:24 UTC +01:00
 
   - Implementation references:
 

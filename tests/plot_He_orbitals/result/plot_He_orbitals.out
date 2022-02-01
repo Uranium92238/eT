@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2022-01-21 17:15:34 UTC +01:00
-  Git branch:         increase-coverage
-  Git hash:           755c038401752ee41833b4aa9656bf70f1f87dc8
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-21 17:18:35 UTC +01:00
+  Calculation started: 2022-02-01 16:10:13 UTC +01:00
 
 
   :: Input file
@@ -68,10 +68,6 @@
         file format: cube
         grid spacing: 0.4
      end visualization
-
-     !basis: cc-pvdz
-     ! He     1.000000     0.000000     4.000000
-     ! He     1.000000     0.000000    -4.000000
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -190,17 +186,17 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.19229
-     Total cpu time (sec):               0.32361
+     Total wall time (sec):              0.35500
+     Total cpu time (sec):               0.50931
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 764.576 KB
+  Peak memory usage during the execution of eT: 760.696 KB
 
-  Total wall time in eT (sec):              0.22532
-  Total cpu time in eT (sec):               0.36665
+  Total wall time in eT (sec):              0.42400
+  Total cpu time in eT (sec):               0.58203
 
-  Calculation ended: 2022-01-21 17:18:35 UTC +01:00
+  Calculation ended: 2022-02-01 16:10:13 UTC +01:00
 
   - Implementation references:
 

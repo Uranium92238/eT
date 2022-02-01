@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:30:08 UTC +02:00
+  Calculation started: 2022-02-01 16:05:40 UTC +01:00
 
 
   :: Input file
@@ -121,16 +121,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
      Energy of initial guess:             -7530.568190922046
@@ -144,6 +134,16 @@
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -153,26 +153,26 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1         -7530.542527047885     0.4281E-01     0.7531E+04
-     2         -7530.543242039054     0.1751E-02     0.7150E-03
-     3         -7530.543343909524     0.6922E-03     0.1019E-03
+     1         -7530.542527047887     0.4281E-01     0.7531E+04
+     2         -7530.543242039052     0.1751E-02     0.7150E-03
+     3         -7530.543343909520     0.6922E-03     0.1019E-03
      4         -7530.543363599998     0.6722E-04     0.1969E-04
-     5         -7530.543363805165     0.7224E-05     0.2052E-06
-     6         -7530.543363806803     0.3314E-05     0.1639E-08
-     7         -7530.543363807132     0.2769E-06     0.3283E-09
-     8         -7530.543363807134     0.1487E-07     0.2728E-11
-     9         -7530.543363807135     0.2640E-09     0.9095E-12
-    10         -7530.543363807137     0.4194E-10     0.1819E-11
+     5         -7530.543363805162     0.7224E-05     0.2052E-06
+     6         -7530.543363806804     0.3314E-05     0.1643E-08
+     7         -7530.543363807134     0.2769E-06     0.3292E-09
+     8         -7530.543363807134     0.1487E-07     0.0000E+00
+     9         -7530.543363807136     0.2640E-09     0.2728E-11
+    10         -7530.543363807134     0.4193E-10     0.1819E-11
   ---------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
   - Summary of UHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.289543124728
+     HOMO-LUMO gap (alpha):          0.289543124727
      HOMO-LUMO gap (beta):           0.696523627897
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:          -7530.543363807137
-     Total energy:               -7530.543363807137
+     Electronic energy:          -7530.543363807134
+     Total energy:               -7530.543363807134
 
   - UHF wavefunction spin expectation values:
 
@@ -183,17 +183,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):             13.10900
-     Total cpu time (sec):              24.00571
+     Total wall time (sec):             15.25800
+     Total cpu time (sec):              26.06360
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 482.676 KB
+  Peak memory usage during the execution of eT: 488.300 KB
 
-  Total wall time in eT (sec):             13.14100
-  Total cpu time in eT (sec):              24.04278
+  Total wall time in eT (sec):             15.29200
+  Total cpu time in eT (sec):              26.09976
 
-  Calculation ended: 2021-10-06 10:30:21 UTC +02:00
+  Calculation ended: 2022-02-01 16:05:55 UTC +01:00
 
   - Implementation references:
 

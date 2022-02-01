@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-29 09:08:10 UTC +02:00
-  Git branch:         cuhf-new-new
-  Git hash:           38de6a8dd84be43cf4032a3e02487c7346e26339
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-29 09:13:00 UTC +02:00
+  Calculation started: 2022-02-01 16:09:53 UTC +01:00
 
 
   :: Input file
@@ -165,8 +165,8 @@
      8          -149.607986594229     0.1293E-07     0.4043E-08
      9          -149.607986594666     0.9862E-09     0.4370E-09
     10          -149.607986594647     0.1629E-09     0.1967E-10
-    11          -149.607986594647     0.1248E-10     0.3979E-12
-    12          -149.607986594647     0.4762E-12     0.2274E-12
+    11          -149.607986594647     0.1252E-10     0.4263E-12
+    12          -149.607986594647     0.4443E-12     0.2274E-12
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -183,21 +183,21 @@
      Sz:                   1.00000000
      Sz(Sz + 1):           2.00000000
      S^2:                  2.00000000
-     Spin contamination:   0.00000000
+     Spin contamination:  -0.00000000
 
   - Timings for the CUHF ground state calculation
 
-     Total wall time (sec):              1.09300
-     Total cpu time (sec):               2.08151
+     Total wall time (sec):              1.83900
+     Total cpu time (sec):               3.38697
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 287.160 KB
 
-  Total wall time in eT (sec):              1.12700
-  Total cpu time in eT (sec):               2.11595
+  Total wall time in eT (sec):              1.87800
+  Total cpu time in eT (sec):               3.42871
 
-  Calculation ended: 2021-10-29 09:13:02 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:55 UTC +01:00
 
   - Implementation references:
 

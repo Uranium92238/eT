@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:31:06 UTC +02:00
+  Calculation started: 2022-02-01 16:09:48 UTC +01:00
 
 
   :: Input file
@@ -153,16 +153,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -78.492022836321
@@ -175,6 +165,16 @@
      ERI cutoff:                     0.1000E-16
      One-electron integral  cutoff:  0.1000E-21
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+     Energy threshold:              0.1000E-10
 
   - DIIS tool settings:
 
@@ -193,14 +193,14 @@
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7488E-09
-     9           -78.843851693630     0.3151E-06     0.1026E-09
-    10           -78.843851693631     0.2637E-07     0.5258E-12
-    11           -78.843851693631     0.5634E-08     0.8527E-13
-    12           -78.843851693631     0.1415E-08     0.8527E-13
-    13           -78.843851693631     0.6806E-09     0.2842E-13
-    14           -78.843851693631     0.1491E-09     0.0000E+00
+     9           -78.843851693630     0.3151E-06     0.1028E-09
+    10           -78.843851693631     0.2637E-07     0.4121E-12
+    11           -78.843851693631     0.5634E-08     0.2842E-13
+    12           -78.843851693631     0.1415E-08     0.1421E-13
+    13           -78.843851693631     0.6806E-09     0.1421E-13
+    14           -78.843851693631     0.1491E-09     0.2842E-13
     15           -78.843851693631     0.2501E-10     0.2842E-13
-    16           -78.843851693631     0.5167E-11     0.0000E+00
+    16           -78.843851693631     0.5168E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -213,8 +213,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.02100
-     Total cpu time (sec):               1.71764
+     Total wall time (sec):              0.95300
+     Total cpu time (sec):               1.68804
 
 
   :: MLCC2 wavefunction
@@ -301,19 +301,18 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.47800
-     Total cpu time (sec):               0.66627
+     Total wall time (sec):              0.44100
+     Total cpu time (sec):               0.68432
 
 
   2) Preparation of MO basis and integrals
 
-     The smallest diagonal after decomposition is:  -0.5551E-16
+     The smallest diagonal after decomposition is:  -0.1110E-15
 
-     The smallest diagonal after decomposition is:  -0.2665E-14
+     The smallest diagonal after decomposition is:  -0.3775E-14
 
   - MLCC2 orbital partitioning:
 
@@ -369,13 +368,13 @@
    11           -79.085769729585     0.9303E-09     0.3266E-10
    12           -79.085769729575     0.2416E-09     0.1073E-10
    13           -79.085769729575     0.4926E-10     0.4547E-12
-   14           -79.085769729575     0.6368E-11     0.3837E-12
+   14           -79.085769729576     0.6368E-11     0.3979E-12
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -79.085769729575
+     Final ground state energy (a.u.):   -79.085769729576
 
      Correlation energy (a.u.):           -0.241918035945
 
@@ -397,8 +396,8 @@
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.13600
-     Total cpu time (sec):               0.16734
+     Total wall time (sec):              0.13700
+     Total cpu time (sec):               0.18494
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -533,7 +532,7 @@
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
      1  19.723936399773    0.000000000000     0.3597E-05   0.9004E-07
-     2  19.789326463674    0.000000000000     0.1640E-05   0.1255E-07
+     2  19.789326463675    0.000000000000     0.1640E-05   0.1255E-07
   ------------------------------------------------------------------------
 
   Iteration:                 12
@@ -551,7 +550,7 @@
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
      1  19.723936409651    0.000000000000     0.1601E-06   0.5413E-08
-     2  19.789326448755    0.000000000000     0.4683E-07   0.2010E-09
+     2  19.789326448755    0.000000000000     0.4683E-07   0.2009E-09
   ------------------------------------------------------------------------
 
   Iteration:                 14
@@ -569,7 +568,7 @@
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
      1  19.723936409634    0.000000000000     0.5539E-08   0.2226E-09
-     2  19.789326448874    0.000000000000     0.3529E-08   0.6967E-11
+     2  19.789326448874    0.000000000000     0.3529E-08   0.6931E-11
   ------------------------------------------------------------------------
 
   Iteration:                 16
@@ -577,8 +576,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1  19.723936409608    0.000000000000     0.5284E-09   0.2624E-10
-     2  19.789326448856    0.000000000000     0.1309E-08   0.1803E-10
+     1  19.723936409608    0.000000000000     0.5284E-09   0.2623E-10
+     2  19.789326448856    0.000000000000     0.1309E-08   0.1809E-10
   ------------------------------------------------------------------------
 
   Iteration:                 17
@@ -586,8 +585,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1  19.723936409602    0.000000000000     0.1896E-09   0.5677E-11
-     2  19.789326448863    0.000000000000     0.1503E-09   0.7802E-11
+     1  19.723936409602    0.000000000000     0.1896E-09   0.5592E-11
+     2  19.789326448863    0.000000000000     0.1503E-09   0.7788E-11
   ------------------------------------------------------------------------
 
   Iteration:                 18
@@ -595,8 +594,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1  19.723936409604    0.000000000000     0.4395E-10   0.1382E-11
-     2  19.789326448864    0.000000000000     0.2119E-10   0.7923E-12
+     1  19.723936409604    0.000000000000     0.4395E-10   0.1361E-11
+     2  19.789326448864    0.000000000000     0.2118E-10   0.7425E-12
   ------------------------------------------------------------------------
 
   Iteration:                 19
@@ -604,8 +603,8 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1  19.723936409604    0.000000000000     0.8477E-11   0.4192E-12
-     2  19.789326448864    0.000000000000     0.4837E-11   0.7816E-13
+     1  19.723936409604    0.000000000000     0.8484E-11   0.4476E-12
+     2  19.789326448864    0.000000000000     0.4836E-11   0.3197E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -669,31 +668,31 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.723936409604      536.715647475672
-        2                 19.789326448864      538.495001075838
+        1                 19.723936409604      536.715647475674
+        2                 19.789326448864      538.495001075841
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCC2 excited state equations (left)
 
-     Total wall time (sec):              0.57000
-     Total cpu time (sec):               0.55687
+     Total wall time (sec):              0.55400
+     Total cpu time (sec):               0.60204
 
   - Timings for the MLCC2 excited state calculation
 
-     Total wall time (sec):              1.20200
-     Total cpu time (sec):               1.41048
+     Total wall time (sec):              1.14900
+     Total cpu time (sec):               1.49380
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 10.665712 MB
+  Peak memory usage during the execution of eT: 10.665728 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              2.28900
-  Total cpu time in eT (sec):               3.19083
+  Total wall time in eT (sec):              2.16800
+  Total cpu time in eT (sec):               3.24836
 
-  Calculation ended: 2021-10-06 10:31:09 UTC +02:00
+  Calculation ended: 2022-02-01 16:09:50 UTC +01:00
 
   - Implementation references:
 

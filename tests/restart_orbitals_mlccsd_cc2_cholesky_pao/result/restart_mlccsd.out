@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:29:30 UTC +02:00
+  Calculation started: 2022-02-01 16:10:30 UTC +01:00
 
 
   :: Input file
@@ -152,16 +152,6 @@
 
   1) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-11
-     Energy threshold:              0.1000E-11
-
   - Requested restart. Reading orbitals from file
 
   - Screening and integral thresholds:
@@ -172,6 +162,16 @@
      One-electron integral  cutoff:  0.1000E-22
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -181,7 +181,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2366E-12     0.7884E+02
+     1           -78.843851693631     0.2368E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -194,8 +194,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.03600
-     Total cpu time (sec):               0.06345
+     Total wall time (sec):              0.02700
+     Total cpu time (sec):               0.05075
 
 
   :: MLCCSD wavefunction
@@ -282,12 +282,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.46900
-     Total cpu time (sec):               0.66562
+     Total wall time (sec):              0.40800
+     Total cpu time (sec):               0.62857
 
 
   2) Preparation of MO basis and integrals
@@ -340,7 +339,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.093161259465     0.7117E-12     0.7909E+02
+    1           -79.093161259465     0.7780E-12     0.7909E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -354,7 +353,7 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      4       -0.016127176453
+        1      4       -0.016127176452
         5      3        0.010020008333
        23      3       -0.006082097111
        12      3       -0.005932315868
@@ -368,8 +367,8 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.02200
-     Total cpu time (sec):               0.02896
+     Total wall time (sec):              0.02400
+     Total cpu time (sec):               0.03282
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -417,10 +416,10 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.245946715752    0.000000000000     0.5518E-12   0.1256E-12
-     2   0.307084362658    0.000000000000     0.3482E-12   0.4302E-13
-     3   0.355706692610    0.000000000000     0.4361E-12   0.1169E-12
-     4   0.413866997258    0.000000000000     0.3117E-11   0.3275E-13
+     1   0.245946715752    0.000000000000     0.5787E-12   0.5412E-13
+     2   0.307084362658    0.000000000000     0.3506E-12   0.5235E-13
+     3   0.355706692610    0.000000000000     0.5086E-12   0.9392E-13
+     4   0.413866997258    0.000000000000     0.3442E-11   0.1521E-13
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -440,16 +439,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      5        0.932226011270
-       16      5       -0.237732531559
-       15      5       -0.117946196268
-       10      5       -0.054863584308
-        6      5       -0.046352217907
-        3      5       -0.036650631151
-       13      5        0.028805012546
-        8      5       -0.015706906502
-       19      5        0.015187083676
-        1      6       -0.012169378872
+        1      5       -0.932226011270
+       16      5        0.237732531559
+       15      5        0.117946196268
+       10      5        0.054863584308
+        6      5        0.046352217907
+        3      5        0.036650631150
+       13      5       -0.028805012546
+        8      5        0.015706906502
+       19      5       -0.015187083676
+        1      6        0.012169378872
      ------------------------------------
 
      Electronic state nr. 2
@@ -466,16 +465,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      5       -0.794477010602
-       14      5       -0.504334666724
-        5      5       -0.173909686647
-       23      5       -0.148877399804
-       12      5       -0.091623750789
-       18      5        0.039440535575
-       22      5       -0.012299762365
-        2      6        0.009595744195
-       14      6        0.007785668538
-        6      5        0.005875384422
+        2      5        0.794477010602
+       14      5        0.504334666724
+        5      5        0.173909686647
+       23      5        0.148877399804
+       12      5        0.091623750789
+       18      5       -0.039440535575
+       22      5        0.012299762365
+        2      6       -0.009595744195
+       14      6       -0.007785668538
+        6      5       -0.005875384422
      ------------------------------------
 
      Electronic state nr. 3
@@ -492,16 +491,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      4        0.915147365098
-       16      4       -0.250877046660
-        2      3       -0.135834053786
-       15      4       -0.124221136911
-        6      4       -0.084933724932
-        1      2       -0.073374273461
-       10      4       -0.052860812467
-       14      3       -0.047488211984
-       13      4        0.043515417323
-        4      5        0.040237403984
+        1      4       -0.915147365098
+       16      4        0.250877046660
+        2      3        0.135834053786
+       15      4        0.124221136911
+        6      4        0.084933724931
+        1      2        0.073374273461
+       10      4        0.052860812467
+       14      3        0.047488211984
+       13      4       -0.043515417323
+        4      5       -0.040237403984
      ------------------------------------
 
      Electronic state nr. 4
@@ -518,16 +517,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      4       -0.746723244613
-       14      4       -0.525164332637
-        1      3        0.208729119477
-        5      4       -0.179232324567
-       23      4       -0.149099781933
-       12      4       -0.105067617968
-       16      3       -0.048138913110
-       18      4        0.036350607706
-       15      3       -0.021569336842
-       10      3       -0.021105133702
+        2      4        0.746723244613
+       14      4        0.525164332637
+        1      3       -0.208729119476
+        5      4        0.179232324567
+       23      4        0.149099781933
+       12      4        0.105067617968
+       16      3        0.048138913110
+       18      4       -0.036350607706
+       15      3        0.021569336842
+       10      3        0.021105133701
      ------------------------------------
 
      - Electronic excitation energies:
@@ -536,33 +535,33 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.245946715752        6.692551022682
-        2                  0.307084362658        8.356191133004
-        3                  0.355706692610        9.679272122498
-        4                  0.413866997258       11.261894623330
+        1                  0.245946715752        6.692551022681
+        2                  0.307084362658        8.356191133002
+        3                  0.355706692610        9.679272122496
+        4                  0.413866997258       11.261894623328
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCCSD excited state equations (right)
 
-     Total wall time (sec):              0.10400
-     Total cpu time (sec):               0.12007
+     Total wall time (sec):              0.10800
+     Total cpu time (sec):               0.12852
 
   - Timings for the MLCCSD excited state calculation
 
-     Total wall time (sec):              0.61100
-     Total cpu time (sec):               0.83159
+     Total wall time (sec):              0.55300
+     Total cpu time (sec):               0.80778
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 10.692856 MB
+  Peak memory usage during the execution of eT: 10.692872 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.71400
-  Total cpu time in eT (sec):               0.95563
+  Total wall time in eT (sec):              0.64100
+  Total cpu time in eT (sec):               0.91929
 
-  Calculation ended: 2021-10-06 10:29:31 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:31 UTC +01:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -16,10 +16,10 @@
 
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
-  One-electron integrals (overlap)             0.00            0.00      0.75
+  One-electron integrals (overlap)             0.00            0.00        --
   Cholesky decomposition of AO        
-  overlap                                      0.00            0.00        --
-  Time initializing AO tool                    0.03            0.03      1.06
+  overlap                                      0.00            0.00      0.37
+  Time initializing AO tool                    0.03            0.03      1.03
 
   :: Hartree-Fock engine
   =========================
@@ -29,10 +29,10 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.67
-  AO G construction                            0.03            0.05      1.79
-  SCF solver                                   0.03            0.05      1.63
-  Hartree-Fock engine                          0.03            0.05      1.61
+  (hamiltonian)                                0.00            0.00      0.64
+  AO G construction                            0.03            0.06      1.93
+  SCF solver                                   0.00            0.00        --
+  Hartree-Fock engine                          0.03            0.06      1.89
 
   :: Excited state coupled cluster engine
   ==========================================
@@ -42,13 +42,13 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   Cholesky: time to determine         
-  auxiliary basis                              0.13            0.18      1.39
+  auxiliary basis                              0.15            0.21      1.44
   Cholesky: time to construct         
-  (J|K), decompose, and invert                 0.06            0.09      1.63
-  Diagonal test                                0.14            0.23      1.61
+  (J|K), decompose, and invert                 0.07            0.11      1.53
+  Diagonal test                                0.17            0.27      1.64
   Construct and write Cholesky        
-  vectors                                      0.10            0.13      1.36
-  Cholesky decomposition of ERIs               0.42            0.63      1.49
+  vectors                                      0.09            0.13      1.40
+  Cholesky decomposition of ERIs               0.48            0.73      1.52
 
   2) Preparation of MO basis and integrals
 
@@ -59,303 +59,175 @@
 
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
-  Copy Cholesky MO to T1                       0.00            0.00      1.55
-  Construct eri integrals                      0.01            0.02      2.72
-  Update t1 cholesky                           0.00            0.00      1.65
-  Construct eri integrals                      0.01            0.02      3.35
+  T1 transform cholesky                        0.01            0.02      2.19
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.80
+  Fock matrix construction (T1 basis)         0.00            0.00      1.23
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.02      1.43
+  T1 transform cholesky                        0.01            0.02      2.06
+  DIIS CC GS iteration time                    0.03            0.05      1.58
   One-electron integrals              
   (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.13
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.09
+  T1 transform cholesky                        0.01            0.02      2.34
+  DIIS CC GS iteration time                    0.03            0.04      1.55
   One-electron integrals              
   (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.01      1.32
+  Fock matrix construction (T1 basis)         0.00            0.00      1.41
+  Calculate energy                             0.00            0.00        --
   Construct CCS Omega                          0.00            0.00        --
   Construct CCSD Omega                         0.01            0.01      1.34
-  Update t1 cholesky                           0.00            0.00      1.40
-  Construct eri integrals                      0.01            0.02      3.22
-  DIIS CC GS iteration time                    0.02            0.04      1.83
+  T1 transform cholesky                        0.01            0.02      2.94
+  DIIS CC GS iteration time                    0.02            0.04      1.89
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.39
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.48
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      0.91
+  (hamiltonian)                                0.00            0.00      0.77
+  Fock matrix construction (T1 basis)         0.00            0.00      1.50
+  Calculate energy                             0.00            0.00        --
   Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.35
-  Update t1 cholesky                           0.00            0.00      0.71
-  Construct eri integrals                      0.00            0.02      3.64
-  DIIS CC GS iteration time                    0.02            0.04      1.77
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.74
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.66
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.17
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.19
-  Update t1 cholesky                           0.00            0.00      0.95
-  Construct eri integrals                      0.00            0.02      4.58
-  DIIS CC GS iteration time                    0.02            0.03      1.89
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.63
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.45
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.45
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      0.88
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.07
-  Update t1 cholesky                           0.00            0.00      1.51
-  Construct eri integrals                      0.00            0.02      4.88
-  DIIS CC GS iteration time                    0.02            0.03      1.88
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.57
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.69
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.21
-  Update t1 cholesky                           0.00            0.00      0.67
-  Construct eri integrals                      0.00            0.02      4.99
-  DIIS CC GS iteration time                    0.02            0.04      2.06
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.62
-  Fock matrix construction (T1 basis)         0.00            0.00      1.31
-  Construct CCS Omega                          0.00            0.00      0.05
-  Construct CCSD Omega                         0.01            0.01      1.19
-  Update t1 cholesky                           0.00            0.00      1.24
-  Construct eri integrals                      0.00            0.02      4.17
-  DIIS CC GS iteration time                    0.02            0.04      2.02
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.46
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.45
-  Fock matrix construction (T1 basis)         0.00            0.00      1.07
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.02
-  Update t1 cholesky                           0.00            0.00      1.35
-  Construct eri integrals                      0.01            0.02      3.10
-  DIIS CC GS iteration time                    0.02            0.03      1.60
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.68
-  Fock matrix construction (T1 basis)         0.00            0.00      1.54
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.35
-  Update t1 cholesky                           0.00            0.00      1.18
-  Construct eri integrals                      0.01            0.02      2.99
-  DIIS CC GS iteration time                    0.02            0.04      1.88
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.78
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.59
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.50
-  Update t1 cholesky                           0.00            0.00      0.81
-  Construct eri integrals                      0.01            0.02      2.95
-  DIIS CC GS iteration time                    0.02            0.03      1.84
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.16
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.31
-  Update t1 cholesky                           0.00            0.00      1.30
-  Construct eri integrals                      0.01            0.02      2.73
-  DIIS CC GS iteration time                    0.02            0.03      1.70
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.55
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.75
-  Fock matrix construction (T1 basis)         0.00            0.00      1.49
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.34
-  Update t1 cholesky                           0.00            0.00      1.24
-  Construct eri integrals                      0.01            0.02      3.61
-  DIIS CC GS iteration time                    0.02            0.04      1.95
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.49
+  T1 transform cholesky                        0.01            0.02      2.84
+  DIIS CC GS iteration time                    0.02            0.04      1.89
   One-electron integrals              
   (hamiltonian)                                0.00            0.00      0.79
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.68
-  Fock matrix construction (T1 basis)         0.00            0.00      1.64
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.29
-  Update t1 cholesky                           0.00            0.00      1.20
-  Construct eri integrals                      0.00            0.02      3.42
-  DIIS CC GS iteration time                    0.02            0.03      1.92
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.75
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.71
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.66
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.17
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.37
-  Update t1 cholesky                           0.00            0.00      1.61
-  Construct eri integrals                      0.01            0.02      2.72
-  DIIS CC GS iteration time                    0.02            0.03      1.72
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.70
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.49
+  Fock matrix construction (T1 basis)         0.00            0.00      1.37
+  Calculate energy                             0.00            0.00      0.34
   Construct CCS Omega                          0.00            0.00        --
   Construct CCSD Omega                         0.01            0.01      1.38
-  Update t1 cholesky                           0.00            0.00      1.50
-  Construct eri integrals                      0.01            0.02      2.89
-  DIIS CC GS iteration time                    0.02            0.04      1.76
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.67
-  Fock matrix construction (T1 basis)         0.00            0.00      1.55
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.00            0.01      1.71
-  Update t1 cholesky                           0.00            0.00      1.49
-  Construct eri integrals                      0.00            0.02      3.34
-  DIIS CC GS iteration time                    0.02            0.03      1.85
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.68
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.71
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.50
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.31
-  Update t1 cholesky                           0.00            0.00      0.82
-  Construct eri integrals                      0.01            0.02      2.87
-  DIIS CC GS iteration time                    0.02            0.03      1.74
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.63
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.64
-  Fock matrix construction (T1 basis)         0.00            0.00      1.54
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.30
-  Update t1 cholesky                           0.00            0.00      1.42
-  Construct eri integrals                      0.01            0.02      3.37
-  DIIS CC GS iteration time                    0.02            0.03      1.88
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.76
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.56
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.13
-  Update t1 cholesky                           0.00            0.00      1.30
-  Construct eri integrals                      0.00            0.02      3.30
-  DIIS CC GS iteration time                    0.02            0.03      1.66
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.66
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.70
-  Fock matrix construction (T1 basis)         0.00            0.00      1.50
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.41
-  Update t1 cholesky                           0.00            0.00      1.61
-  Construct eri integrals                      0.01            0.02      2.85
+  T1 transform cholesky                        0.01            0.02      2.85
   DIIS CC GS iteration time                    0.02            0.04      1.86
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.71
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.67
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      0.95
+  (hamiltonian)                                0.00            0.00      0.80
+  Fock matrix construction (T1 basis)         0.00            0.00      1.11
+  Calculate energy                             0.00            0.00        --
   Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.16
+  T1 transform cholesky                        0.01            0.02      2.81
+  DIIS CC GS iteration time                    0.03            0.04      1.64
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.76
+  Fock matrix construction (T1 basis)         0.00            0.00      1.20
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.28
+  T1 transform cholesky                        0.01            0.02      2.76
+  DIIS CC GS iteration time                    0.02            0.04      1.77
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.83
+  Fock matrix construction (T1 basis)         0.00            0.00      1.21
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00      0.08
   Construct CCSD Omega                         0.01            0.01      1.31
-  Update t1 cholesky                           0.00            0.00      0.69
-  Construct eri integrals                      0.00            0.02      4.67
-  DIIS CC GS iteration time                    0.02            0.04      1.72
+  T1 transform cholesky                        0.01            0.02      2.48
+  DIIS CC GS iteration time                    0.03            0.04      1.67
   One-electron integrals              
   (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.51
+  Fock matrix construction (T1 basis)         0.00            0.00      1.26
+  Calculate energy                             0.00            0.00        --
   Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.05
-  DIIS CC GS iteration time                    0.01            0.01      1.05
-  CC GS solver time                            0.42            0.76      1.81
+  Construct CCSD Omega                         0.01            0.01      1.07
+  T1 transform cholesky                        0.01            0.02      3.01
+  DIIS CC GS iteration time                    0.02            0.04      1.86
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.47
+  Fock matrix construction (T1 basis)         0.00            0.00      1.15
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.53
+  T1 transform cholesky                        0.01            0.02      3.17
+  DIIS CC GS iteration time                    0.02            0.04      1.92
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.53
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.61
+  T1 transform cholesky                        0.01            0.02      3.17
+  DIIS CC GS iteration time                    0.02            0.04      2.01
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.20
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.42
+  T1 transform cholesky                        0.01            0.02      2.95
+  DIIS CC GS iteration time                    0.02            0.04      1.87
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.12
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.34
+  T1 transform cholesky                        0.01            0.02      2.20
+  DIIS CC GS iteration time                    0.02            0.04      1.70
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.76
+  Fock matrix construction (T1 basis)         0.00            0.00      1.10
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.30
+  T1 transform cholesky                        0.01            0.02      2.85
+  DIIS CC GS iteration time                    0.02            0.04      1.78
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.47
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.48
+  T1 transform cholesky                        0.01            0.02      2.70
+  DIIS CC GS iteration time                    0.02            0.04      1.91
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.78
+  Fock matrix construction (T1 basis)         0.00            0.00      1.46
+  Calculate energy                             0.00            0.00      0.34
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.24
+  T1 transform cholesky                        0.01            0.02      2.83
+  DIIS CC GS iteration time                    0.02            0.04      1.75
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.71
+  Fock matrix construction (T1 basis)         0.00            0.00      1.31
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.09
+  T1 transform cholesky                        0.01            0.02      2.90
+  DIIS CC GS iteration time                    0.02            0.04      1.85
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.73
+  Fock matrix construction (T1 basis)         0.00            0.00      1.05
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.24
+  T1 transform cholesky                        0.01            0.02      3.09
+  DIIS CC GS iteration time                    0.02            0.04      1.78
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.79
+  Fock matrix construction (T1 basis)         0.00            0.00      1.07
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.26
+  T1 transform cholesky                        0.01            0.02      2.37
+  DIIS CC GS iteration time                    0.02            0.04      1.65
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.77
+  Fock matrix construction (T1 basis)         0.01            0.00      0.87
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.13
+  T1 transform cholesky                        0.01            0.02      2.22
+  DIIS CC GS iteration time                    0.03            0.04      1.54
+  One-electron integrals              
+  (hamiltonian)                                0.00            0.00      0.73
+  Fock matrix construction (T1 basis)         0.00            0.00      1.05
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00        --
+  Construct CCSD Omega                         0.01            0.01      1.11
+  DIIS CC GS iteration time                    0.01            0.02      1.17
+  CC GS solver time                            0.48            0.83      1.74
 
   4) Calculation of the excited state (davidson algorithm)
      Calculating right vectors
@@ -363,175 +235,235 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.74
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.51
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.23
-  Prepare for Jacobian CCSD                    0.01            0.01      1.14
-  Jacobian CCS transformation                  0.00            0.00      1.59
-  Jacobian CCSD transformation                 0.01            0.02      1.16
-  Jacobian CCS transformation                  0.00            0.00      1.60
-  Jacobian CCSD transformation                 0.01            0.02      1.14
-  Jacobian CCS transformation                  0.00            0.00      1.38
-  Jacobian CCSD transformation                 0.01            0.01      1.00
-  Davidson: CC ES iteration 1                  0.05            0.05      1.06
-  Jacobian CCS transformation                  0.00            0.00      1.74
-  Jacobian CCSD transformation                 0.01            0.02      1.05
-  Jacobian CCS transformation                  0.00            0.00      0.93
-  Jacobian CCSD transformation                 0.01            0.02      1.22
-  Jacobian CCS transformation                  0.00            0.00      1.49
-  Jacobian CCSD transformation                 0.01            0.02      1.17
-  Davidson: CC ES iteration 2                  0.05            0.05      1.16
-  Jacobian CCS transformation                  0.00            0.00      0.95
-  Jacobian CCSD transformation                 0.01            0.02      1.20
-  Jacobian CCS transformation                  0.00            0.00      1.70
-  Jacobian CCSD transformation                 0.01            0.02      1.26
-  Jacobian CCS transformation                  0.00            0.00      1.76
-  Jacobian CCSD transformation                 0.01            0.02      1.21
-  Davidson: CC ES iteration 3                  0.05            0.06      1.18
-  Jacobian CCS transformation                  0.00            0.00      0.93
-  Jacobian CCSD transformation                 0.01            0.02      1.25
-  Jacobian CCS transformation                  0.00            0.00      1.82
-  Jacobian CCSD transformation                 0.01            0.02      1.20
-  Jacobian CCS transformation                  0.00            0.00      0.92
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Davidson: CC ES iteration 4                  0.05            0.06      1.18
-  Jacobian CCS transformation                  0.00            0.00      1.75
-  Jacobian CCSD transformation                 0.01            0.02      1.23
+  (hamiltonian)                                0.00            0.00      0.75
+  Fock matrix construction (T1 basis)         0.00            0.00      1.49
+  Prepare for Jacobian CCSD                    0.01            0.01      1.12
+  Jacobian CCS transformation                  0.00            0.00      1.81
+  Jacobian doubles transformation              0.00            0.00      1.18
+  Jacobian CCSD transformation                 0.02            0.03      1.14
+  Jacobian CCS transformation                  0.00            0.00      0.84
+  Jacobian doubles transformation              0.00            0.00      1.15
+  Jacobian CCSD transformation                 0.02            0.03      1.15
   Jacobian CCS transformation                  0.00            0.00      0.86
-  Jacobian CCSD transformation                 0.01            0.02      1.14
-  Jacobian CCS transformation                  0.00            0.00      1.52
-  Jacobian CCSD transformation                 0.01            0.02      1.27
-  Davidson: CC ES iteration 5                  0.05            0.06      1.17
-  Jacobian CCS transformation                  0.00            0.00      0.92
-  Jacobian CCSD transformation                 0.01            0.02      1.23
-  Jacobian CCS transformation                  0.00            0.00      1.53
-  Jacobian CCSD transformation                 0.01            0.02      1.31
-  Jacobian CCS transformation                  0.00            0.00      1.66
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Davidson: CC ES iteration 6                  0.05            0.06      1.17
-  Jacobian CCS transformation                  0.00            0.00      1.74
-  Jacobian CCSD transformation                 0.01            0.02      1.26
-  Jacobian CCS transformation                  0.00            0.00      1.83
-  Jacobian CCSD transformation                 0.01            0.02      1.17
-  Jacobian CCS transformation                  0.00            0.00      0.98
-  Jacobian CCSD transformation                 0.02            0.02      1.11
-  Davidson: CC ES iteration 7                  0.05            0.06      1.16
-  Jacobian CCS transformation                  0.00            0.00      1.33
-  Jacobian CCSD transformation                 0.01            0.01      1.07
-  Jacobian CCS transformation                  0.00            0.00      0.57
-  Jacobian CCSD transformation                 0.01            0.01      0.88
-  Jacobian CCS transformation                  0.00            0.00      1.18
-  Jacobian CCSD transformation                 0.02            0.02      1.05
-  Davidson: CC ES iteration 8                  0.05            0.05      1.01
-  Jacobian CCS transformation                  0.00            0.00      1.45
-  Jacobian CCSD transformation                 0.01            0.01      1.04
-  Jacobian CCS transformation                  0.00            0.00      1.32
-  Jacobian CCSD transformation                 0.02            0.01      0.99
+  Jacobian doubles transformation              0.00            0.00      1.16
+  Jacobian CCSD transformation                 0.02            0.03      1.13
+  Davidson: CC ES iteration 1                  0.07            0.08      1.15
+  Jacobian CCS transformation                  0.00            0.00      1.61
+  Jacobian doubles transformation              0.00            0.00      1.51
+  Jacobian CCSD transformation                 0.02            0.03      1.20
+  Jacobian CCS transformation                  0.00            0.00      0.84
+  Jacobian doubles transformation              0.00            0.00      1.17
+  Jacobian CCSD transformation                 0.02            0.03      1.14
+  Jacobian CCS transformation                  0.00            0.00      0.84
+  Jacobian doubles transformation              0.00            0.00      1.13
+  Jacobian CCSD transformation                 0.02            0.02      1.18
+  Davidson: CC ES iteration 2                  0.07            0.08      1.16
+  Jacobian CCS transformation                  0.00            0.00      0.87
+  Jacobian doubles transformation              0.00            0.00      1.14
+  Jacobian CCSD transformation                 0.02            0.03      1.16
   Jacobian CCS transformation                  0.00            0.00      1.59
-  Jacobian CCSD transformation                 0.01            0.02      1.20
-  Davidson: CC ES iteration 9                  0.05            0.06      1.07
-  Jacobian CCS transformation                  0.00            0.00      1.86
-  Jacobian CCSD transformation                 0.01            0.01      1.21
-  Jacobian CCS transformation                  0.00            0.00      1.80
-  Jacobian CCSD transformation                 0.01            0.01      1.23
-  Jacobian CCS transformation                  0.00            0.00      1.76
-  Jacobian CCSD transformation                 0.01            0.02      1.19
-  Davidson: CC ES iteration 10                 0.05            0.06      1.13
-  Jacobian CCS transformation                  0.00            0.00      0.82
-  Jacobian CCSD transformation                 0.01            0.01      1.19
-  Jacobian CCS transformation                  0.00            0.00      0.91
-  Jacobian CCSD transformation                 0.01            0.02      1.11
-  Jacobian CCS transformation                  0.00            0.00      1.58
-  Jacobian CCSD transformation                 0.01            0.02      1.26
-  Davidson: CC ES iteration 11                 0.05            0.06      1.19
-  Jacobian CCS transformation                  0.00            0.00      1.07
-  Jacobian CCSD transformation                 0.01            0.02      1.21
-  Jacobian CCS transformation                  0.00            0.00      1.83
-  Jacobian CCSD transformation                 0.01            0.02      1.14
-  Jacobian CCS transformation                  0.00            0.00      1.00
-  Jacobian CCSD transformation                 0.01            0.02      1.17
-  Davidson: CC ES iteration 12                 0.06            0.07      1.17
-  Jacobian CCS transformation                  0.00            0.00      1.87
-  Jacobian CCSD transformation                 0.01            0.02      1.22
-  Jacobian CCS transformation                  0.00            0.00      1.91
-  Jacobian CCSD transformation                 0.02            0.02      1.25
-  Jacobian CCS transformation                  0.00            0.00      1.99
-  Jacobian CCSD transformation                 0.02            0.02      1.12
-  Davidson: CC ES iteration 13                 0.06            0.07      1.16
-  Jacobian CCS transformation                  0.00            0.00      0.95
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Jacobian CCS transformation                  0.00            0.00      2.07
-  Jacobian CCSD transformation                 0.01            0.02      1.20
-  Jacobian CCS transformation                  0.00            0.00      0.93
-  Jacobian CCSD transformation                 0.01            0.02      1.21
-  Davidson: CC ES iteration 14                 0.06            0.07      1.15
-  Jacobian CCS transformation                  0.00            0.00      1.83
-  Jacobian CCSD transformation                 0.01            0.02      1.19
-  Jacobian CCS transformation                  0.00            0.00      0.93
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Jacobian CCS transformation                  0.00            0.00      1.66
-  Jacobian CCSD transformation                 0.01            0.02      1.25
-  Davidson: CC ES iteration 15                 0.06            0.07      1.18
-  Jacobian CCS transformation                  0.00            0.00      0.88
-  Jacobian CCSD transformation                 0.01            0.02      1.21
-  Jacobian CCS transformation                  0.00            0.00      0.92
-  Jacobian CCSD transformation                 0.01            0.02      1.20
-  Jacobian CCS transformation                  0.00            0.00      1.66
-  Jacobian CCSD transformation                 0.01            0.02      1.17
-  Davidson: CC ES iteration 16                 0.06            0.07      1.19
-  Jacobian CCS transformation                  0.00            0.00      0.95
-  Jacobian CCSD transformation                 0.01            0.02      1.19
-  Jacobian CCS transformation                  0.00            0.00      1.82
-  Jacobian CCSD transformation                 0.01            0.02      1.22
-  Jacobian CCS transformation                  0.00            0.00      0.93
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Davidson: CC ES iteration 17                 0.06            0.07      1.17
-  Jacobian CCS transformation                  0.00            0.00      0.93
-  Jacobian CCSD transformation                 0.01            0.02      1.24
-  Jacobian CCS transformation                  0.00            0.00      1.06
-  Jacobian CCSD transformation                 0.01            0.02      1.27
-  Jacobian CCS transformation                  0.00            0.00      1.88
-  Jacobian CCSD transformation                 0.02            0.02      1.14
-  Davidson: CC ES iteration 18                 0.06            0.08      1.19
-  Jacobian CCS transformation                  0.00            0.00      1.03
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Jacobian CCS transformation                  0.00            0.00      2.06
-  Jacobian CCSD transformation                 0.02            0.02      1.22
-  Jacobian CCS transformation                  0.00            0.00      1.02
-  Jacobian CCSD transformation                 0.02            0.02      1.05
-  Davidson: CC ES iteration 19                 0.07            0.08      1.16
-  Jacobian CCS transformation                  0.00            0.00      1.16
-  Jacobian CCSD transformation                 0.02            0.02      1.20
-  Jacobian CCS transformation                  0.00            0.00      1.06
-  Jacobian CCSD transformation                 0.02            0.02      1.19
-  Jacobian CCS transformation                  0.00            0.00      2.05
+  Jacobian doubles transformation              0.00            0.00      1.47
   Jacobian CCSD transformation                 0.02            0.02      1.21
-  Davidson: CC ES iteration 20                 0.07            0.08      1.19
-  Jacobian CCS transformation                  0.00            0.00      1.82
-  Jacobian CCSD transformation                 0.02            0.02      1.12
-  Jacobian CCS transformation                  0.00            0.00      1.03
-  Jacobian CCSD transformation                 0.01            0.02      1.19
-  Davidson: CC ES iteration 21                 0.05            0.06      1.20
-  Jacobian CCS transformation                  0.00            0.00      1.03
-  Jacobian CCSD transformation                 0.02            0.02      1.25
-  Jacobian CCS transformation                  0.00            0.00      1.14
+  Jacobian CCS transformation                  0.00            0.00      1.63
+  Jacobian doubles transformation              0.00            0.00      1.47
+  Jacobian CCSD transformation                 0.02            0.03      1.20
+  Davidson: CC ES iteration 3                  0.07            0.08      1.16
+  Jacobian CCS transformation                  0.00            0.00      1.42
+  Jacobian doubles transformation              0.00            0.00      1.07
+  Jacobian CCSD transformation                 0.03            0.03      0.92
+  Jacobian CCS transformation                  0.00            0.00      0.48
+  Jacobian doubles transformation              0.01            0.01      0.51
+  Jacobian CCSD transformation                 0.05            0.03      0.62
+  Jacobian CCS transformation                  0.00            0.00      0.78
+  Jacobian doubles transformation              0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.04            0.03      0.73
+  Davidson: CC ES iteration 4                  0.12            0.09      0.74
+  Jacobian CCS transformation                  0.00            0.00      0.90
+  Jacobian doubles transformation              0.00            0.00      1.17
+  Jacobian CCSD transformation                 0.03            0.03      0.98
+  Jacobian CCS transformation                  0.00            0.00      0.90
+  Jacobian doubles transformation              0.00            0.00      1.11
+  Jacobian CCSD transformation                 0.02            0.02      0.97
+  Jacobian CCS transformation                  0.00            0.00      1.64
+  Jacobian doubles transformation              0.00            0.00      1.43
+  Jacobian CCSD transformation                 0.02            0.02      1.06
+  Davidson: CC ES iteration 5                  0.08            0.08      1.00
+  Jacobian CCS transformation                  0.00            0.00      0.80
+  Jacobian doubles transformation              0.00            0.00      1.11
+  Jacobian CCSD transformation                 0.02            0.02      0.93
+  Jacobian CCS transformation                  0.00            0.00      0.65
+  Jacobian doubles transformation              0.01            0.01      0.73
+  Jacobian CCSD transformation                 0.05            0.03      0.64
+  Jacobian CCS transformation                  0.00            0.00      0.90
+  Jacobian doubles transformation              0.01            0.00      0.83
+  Jacobian CCSD transformation                 0.04            0.03      0.83
+  Davidson: CC ES iteration 6                  0.12            0.09      0.78
+  Jacobian CCS transformation                  0.00            0.00      0.84
+  Jacobian doubles transformation              0.01            0.00      0.80
+  Jacobian CCSD transformation                 0.03            0.03      0.90
+  Jacobian CCS transformation                  0.00            0.00      1.61
+  Jacobian doubles transformation              0.00            0.00      1.17
+  Jacobian CCSD transformation                 0.03            0.03      1.05
+  Jacobian CCS transformation                  0.00            0.00      0.71
+  Jacobian doubles transformation              0.00            0.00      1.04
+  Jacobian CCSD transformation                 0.03            0.03      0.89
+  Davidson: CC ES iteration 7                  0.10            0.09      0.96
+  Jacobian CCS transformation                  0.00            0.00      1.60
+  Jacobian doubles transformation              0.00            0.00      1.05
+  Jacobian CCSD transformation                 0.02            0.02      1.07
+  Jacobian CCS transformation                  0.00            0.00      1.38
+  Jacobian doubles transformation              0.00            0.00      1.10
+  Jacobian CCSD transformation                 0.02            0.02      1.10
+  Jacobian CCS transformation                  0.00            0.00      1.72
+  Jacobian doubles transformation              0.00            0.00      1.49
   Jacobian CCSD transformation                 0.02            0.02      1.15
-  Davidson: CC ES iteration 22                 0.05            0.06      1.20
-  Jacobian CCS transformation                  0.00            0.00      1.03
-  Jacobian CCSD transformation                 0.02            0.02      1.22
-  Jacobian CCS transformation                  0.00            0.00      1.00
-  Jacobian CCSD transformation                 0.01            0.02      1.19
-  Davidson: CC ES iteration 23                 0.05            0.06      1.21
-  CCSD excited state (right)                   1.29            1.50      1.16
+  Davidson: CC ES iteration 8                  0.07            0.08      1.09
+  Jacobian CCS transformation                  0.00            0.00      0.80
+  Jacobian doubles transformation              0.01            0.01      1.05
+  Jacobian CCSD transformation                 0.02            0.02      1.08
+  Jacobian CCS transformation                  0.00            0.00      1.57
+  Jacobian doubles transformation              0.00            0.00      1.40
+  Jacobian CCSD transformation                 0.02            0.02      1.13
+  Jacobian CCS transformation                  0.00            0.00      0.76
+  Jacobian doubles transformation              0.00            0.00      1.04
+  Jacobian CCSD transformation                 0.02            0.02      1.11
+  Davidson: CC ES iteration 9                  0.08            0.09      1.11
+  Jacobian CCS transformation                  0.00            0.00      1.61
+  Jacobian doubles transformation              0.00            0.00      1.11
+  Jacobian CCSD transformation                 0.02            0.02      1.19
+  Jacobian CCS transformation                  0.00            0.00      0.83
+  Jacobian doubles transformation              0.00            0.00      1.14
+  Jacobian CCSD transformation                 0.02            0.03      1.10
+  Jacobian CCS transformation                  0.00            0.00      1.60
+  Jacobian doubles transformation              0.00            0.00      1.44
+  Jacobian CCSD transformation                 0.03            0.03      0.85
+  Davidson: CC ES iteration 10                 0.09            0.09      1.00
+  Jacobian CCS transformation                  0.00            0.00      1.55
+  Jacobian doubles transformation              0.01            0.00      0.93
+  Jacobian CCSD transformation                 0.03            0.03      0.92
+  Jacobian CCS transformation                  0.00            0.00      1.48
+  Jacobian doubles transformation              0.00            0.00      1.06
+  Jacobian CCSD transformation                 0.03            0.03      0.94
+  Jacobian CCS transformation                  0.00            0.00      1.85
+  Jacobian doubles transformation              0.01            0.00      0.95
+  Jacobian CCSD transformation                 0.03            0.03      0.86
+  Davidson: CC ES iteration 11                 0.10            0.09      0.89
+  Jacobian CCS transformation                  0.00            0.00      0.88
+  Jacobian doubles transformation              0.00            0.00      1.13
+  Jacobian CCSD transformation                 0.03            0.03      0.87
+  Jacobian CCS transformation                  0.00            0.00      1.53
+  Jacobian doubles transformation              0.00            0.00      1.40
+  Jacobian CCSD transformation                 0.02            0.02      1.11
+  Jacobian CCS transformation                  0.00            0.00      1.65
+  Jacobian doubles transformation              0.00            0.00      1.48
+  Jacobian CCSD transformation                 0.03            0.03      0.98
+  Davidson: CC ES iteration 12                 0.11            0.09      0.88
+  Jacobian CCS transformation                  0.00            0.00      1.54
+  Jacobian doubles transformation              0.01            0.00      0.57
+  Jacobian CCSD transformation                 0.03            0.03      0.78
+  Jacobian CCS transformation                  0.00            0.00      0.53
+  Jacobian doubles transformation              0.01            0.00      0.65
+  Jacobian CCSD transformation                 0.04            0.03      0.65
+  Jacobian CCS transformation                  0.00            0.00      1.52
+  Jacobian doubles transformation              0.00            0.00      1.45
+  Jacobian CCSD transformation                 0.03            0.03      1.00
+  Davidson: CC ES iteration 13                 0.13            0.10      0.77
+  Jacobian CCS transformation                  0.00            0.00      1.56
+  Jacobian doubles transformation              0.00            0.00      1.13
+  Jacobian CCSD transformation                 0.03            0.03      0.79
+  Jacobian CCS transformation                  0.00            0.00      0.77
+  Jacobian doubles transformation              0.00            0.00      1.10
+  Jacobian CCSD transformation                 0.02            0.02      1.05
+  Jacobian CCS transformation                  0.00            0.00      1.49
+  Jacobian doubles transformation              0.00            0.00      1.05
+  Jacobian CCSD transformation                 0.02            0.02      1.08
+  Davidson: CC ES iteration 14                 0.09            0.09      0.98
+  Jacobian CCS transformation                  0.00            0.00      0.67
+  Jacobian doubles transformation              0.01            0.01      0.88
+  Jacobian CCSD transformation                 0.03            0.03      0.94
+  Jacobian CCS transformation                  0.00            0.00      1.63
+  Jacobian doubles transformation              0.00            0.00      1.13
+  Jacobian CCSD transformation                 0.05            0.03      0.54
+  Jacobian CCS transformation                  0.00            0.00      0.92
+  Jacobian doubles transformation              0.01            0.01      0.84
+  Jacobian CCSD transformation                 0.04            0.03      0.86
+  Davidson: CC ES iteration 15                 0.14            0.11      0.80
+  Jacobian CCS transformation                  0.00            0.00      0.84
+  Jacobian doubles transformation              0.01            0.01      0.85
+  Jacobian CCSD transformation                 0.03            0.03      0.85
+  Jacobian CCS transformation                  0.00            0.00      0.47
+  Jacobian doubles transformation              0.01            0.00      0.58
+  Jacobian CCSD transformation                 0.03            0.03      0.86
+  Jacobian CCS transformation                  0.00            0.00      0.74
+  Jacobian doubles transformation              0.00            0.00      1.07
+  Jacobian CCSD transformation                 0.03            0.03      0.99
+  Davidson: CC ES iteration 16                 0.15            0.11      0.71
+  Jacobian CCS transformation                  0.00            0.00      0.79
+  Jacobian doubles transformation              0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.08            0.03      0.33
+  Jacobian CCS transformation                  0.00            0.00      1.38
+  Jacobian doubles transformation              0.01            0.00      0.93
+  Jacobian CCSD transformation                 0.03            0.03      0.87
+  Jacobian CCS transformation                  0.00            0.00      1.55
+  Jacobian doubles transformation              0.00            0.00      1.39
+  Jacobian CCSD transformation                 0.06            0.03      0.47
+  Davidson: CC ES iteration 17                 0.20            0.11      0.55
+  Jacobian CCS transformation                  0.00            0.00      0.85
+  Jacobian doubles transformation              0.01            0.00      0.94
+  Jacobian CCSD transformation                 0.03            0.03      1.00
+  Jacobian CCS transformation                  0.00            0.00      0.86
+  Jacobian doubles transformation              0.01            0.00      0.92
+  Jacobian CCSD transformation                 0.03            0.03      0.97
+  Jacobian CCS transformation                  0.00            0.00      1.64
+  Jacobian doubles transformation              0.00            0.00      1.05
+  Jacobian CCSD transformation                 0.03            0.02      0.80
+  Davidson: CC ES iteration 18                 0.11            0.11      0.98
+  Jacobian CCS transformation                  0.00            0.00      0.77
+  Jacobian doubles transformation              0.01            0.00      0.91
+  Jacobian CCSD transformation                 0.03            0.03      0.97
+  Jacobian CCS transformation                  0.00            0.00      0.80
+  Jacobian doubles transformation              0.01            0.00      0.75
+  Jacobian CCSD transformation                 0.03            0.03      0.97
+  Jacobian CCS transformation                  0.00            0.00      1.55
+  Jacobian doubles transformation              0.00            0.00      1.37
+  Jacobian CCSD transformation                 0.02            0.03      1.08
+  Davidson: CC ES iteration 19                 0.13            0.11      0.82
+  Jacobian CCS transformation                  0.00            0.00      1.57
+  Jacobian doubles transformation              0.00            0.00      1.44
+  Jacobian CCSD transformation                 0.02            0.03      1.07
+  Jacobian CCS transformation                  0.00            0.00      0.77
+  Jacobian doubles transformation              0.00            0.00      1.04
+  Jacobian CCSD transformation                 0.02            0.02      1.04
+  Jacobian CCS transformation                  0.00            0.00      1.64
+  Jacobian doubles transformation              0.00            0.00      1.46
+  Jacobian CCSD transformation                 0.05            0.02      0.53
+  Davidson: CC ES iteration 20                 0.12            0.10      0.85
+  Jacobian CCS transformation                  0.00            0.00      0.81
+  Jacobian doubles transformation              0.00            0.00      1.09
+  Jacobian CCSD transformation                 0.03            0.03      0.95
+  Jacobian CCS transformation                  0.00            0.00      1.64
+  Jacobian doubles transformation              0.00            0.00      1.10
+  Jacobian CCSD transformation                 0.04            0.03      0.58
+  Davidson: CC ES iteration 21                 0.10            0.08      0.79
+  Jacobian CCS transformation                  0.00            0.00      1.74
+  Jacobian doubles transformation              0.00            0.00      1.17
+  Jacobian CCSD transformation                 0.03            0.03      1.04
+  Jacobian CCS transformation                  0.00            0.00      0.83
+  Jacobian doubles transformation              0.00            0.00      1.03
+  Jacobian CCSD transformation                 0.02            0.02      1.11
+  Davidson: CC ES iteration 22                 0.07            0.08      1.10
+  Jacobian CCS transformation                  0.00            0.00      0.91
+  Jacobian doubles transformation              0.00            0.00      1.18
+  Jacobian CCSD transformation                 0.02            0.03      1.10
+  Jacobian CCS transformation                  0.00            0.00      1.44
+  Jacobian doubles transformation              0.01            0.00      0.87
+  Jacobian CCSD transformation                 0.05            0.03      0.57
+  Davidson: CC ES iteration 23                 0.10            0.08      0.77
+  CCSD excited state (right)                   2.46            2.15      0.87
   Excited state coupled cluster       
-  engine                                       2.14            2.90      1.35
+  engine                                       3.43            3.74      1.09
 
 
   :: Total time
   ================
-  Total time in eT                             2.23            3.00      1.35
+  Total time in eT                             3.53            3.86      1.10

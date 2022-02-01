@@ -1,7 +1,7 @@
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -16,10 +16,10 @@
 
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
-  One-electron integrals (overlap)             0.00            0.00        --
+  One-electron integrals (overlap)             0.00            0.00      0.76
   Cholesky decomposition of AO        
   overlap                                      0.00            0.00        --
-  Time initializing AO tool                    0.04            0.04      1.02
+  Time initializing AO tool                    0.03            0.03      1.01
 
   :: Hartree-Fock engine
   =========================
@@ -29,10 +29,10 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  AO G construction                            0.03            0.06      1.91
-  SCF solver                                   0.03            0.06      1.97
-  Hartree-Fock engine                          0.03            0.06      1.87
+  (hamiltonian)                                0.00            0.00      0.55
+  AO G construction                            0.03            0.06      1.87
+  SCF solver                                   0.00            0.00        --
+  Hartree-Fock engine                          0.03            0.06      1.84
 
   :: Coupled cluster response engine
   =====================================
@@ -42,13 +42,13 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   Cholesky: time to determine         
-  auxiliary basis                              0.13            0.20      1.51
+  auxiliary basis                              0.12            0.19      1.54
   Cholesky: time to construct         
-  (J|K), decompose, and invert                 0.05            0.09      1.75
-  Diagonal test                                0.15            0.23      1.53
+  (J|K), decompose, and invert                 0.05            0.09      1.74
+  Diagonal test                                0.17            0.26      1.49
   Construct and write Cholesky        
-  vectors                                      0.09            0.13      1.42
-  Cholesky decomposition of ERIs               0.43            0.65      1.52
+  vectors                                      0.09            0.13      1.41
+  Cholesky decomposition of ERIs               0.44            0.67      1.52
 
   2) Preparation of MO basis and integrals
 
@@ -59,42 +59,28 @@
 
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
-  Copy Cholesky MO to T1                       0.00            0.00      0.75
-  Construct eri integrals                      0.01            0.02      2.23
-  Update t1 cholesky                           0.00            0.00      1.12
-  Construct eri integrals                      0.01            0.02      3.45
+  T1 transform cholesky                        0.01            0.02      2.37
   One-electron integrals              
   (hamiltonian)                                0.00            0.00        --
+  Fock matrix construction (T1 basis)         0.00            0.00      1.43
+  Calculate energy                             0.00            0.00        --
+  Construct CCS Omega                          0.00            0.00      0.05
+  Construct CCSD Omega                         0.01            0.01      1.26
+  DIIS CC GS iteration time                    0.01            0.02      1.29
+  CC GS solver time                            0.03            0.04      1.54
   One-electron integrals              
   (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.69
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.66
-  Fock matrix construction (T1 basis)         0.00            0.00      1.62
-  Construct CCS Omega                          0.00            0.00        --
-  Construct CCSD Omega                         0.01            0.01      1.28
-  DIIS CC GS iteration time                    0.01            0.02      1.43
-  CC GS solver time                            0.03            0.06      1.90
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.68
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.71
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.57
+  Fock matrix construction (T1 basis)         0.00            0.00      1.34
 
   4) Calculation of the multipliers (davidson algorithm)
 
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   Time preparing for CCSD Jacobian    
-  transpose                                    0.01            0.01      1.13
-  Jacobian transpose CCS                       0.00            0.00      1.68
-  Jacobian transpose CCSD                      0.02            0.02      1.21
-  CCSD multipliers                             0.03            0.04      1.13
+  transpose                                    0.01            0.01      1.10
+  Jacobian transpose CCS                       0.00            0.00      1.70
+  Jacobian transpose CCSD                      0.02            0.03      1.14
+  CCSD multipliers                             0.04            0.04      1.07
 
   5) Calculation of the excited states (davidson algorithm)
      Calculating right vectors
@@ -102,23 +88,20 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.76
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.68
-  One-electron integrals              
   (hamiltonian)                                0.00            0.00        --
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.16
+  Fock matrix construction (T1 basis)         0.00            0.01      1.67
   Prepare for Jacobian CCSD                    0.01            0.01      1.07
-  Jacobian CCS transformation                  0.00            0.00      1.25
-  Jacobian CCSD transformation                 0.01            0.02      1.20
-  Jacobian CCS transformation                  0.00            0.00      1.70
-  Jacobian CCSD transformation                 0.01            0.02      1.18
-  Jacobian CCS transformation                  0.00            0.00      1.79
-  Jacobian CCSD transformation                 0.02            0.02      1.13
-  Davidson: CC ES iteration 1                  0.05            0.06      1.15
-  CCSD excited state (right)                   0.07            0.08      1.16
+  Jacobian CCS transformation                  0.00            0.00      1.61
+  Jacobian doubles transformation              0.00            0.00      1.38
+  Jacobian CCSD transformation                 0.02            0.02      1.18
+  Jacobian CCS transformation                  0.00            0.00      1.47
+  Jacobian doubles transformation              0.00            0.00      1.39
+  Jacobian CCSD transformation                 0.02            0.02      1.19
+  Jacobian CCS transformation                  0.00            0.00      1.44
+  Jacobian doubles transformation              0.00            0.00      1.35
+  Jacobian CCSD transformation                 0.02            0.02      1.20
+  Davidson: CC ES iteration 1                  0.06            0.07      1.17
+  CCSD excited state (right)                   0.08            0.10      1.15
 
   5) Calculation of the excited states (davidson algorithm)
      Calculating left vectors
@@ -126,43 +109,37 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.75
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.68
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.72
-  One-electron integrals              
-  (hamiltonian)                                0.00            0.00        --
-  Fock matrix construction (T1 basis)         0.00            0.00      1.17
+  (hamiltonian)                                0.00            0.00      0.73
+  Fock matrix construction (T1 basis)         0.00            0.00      1.36
   Time preparing for CCSD Jacobian    
-  transpose                                    0.01            0.01      0.99
-  Jacobian transpose CCS                       0.00            0.00      1.24
-  Jacobian transpose CCSD                      0.02            0.02      1.21
-  Jacobian transpose CCS                       0.00            0.00      1.27
-  Jacobian transpose CCSD                      0.02            0.02      0.89
-  Jacobian transpose CCS                       0.00            0.00      1.70
-  Jacobian transpose CCSD                      0.02            0.02      0.95
-  Davidson: CC ES iteration 1                  0.06            0.06      1.01
-  CCSD excited state (left)                    0.08            0.08      1.03
+  transpose                                    0.01            0.01      1.10
+  Jacobian transpose CCS                       0.00            0.00      0.85
+  Jacobian transpose CCSD                      0.02            0.03      1.15
+  Jacobian transpose CCS                       0.00            0.00      1.64
+  Jacobian transpose CCSD                      0.02            0.03      1.20
+  Jacobian transpose CCS                       0.00            0.00      1.53
+  Jacobian transpose CCSD                      0.02            0.03      1.14
+  Davidson: CC ES iteration 1                  0.07            0.08      1.16
+  CCSD excited state (left)                    0.09            0.10      1.15
   Biorthonormalization of left and    
-  right states                                 0.00            0.00      1.12
+  right states                                 0.00            0.00      1.05
 
   6) Calculation of excited state properties (EOM)
 
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   Ground state density                         0.00            0.00        --
-  One-electron integrals (dipole)              0.00            0.00      0.33
-  Density <0|E_pq|1>                           0.00            0.00      0.98
-  Density <0|E_pq|2>                           0.00            0.00      0.98
-  Density <0|E_pq|3>                           0.00            0.00      0.94
-  Density <1|E_pq|0>                           0.00            0.00        --
+  One-electron integrals (dipole)              0.00            0.00        --
+  Density <0|E_pq|1>                           0.00            0.00      0.96
+  Density <0|E_pq|2>                           0.00            0.00      0.97
+  Density <0|E_pq|3>                           0.00            0.00      1.04
+  Density <1|E_pq|0>                           0.00            0.00      0.55
   Density <2|E_pq|0>                           0.00            0.00        --
-  Density <3|E_pq|0>                           0.00            0.00      0.56
-  Time to calculate EOM properties             0.01            0.01      1.05
-  Coupled cluster response engine              0.65            0.92      1.41
+  Density <3|E_pq|0>                           0.00            0.00      0.52
+  Time to calculate EOM properties             0.01            0.01      1.24
+  Coupled cluster response engine              0.70            0.98      1.41
 
 
   :: Total time
   ================
-  Total time in eT                             0.75            1.05      1.40
+  Total time in eT                             0.79            1.10      1.40

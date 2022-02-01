@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-11-17 17:47:28 UTC +01:00
-  Git branch:         core-excitation-ionization-basis-sets
-  Git hash:           2dc5be8beb43bb376ee6ac3cdd6fe91b8327eb29
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-11-17 17:55:32 UTC +01:00
+  Calculation started: 2022-02-01 16:09:24 UTC +01:00
 
 
   :: Input file
@@ -177,18 +177,18 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -75.966704581796     0.9113E-01     0.7597E+02
-     2           -75.996757998030     0.7949E-01     0.3005E-01
+     2           -75.996757998031     0.7949E-01     0.3005E-01
      3           -76.019231407633     0.4696E-02     0.2247E-01
      4           -76.019519353155     0.2456E-02     0.2879E-03
      5           -76.019560577025     0.5565E-03     0.4122E-04
      6           -76.019563451275     0.1389E-03     0.2874E-05
      7           -76.019563586037     0.6809E-05     0.1348E-06
-     8           -76.019563586607     0.1285E-05     0.5703E-09
-     9           -76.019563586622     0.1141E-06     0.1424E-10
-    10           -76.019563586622     0.2389E-07     0.2984E-12
-    11           -76.019563586622     0.7408E-08     0.2416E-12
-    12           -76.019563586622     0.1750E-08     0.5684E-13
-    13           -76.019563586622     0.6453E-09     0.5684E-13
+     8           -76.019563586607     0.1285E-05     0.5704E-09
+     9           -76.019563586622     0.1141E-06     0.1435E-10
+    10           -76.019563586622     0.2389E-07     0.3695E-12
+    11           -76.019563586622     0.7408E-08     0.8527E-13
+    12           -76.019563586622     0.1750E-08     0.9948E-13
+    13           -76.019563586622     0.6453E-09     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -201,8 +201,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.43691
-     Total cpu time (sec):               2.82348
+     Total wall time (sec):              2.76600
+     Total cpu time (sec):               4.77473
 
 
   :: CCSD wavefunction
@@ -287,18 +287,17 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9171E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.6843E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.2717E-14
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.50593
-     Total cpu time (sec):               1.01028
+     Total wall time (sec):              1.20800
+     Total cpu time (sec):               1.84038
 
 
   2) Preparation of MO basis and integrals
@@ -387,8 +386,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.21796
-     Total cpu time (sec):               2.42839
+     Total wall time (sec):              1.98800
+     Total cpu time (sec):               4.28603
 
 
   4) Calculation of the excited state (davidson algorithm)
@@ -601,28 +600,28 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.655593090826      534.855931046509
+        1                 19.655593090826      534.855931046510
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.66258
-     Total cpu time (sec):               1.32424
+     Total wall time (sec):              2.27400
+     Total cpu time (sec):               2.62003
 
   - Timings for the CCSD excited state calculation
 
-     Total wall time (sec):              2.38703
-     Total cpu time (sec):               4.76349
+     Total wall time (sec):              5.56200
+     Total cpu time (sec):               8.98226
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 91.769296 MB
+  Peak memory usage during the execution of eT: 105.444884 MB
 
-  Total wall time in eT (sec):              3.84896
-  Total cpu time in eT (sec):               7.62064
+  Total wall time in eT (sec):              8.40000
+  Total cpu time in eT (sec):              13.82886
 
-  Calculation ended: 2021-11-17 17:55:36 UTC +01:00
+  Calculation ended: 2022-02-01 16:09:33 UTC +01:00
 
   - Implementation references:
 

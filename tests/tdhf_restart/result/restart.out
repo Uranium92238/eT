@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-12-13 17:02:21 UTC +01:00
-  Git branch:         input-cleanup
-  Git hash:           4c2cc6bf523455801cdf275544d28013b6da142b
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-12-13 17:04:06 UTC +01:00
+  Calculation started: 2022-02-01 16:07:23 UTC +01:00
 
 
   :: Input file
@@ -166,18 +166,18 @@
      1           -78.796357979384     0.9791E-01     0.7880E+02
      2           -78.828453237445     0.7078E-01     0.3210E-01
      3           -78.843281517241     0.6747E-02     0.1483E-01
-     4           -78.843608975052     0.2753E-02     0.3275E-03
+     4           -78.843608975051     0.2753E-02     0.3275E-03
      5           -78.843645123311     0.3974E-03     0.3615E-04
      6           -78.843646182586     0.5223E-04     0.1059E-05
      7           -78.843646204409     0.6084E-05     0.2182E-07
      8           -78.843646205153     0.2132E-05     0.7440E-09
      9           -78.843646205256     0.3153E-06     0.1024E-09
-    10           -78.843646205256     0.2623E-07     0.3979E-12
-    11           -78.843646205256     0.5559E-08     0.5684E-13
+    10           -78.843646205256     0.2623E-07     0.3837E-12
+    11           -78.843646205256     0.5559E-08     0.7105E-13
     12           -78.843646205256     0.1724E-08     0.2842E-13
     13           -78.843646205256     0.7589E-09     0.2842E-13
-    14           -78.843646205256     0.1286E-09     0.5684E-13
-    15           -78.843646205256     0.2324E-10     0.0000E+00
+    14           -78.843646205256     0.1286E-09     0.0000E+00
+    15           -78.843646205256     0.2324E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -190,6 +190,13 @@
 
 
   3) Calculate TDHF excitation energies
+
+   - Davidson eigenvalue equation solver
+  -----------------------------------------
+
+  A Davidson solver that solves an eigenvalue equation: M x = omega x. 
+  This equation is solved in a reduced space. A description of the algorithm 
+  can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
 
    - Davidson tool settings:
 
@@ -213,10 +220,10 @@
   Reduced space dimension:    2
 
    Root  omega (Re)        omega (Im)         |residual|   Delta omega (Re)
-  ------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1410E-10   0.7819E-01
-     2   0.142327765331    0.000000000000     0.2409E-10   0.1423E+00
-  ------------------------------------------------------------------------
+  -------------------------------------------------------------------------
+     1   0.078189601095    0.000000000000     0.1401E-10   0.7819E-01
+     2   0.142327765331    0.000000000000     0.2424E-10   0.1423E+00
+  -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
   - TDHF excitation energies:
@@ -225,24 +232,24 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.279624035259        7.608957563912
+        1                  0.279624035259        7.608957563911
         2                  0.377263522396       10.265863339180
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Timings for the RHF properties calculation
 
-     Total wall time (sec):              0.73178
-     Total cpu time (sec):               1.42550
+     Total wall time (sec):              1.39500
+     Total cpu time (sec):               2.17862
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 213.784 KB
+  Peak memory usage during the execution of eT: 212.068 KB
 
-  Total wall time in eT (sec):              0.75086
-  Total cpu time in eT (sec):               1.44441
+  Total wall time in eT (sec):              1.44200
+  Total cpu time in eT (sec):               2.22377
 
-  Calculation ended: 2021-12-13 17:04:06 UTC +01:00
+  Calculation ended: 2022-02-01 16:07:24 UTC +01:00
 
   - Implementation references:
 

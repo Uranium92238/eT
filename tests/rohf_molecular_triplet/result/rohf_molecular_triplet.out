@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,11 +14,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-11-26 17:05:26 UTC +01:00
-  Git branch:         rohf-canonicalization
-  Git hash:           db315a5333dd3f09f5acc98eaaf894575b7f25ae
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-11-26 17:14:57 UTC +01:00
+  Calculation started: 2022-02-01 16:10:06 UTC +01:00
 
 
   :: Input file
@@ -170,15 +170,15 @@
      7           -75.796964949737     0.1699E-04     0.4404E-06
      8           -75.796964978404     0.1725E-05     0.2867E-07
      9           -75.796964999997     0.1349E-06     0.2159E-07
-    10           -75.796964997003     0.3836E-07     0.2994E-08
+    10           -75.796964997004     0.3836E-07     0.2994E-08
     11           -75.796964997728     0.5910E-08     0.7240E-09
-    12           -75.796964997733     0.1526E-08     0.5116E-11
-    13           -75.796964997742     0.2078E-09     0.9237E-11
-    14           -75.796964997744     0.6746E-10     0.2430E-11
-    15           -75.796964997745     0.1812E-10     0.3837E-12
-    16           -75.796964997745     0.3470E-11     0.2842E-12
-    17           -75.796964997745     0.1359E-11     0.2842E-13
-    18           -75.796964997745     0.1795E-12     0.2842E-13
+    12           -75.796964997733     0.1526E-08     0.5130E-11
+    13           -75.796964997742     0.2078E-09     0.9209E-11
+    14           -75.796964997744     0.6746E-10     0.2345E-11
+    15           -75.796964997745     0.1812E-10     0.4547E-12
+    16           -75.796964997745     0.3470E-11     0.3126E-12
+    17           -75.796964997745     0.1360E-11     0.0000E+00
+    18           -75.796964997745     0.1787E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -199,8 +199,8 @@
 
   - Timings for the ROHF ground state calculation
 
-     Total wall time (sec):              0.80200
-     Total cpu time (sec):               1.41355
+     Total wall time (sec):              1.19000
+     Total cpu time (sec):               2.07866
 
   ------------------------------------------------------------
 
@@ -208,10 +208,10 @@
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.83500
-  Total cpu time in eT (sec):               1.44665
+  Total wall time in eT (sec):              1.22600
+  Total cpu time in eT (sec):               2.11650
 
-  Calculation ended: 2021-11-26 17:14:58 UTC +01:00
+  Calculation ended: 2022-02-01 16:10:07 UTC +01:00
 
   - Implementation references:
 

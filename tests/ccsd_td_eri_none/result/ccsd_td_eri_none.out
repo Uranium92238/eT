@@ -1,37 +1,37 @@
 
 
 
-                     eT 1.3 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.3.0 Disco
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-06-07 12:48:33 UTC +02:00
-  Git branch:         update-test-refs-new
-  Git hash:           07052c810cfb89ed77f5f7b0b9d39be404f0338e
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
-  PCM:                ON
+  PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-06-07 12:50:42 UTC +02:00
+  Calculation started: 2022-02-01 16:07:09 UTC +01:00
 
 
   :: Input file
@@ -47,6 +47,11 @@
      do
         time dependent state
      end do
+
+     integrals
+        cholesky storage: memory
+        eri storage: none
+     end integrals
 
      method
         hf
@@ -166,17 +171,9 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.492022836338
+     Energy of initial guess:               -78.492022836361
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
@@ -187,44 +184,54 @@
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - DIIS tool settings:
 
      DIIS dimension:   8
 
-     Storage (solver scf_e): memory
-     Storage (solver scf_x): memory
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.796606592630     0.9053E-01     0.7880E+02
-     2           -78.828675852674     0.7128E-01     0.3207E-01
-     3           -78.843428154462     0.8290E-02     0.1475E-01
-     4           -78.843809541675     0.2414E-02     0.3814E-03
-     5           -78.843850846799     0.3301E-03     0.4131E-04
-     6           -78.843851669326     0.5527E-04     0.8225E-06
-     7           -78.843851692851     0.5865E-05     0.2353E-07
-     8           -78.843851693557     0.2356E-05     0.7054E-09
-     9           -78.843851693630     0.2071E-06     0.7371E-10
-    10           -78.843851693631     0.1594E-07     0.4690E-12
-    11           -78.843851693631     0.3322E-08     0.7105E-13
-    12           -78.843851693631     0.1197E-08     0.2842E-13
-    13           -78.843851693631     0.4264E-09     0.7105E-13
-    14           -78.843851693631     0.1280E-09     0.4263E-13
-    15           -78.843851693631     0.1479E-10     0.1421E-13
+     1           -78.796606592568     0.9786E-01     0.7880E+02
+     2           -78.828675852646     0.7077E-01     0.3207E-01
+     3           -78.843487343819     0.6747E-02     0.1481E-01
+     4           -78.843814479549     0.2753E-02     0.3271E-03
+     5           -78.843850612079     0.3973E-03     0.3613E-04
+     6           -78.843851670925     0.5220E-04     0.1059E-05
+     7           -78.843851692779     0.6096E-05     0.2185E-07
+     8           -78.843851693528     0.2137E-05     0.7488E-09
+     9           -78.843851693630     0.3151E-06     0.1027E-09
+    10           -78.843851693631     0.2637E-07     0.3979E-12
+    11           -78.843851693631     0.5634E-08     0.1421E-13
+    12           -78.843851693631     0.1415E-08     0.2842E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.0000E+00
+    15           -78.843851693631     0.2501E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.645629080236
+     HOMO-LUMO gap:                  0.645629080219
      Nuclear repulsion energy:      12.116100574587
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.29797
-     Total cpu time (sec):               0.51697
+     Total wall time (sec):              1.01700
+     Total cpu time (sec):               1.70855
 
 
   :: CCSD wavefunction
@@ -273,6 +280,9 @@
      3) Calculation of the ground state (diis algorithm)
      4) Calculation of the multipliers (davidson algorithm)
      5) Propagation from the ground state
+
+
+  1) Cholesky decomposition of the electron repulsion integrals
 
 
   1) Cholesky decomposition of the electron repulsion integrals
@@ -332,12 +342,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.11840
-     Total cpu time (sec):               0.23437
+     Total wall time (sec):              0.49100
+     Total cpu time (sec):               0.70874
 
 
   2) Preparation of MO basis and integrals
@@ -355,6 +364,8 @@
 
   - CC ground state solver settings:
 
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
      Max number of iterations:      100
@@ -363,30 +374,30 @@
 
      DIIS dimension:   8
 
-     Storage (cc_gs_diis_e): file
-     Storage (cc_gs_diis_x): file
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1           -79.084241931609     0.9391E-01     0.7908E+02
-    2           -79.092586666608     0.2720E-01     0.8345E-02
+    2           -79.092586666607     0.2720E-01     0.8345E-02
     3           -79.099408028306     0.7507E-02     0.6821E-02
     4           -79.100345871309     0.2095E-02     0.9378E-03
     5           -79.100371860301     0.5154E-03     0.2599E-04
     6           -79.100393801016     0.2313E-03     0.2194E-04
     7           -79.100385611260     0.4933E-04     0.8190E-05
     8           -79.100384217524     0.1180E-04     0.1394E-05
-    9           -79.100383621795     0.4135E-05     0.5957E-06
+    9           -79.100383621794     0.4135E-05     0.5957E-06
    10           -79.100383427012     0.1779E-05     0.1948E-06
    11           -79.100383466393     0.6705E-06     0.3938E-07
-   12           -79.100383474630     0.2989E-06     0.8237E-08
-   13           -79.100383487352     0.1028E-06     0.1272E-07
-   14           -79.100383481865     0.3056E-07     0.5487E-08
-   15           -79.100383481092     0.6508E-08     0.7730E-09
-   16           -79.100383481303     0.2112E-08     0.2109E-09
-   17           -79.100383481485     0.6588E-09     0.1819E-09
+   12           -79.100383474629     0.2989E-06     0.8237E-08
+   13           -79.100383487351     0.1028E-06     0.1272E-07
+   14           -79.100383481864     0.3056E-07     0.5487E-08
+   15           -79.100383481091     0.6508E-08     0.7730E-09
+   16           -79.100383481302     0.2112E-08     0.2110E-09
+   17           -79.100383481484     0.6588E-09     0.1819E-09
    18           -79.100383481546     0.1594E-09     0.6158E-10
-   19           -79.100383481554     0.5326E-10     0.7915E-11
+   19           -79.100383481554     0.5326E-10     0.7901E-11
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -400,15 +411,15 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        1      5        0.014740597486
-       14      4       -0.009546856216
-        7      4        0.008284826477
-       15      5       -0.006124828872
-        4      5        0.005606072685
-        6      2        0.005476844297
-        2      4        0.005318591723
-       13      5        0.005269818340
-        5      6        0.004933006894
+        1      5        0.014740597500
+       14      4       -0.009546856217
+        7      4        0.008284826482
+       15      5       -0.006124828871
+        4      5        0.005606072690
+        6      2        0.005476844296
+        2      4        0.005318591716
+       13      5        0.005269818339
+        5      6        0.004933006887
        11      6       -0.003454309400
      ------------------------------------
 
@@ -416,12 +427,12 @@
      --------------------------------------------------
         a      i       b      j         t(ai,bj)
      --------------------------------------------------
-        2      4       2      4       -0.047351708919
-        5      6       5      6       -0.046240574399
+        2      4       2      4       -0.047351708918
+        5      6       5      6       -0.046240574400
         9      3       9      3       -0.041367012251
         3      4       3      4       -0.036659067518
-        6      5       6      5       -0.034554012169
-        1      5       1      5       -0.034177347752
+        6      5       6      5       -0.034554012170
+        1      5       1      5       -0.034177347751
        16      3      16      3       -0.032108235347
        17      3      17      3       -0.032052553602
        18      3      18      3       -0.031351828683
@@ -430,8 +441,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.16125
-     Total cpu time (sec):               0.32524
+     Total wall time (sec):              0.58600
+     Total cpu time (sec):               0.74158
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -444,41 +455,40 @@
   the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
   (1975).
 
-  - Davidson CC multipliers solver settings:
-
-     Residual threshold:        0.10E-09
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                 9729
      Number of requested solutions:           1
      Max reduced space dimension:            50
 
-     Storage (multipliers_trials): file
-     Storage (multipliers_transforms): file
+     Storage (multipliers_davidson_trials): file
+     Storage (multipliers_davidson_transforms): file
 
-  Iteration     Residual norm
-  ---------------------------
-    1             0.3520E-01
-    2             0.6901E-02
-    3             0.1186E-02
-    4             0.6190E-03
-    5             0.1749E-03
-    6             0.4640E-04
-    7             0.1050E-04
-    8             0.3165E-05
-    9             0.1472E-05
-   10             0.6431E-06
-   11             0.2184E-06
-   12             0.5525E-07
-   13             0.1279E-07
-   14             0.2938E-08
-   15             0.7460E-09
-   16             0.2189E-09
-   17             0.7579E-10
-  ---------------------------
+  - Davidson solver settings
 
+     Residual threshold:              0.10E-09
+     Max number of iterations:             100
+
+   Iteration       Residual norm
+  -------------------------------
+     1               0.3520E-01
+     2               0.6901E-02
+     3               0.1186E-02
+     4               0.6190E-03
+     5               0.1749E-03
+     6               0.4640E-04
+     7               0.1050E-04
+     8               0.3165E-05
+     9               0.1472E-05
+    10               0.6431E-06
+    11               0.2184E-06
+    12               0.5525E-07
+    13               0.1279E-07
+    14               0.2938E-08
+    15               0.7460E-09
+    16               0.2189E-09
+    17               0.7579E-10
+  -------------------------------
   Convergence criterion met in 17 iterations!
 
   - Davidson CC multipliers solver summary:
@@ -487,44 +497,43 @@
      -----------------------------------
         a       i         tbar(a,i)
      -----------------------------------
-        1      5        0.022790118883
+        1      5        0.022790118911
        14      4       -0.015907507086
-        7      4        0.014297181943
-        4      5        0.011712306720
-       15      5       -0.010007216960
-        6      2        0.009083547624
-       13      5        0.008770531165
-        2      4        0.006954460323
-        5      6        0.006820250255
-        3      4        0.006765159554
+        7      4        0.014297181953
+        4      5        0.011712306731
+       15      5       -0.010007216957
+        6      2        0.009083547622
+       13      5        0.008770531163
+        2      4        0.006954460311
+        5      6        0.006820250243
+        3      4        0.006765159556
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         tbar(ai,bj)
      --------------------------------------------------
-        5      6       5      6       -0.092500754790
-        2      4       2      4       -0.092085328212
-        6      5       5      6        0.089666625590
-        2      4       5      6       -0.083792278098
-        9      3       9      3       -0.082167759493
+        5      6       5      6       -0.092500754791
+        2      4       2      4       -0.092085328211
+        6      5       5      6        0.089666625591
+        2      4       5      6       -0.083792278097
+        9      3       9      3       -0.082167759494
         2      4       6      5        0.077164163662
-        2      4       1      5       -0.076342716084
+        2      4       1      5       -0.076342716083
         7      4       5      6        0.071424572152
-        3      4       3      4       -0.071282985174
-        6      5       6      5       -0.068075967751
+        3      4       3      4       -0.071282985175
+        6      5       6      5       -0.068075967752
      --------------------------------------------------
 
   - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               0.08120
-     Total cpu time (sec):                0.16118
+     Total wall time (sec):               0.82800
+     Total cpu time (sec):                0.91307
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
 
 
   5) Propagation from the ground state
@@ -569,17 +578,17 @@
 
   - Timings for the CCSD time dependent calculation
 
-     Total wall time (sec):              1.14154
-     Total cpu time (sec):               2.28135
+     Total wall time (sec):              8.71700
+     Total cpu time (sec):              15.80661
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 31.695304 MB
+  Peak memory usage during the execution of eT: 26.938696 MB
 
-  Total wall time in eT (sec):              1.45888
-  Total cpu time in eT (sec):               2.82733
+  Total wall time in eT (sec):              9.81000
+  Total cpu time in eT (sec):              17.58804
 
-  Calculation ended: 2021-06-07 12:50:44 UTC +02:00
+  Calculation ended: 2022-02-01 16:07:19 UTC +01:00
 
   - Implementation references:
 

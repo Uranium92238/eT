@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,14 +14,14 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-11-13 15:41:28 UTC +01:00
-  Git branch:         multimodel-ccsd-cc2
-  Git hash:           ccec5d8c2fa50caaef878888a892593dd696aa44
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-11-13 15:41:43 UTC +01:00
+  Calculation started: 2022-02-01 16:10:40 UTC +01:00
 
 
   :: Input file
@@ -180,15 +180,15 @@
   Fock matrix construction using density differences
      3           -74.942054999957     0.2353E-02     0.1580E-02
   Fock matrix construction using density differences
-     4           -74.942080036553     0.5610E-04     0.2504E-04
+     4           -74.942080036554     0.5610E-04     0.2504E-04
   Fock matrix construction using density differences
      5           -74.942080053363     0.1780E-04     0.1681E-07
   Fock matrix construction using density differences
      6           -74.942080057695     0.2053E-06     0.4333E-08
   Fock matrix construction using density differences
-     7           -74.942080057696     0.9667E-09     0.3979E-12
+     7           -74.942080057696     0.9667E-09     0.3553E-12
   Fock matrix construction using density differences
-     8           -74.942080057696     0.7851E-12     0.4263E-13
+     8           -74.942080057696     0.7745E-12     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -201,8 +201,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02800
-     Total cpu time (sec):               0.03135
+     Total wall time (sec):              0.04000
+     Total cpu time (sec):               0.04652
 
   No frozen fock contributions!
 
@@ -241,7 +241,6 @@
 
 
   1) Cholesky decomposition of the electron repulsion integrals
-  Doing Cholesky decomposition of the ERIs.
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -290,19 +289,18 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2858E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.4037E-16
+     Maximal difference between approximate and actual diagonal:              0.2937E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3632E-16
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00900
-     Total cpu time (sec):               0.01195
+     Total wall time (sec):              0.02000
+     Total cpu time (sec):               0.02274
 
 
   2) Preparation of MO basis and integrals
@@ -425,7 +423,7 @@
        3           0.7607E-09
      -----------------------------
 
-   10           -75.012760215055     0.4517E-07     0.5149E-08
+   10           -75.012760215056     0.4517E-07     0.5149E-08
 
      Iteration     Residual norm
      -----------------------------
@@ -486,12 +484,12 @@
         1      2       -0.003289879849
         2      3        0.002501121772
         1      1        0.000048909218
+        2      4       -0.000000000000
+        1      5       -0.000000000000
         1      3        0.000000000000
         2      2        0.000000000000
-        2      4        0.000000000000
-        1      5       -0.000000000000
-        2      5       -0.000000000000
         2      1       -0.000000000000
+        2      5        0.000000000000
      ------------------------------------
 
      Largest double amplitudes:
@@ -512,24 +510,24 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.11700
-     Total cpu time (sec):               0.11982
+     Total wall time (sec):              0.20400
+     Total cpu time (sec):               0.19805
 
   - Timings for the CCSD ground state calculation
 
-     Total wall time (sec):              0.12700
-     Total cpu time (sec):               0.13253
+     Total wall time (sec):              0.22500
+     Total cpu time (sec):               0.22277
 
   - Cleaning up ccsd wavefunction
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 78.684 KB
+  Peak memory usage during the execution of eT: 68.104 KB
 
-  Total wall time in eT (sec):              0.17100
-  Total cpu time in eT (sec):               0.17889
+  Total wall time in eT (sec):              0.28700
+  Total cpu time in eT (sec):               0.28995
 
-  Calculation ended: 2021-11-13 15:41:43 UTC +01:00
+  Calculation ended: 2022-02-01 16:10:40 UTC +01:00
 
   - Implementation references:
 

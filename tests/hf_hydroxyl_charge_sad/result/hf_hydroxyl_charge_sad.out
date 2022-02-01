@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:32:29 UTC +02:00
+  Calculation started: 2022-02-01 16:10:31 UTC +01:00
 
 
   :: Input file
@@ -121,16 +121,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
-
   - Setting initial AO density to sad
 
      Energy of initial guess:               -75.098180518064
@@ -145,6 +135,16 @@
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -157,14 +157,14 @@
      1           -74.797266608698     0.9216E-01     0.7480E+02
      2           -74.813878026388     0.2467E-01     0.1661E-01
      3           -74.815168149392     0.6554E-02     0.1290E-02
-     4           -74.815300882333     0.1129E-02     0.1327E-03
+     4           -74.815300882334     0.1129E-02     0.1327E-03
      5           -74.815315506256     0.9692E-04     0.1462E-04
      6           -74.815315619728     0.5209E-05     0.1135E-06
-     7           -74.815315619823     0.4491E-06     0.9450E-10
-     8           -74.815315619823     0.6271E-07     0.7390E-12
-     9           -74.815315619823     0.2374E-08     0.0000E+00
+     7           -74.815315619823     0.4491E-06     0.9446E-10
+     8           -74.815315619823     0.6271E-07     0.7816E-12
+     9           -74.815315619823     0.2374E-08     0.4263E-13
     10           -74.815315619823     0.2247E-09     0.4263E-13
-    11           -74.815315619823     0.2957E-10     0.1421E-13
+    11           -74.815315619823     0.2957E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -178,16 +178,16 @@
   - Timings for the RHF ground state calculation
 
      Total wall time (sec):              0.08300
-     Total cpu time (sec):               0.09703
+     Total cpu time (sec):               0.10223
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 27.076 KB
 
-  Total wall time in eT (sec):              0.09700
-  Total cpu time in eT (sec):               0.11150
+  Total wall time in eT (sec):              0.09800
+  Total cpu time in eT (sec):               0.11668
 
-  Calculation ended: 2021-10-06 10:32:29 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:32 UTC +01:00
 
   - Implementation references:
 

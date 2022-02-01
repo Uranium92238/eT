@@ -1,24 +1,24 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.6 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2021-10-06 10:20:02 UTC +02:00
-  Git branch:         hf-cleanup-oao-stuff
-  Git hash:           82fed81e1022a04236e45d2edec97a412b5fa7bd
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
   Fortran compiler:   GNU 10.3.0
   C compiler:         GNU 10.3.0
   C++ compiler:       GNU 10.3.0
@@ -31,7 +31,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2021-10-06 10:32:25 UTC +02:00
+  Calculation started: 2022-02-01 16:10:13 UTC +01:00
 
 
   :: Input file
@@ -151,16 +151,6 @@
 
   2) Calculation of reference state (SCF-DIIS algorithm)
 
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-11
-     Energy threshold:              0.1000E-11
-
   - Requested restart. Reading orbitals from file
 
      max gradient          0.000000000001
@@ -172,6 +162,16 @@
      ERI cutoff:                     0.1000E-17
      One-electron integral  cutoff:  0.1000E-22
      Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
 
   Warning: skipping SCF solver!
 
@@ -190,8 +190,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.03300
-     Total cpu time (sec):               0.06165
+     Total wall time (sec):              0.02700
+     Total cpu time (sec):               0.05121
 
 
   :: CCS wavefunction
@@ -286,12 +286,11 @@
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       False
-     T1 ERI matrix in memory:    False
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.40700
-     Total cpu time (sec):               0.63809
+     Total wall time (sec):              0.41900
+     Total cpu time (sec):               0.65629
 
 
   2) Preparation of MO basis and integrals
@@ -354,8 +353,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.00860
+     Total wall time (sec):              0.02600
+     Total cpu time (sec):               0.01133
 
 
   4) Calculation of the multipliers (davidson algorithm)
@@ -368,22 +367,18 @@
   the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
   (1975).
 
-  - Davidson CC multipliers solver settings:
-
-     Residual threshold:        0.10E-10
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                  138
      Number of requested solutions:           1
      Max reduced space dimension:            50
 
-     Storage (multipliers_trials): file
-     Storage (multipliers_transforms): file
+     Storage (multipliers_davidson_trials): file
+     Storage (multipliers_davidson_transforms): file
 
   Right hand side is zero to within threshold .1E-10.
-  Equations solved with multipliers set to zero!
+
+  - Davidson CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -404,7 +399,7 @@
   - Finished solving the CCS multipliers equations
 
      Total wall time (sec):               0.00100
-     Total cpu time (sec):                0.00122
+     Total cpu time (sec):                0.00116
 
 
   5) Calculation of the excited states (davidson algorithm)
@@ -451,9 +446,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803896    0.000000000000     0.6993E-12   0.3497E-14
-     2   0.336575862688    0.000000000000     0.3866E-11   0.8327E-15
-     3   0.381521396005    0.000000000000     0.2565E-11   0.4996E-15
+     1   0.283140803896    0.000000000000     0.6993E-12   0.1438E-13
+     2   0.336575862688    0.000000000000     0.3866E-11   0.1188E-13
+     3   0.381521396005    0.000000000000     0.2565E-11   0.6772E-14
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -536,8 +531,8 @@
 
   - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.01500
-     Total cpu time (sec):               0.01577
+     Total wall time (sec):              0.02300
+     Total cpu time (sec):               0.02084
 
 
   5) Calculation of the excited states (davidson algorithm)
@@ -584,9 +579,9 @@
 
    Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   ------------------------------------------------------------------------
-     1   0.283140803896    0.000000000000     0.6995E-12   0.3497E-14
-     2   0.336575862688    0.000000000000     0.3865E-11   0.4996E-15
-     3   0.381521396005    0.000000000000     0.2562E-11   0.4996E-15
+     1   0.283140803896    0.000000000000     0.6995E-12   0.1432E-13
+     2   0.336575862688    0.000000000000     0.3865E-11   0.1166E-13
+     3   0.381521396005    0.000000000000     0.2563E-11   0.6883E-14
   ------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -669,8 +664,8 @@
 
   - Finished solving the CCS excited state equations (left)
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.01465
+     Total wall time (sec):              0.02100
+     Total cpu time (sec):               0.01787
 
 
   6) Calculation of excited state properties (EOM)
@@ -732,19 +727,19 @@
 
   - Timings for the CCS response calculation
 
-     Total wall time (sec):              0.45400
-     Total cpu time (sec):               0.69073
+     Total wall time (sec):              0.50900
+     Total cpu time (sec):               0.72263
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 10.665716 MB
+  Peak memory usage during the execution of eT: 10.665732 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.54400
-  Total cpu time in eT (sec):               0.80872
+  Total wall time in eT (sec):              0.58500
+  Total cpu time in eT (sec):               0.82406
 
-  Calculation ended: 2021-10-06 10:32:26 UTC +02:00
+  Calculation ended: 2022-02-01 16:10:14 UTC +01:00
 
   - Implementation references:
 

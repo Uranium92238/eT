@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.6.0 Galaxy
   ------------------------------------------------------------
-  Configuration date: 2022-01-25 08:49:03 UTC +01:00
-  Git branch:         qed_tests_print_level
-  Git hash:           4d864f799adcee7936740aea8eebe8fe8b2f57c4
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-02-01 15:59:21 UTC +01:00
+  Git branch:         release-v1.6.0
+  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
+  Fortran compiler:   GNU 10.3.0
+  C compiler:         GNU 10.3.0
+  C++ compiler:       GNU 10.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
-  Runtime checks:     ON
+  Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-25 08:50:08 UTC +01:00
+  Calculation started: 2022-02-01 16:09:10 UTC +01:00
 
 
   :: Input file
@@ -71,7 +71,7 @@
      end qed
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -171,16 +171,16 @@
      5          -177.473072665228     0.4338E-03     0.1351E-04
      6          -177.473074017753     0.8034E-04     0.1353E-05
      7          -177.473074099747     0.2288E-04     0.8199E-07
-     8          -177.473074109886     0.4798E-05     0.1014E-07
-     9          -177.473074110712     0.1042E-05     0.8267E-09
-    10          -177.473074110743     0.2401E-06     0.3050E-10
-    11          -177.473074110744     0.5227E-07     0.8242E-12
-    12          -177.473074110744     0.9528E-08     0.5684E-13
-    13          -177.473074110744     0.3942E-08     0.2842E-13
-    14          -177.473074110744     0.1825E-08     0.5684E-13
-    15          -177.473074110744     0.6790E-09     0.1137E-12
+     8          -177.473074109885     0.4798E-05     0.1014E-07
+     9          -177.473074110712     0.1042E-05     0.8268E-09
+    10          -177.473074110743     0.2401E-06     0.3064E-10
+    11          -177.473074110744     0.5227E-07     0.8527E-12
+    12          -177.473074110744     0.9528E-08     0.1137E-12
+    13          -177.473074110744     0.3942E-08     0.1137E-12
+    14          -177.473074110744     0.1825E-08     0.2842E-13
+    15          -177.473074110744     0.6790E-09     0.1421E-12
     16          -177.473074110744     0.1509E-09     0.1705E-12
-    17          -177.473074110744     0.4928E-10     0.2842E-13
+    17          -177.473074110744     0.4928E-10     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -207,17 +207,17 @@
 
   - Timings for the QED-RHF ground state calculation
 
-     Total wall time (sec):              1.07003
-     Total cpu time (sec):               4.17605
+     Total wall time (sec):              3.48500
+     Total cpu time (sec):               5.52711
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 437.280 KB
+  Peak memory usage during the execution of eT: 434.788 KB
 
-  Total wall time in eT (sec):              1.09212
-  Total cpu time in eT (sec):               4.20058
+  Total wall time in eT (sec):              3.52400
+  Total cpu time in eT (sec):               5.56975
 
-  Calculation ended: 2022-01-25 08:50:09 UTC +01:00
+  Calculation ended: 2022-02-01 16:09:14 UTC +01:00
 
   - Implementation references:
 
