@@ -24,7 +24,7 @@ module observer_node_class
 !! Written by Sarai D. Folkestad, Oct 2021
 !!
 !! Part of the general implementation of the
-!! Observer pattern
+!! Observer design pattern
 !!
 !! A concrete observer_node must implement an 'update'
 !!

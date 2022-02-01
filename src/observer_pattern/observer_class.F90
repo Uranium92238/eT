@@ -24,9 +24,10 @@ module observer_class
 !! Written by Sarai D. Folkestad, Oct 2021
 !!
 !! Part of the general implementation of the
-!! Observer pattern
+!! Observer design pattern
 !!
 !! A concrete observer must implement an 'update'
+!! which is used by the 'observable'.
 !!
 !
    use parameters
