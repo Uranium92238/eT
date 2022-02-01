@@ -193,10 +193,10 @@ set(eT_fortran_sources
    src/tools/math_utilities.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
-   src/tools/linked_list/array_3D_node_class.F90
-   src/tools/linked_list/array_3D_list_class.F90
-   src/tools/linked_list/generated_linked_list/array_3D_node_c_class.F90
-   src/tools/linked_list/generated_linked_list/array_3D_list_c_class.F90
+   src/tools/linked_list/cholesky_block_node_class.F90
+   src/tools/linked_list/cholesky_block_list_class.F90
+   src/tools/linked_list/generated_linked_list/cholesky_block_node_c_class.F90
+   src/tools/linked_list/generated_linked_list/cholesky_block_list_c_class.F90
    src/tools/fftpack/fftpack_auxiliary_routines.F90
    src/tools/fftpack/fftpack_complex_forward_1d.F90
    src/tools/fftpack/fftpack_complex_initialization_routines.F90

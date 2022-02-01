@@ -62,6 +62,8 @@ module eri_adapter_class
       procedure, private :: request_g_packed
       procedure, private :: index_setup
 !
+      final :: cleanup
+!
    end type eri_adapter
 !
    interface eri_adapter
@@ -388,6 +390,20 @@ contains
       memory = this%eri%get_memory_estimate_packed(first_p, last_p, first_q, last_q)
 !
    end function get_memory_estimate_packed_eri_adapter
+!
+!
+   subroutine cleanup(this)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad, Jan 2022
+!!
+      implicit none
+!
+      type(eri_adapter), intent(inout) :: this
+!
+      if (allocated(this%eri)) deallocate(this%eri)
+!
+   end subroutine cleanup
 !
 !
 end module eri_adapter_class

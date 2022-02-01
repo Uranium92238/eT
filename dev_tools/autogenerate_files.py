@@ -46,8 +46,8 @@ complexifiable_classes = {
     "abstract_eri_tool_class",
     "eri_memory_tool_class",
     "eri_tool_class",
-    "array_3D_node_class",
-    "array_3D_list_class",
+    "cholesky_block_node_class",
+    "cholesky_block_list_class",
     "eri_adapter_class",
 }
 

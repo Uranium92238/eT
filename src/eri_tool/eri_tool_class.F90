@@ -124,7 +124,7 @@ contains
 !
       logical :: pq_equals_rs
 !
-      real(dp), dimension(:,:,:), allocatable, target :: L_Jpq, L_Jrs
+      real(dp), dimension(:,:,:), pointer :: L_Jpq, L_Jrs
 !
       call this%set_alpha_and_beta(alpha, beta, alpha_, beta_)
 !
@@ -139,11 +139,8 @@ contains
 !
       else
 !
-         call mem%alloc(L_Jpq, this%L%n_J, last_p-first_p+1, last_q-first_q+1)
-         call this%L%get(L_Jpq, first_p, last_p, first_q, last_q)
-!
-         call mem%alloc(L_Jrs, this%L%n_J, last_r-first_r+1, last_s-first_s+1)
-         call this%L%get(L_Jrs, first_r, last_r, first_s, last_s)
+         call this%L%load_block(L_Jpq, first_p, last_p, first_q, last_q)
+         call this%L%load_block(L_Jrs, first_r, last_r, first_s, last_s)
 !
          call dgemm('T', 'N',                              &
                     (last_p-first_p+1)*(last_q-first_q+1), &
@@ -158,8 +155,8 @@ contains
                     g_pqrs,                                &
                     (last_p-first_p+1)*(last_q-first_q+1))
 !
-         call mem%dealloc(L_Jrs, this%L%n_J, last_r-first_r+1, last_s-first_s+1)
-         call mem%dealloc(L_Jpq, this%L%n_J, last_p-first_p+1, last_q-first_q+1)
+         call this%L%offload_block(first_p, last_p, first_q, last_q)
+         call this%L%offload_block(first_r, last_r, first_s, last_s)
 !
       endif
 !
@@ -188,12 +185,11 @@ contains
 !
       real(dp) :: alpha_, beta_
 !
-      real(dp), dimension(:,:,:), allocatable, target :: L_Jpq
+      real(dp), dimension(:,:,:), pointer :: L_Jpq
 !
       call this%set_alpha_and_beta(alpha, beta, alpha_, beta_)
 !
-      call mem%alloc(L_Jpq, this%L%n_J, last_p-first_p+1, last_q-first_q+1)
-      call this%L%get(L_Jpq, first_p, last_p, first_q, last_q)
+      call this%L%load_block(L_Jpq, first_p, last_p, first_q, last_q)
 !
       call dgemm('T', 'N',                             &
                  (last_p-first_p+1)*(last_q-first_q+1),&
@@ -208,7 +204,7 @@ contains
                  g_pqpq,                               &
                  (last_p-first_p+1)*(last_q-first_q+1))
 !
-      call mem%dealloc(L_Jpq, this%L%n_J, last_p-first_p+1, last_q-first_q+1)
+         call this%L%offload_block(first_p, last_p, first_q, last_q)
 !
    end subroutine get_symmetric
 !
@@ -307,17 +303,11 @@ contains
 !
       integer, dimension(2) :: memory
 !
-      integer :: dim_p, dim_q, dim_r, dim_s
+      memory(1) = this%L%load_memory_estimate(first_p, last_p, &
+                                              first_q, last_q)
 !
-      dim_p = last_p - first_p + 1
-      dim_q = last_q - first_q + 1
-      dim_r = last_r - first_r + 1
-      dim_s = last_s - first_s + 1
-!
-      memory(1) = dim_p*dim_q*this%L%n_J + this%L%get_memory_estimate(first_p, last_p, &
-                                                                 first_q, last_q )
-      memory(2) = dim_r*dim_s*this%L%n_J + this%L%get_memory_estimate(first_r, last_r, &
-                                                                  first_s, last_s)
+      memory(2) = this%L%load_memory_estimate(first_r, last_r, &
+                                              first_s, last_s)
 !
    end function get_memory_estimate_eri_tool
 !

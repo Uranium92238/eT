@@ -28,39 +28,44 @@ module eri_cholesky_memory_class
 !!
    use parameters
 !
-   use global_out,   only : output
-!
-   use array_3D_list_class,      only: array_3D_list
-   use range_class,              only: range_
-   use memory_manager_class,     only: mem
-!
+   use global_out,                  only : output
+   use cholesky_block_list_class,   only: cholesky_block_list
+   use range_class,                 only: range_
+   use memory_manager_class,        only: mem
    use abstract_eri_cholesky_class, only: abstract_eri_cholesky
 !
    implicit none
 !
    type, extends(abstract_eri_cholesky) :: eri_cholesky_memory
 !
-      type(array_3D_list), allocatable, private ::  L_Jpq
+      type(cholesky_block_list), allocatable, private ::  L_Jpq
 !
    contains
 !
-      procedure, private :: copy_in_block
-      procedure, private :: copy_out_block
       procedure, private :: allocate_L_Jpq
 !
       procedure, public :: initialize &
                         => initialize_eri_cholesky_memory
 !
-      procedure, public :: get &
-                        => get_eri_cholesky_memory
+      procedure, public :: get_block &
+                        => get_block_eri_cholesky_memory
 !
-      procedure, public :: set &
-                        => set_eri_cholesky_memory
-!
-      final :: cleanup
+      procedure, public :: set_block &
+                        => set_block_eri_cholesky_memory
 !
       procedure, public :: get_memory_estimate &
                         => get_memory_estimate_eri_cholesky_memory
+!
+      procedure, public :: load_memory_estimate &
+                        => load_memory_estimate_eri_cholesky_memory
+!
+      procedure, public :: load_block &
+                        => load_block_eri_cholesky_memory
+!
+      procedure, public :: offload_block &
+                        => offload_block_eri_cholesky_memory
+!
+      final :: cleanup
 !
    end type eri_cholesky_memory
 !
@@ -85,8 +90,6 @@ contains
       this%n_ranges  = -1
       this%dim_      = -1
 !
-      this%L_Jpq = array_3D_list()
-!
    end function new_eri_cholesky_memory
 !
 !
@@ -104,6 +107,9 @@ contains
 !
       call this%set_dimensions(n_J, n_ranges, range_lengths)
       call this%set_index_ranges()
+!
+      this%L_Jpq = cholesky_block_list(this%n_J)
+      this%L_Jpq_loaded = cholesky_block_list(this%n_J)
 !
       call this%allocate_L_Jpq()
 !
@@ -126,9 +132,8 @@ contains
       do p = 1, this%n_ranges
          do q = 1, this%n_ranges
 !
-            call this%L_Jpq%push_back(this%n_J, this%range_lengths(p), this%range_lengths(q))
-!
             this%n_blocks = this%n_blocks + 1
+            call this%L_Jpq%push_back(this%index_ranges(p), this%index_ranges(q))
 !
          enddo
       enddo
@@ -136,184 +141,92 @@ contains
    end subroutine allocate_L_Jpq
 !
 !
-   subroutine set_eri_cholesky_memory(this, L_Jpq, first_p, last_p, first_q, last_q)
+   subroutine set_block_eri_cholesky_memory(this, block_, overlap_p, overlap_q,  &
+                                    L_Jpq, range_p, range_q)
 !!
-!!    Set
+!!    Set block
 !!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!!    Sets a subblock of the given block, given by overlap_p and overlap_q
 !!
       implicit none
 !
       class(eri_cholesky_memory),                            intent(inout):: this
-      integer,                                                       intent(in)   :: first_p, last_p
-      integer,                                                       intent(in)   :: first_q, last_q
-      real(dp), dimension(this%n_J, first_p:last_p, first_q:last_q), intent(in)   :: L_Jpq
 !
-      type(range_) :: subrange_p, subrange_q, p_range, q_range
-!
-      integer :: block_, p, q
-!
-      p_range = range_(first_p, last_p - first_p + 1)
-      q_range = range_(first_q, last_q - first_q + 1)
-!
-      block_ = 0
-!
-      do p = 1, this%n_ranges
-         do q = 1, this%n_ranges
-!
-            block_ = block_ + 1
-!
-            if (.not. (p_range%overlaps(this%index_ranges(p)) .and. &
-                       q_range%overlaps(this%index_ranges(q)))) cycle
-!
-!           Get (sub)range of p and q for the current block.
-            call this%get_block_range_overlap(block_,            &
-                                             p_range, q_range,   &
-                                             subrange_p,         &
-                                             subrange_q)
-!
-            call this%copy_in_block(block_,               &
-                                    subrange_p,           &
-                                    subrange_q, L_Jpq,    &
-                                    p_range, q_range)
-!
-         enddo
-      enddo
-!
-   end subroutine set_eri_cholesky_memory
-!
-!
-   subroutine get_eri_cholesky_memory(this, L_Jpq, first_p, last_p, first_q, last_q)
-!!
-!!    Get
-!!    Written by Sarai D. Folkestad, Sep 2021
-!!
-      implicit none
-!
-      class(eri_cholesky_memory),                                    intent(inout):: this
-      integer,                                                       intent(in)   :: first_p, last_p
-      integer,                                                       intent(in)   :: first_q, last_q
-      real(dp), dimension(this%n_J, first_p:last_p, first_q:last_q), intent(out)  :: L_Jpq
-!
-      type(range_) :: subrange_p, subrange_q, p_range, q_range
-!
-      integer :: block_, p, q
-!
-      p_range = range_(first_p, last_p - first_p + 1)
-      q_range = range_(first_q, last_q - first_q + 1)
-!
-      block_ = 0
-!
-      do p = 1, this%n_ranges
-         do q = 1, this%n_ranges
-!
-            block_ = block_ + 1
-!
-            if (.not. (p_range%overlaps(this%index_ranges(p)) .and. &
-                       q_range%overlaps(this%index_ranges(q)))) cycle
-!
-!           Get (sub)range of p and q for the current block.
-            call this%get_block_range_overlap(block_,            &
-                                             p_range, q_range,   &
-                                             subrange_p,         &
-                                             subrange_q)
-!
-            call this%copy_out_block(block_,     &
-                              subrange_p,        &
-                              subrange_q, L_Jpq, &
-                              p_range, q_range)
-!
-         enddo
-      enddo
-!
-   end subroutine get_eri_cholesky_memory
-!
-!
-   subroutine copy_in_block(this, block_, set_range_p, set_range_q, L_Jpq, p_range, q_range)
-!!
-!!    Copy in block_
-!!    Written by Sarai D. Folkestad, Sep 2021
-!!
-      implicit none
-!
-      class(eri_cholesky_memory), intent(inout) :: this
-!
-      type(range_), intent(in) :: set_range_p, set_range_q
-      type(range_), intent(in) :: p_range, q_range
-!
-      real(dp), dimension(this%n_J, p_range%length, q_range%length), intent(in) :: L_Jpq
-!
+      type(range_), intent(in) :: overlap_p, overlap_q
+      type(range_), intent(in) :: range_p, range_q
       integer, intent(in) :: block_
+!
+      real(dp), dimension(this%n_J, range_p%length, range_q%length), intent(in)   :: L_Jpq
 !
       real(dp), dimension(:,:,:), pointer :: block_pointer
 !
-      integer :: p, q, k, r, s
-      integer, dimension(2) :: r_and_s
+      integer :: p, q, J
 !
-      r_and_s = this%get_range_indices_from_block(block_)
-      r = r_and_s(1)
-      s = r_and_s(2)
+      type(range_) :: range_r, range_s
 !
-      call this%L_Jpq%get_array_n(block_pointer, block_)
+      call this%get_ranges_from_block(block_, range_r, range_s)
+      call this%L_Jpq%get_array(block_pointer, range_r, range_s)
 !
-!$omp parallel do private(p, q, k)
-      do q = set_range_q%first, set_range_q%get_last()
-         do p = set_range_p%first, set_range_p%get_last()
-            do k = 1, this%n_J
+!$omp parallel do private(p, q, J)
+      do q = overlap_q%first, overlap_q%get_last()
+         do p = overlap_p%first, overlap_p%get_last()
+            do J = 1, this%n_J
 
-               block_pointer(k, p - this%index_ranges(r)%first + 1, &
-                                q - this%index_ranges(s)%first + 1) = &
-                       L_Jpq(k, p - p_range%first + 1, q - q_range%first + 1)
+               block_pointer(J, p - range_r%first + 1, &
+                                q - range_s%first + 1) = &
+                       L_Jpq(J, p - range_p%first + 1, q - range_q%first + 1)
 !
             enddo
          enddo
       enddo
 !$omp end parallel do
 !
-   end subroutine copy_in_block
+   end subroutine set_block_eri_cholesky_memory
 !
 !
-   subroutine copy_out_block(this, block_, set_range_p, set_range_q, L_Jpq, p_range, q_range)
+   subroutine get_block_eri_cholesky_memory(this, block_, overlap_p, overlap_q, &
+                                    L_Jpq, range_p, range_q)
 !!
-!!    Copy out block_
+!!    Get block
 !!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!!    Gets a subblock of the given block, given by overlap_p and overlap_q
 !!
       implicit none
 !
-      class(eri_cholesky_memory), intent(inout) :: this
+      class(eri_cholesky_memory), intent(inout):: this
 !
-      type(range_), intent(in) :: set_range_p, set_range_q
-      type(range_), intent(in) :: p_range, q_range
+      type(range_), intent(in) :: overlap_p, overlap_q
+      type(range_), intent(in) :: range_p, range_q
+      integer,      intent(in) :: block_
 !
-      real(dp), dimension(this%n_J, p_range%length, q_range%length), intent(out) :: L_Jpq
+      real(dp), dimension(this%n_J, range_p%length, range_q%length), intent(out)   :: L_Jpq
 !
-      integer, intent(in) :: block_
-!
-      integer :: r, s, p, q, k
-      integer, dimension(2) :: r_and_s
+      integer :: p, q, J
 !
       real(dp), dimension(:,:,:), pointer :: block_pointer
 !
-      r_and_s = this%get_range_indices_from_block(block_)
-      r = r_and_s(1)
-      s = r_and_s(2)
+      type(range_) :: range_r, range_s
 !
-      call this%L_Jpq%get_array_n(block_pointer, block_)
+      call this%get_ranges_from_block(block_, range_r, range_s)
 !
-!$omp parallel do private(p, q, k)
-      do q = set_range_q%first, set_range_q%get_last()
-         do p = set_range_p%first, set_range_p%get_last()
-            do k = 1, this%n_J
+      call this%L_Jpq%get_array(block_pointer, range_r, range_s)
 !
-               L_Jpq(k, p - p_range%first + 1, q - q_range%first + 1) = &
-                     block_pointer(k, p - this%index_ranges(r)%first + 1, &
-                                      q - this%index_ranges(s)%first + 1)
+!$omp parallel do private(p, q, J)
+      do q = overlap_q%first, overlap_q%get_last()
+         do p = overlap_p%first, overlap_p%get_last()
+            do J = 1, this%n_J
+!
+               L_Jpq(J, p - range_p%first + 1, q - range_q%first + 1) = &
+                     block_pointer(J, p - range_r%first + 1, q - range_s%first + 1)
 !
             enddo
          enddo
       enddo
 !$omp end parallel do
 !
-   end subroutine copy_out_block
+   end subroutine get_block_eri_cholesky_memory
 !
 !
    subroutine cleanup(this)
@@ -326,9 +239,8 @@ contains
       type(eri_cholesky_memory),  intent(inout)  :: this
 !
       if (allocated(this%range_lengths)) call mem%dealloc(this%range_lengths, this%n_ranges)
-!
       if (allocated(this%L_Jpq)) call this%L_Jpq%finalize()
-!
+ !
    end subroutine cleanup
 !
 !
@@ -358,6 +270,115 @@ contains
       memory = 0
 !
    end function get_memory_estimate_eri_cholesky_memory
+!
+!
+   function load_memory_estimate_eri_cholesky_memory(this, first_p, last_p, first_q, last_q) result(memory)
+!!
+!!    Memory estimate
+!!    Written by Sarai D. Folkestad, Sep 2021
+!!
+!!    Returns the memory required by the Cholesky tool
+!!    to handle the indicated Cholesky vector block_
+!!
+!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(eri_cholesky_memory), intent(in) :: this
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+!
+      integer :: memory
+!
+      type(range_) :: range_p, range_q
+!
+      range_p = range_(first_p, last_p - first_p + 1)
+      range_q = range_(first_q, last_q - first_q + 1)
+!
+      memory = 0
+!
+      if (this%is_contiguous_in_block(range_p, range_q)) return
+!
+      memory = range_p%length*range_q%length*this%n_J
+!
+   end function load_memory_estimate_eri_cholesky_memory
+!
+!
+   subroutine load_block_eri_cholesky_memory(this, L_Jpq, first_p, last_p, first_q, last_q)
+!!
+!!    Load block
+!!    Written by Sarai D. Folkestad, Jan 2022
+!!
+      implicit none
+!
+      class(eri_cholesky_memory), intent(inout):: this
+      integer,                     intent(in)   :: first_p, last_p
+      integer,                     intent(in)   :: first_q, last_q
+!
+         real(dp), dimension(:,:,:), pointer,   intent(out)   :: L_Jpq
+!
+      type(range_) :: range_p, range_q
+
+      integer           :: block_
+      type(range_)      :: range_r, range_s
+!
+      range_p = range_(first_p, last_p - first_p + 1)
+      range_q = range_(first_q, last_q - first_q + 1)
+!
+      if (this%is_contiguous_in_block(range_p, range_q)) then
+!
+         block_ = this%get_contiguous_block_index(range_p, range_q)
+         call this%get_ranges_from_block(block_, range_r, range_s)
+!
+         call this%L_Jpq%get_array(L_Jpq,                             &
+                                  range_r, range_s,                   &
+                                  range_q%first - range_s%first + 1,  &
+                                  range_q%get_last() - range_s%first + 1)
+!
+      else
+!
+
+         call this%load_block_to_linked_list(range_p, range_q)
+         call this%L_Jpq_loaded%get_array(L_Jpq, range_p, range_q)
+!
+      endif
+!
+   end subroutine load_block_eri_cholesky_memory
+!
+!
+   subroutine offload_block_eri_cholesky_memory(this, first_p, last_p, first_q, last_q)
+!!
+!!    Offload block
+!!    Written by Sarai D. Folkestad, Jan 2022
+!!
+!!    Note: in the case of the block being stored in this%L_pq_J
+!!          nothing should happen when this routine is called.
+!!
+      implicit none
+!
+      class(eri_cholesky_memory), intent(inout):: this
+      integer,                    intent(in)    :: first_p, last_p
+      integer,                    intent(in)    :: first_q, last_q
+!
+      type(range_)      :: range_p, range_q
+!
+      range_p = range_(first_p, last_p - first_p + 1)
+      range_q = range_(first_q, last_q - first_q + 1)
+!
+      if (this%L_Jpq_loaded%node_in_list(range_p, range_q)) then
+!
+         call this%offload_block_from_linked_list(range_p, range_q)
+!
+!     block not in either of the lists
+      else if (.not. this%is_contiguous_in_block(range_p, range_q)) then
+!
+         call output%error_msg('cannot offload Cholesky block!')
+!
+      endif
+!
+   end subroutine offload_block_eri_cholesky_memory
 !
 !
 end module eri_cholesky_memory_class
