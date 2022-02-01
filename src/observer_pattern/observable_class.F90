@@ -24,7 +24,11 @@ module observable_class
 !! Written by Sarai D. Folkestad, Oct 2021
 !!
 !! Part of the general implementation of the
-!! Observer pattern
+!! Observer design pattern
+!!
+!! An 'observable' keeps a list of many 'observers' which it can 'notify'
+!! when the observable changes. The observers 'update' when
+!! they are notified.
 !!
 !
    use parameters

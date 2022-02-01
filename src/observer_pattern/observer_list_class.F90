@@ -24,7 +24,7 @@ module observer_list_class
 !! Written by Sarai D. Folkestad, Oct 2021
 !!
 !! Part of the general implementation of the
-!! Observer pattern
+!! Observer design pattern
 !!
 !
    use parameters
