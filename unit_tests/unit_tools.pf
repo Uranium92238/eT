@@ -2,11 +2,57 @@ module unit_tools
 
    use parameters
    use range_class, only: range_
+   use named_range_class, only: named_range
+   use block_class, only: block_
    use funit
 
    implicit none
 
 contains
+!
+!
+   subroutine assert_logical(expected_result, logical_to_test)
+!
+!     pfunits assertTrue does not work as expected
+!
+      implicit none
+
+      logical, intent(in) :: logical_to_test, expected_result
+
+      integer :: integer_to_test, expected_integer
+
+      if (expected_result) then
+         expected_integer = 1
+      else
+         expected_integer = 0
+      end if
+
+      if (logical_to_test) then
+         integer_to_test = 1
+      else
+         integer_to_test = 0
+      end if
+
+      @assertEqual(expected_integer, integer_to_test)
+
+   end subroutine assert_logical
+!
+!
+   subroutine assert_range(this_range, first, length, step, last)
+
+      implicit none
+
+      type(range_), intent(in) :: this_range
+
+      integer, intent(in) :: first, length, step, last
+
+      @assertEqual(first, this_range%get_first())
+      @assertEqual(length, this_range%get_length())
+      @assertEqual(last, this_range%get_last())
+      @assertEqual(step, this_range%get_step())
+
+   end subroutine assert_range
+!
 !
    @test
    subroutine test_least_common_multiple()
@@ -32,10 +78,7 @@ contains
       this = range_(1, 15, 1)
       call this%shift(7)
 
-      @assertEqual(8, this%get_first())
-      @assertEqual(15, this%get_length())
-      @assertEqual(22, this%get_last())
-      @assertEqual(1, this%get_step())
+      call assert_range(this, 8, 15, 1, 22)
 
    end subroutine test_shift_range
 !
@@ -50,10 +93,7 @@ contains
       this = range_(1, 15, 1)
       call this%shift_first_to(15)
 
-      @assertEqual(15, this%get_first())
-      @assertEqual(15, this%get_length())
-      @assertEqual(29, this%get_last())
-      @assertEqual(1, this%get_step())
+      call assert_range(this, 15, 15, 1, 29)
 
    end subroutine test_shift_first_to
 !
@@ -68,12 +108,330 @@ contains
       this = range_(1, 15, 1)
       call this%shift_last_to(10)
 
-      @assertEqual(-4, this%get_first())
-      @assertEqual(15, this%get_length())
-      @assertEqual(10, this%get_last())
-      @assertEqual(1, this%get_step())
+      call assert_range(this, -4, 15, 1, 10)
 
    end subroutine test_shift_last_to
+!
+!
+   @test
+   subroutine test_get_position_range()
+
+      implicit none
+
+      type(range_) :: this
+
+      this = range_(1, 15, 1)
+
+      @assertEqual(5, this%get_position(5))
+
+      call this%shift_last_to(10)
+      @assertEqual(10, this%get_position(5))
+
+   end subroutine test_get_position_range
+!
+!
+   @test
+   subroutine test_get_extent_range()
+
+      implicit none
+
+      type(range_) :: this, that
+
+      this = range_(1, 15, 1)
+      @assertEqual(15, this%get_extent())
+
+      that = range_(1, 16, 5)
+
+      @assertEqual(15, this%get_extent())
+
+   end subroutine test_get_extent_range
+!
+!
+   @test
+   subroutine test_contains_integer()
+
+      implicit none
+
+      type(range_) :: this
+
+      this = range_(1, 15, 1)
+
+      call assert_logical(.true., this%contains_(8))
+
+      call assert_logical(.false., this%contains_(20))
+
+
+   end subroutine test_contains_integer
+!
+!
+   @test
+   subroutine test_overlaps_range()
+
+      implicit none
+
+      type(range_), allocatable :: this, that
+
+      this = range_(1, 15, 10)
+      that = range_(-5, 5, 6)
+
+      call assert_logical(.true., this%overlaps(that))
+
+      deallocate(that)
+      that = range_(-5, 20, 1)
+      call assert_logical(.true., this%overlaps(that))
+
+   end subroutine test_overlaps_range
+!
+!
+   @test
+   subroutine test_no_overlap_range()
+
+      implicit none
+
+      type(range_) :: this, that
+
+      this = range_(1, 15, 10)
+      that = range_(-10, 5, 1)
+
+      call assert_logical(.false., this%overlaps(that))
+
+   end subroutine test_no_overlap_range
+!
+!  named range
+!
+   @test
+   subroutine test_copy_named_range()
+
+      implicit none
+
+      type(named_range) :: this, that
+
+      this = named_range("named_range", 1, 15, 1)
+      that = named_range(this)
+
+      @assertEqual("named_range", that%get_name())
+
+   end subroutine test_copy_named_range
+!
+!  blocks
+!
+   @test
+   subroutine test_block_constructors()
+
+      implicit none
+
+      type(block_) :: block_1, block_2, block_3
+      type(range_) :: range_p, range_q
+
+      block_1 = block_(1, 6, 1, 23)
+
+      call assert_range(block_1%p_range, 1, 6, 1, 6)
+      call assert_range(block_1%q_range, 1, 23, 1, 23)
+
+      block_2 = block_(block_1)
+
+      call assert_range(block_2%p_range, 1, 6, 1, 6)
+      call assert_range(block_2%q_range, 1, 23, 1, 23)
+
+      range_p = range_(1, 6)
+      range_q = range_(1, 23)
+      block_3 = block_(range_p, range_q)
+
+      call assert_range(block_2%p_range, 1, 6, 1, 6)
+      call assert_range(block_2%q_range, 1, 23, 1, 23)
+
+   end subroutine test_block_constructors
+!
+!
+   @test
+   subroutine test_is_equal_block()
+
+      implicit none
+
+      type(block_) :: block_1, block_2, block_3
+
+      block_1 = block_(1, 6, 1, 23)
+
+      call assert_range(block_1%p_range, 1, 6, 1, 6)
+      call assert_range(block_1%q_range, 1, 23, 1, 23)
+
+      block_2 = block_(block_1)
+
+      block_3 = block_(1, 6, 1, 6)
+
+      call assert_logical(.true., block_1 == block_2)
+      call assert_logical(.false., block_1 == block_3)
+
+   end subroutine test_is_equal_block
+!
+!
+   @test
+   subroutine test_overlaps_block()
+
+      implicit none
+
+      type(block_) :: block_1, block_2, block_3
+
+      block_1 = block_(1, 6, 1, 6)
+
+      call assert_range(block_1%p_range, 1, 6, 1, 6)
+      call assert_range(block_1%q_range, 1, 6, 1, 6)
+
+      block_2 = block_(block_1)
+
+      block_3 = block_(7, 23, 7, 23)
+
+      call assert_logical(.true., block_1%overlaps(block_2))
+      call assert_logical(.false., block_1%overlaps(block_3))
+
+   end subroutine test_overlaps_block
+!
+!
+   @test
+   subroutine test_get_overlap_block()
+
+      implicit none
+
+      type(block_) :: block_1, block_2, overlap
+
+      block_1 = block_(1, 3, 1, 23)
+
+      call assert_range(block_1%p_range, 1, 3, 1, 3)
+      call assert_range(block_1%q_range, 1, 23, 1, 23)
+
+      block_2 = block_(1, 6, 1, 6)
+      call assert_range(block_2%p_range, 1, 6, 1, 6)
+      call assert_range(block_2%q_range, 1, 6, 1, 6)
+
+      overlap = block_1%get_overlap(block_2)
+
+      call assert_range(overlap%p_range, 1, 3, 1, 3)
+      call assert_range(overlap%q_range, 1, 6, 1, 6)
+
+   end subroutine test_get_overlap_block
+!
+!
+   @test
+   subroutine test_contains_block()
+
+      implicit none
+
+      type(block_) :: block_1, block_2
+
+      block_1 = block_(1, 23, 1, 23)
+
+      call assert_range(block_1%p_range, 1, 23, 1, 23)
+      call assert_range(block_1%q_range, 1, 23, 1, 23)
+
+      block_2 = block_(1, 6, 1, 6)
+      call assert_range(block_2%p_range, 1, 6, 1, 6)
+      call assert_range(block_2%q_range, 1, 6, 1, 6)
+
+      call assert_logical(.true., block_1%contains_(block_2))
+      call assert_logical(.false., block_2%contains_(block_1))
+
+   end subroutine test_contains_block
+!
+!
+   @test
+   subroutine test_get_area_block()
+
+      implicit none
+
+      type(block_) :: block_1
+
+      block_1 = block_(1, 6, 1, 23)
+
+      call assert_range(block_1%p_range, 1, 6, 1, 6)
+      call assert_range(block_1%q_range, 1, 23, 1, 23)
+
+      @assertEqual(138, block_1%get_area())
+
+   end subroutine test_get_area_block
+!
+!
+   @test
+   subroutine test_get_extent_block()
+
+      implicit none
+
+      type(block_) :: block_1
+      type(range_) :: p_range, q_range
+
+      p_range = range_(7, 6, 2)
+      q_range = range_(7, 23, 3)
+
+      block_1 = block_(p_range, q_range)
+
+      call assert_range(block_1%p_range, 7, 6, 2, 17)
+      call assert_range(block_1%q_range, 7, 23, 3, 73)
+
+      @assertEqual(737, block_1%get_extent())
+
+   end subroutine test_get_extent_block
+!
+!
+   @test
+   subroutine test_get_position_block()
+
+      implicit none
+
+      type(block_) :: block_1
+
+      block_1 = block_(1, 23, 1, 6)
+
+      call assert_range(block_1%p_range, 1, 23, 1, 23)
+      call assert_range(block_1%q_range, 1, 6, 1, 6)
+
+      @assertEqual(42, block_1%get_position(19, 2))
+
+   end subroutine test_get_position_block
+!
+!
+   @test
+   subroutine test_is_diagonal_block()
+
+      implicit none
+
+      type(block_) :: block_1, block_2
+
+      block_1 = block_(1, 23, 1, 6)
+
+      call assert_range(block_1%p_range, 1, 23, 1, 23)
+      call assert_range(block_1%q_range, 1, 6, 1, 6)
+
+      call assert_logical(.false., block_1%is_diagonal())
+
+      block_2 = block_(1, 6, 1, 6)
+
+      call assert_range(block_2%p_range, 1, 6, 1, 6)
+      call assert_range(block_2%q_range, 1, 6, 1, 6)
+
+      call assert_logical(.true., block_2%is_diagonal())
+
+   end subroutine test_is_diagonal_block
+!
+!
+   @test
+   subroutine test_get_ranges_block()
+
+      implicit none
+
+      type(block_) :: block_1
+      type(range_) :: p_range, q_range
+
+      block_1 = block_(1, 23, 1, 6)
+
+      call assert_range(block_1%p_range, 1, 23, 1, 23)
+      call assert_range(block_1%q_range, 1, 6, 1, 6)
+
+      p_range = block_1%get_p_range()
+      call assert_range(p_range, 1, 23, 1, 23)
+
+      q_range = block_1%get_q_range()
+      call assert_range(q_range, 1, 6, 1, 6)
+
+   end subroutine test_get_ranges_block
 !
 !
 end module unit_tools
