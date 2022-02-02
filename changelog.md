@@ -1,4 +1,6 @@
 # eT v1.7.0
+### Tests
+- Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035
 
 # eT v1.6.0
 ### Features
