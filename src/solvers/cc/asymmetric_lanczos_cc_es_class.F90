@@ -89,35 +89,29 @@ module asymmetric_lanczos_cc_es_class
 !
       class(ccs), pointer :: wf
 !
+      logical :: restart
+!
    contains
 !
-      procedure :: read_settings                   =>  read_settings_asymmetric_lanczos_cc_es
-      procedure :: print_settings                  =>  print_settings_asymmetric_lanczos_cc_es
+      procedure :: run     => run_asymmetric_lanczos_cc_es
+      procedure :: cleanup => cleanup_asymmetric_lanczos_cc_es
 !
-      procedure :: initialize_energies             => initialize_energies_asymmetric_lanczos_cc_es
-      procedure :: destruct_energies               => destruct_energies_asymmetric_lanczos_cc_es
-!
-      procedure :: calculate_oscillator_strength   &
-                => calculate_oscillator_strength_asymmetric_lanczos_cc_es
-!
-      procedure :: run                             => run_asymmetric_lanczos_cc_es
-      procedure :: cleanup                         => cleanup_asymmetric_lanczos_cc_es
-!
-      procedure :: prepare_wf_for_excited_state  &
-                => prepare_wf_for_excited_state_asymmetric_lanczos_cc_es
-!
-      procedure :: print_summary => print_summary_asymmetric_lanczos_cc_es
-      procedure :: print_banner  => print_banner_asymmetric_lanczos_cc_es
+      procedure, private :: initialize_energies
+      procedure, private :: destruct_energies
+      procedure, private :: read_settings
+      procedure, private :: print_settings
+      procedure, private :: calculate_oscillator_strength
+      procedure, private :: prepare_wf_for_excited_state
+      procedure, private :: print_summary
+      procedure, private :: print_banner
 !
    end type asymmetric_lanczos_cc_es
-!
 !
    interface asymmetric_lanczos_cc_es
 !
       procedure :: new_asymmetric_lanczos_cc_es
 !
    end interface asymmetric_lanczos_cc_es
-!
 !
 contains
 !
@@ -223,7 +217,9 @@ contains
 !!
 !!       - T is diagonalized and the oscillator strengths are calculated.
 !!
-!
+!!
+!!    Modified by Andreas Skeidvoll and Torsha Moitra to add restart.
+!!
       use asymmetric_lanczos_tool_class,  only : asymmetric_lanczos_tool
 !
       implicit none
@@ -242,7 +238,9 @@ contains
 !
       real(dp) :: norm_eta_times_norm_xi, ddot, overlap, factor, norm_p1q1
 !
-      integer :: cartesian, iteration
+      integer :: cartesian, iteration, start_chain_length
+!
+      character(len=1), dimension(3), parameter :: cartesian_string = ['X', 'Y', 'Z']
 !
 !     Construct the dipole integrals
 !
@@ -297,10 +295,18 @@ contains
 !
          norm_eta_times_norm_xi = overlap
 !
-!        Initialize the asymmetric Lanczos tool
+         lanczos = asymmetric_lanczos_tool(this%wf%n_es_amplitudes, this%chain_length,&
+                                           this%normalization, this%restart, &
+                                           cartesian_string(cartesian))
 !
-         lanczos = asymmetric_lanczos_tool(this%wf%n_es_amplitudes, this%chain_length, &
-                                             etaX, xiX, this%normalization)
+         call lanczos%initialize()
+!
+         if (.not. this%restart) then
+!
+            call lanczos%save_p(etaX, 1)
+            call lanczos%save_q(xiX, 1)
+!
+         endif
 !
          call mem%alloc(p_and_q, this%wf%n_es_amplitudes)
 !
@@ -310,18 +316,17 @@ contains
 !        Build the Krylov subspace and the tridiagonal matrix T
 !        Loops over the chain-length
 !
-         do iteration = 1, this%chain_length
-!
-!
+         start_chain_length = lanczos%get_start_chain_length()
+         do iteration = start_chain_length, this%chain_length
 !
 !           Transforms p -> pA and q -> Aq
 !
-!           q_(i) is stored in p_and_q
-            call lanczos%read_q(p_and_q, iteration)
+!           q is stored in p_and_q
+            call lanczos%get_q(p_and_q, iteration)
             call this%wf%jacobian_transformation(p_and_q, Aq)
 !
-!           p_(i) is stored in p_and_q
-            call lanczos%read_p(p_and_q, iteration)
+!           p is stored in p_and_q
+            call lanczos%get_p(p_and_q, iteration)
             call this%wf%jacobian_transpose_transformation(p_and_q, pA)
 !
             if (this%projector%active) then
@@ -331,21 +336,10 @@ contains
 !
             endif
 !
-!           Calculates alpha_(i)
-!
-            call lanczos%calculate_alpha(Aq, iteration)
-!
-!           Calculates beta_(i), gamme_(i), p_(i+1) and q_(i+1)
-!
-            if (iteration .lt. this%chain_length) then
-!
-               call lanczos%calculate_beta_gamma_p_q(iteration, Aq, pA)
-!
-            end if
+            call lanczos%expand_subspace(pA, Aq, iteration)
 !
 !           Checks if the value of beta is too small then stops iteration
 !           Resets chain length to current iteration.
-!
             if (lanczos%chain_length .lt. this%chain_length) then
 !
                call output%warning_msg('Chain length value reset = (i4)', &
@@ -361,29 +355,22 @@ contains
 !
          call mem%dealloc(Aq, this%wf%n_es_amplitudes)
          call mem%dealloc(pA, this%wf%n_es_amplitudes)
-!
          call mem%dealloc(p_and_q, this%wf%n_es_amplitudes)
-!
-!        Diagonalize T to get the eigenvalues and eigenvectors
 !
          call mem%alloc(reduced_left, this%chain_length, this%chain_length)
          call mem%alloc(reduced_right, this%chain_length, this%chain_length)
-!
          call mem%alloc(eigenvalues_Re, this%chain_length)
          call mem%alloc(eigenvalues_Im, this%chain_length)
 !
          call lanczos%diagonalize_T(reduced_left, reduced_right, eigenvalues_Re, eigenvalues_Im)
 !
-!        Done with the tool, clean it up
-!
          call lanczos%cleanup()
 !
          call mem%alloc(oscillator_strength, this%chain_length)
 !
-!        Calculate oscillator strength
-!
          call this%calculate_oscillator_strength(reduced_left, reduced_right, eigenvalues_Re, &
-                                                   norm_eta_times_norm_xi, oscillator_strength)
+                                                 eigenvalues_Im, norm_eta_times_norm_xi, &
+                                                 oscillator_strength)
 !
          call mem%dealloc(reduced_left, this%chain_length, this%chain_length)
          call mem%dealloc(reduced_right, this%chain_length, this%chain_length)
@@ -406,7 +393,7 @@ contains
    end subroutine run_asymmetric_lanczos_cc_es
 !
 !
-   subroutine print_settings_asymmetric_lanczos_cc_es(this)
+   subroutine print_settings(this)
 !!
 !!    Print settings
 !!    Written by Torsha Moitra, Nov 2019
@@ -425,10 +412,10 @@ contains
       call output%printf('m', 'Biorthonormalization procedure: (a0)', &
                          chars=[trim(this%normalization)], fs='(t6,a)')
 !
-   end subroutine print_settings_asymmetric_lanczos_cc_es
+   end subroutine print_settings
 !
 !
-   subroutine read_settings_asymmetric_lanczos_cc_es(this)
+   subroutine read_settings(this)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -451,12 +438,15 @@ contains
       if (input%is_keyword_present('ionization', 'solver cc es')) &
             call output%error_msg('Ionization not possible with the asymmetric Lanczos solver')
 !
-   end subroutine read_settings_asymmetric_lanczos_cc_es
+      this%restart = input%is_keyword_present('restart', 'solver cc es') .or. &
+                     input%is_keyword_present('restart', 'do')
+!
+   end subroutine read_settings
 !
 !
-   subroutine initialize_energies_asymmetric_lanczos_cc_es(this)
+   subroutine initialize_energies(this)
 !!
-!!    Initialise energies
+!!    Initialize energies
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
 !!
       implicit none
@@ -465,10 +455,10 @@ contains
 !
       call mem%alloc(this%energies, this%chain_length)
 !
-   end subroutine initialize_energies_asymmetric_lanczos_cc_es
+   end subroutine initialize_energies
 !
 !
-   subroutine destruct_energies_asymmetric_lanczos_cc_es(this)
+   subroutine destruct_energies(this)
 !!
 !!    Destruct energies
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
@@ -479,11 +469,12 @@ contains
 !
       if (allocated(this%energies)) call mem%dealloc(this%energies, this%chain_length)
 !
-   end subroutine destruct_energies_asymmetric_lanczos_cc_es
+   end subroutine destruct_energies
 !
 !
-   subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es(this, L, R, eigenvalues, &
-            norm_eta_times_norm_xi, oscillator_strength)
+   subroutine calculate_oscillator_strength(this, L, R, eigenvalues_Re, &
+                                            eigenvalues_Im, norm_eta_times_norm_xi, &
+                                            oscillator_strength)
 !!
 !!    Calculate oscillator strength
 !!    Written by Sonia Coriani, Torsha Moitra and Sarai D. Folkestad, 2019
@@ -496,6 +487,9 @@ contains
 !!
 !!    L and R are reduced space eigenvectors of the order of chain length.
 !!
+!
+      use array_utilities, only: zero_array
+!
       implicit none
 !
       class(asymmetric_lanczos_cc_es), intent(in) :: this
@@ -503,7 +497,8 @@ contains
       real(dp), dimension(this%chain_length, this%chain_length), intent(in) :: L
       real(dp), dimension(this%chain_length, this%chain_length), intent(in) :: R
 !
-      real(dp), dimension(this%chain_length), intent(in) :: eigenvalues
+      real(dp), dimension(this%chain_length), intent(in) :: eigenvalues_Re
+      real(dp), dimension(this%chain_length), intent(in) :: eigenvalues_Im
 !
       real(dp), intent(in) :: norm_eta_times_norm_xi
 !
@@ -511,8 +506,13 @@ contains
 
       integer :: j
 !
+      call zero_array(oscillator_strength, this%chain_length)
+!
 !$omp parallel do private(j)
       do j = 1, this%chain_length
+!
+!        If Eigenvalue is complex, skip oscillator strength
+         if (abs(eigenvalues_Im(j)) .gt. 1.0d-12) cycle
 !
          oscillator_strength(j) = L(1,j) * R(1,j)
 !
@@ -522,17 +522,17 @@ contains
 !$omp parallel do private(j)
       do j = 1, this%chain_length
 !
-         oscillator_strength(j) = eigenvalues(j) * oscillator_strength(j)
+         oscillator_strength(j) = eigenvalues_Re(j) * oscillator_strength(j)
 !
       enddo
 !$omp end parallel do
 !
       call dscal(this%chain_length, (two/three)*norm_eta_times_norm_xi, oscillator_strength, 1)
 !
-   end subroutine calculate_oscillator_strength_asymmetric_lanczos_cc_es
+   end subroutine calculate_oscillator_strength
 !
 !
-   subroutine prepare_wf_for_excited_state_asymmetric_lanczos_cc_es(this)
+   subroutine prepare_wf_for_excited_state(this)
 !!
 !!    Prepare wf for excited state
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
@@ -544,10 +544,10 @@ contains
       call this%wf%prepare_for_jacobian()
       call this%wf%prepare_for_jacobian_transpose()
 !
-   end subroutine prepare_wf_for_excited_state_asymmetric_lanczos_cc_es
+   end subroutine prepare_wf_for_excited_state
 !
 !
-   subroutine print_summary_asymmetric_lanczos_cc_es(this, component, eigenvalues_Re, &
+   subroutine print_summary(this, component, eigenvalues_Re, &
                eigenvalues_Im, oscillator_strength)
 !!
 !!    Print summary
@@ -651,10 +651,10 @@ contains
 !
       call mem%dealloc(index_list, this%chain_length)
 !
-   end subroutine print_summary_asymmetric_lanczos_cc_es
+   end subroutine print_summary
 !
 !
-   subroutine print_banner_asymmetric_lanczos_cc_es(this)
+   subroutine print_banner(this)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -669,7 +669,7 @@ contains
       call output%printf('n', this%description1, ffs='(/t3,a)', fs='(t3,a)')
       call output%printf('n', this%description2, ffs='(/t3,a)', fs='(t3,a)')
 !
-   end subroutine print_banner_asymmetric_lanczos_cc_es
+   end subroutine print_banner
 !
 !
    subroutine cleanup_asymmetric_lanczos_cc_es(this)

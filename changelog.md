@@ -2,6 +2,9 @@
 ### Tests
 - Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035
 
+### Features
+- Restart for the Lanczos solver. eT-program/eT!1036
+
 # eT v1.6.0
 ### Features
 - Print tool for eigen and linear Davidson solvers. eT-program/eT!983

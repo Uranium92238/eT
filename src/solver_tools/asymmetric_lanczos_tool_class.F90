@@ -68,34 +68,62 @@ module asymmetric_lanczos_tool_class
 !
    use kinds
    use parameters
-   use sequential_file_class, only: sequential_file
+   use stream_file_class, only: stream_file
+   use direct_stream_file_class, only: direct_stream_file
    use memory_manager_class, only: mem
    use global_out, only: output
 !
    type :: asymmetric_lanczos_tool
 !
       integer :: chain_length
+      integer :: start_chain_length
       integer :: n_parameters
 !
       character (len=200) :: normalization
 !
       real(dp), dimension (:), allocatable :: alpha_, beta_, gamma_
 !
-      type(sequential_file), allocatable :: p_file, q_file, T_file
+      type(stream_file), allocatable :: T_file
+      type(direct_stream_file), allocatable :: p_file, q_file
+!
+      logical :: restart
 !
    contains
 !
-      procedure :: read_p                    => read_p_asymmetric_lanczos_tool
-      procedure :: read_q                    => read_q_asymmetric_lanczos_tool
+      procedure :: get_p &
+                => get_p_asymmetric_lanczos_tool
 !
-      procedure :: calculate_alpha           => calculate_alpha_asymmetric_lanczos_tool
-      procedure :: construct_s               => construct_s_asymmetric_lanczos_tool
-      procedure :: construct_r               => construct_r_asymmetric_lanczos_tool
-      procedure :: calculate_beta_gamma_p_q  => calculate_beta_gamma_p_q_asymmetric_lanczos_tool
-      procedure :: diagonalize_T             => diagonalize_T_asymmetric_lanczos_tool
-      procedure :: save_T                    => save_T_asymmetric_lanczos_tool
-      procedure :: biorthonormalize          => biorthonormalize_asymmetric_lanczos_tool
-      procedure :: cleanup                   => cleanup_asymmetric_lanczos_tool
+      procedure :: get_q &
+                => get_q_asymmetric_lanczos_tool
+!
+      procedure :: save_p &
+                => save_p_asymmetric_lanczos_tool
+!
+      procedure :: save_q &
+                => save_q_asymmetric_lanczos_tool
+!
+      procedure :: expand_subspace &
+                => expand_subspace_asymmetric_lanczos_tool
+!
+      procedure :: diagonalize_T &
+                => diagonalize_T_asymmetric_lanczos_tool
+!
+      procedure :: cleanup &
+                => cleanup_asymmetric_lanczos_tool
+!
+      procedure :: initialize &
+                => initialize_asymmetric_lanczos_tool
+!
+      procedure :: get_start_chain_length &
+                => get_start_chain_length_asymmetric_lanczos_tool
+!
+      procedure, private :: save_T
+      procedure, private :: read_T
+      procedure, private :: biorthonormalize
+      procedure, private :: construct_s
+      procedure, private :: construct_r
+      procedure, private :: calculate_alpha
+      procedure, private :: calculate_beta_gamma_p_q
 !
    end type asymmetric_lanczos_tool
 !
@@ -108,44 +136,60 @@ module asymmetric_lanczos_tool_class
 contains
 !
 !
-   function new_asymmetric_lanczos_tool(n_parameters, chain_length, p1, q1, normalization) &
-                    result(lanczos)
+   function new_asymmetric_lanczos_tool(n_parameters, chain_length, normalization, &
+                                        restart, component) &
+                                        result(lanczos)
 !!
-!!    New asymmetric Lanczos tool
+!!    New
 !!    Written by Torsha Moitra, Sarai D. Folkestad
 !!    and Sonia Coriani, Sep-Nov 2019
 !!
-!!    Constructor for the asymmetric Lanczos tool.
+!!    Modified by Andreas S. Skeidsvoll, Oct 2020
+!!    Moved allocations, restart reading, and binormalization/saving of start
+!!    vectors out of this constructor.
+!!
+      implicit none
+!
+      type(asymmetric_lanczos_tool) :: lanczos
+!
+      integer,             intent(in) :: n_parameters, chain_length
+      character (len=200), intent(in) :: normalization
+      character (len=1),   intent(in) :: component
+      logical,             intent(inout) :: restart
+!
+      lanczos%n_parameters       = n_parameters
+      lanczos%chain_length       = chain_length
+      lanczos%start_chain_length = 1
+      lanczos%normalization      = normalization
+!
+      lanczos%p_file = direct_stream_file('asymmetric_lanczos_p_'// component, lanczos%n_parameters)
+      lanczos%q_file = direct_stream_file('asymmetric_lanczos_q_'// component, lanczos%n_parameters)
+      lanczos%T_file = stream_file('asymmetric_lanczos_T_'// component)
+!
+      if (lanczos%p_file%exists() .and. lanczos%q_file%exists() .and. lanczos%T_file%exists()) then
+         lanczos%restart = restart
+      else ! restart files not present
+         restart = .false.
+         lanczos%restart = restart
+      endif
+!
+   end function new_asymmetric_lanczos_tool
+!
+!
+   subroutine initialize_asymmetric_lanczos_tool(lanczos)
+!!
+!!    Initialize
+!!    Written by Torsha Moitra, Sarai D. Folkestad
+!!    and Sonia Coriani, Sep-Nov 2019
 !!
 !!    Allocates arrays (alpha_, beta_, gamma_)
 !!    and initializes files.
-!!
-!!    "chain_length" : dimension of the Krylov subspace
-!!
-!!    "p_1" : initial left vector
-!!
-!!    "q_1" : initial right vector
-!!
-!!    "normalization" : biorthonormalization procedure
-!!                      Must be either 'symmetric' or 'asymmetric'
 !!
       use array_utilities, only: zero_array
 !
       implicit none
 !
-      type(asymmetric_lanczos_tool) :: lanczos
-!
-      integer, intent(in) :: n_parameters, chain_length
-!
-      character (len=200), intent(in) :: normalization
-!
-      real(dp), dimension(n_parameters), intent(in) :: p1, q1
-!
-      real(dp) :: ddot, norm
-!
-      lanczos%n_parameters = n_parameters
-      lanczos%chain_length = chain_length
-      lanczos%normalization = normalization
+      class(asymmetric_lanczos_tool), intent(inout) :: lanczos
 !
       call mem%alloc(lanczos%alpha_, lanczos%chain_length)
       call zero_array(lanczos%alpha_, lanczos%chain_length)
@@ -156,28 +200,16 @@ contains
       call mem%alloc(lanczos%gamma_, lanczos%chain_length-1)
       call zero_array(lanczos%gamma_, lanczos%chain_length-1)
 !
-      norm=ddot(lanczos%n_parameters, p1, 1, q1, 1)
+      if (lanczos%restart) then
 !
-      if (abs(norm - one) .gt. 1.0d-8) &
-          call output%error_msg('Start vectors for Asymmetric Lanczos not binormalized')
+         call lanczos%read_T()
 !
-      lanczos%p_file = sequential_file('asymmetric_lanczos_p', 'unformatted' )
-      lanczos%q_file = sequential_file('asymmetric_lanczos_q', 'unformatted' )
-      lanczos%T_file = sequential_file('asymmetric_lanczos_T', 'unformatted' )
+      endif
 !
-      call lanczos%p_file%open_('write', 'rewind')
-      call lanczos%q_file%open_('write', 'rewind')
-!
-      call lanczos%p_file%write_(p1, lanczos%n_parameters)
-      call lanczos%q_file%write_(q1, lanczos%n_parameters)
-!
-      call lanczos%p_file%close_()
-      call lanczos%q_file%close_()
-!
-   end function
+   end subroutine initialize_asymmetric_lanczos_tool
 !
 !
-   subroutine read_p_asymmetric_lanczos_tool(lanczos, p, n)
+   subroutine get_p_asymmetric_lanczos_tool(lanczos, p, n)
 !!
 !!    Read p vector
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
@@ -194,24 +226,17 @@ contains
 !
       real(dp), dimension(lanczos%n_parameters), intent(out) :: p
 !
-      integer, optional, intent(in) :: n
+      integer, intent(in) :: n
 !
-      call lanczos%p_file%open_('read', 'append')
+      call lanczos%p_file%open_('read')
 !
-      if (present(n)) then
-!
-         call lanczos%p_file%rewind_()
-         call lanczos%p_file%skip(n - 1)
-!
-      endif
-!
-      call lanczos%p_file%read_(p, lanczos%n_parameters)
+      call lanczos%p_file%read_(p, n, n)
       call lanczos%p_file%close_()
 !
-   end subroutine read_p_asymmetric_lanczos_tool
+   end subroutine get_p_asymmetric_lanczos_tool
 
 
-   subroutine read_q_asymmetric_lanczos_tool(lanczos, q, n)
+   subroutine get_q_asymmetric_lanczos_tool(lanczos, q, n)
 !!
 !!    Read q vector
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
@@ -228,24 +253,17 @@ contains
 !
       real(dp), dimension(lanczos%n_parameters), intent(out) :: q
 !
-      integer, optional, intent(in) :: n
+      integer, intent(in) :: n
 !
-      call lanczos%q_file%open_('read','append')
+      call lanczos%q_file%open_('read')
 !
-      if (present(n)) then
-!
-         call lanczos%q_file%rewind_()
-         call lanczos%q_file%skip(n - 1)
-!
-      endif
-!
-      call lanczos%q_file%read_(q, lanczos%n_parameters)
+      call lanczos%q_file%read_(q, n, n)
       call lanczos%q_file%close_()
 !
-   end subroutine read_q_asymmetric_lanczos_tool
+   end subroutine get_q_asymmetric_lanczos_tool
 
 !
-   subroutine calculate_alpha_asymmetric_lanczos_tool(lanczos, Aq, i)
+   subroutine calculate_alpha(lanczos, Aq, i)
 !!
 !!    Calculate alpha
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
@@ -270,16 +288,16 @@ contains
 !
       call mem%alloc(p, lanczos%n_parameters)
 !
-      call lanczos%read_p(p, i)
+      call lanczos%get_p(p, i)
 !
       lanczos%alpha_(i) = ddot(lanczos%n_parameters, p, 1, Aq, 1)
 !
       call mem%dealloc(p, lanczos%n_parameters)
 !    
-   end subroutine calculate_alpha_asymmetric_lanczos_tool
+   end subroutine calculate_alpha
 !
 !
-   subroutine construct_r_asymmetric_lanczos_tool(lanczos, i, Aq, r)
+   subroutine construct_r(lanczos, i, Aq, r)
 !!
 !!    Construct r
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
@@ -312,7 +330,7 @@ contains
 !
       call mem%alloc(q, lanczos%n_parameters)
 !
-      call lanczos%read_q(q, i)
+      call lanczos%get_q(q, i)
 !
 !     r_i -= alpha_i*q_i
 !
@@ -322,7 +340,7 @@ contains
 !
 !        r -= gamma_i-1 q_i-1
 !
-         call lanczos%read_q(q, i - 1)
+         call lanczos%get_q(q, i - 1)
 !
          call daxpy(lanczos%n_parameters, -lanczos%gamma_(i - 1), q, 1, r, 1)
 !
@@ -330,10 +348,10 @@ contains
 !
       call mem%dealloc(q, lanczos%n_parameters)
 !
-   end subroutine construct_r_asymmetric_lanczos_tool
+   end subroutine construct_r
 !
 !
-   subroutine construct_s_asymmetric_lanczos_tool(lanczos, i, pA, s)
+   subroutine construct_s(lanczos, i, pA, s)
 !!
 !!    Construct s
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
@@ -366,7 +384,7 @@ contains
 !
       call mem%alloc(p, lanczos%n_parameters)
 !
-      call lanczos%read_p(p, i)
+      call lanczos%get_p(p, i)
 !
 !     s_i -= alpha_i p_i
 !
@@ -376,7 +394,7 @@ contains
 !
 !        s_i -= beta_i-1 p_i-1
 !
-         call lanczos%read_p(p, i - 1)
+         call lanczos%get_p(p, i - 1)
 !
          call daxpy(lanczos%n_parameters, -lanczos%beta_(i - 1), p, 1, s, 1)
 !
@@ -384,10 +402,10 @@ contains
 !
       call mem%dealloc(p,lanczos%n_parameters)
 !
-   end subroutine construct_s_asymmetric_lanczos_tool
+   end subroutine construct_s
 !
 !
-   subroutine calculate_beta_gamma_p_q_asymmetric_lanczos_tool(lanczos, i, Aq, pA)
+   subroutine calculate_beta_gamma_p_q(lanczos, i, Aq, pA)
 !!
 !!    Calculate beta and gamma
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
@@ -451,19 +469,13 @@ contains
 !
       call lanczos%biorthonormalize(r, s, i)
 !
-      call lanczos%q_file%open_('write', 'append')
-      call lanczos%p_file%open_('write', 'append')
-
-      call lanczos%q_file%write_(r, lanczos%n_parameters)
-      call lanczos%p_file%write_(s, lanczos%n_parameters)
-!
-      call lanczos%p_file%close_()
-      call lanczos%q_file%close_()
+      call lanczos%save_p(s, i + 1)
+      call lanczos%save_q(r, i + 1)
 !
       call mem%dealloc(r,lanczos%n_parameters)
       call mem%dealloc(s,lanczos%n_parameters)
 !
-   end subroutine calculate_beta_gamma_p_q_asymmetric_lanczos_tool
+   end subroutine calculate_beta_gamma_p_q
 !
 !
    subroutine diagonalize_T_asymmetric_lanczos_tool(lanczos, left, right, &
@@ -502,6 +514,10 @@ contains
 !
       integer :: lwork, i, info
 !
+      real(dp) :: norm, ddot
+!
+      call lanczos%save_T()
+!
       call mem%alloc(T, lanczos%chain_length, lanczos%chain_length)
 !
       call zero_array(T, lanczos%chain_length**2)
@@ -522,18 +538,18 @@ contains
 !
       call mem%alloc(work, lwork)
 !
-      call dgeev('V', 'V',                 &
+      call dgeev('V', 'V',             &
                  lanczos%chain_length, &
-                 T,                        &
+                 T,                    &
                  lanczos%chain_length, &
-                 eigenvalues_Re,           &
-                 eigenvalues_Im,           &
-                 left,                     &
+                 eigenvalues_Re,       &
+                 eigenvalues_Im,       &
+                 left,                 &
                  lanczos%chain_length, &
-                 right,                    &
+                 right,                &
                  lanczos%chain_length, &
-                 work,                     &
-                 lwork,                    &
+                 work,                 &
+                 lwork,                &
                  info)
 !
       if (info .ne. 0) then
@@ -542,15 +558,22 @@ contains
 !
       endif
 !
+!     Biorthonormalize (dgeev returns normalized left and right vectors)
+      do i = 1, lanczos%chain_length
+!
+            norm = ddot(lanczos%chain_length, left(:,i), 1, right(:,i), 1)
+            call dscal(lanczos%chain_length, one/norm, left(:,i), 1)
+      enddo
+!
       call mem%dealloc(work,lwork)
       call mem%dealloc(T, lanczos%chain_length, lanczos%chain_length)
 !
-   end subroutine diagonalize_t_asymmetric_lanczos_tool
+   end subroutine diagonalize_T_asymmetric_lanczos_tool
 !
 !
-   subroutine save_T_asymmetric_lanczos_tool(lanczos)
+   subroutine save_T(lanczos)
 !!
-!!    Save alpha, beta, gamma onto T_file
+!!    Save T
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
 !!
       implicit none
@@ -559,20 +582,69 @@ contains
 !
       call lanczos%T_file%open_('write', 'rewind')
 !
-      call lanczos%T_file%write_(lanczos%alpha_,lanczos%chain_length)
-      call lanczos%T_file%write_(lanczos%beta_,lanczos%chain_length-1)
-      call lanczos%T_file%write_(lanczos%gamma_,lanczos%chain_length-1)
+      call lanczos%T_file%write_(lanczos%chain_length)
+      call lanczos%T_file%write_(lanczos%alpha_, lanczos%chain_length)
+      call lanczos%T_file%write_(lanczos%beta_,  lanczos%chain_length-1)
+      call lanczos%T_file%write_(lanczos%gamma_, lanczos%chain_length-1)
 !
       call lanczos%T_file%close_()
 
-   end subroutine save_T_asymmetric_lanczos_tool
+   end subroutine save_T
 !
 !
-   subroutine biorthonormalize_asymmetric_lanczos_tool(lanczos,q,p,i)
+   subroutine read_T(lanczos)
 !!
-!!    Biorthonomalize p and q vectors
+!!    Read T
 !!    Written by Torsha Moitra and Sarai D. Folkestad, Sep 2019
-!!    Revised by Torsha Moitra and Sonia Coriani, Nov 2019
+!!
+!!    Reads alpha_, beta_ and gamma_
+!!
+      implicit none
+!
+      class(asymmetric_lanczos_tool), intent(inout) :: lanczos
+!
+      integer :: chain_length
+      real(dp), dimension(:), allocatable :: alpha_, beta_, gamma_
+!
+      call output%printf('m', 'Restarting in the asymmetric Lanczos solver:', fs='(/t6,a)')
+!
+      call lanczos%T_file%open_('read', 'rewind')
+!
+      call lanczos%T_file%read_(chain_length)
+      call output%printf('m', 'Found restart with chain length (i0)', &
+                        ints=[chain_length], fs='(t6,a)')
+!
+      if (chain_length .gt. lanczos%chain_length) &
+         call output%warning_msg('chain length is shorter than the restart chain length')
+!
+      call mem%alloc(alpha_, chain_length)
+      call mem%alloc(beta_,  chain_length-1)
+      call mem%alloc(gamma_, chain_length-1)
+!
+      call lanczos%T_file%read_(alpha_, chain_length)
+      call lanczos%T_file%read_(beta_,  chain_length-1)
+      call lanczos%T_file%read_(gamma_, chain_length-1)
+!
+      call lanczos%T_file%close_()
+!
+      call dcopy(min(chain_length, lanczos%chain_length), alpha_, 1, lanczos%alpha_, 1)
+      call dcopy(min(chain_length, lanczos%chain_length)-1, beta_, 1, lanczos%beta_, 1)
+      call dcopy(min(chain_length, lanczos%chain_length)-1, gamma_, 1, lanczos%gamma_, 1)
+!
+      call mem%dealloc(alpha_, chain_length)
+      call mem%dealloc(beta_,  chain_length-1)
+      call mem%dealloc(gamma_, chain_length-1)
+!
+      lanczos%start_chain_length = min(chain_length, lanczos%chain_length)
+!
+   end subroutine read_T
+!
+!
+   subroutine biorthonormalize(lanczos, q, p, i)
+!!
+!!    Biorthonomalize
+!!    Written by Torsha Moitra, Sarai D. Folkestad, and Sonia Coriani, 2019
+!!
 !!    Enforces the biorthonormality condition on the p and q vectors
 !!
 !!       P^T*Q = I ,
@@ -610,8 +682,8 @@ contains
 !
 !           biorthogonalize against previous 
 !
-            call lanczos%read_p(p_j, j)      
-            call lanczos%read_q(q_j, j)      
+            call lanczos%get_p(p_j, j)
+            call lanczos%get_q(q_j, j)
 
             overlap = ddot(lanczos%n_parameters, p_j, 1, q, 1) 
             call daxpy(lanczos%n_parameters, -overlap, q_j, 1, q, 1)   
@@ -649,7 +721,7 @@ contains
       call mem%dealloc(p_j, lanczos%n_parameters)
       call mem%dealloc(q_j, lanczos%n_parameters)
 !
-   end subroutine biorthonormalize_asymmetric_lanczos_tool
+   end subroutine biorthonormalize
 !
 !
    subroutine cleanup_asymmetric_lanczos_tool(lanczos)
@@ -667,5 +739,90 @@ contains
 
    end subroutine cleanup_asymmetric_lanczos_tool
 !
+!
+   subroutine save_p_asymmetric_lanczos_tool(lanczos, p, n)
+!!
+!!    Save p
+!!    Written by ndreas S. Skeidsvoll, Jul 2020
+!!
+!!    Writes columns of p vectors to disk.
+!!
+      implicit none
+!
+      class(asymmetric_lanczos_tool), intent(inout) :: lanczos
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(lanczos%n_parameters), intent(in) :: p
+!
+      call lanczos%p_file%open_('write')
+!
+      call lanczos%p_file%write_(p, n, n)
+!
+      call lanczos%p_file%close_()
+!
+   end subroutine save_p_asymmetric_lanczos_tool
+!
+!
+   subroutine save_q_asymmetric_lanczos_tool(lanczos, q, n)
+!!
+!!    Save q
+!!    Written by Andreas S. Skeidsvoll, Jul 2020
+!!
+!!    Writes columns of q vectors to disk.
+!!
+      implicit none
+!
+      class(asymmetric_lanczos_tool), intent(inout) :: lanczos
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(lanczos%n_parameters), intent(in) :: q
+!
+      call lanczos%q_file%open_('write')
+!
+      call lanczos%q_file%write_(q, n, n)
+!
+      call lanczos%q_file%close_()
+!
+   end subroutine save_q_asymmetric_lanczos_tool
+!
+!
+   function get_start_chain_length_asymmetric_lanczos_tool(lanczos) result(start_chain_length)
+!!
+!!    Get start chan length
+!!    Written by Sarai D. Folkestad, 2022
+!!
+      implicit none
+!
+      class(asymmetric_lanczos_tool), intent(in) :: lanczos
+!
+      integer :: start_chain_length
+!
+      start_chain_length = lanczos%start_chain_length
+!
+   end function get_start_chain_length_asymmetric_lanczos_tool
+!
+!
+   subroutine expand_subspace_asymmetric_lanczos_tool(lanczos, pA, Aq, i)
+!!
+!!    Increase subspace
+!!    Written by Sarai D. Folkestad, 2022
+!!
+      implicit none
+
+      class(asymmetric_lanczos_tool),            intent(inout) :: lanczos
+      real(dp), dimension(lanczos%n_parameters), intent(in)    :: pA, Aq
+      integer,                                   intent(in)    :: i
+!
+      call lanczos%calculate_alpha(Aq, i)
+!
+      if (i .lt. lanczos%chain_length) then
+!
+         call lanczos%calculate_beta_gamma_p_q(i, Aq, pA)
+!
+      end if
+!
+   end subroutine expand_subspace_asymmetric_lanczos_tool
 !
 end module asymmetric_lanczos_tool_class
