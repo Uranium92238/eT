@@ -206,6 +206,7 @@ add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;left;diis")
 add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eom;lanczos")
 add_eT_runtest(ccsd_cvs_lanczos                             "eT;short;ccsd;es;eom;lanczos;cvs")
+add_eT_runtest(ccsd_lanczos_restart                         "eT;short;ccsd;es;eom;lanczos;restart")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_lr_polarizability_transition_moments_nosym "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_lr_polarizability_transition_moments    "eT;short;ccsd;es;eom")
