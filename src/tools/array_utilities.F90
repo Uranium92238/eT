@@ -3354,4 +3354,33 @@ contains
    end function find_location
 !
 !
+   subroutine remove_trace(M)
+!!
+!!    Remove trace
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz,
+!!    where the other elements of the tensor are given by symmetry, such as for the quadrupole
+!!    moment. Thus, this routine can be called after a call to "calculate quadrupole moment"
+!!    to make the moment trace-free.
+!!
+      implicit none
+!
+      real(dp), dimension(6), intent(inout) :: M
+!
+      real(dp) :: trace_
+!
+      trace_ = M(1) + M(4) + M(6)
+!
+      M(1) = (three*M(1) - trace_)/two
+      M(4) = (three*M(4) - trace_)/two
+      M(6) = (three*M(6) - trace_)/two
+!
+      M(2) = (three*M(2))/two
+      M(3) = (three*M(3))/two
+      M(5) = (three*M(5))/two
+!
+   end subroutine remove_trace
+!
+!
 end module array_utilities

@@ -206,7 +206,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: multipliers
 !
-      call output%printf('n', '- Davidson CC multipliers solver summary:', fs='(/t3,a)')
+      call output%printf('n', '- CC multipliers solver summary:', fs='(/t3,a)')
 !
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
 

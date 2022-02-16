@@ -27,15 +27,51 @@ set(eT_fortran_sources
 #
    src/sad/sad_tool_class.F90
 #
-   src/engines/abstract_engine_class.F90
-   src/engines/reference_engine_class.F90
-   src/engines/hf_geoopt_engine_class.F90
-   src/engines/tdhf_engine_class.F90
-   src/engines/gs_engine_class.F90
-   src/engines/es_engine_class.F90
-   src/engines/mean_value_engine_class.F90
-   src/engines/response_engine_class.F90
-   src/engines/td_engine_class.F90
+   src/engines/hf/abstract_engine_class.F90
+   src/engines/hf/reference_engine_class.F90
+   src/engines/hf/hf_geoopt_engine_class.F90
+   src/engines/hf/tdhf_engine_class.F90
+#
+   src/engines/cc/cc_engine_class.F90
+   src/engines/cc/cc_gs_engine_class.F90
+   src/engines/cc/cc_gs_mean_value_engine_class.F90
+   src/engines/cc/cc_es_engine_class.F90
+   src/engines/cc/td_cc_engine_class.F90
+   src/engines/cc/cc_polarizability_engine_class.F90
+   src/engines/cc/lr_transition_moment_engine_class.F90
+   src/engines/cc/eom_transition_moment_engine_class.F90
+#
+   src/engines/cc/tasks/eri_approximator_task_class.F90
+   src/engines/cc/tasks/cholesky_decomposition_task_class.F90
+   src/engines/cc/tasks/ri_task_class.F90
+   src/engines/cc/tasks/cc_polarizability_task_class.F90
+   src/engines/cc/tasks/cc_amplitude_response_task_class.F90
+   src/engines/cc/tasks/cc_task_class.F90
+   src/engines/cc/tasks/cc_multipliers_task_class.F90
+   src/engines/cc/tasks/cc_amplitudes_task_class.F90
+   src/engines/cc/tasks/cc_es_amplitudes_task_class.F90
+   src/engines/cc/tasks/cc_mean_values_task_class.F90
+   src/engines/cc/tasks/cc_visualization_task_class.F90
+   src/engines/cc/tasks/cc_propagation_task_class.F90
+   src/engines/cc/tasks/biorthonormalization_task_class.F90
+   src/engines/cc/tasks/cc_transition_moments_task_class.F90
+   src/engines/cc/tasks/cc_eom_transition_moments_task_class.F90
+   src/engines/cc/tasks/cc_lr_transition_moments_task_class.F90
+   src/engines/cc/tasks/fft_task_class.F90
+#
+   src/engines/cc/calculators/cc_F_transformation_class.F90
+   src/engines/cc/calculators/cc_null_F_transformation_class.F90
+   src/engines/cc/calculators/cc_lr_F_transformation_class.F90
+   src/engines/cc/calculators/cc_eta_xi_calculator_class.F90
+   src/engines/cc/calculators/cc_lr_eta_xi_calculator_class.F90
+   src/engines/cc/calculators/cc_eom_eta_xi_calculator_class.F90
+#
+   src/engines/cc/factories/eri_approximator_factory_class.F90
+   src/engines/cc/factories/cc_multipliers_solver_factory_class.F90
+   src/engines/cc/factories/cc_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_es_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_propagator_factory_class.F90
+   src/engines/cc/factories/cc_response_engine_factory_class.F90
 #
    src/eri_tool/eri_tool_class.F90
    src/eri_tool/eri_adapter_class.F90
@@ -214,6 +250,7 @@ set(eT_fortran_sources
    src/tools/orbitals/nto_tool_class.F90
    src/tools/orbitals/cnto_tool_class.F90
    src/tools/redundant_internal_coords_class.F90
+   src/tools/banner_printer_class.F90
 #
    src/tools/citation_printer_class.F90
    src/tools/citation_class.F90
@@ -240,6 +277,7 @@ set(eT_fortran_sources
    src/various/angular_momentum/spherical_i_angular_momentum.F90
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
+   src/wavefunctions/cc_wavefunctions_class.F90
 
    src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/hf/hf_class.F90

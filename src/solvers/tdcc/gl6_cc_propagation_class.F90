@@ -53,8 +53,7 @@ module gl6_cc_propagation_class
       procedure :: step => gl6_step
 !
       procedure :: Initializations => initializations_gl6_cc_propagation
-!
-      final :: destructor_gl6_cc_propagation
+      procedure :: cleanup => cleanup_gl6_cc_propagation
 !
    end type gl6_cc_propagation
 !
@@ -87,7 +86,7 @@ contains
    end function new_gl6_cc_propagation
 !
 !
-   subroutine destructor_gl6_cc_propagation(solver)
+   subroutine cleanup_gl6_cc_propagation(solver, wf)
 !!
 !!    Destructor
 !!    Written by Andreas Skeidsvoll, Oct 2018
@@ -96,13 +95,18 @@ contains
 !!
       implicit none
 !
-      type(gl6_cc_propagation), intent(inout) :: solver
+      class(gl6_cc_propagation), intent(inout) :: solver
+      class(ccs), intent(inout) :: wf
 !
-      if (allocated(solver%z1_guess)) call mem%dealloc(solver%z1_guess, solver%vector_length)
-      if (allocated(solver%z2_guess)) call mem%dealloc(solver%z2_guess, solver%vector_length)
-      if (allocated(solver%z3_guess)) call mem%dealloc(solver%z3_guess, solver%vector_length)
+      if (solver%energy_output             &
+          .or. solver%dipole_moment_output &
+          .or. solver%density_matrix_output) call wf%destruct_gs_density_complex()
 !
-   end subroutine destructor_gl6_cc_propagation
+      call mem%dealloc(solver%z1_guess, solver%vector_length)
+      call mem%dealloc(solver%z2_guess, solver%vector_length)
+      call mem%dealloc(solver%z3_guess, solver%vector_length)
+!
+   end subroutine cleanup_gl6_cc_propagation
 !
 !
    subroutine initializations_gl6_cc_propagation(solver)

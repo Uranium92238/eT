@@ -371,6 +371,15 @@ module ccs_class
       procedure :: density_mu_mu_oo                              => density_mu_mu_oo_ccs
       procedure :: density_mu_ref                                => density_mu_ref_ccs
 !
+      procedure, public :: calculate_and_print_dipole &
+                        => calculate_and_print_dipole_ccs
+!
+      procedure, public :: calculate_and_print_quadrupole &
+                        => calculate_and_print_quadrupole_ccs
+!
+      procedure, private :: get_electronic_dipole
+      procedure, private :: get_electronic_quadrupole
+!
       procedure :: construct_etaX                                => construct_etaX_ccs
       procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
       procedure :: etaX_ccs_a1                                   => etaX_ccs_a1_ccs

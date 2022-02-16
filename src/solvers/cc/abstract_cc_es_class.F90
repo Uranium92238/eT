@@ -209,6 +209,14 @@ contains
 !
       if (input%is_keyword_present('remove core', 'solver cc es')) this%es_type = 'remove core'
 !
+      if (input%is_keyword_present('ionization', 'solver cc es') .and. &
+          input%is_keyword_present('core excitation', 'solver cc es')) &
+            call output%error_msg('XPS not implemented yet.')
+!
+      if (input%is_keyword_present('remove core', 'solver cc es') .and. &
+          input%is_keyword_present('core excitation', 'solver cc es')) &
+            call output%error_msg('Both remove core and core excitations specified.')
+!
       call input%place_records_in_memory('solver cc es', records_in_memory)
 !
    end subroutine read_es_settings_abstract_cc_es

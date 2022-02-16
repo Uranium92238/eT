@@ -21,18 +21,19 @@ assert version_info.major == 2
 # construct filter(s)
 tolerance = 1.0e-10
 f = get_gs_filter(tolerance)
-g = get_polarizability_filter(tolerance)
+components = [11,13]
+g = get_polarizability_filter(tolerance, components)
 f.extend(g)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_eom_polarizability.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_eom_polarizability.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

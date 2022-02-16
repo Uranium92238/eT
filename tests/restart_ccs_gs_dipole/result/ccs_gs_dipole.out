@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.6.0 Galaxy (development)
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-01-24 17:39:52 UTC +01:00
+  Git branch:         new-engine-structure
+  Git hash:           d1e8e93398320e8e8afa566fe8b1dda423b9358b
+  Fortran compiler:   GNU 11.1.0
+  C compiler:         GNU 11.1.0
+  C++ compiler:       GNU 11.1.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:24 UTC +01:00
+  Calculation started: 2022-01-24 17:41:02 UTC +01:00
 
 
   :: Input file
@@ -170,14 +170,14 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.889701962820     0.1071E+00     0.7489E+02
+     1           -74.889701962821     0.1071E+00     0.7489E+02
      2           -74.940474931397     0.1469E-01     0.5077E-01
      3           -74.942054999957     0.2353E-02     0.1580E-02
-     4           -74.942080036554     0.5610E-04     0.2504E-04
+     4           -74.942080036553     0.5610E-04     0.2504E-04
      5           -74.942080053363     0.1780E-04     0.1681E-07
      6           -74.942080057695     0.2053E-06     0.4333E-08
-     7           -74.942080057696     0.9667E-09     0.4121E-12
-     8           -74.942080057696     0.7843E-12     0.4263E-13
+     7           -74.942080057696     0.9667E-09     0.3695E-12
+     8           -74.942080057696     0.7808E-12     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -190,8 +190,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.04200
-     Total cpu time (sec):               0.04950
+     Total wall time (sec):              0.02770
+     Total cpu time (sec):               0.04093
 
 
   :: CCS wavefunction
@@ -209,26 +209,6 @@
    - Number of ground state amplitudes:
 
      Single excitation amplitudes:  10
-
-
-  :: Mean value coupled cluster engine
-  =======================================
-
-  Calculates the time-independent expectation value of one-electron operators 
-
-  A, < A > = < Λ | A | CC >.
-
-  This is a CCS mean value calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of ground state properties
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -275,8 +255,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2858E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.4037E-16
+     Maximal difference between approximate and actual diagonal:              0.3206E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.2804E-16
 
   - Settings for integral handling:
 
@@ -285,14 +265,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.01700
-     Total cpu time (sec):               0.02208
-
-
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.00513
+     Total cpu time (sec):               0.01312
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -318,7 +292,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -74.942080057696     0.1201E-11     0.7494E+02
+    1           -74.942080057696     0.1199E-11     0.7494E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -346,11 +320,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00300
-     Total cpu time (sec):               0.00316
-
-
-  4) Calculation of the multipliers (diis algorithm)
+     Total wall time (sec):              0.00067
+     Total cpu time (sec):               0.00067
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -377,16 +348,16 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.2403E-11
+    1          0.2398E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00100
-     Total cpu time (sec):               0.00163
+     Total wall time (sec):              0.00030
+     Total cpu time (sec):               0.00030
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -404,43 +375,22 @@
         2      5        0.000000000000
      ------------------------------------
 
-  - Finished solving the CCS multipliers equations
+  - Operator: dipole [Debye]
 
-     Total wall time (sec):               0.00200
-     Total cpu time (sec):                0.00224
-
-
-  5) Calculation of ground state properties
-
-  - Operator: dipole moment [a.u.]
-
-     x:          0.0000000
-     y:          0.6035218
-     z:          0.0000000
-
-     |mu|:       0.6035218
-
-  - Operator: dipole moment [Debye]
-
-     x:          0.0000000
+     x:         -0.0000000
      y:          1.5339994
      z:          0.0000000
 
      |mu|:       1.5339994
 
-  - Timings for the CCS mean value calculation
-
-     Total wall time (sec):              0.02600
-     Total cpu time (sec):               0.03186
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 59.492 KB
+  Peak memory usage during the execution of eT: 61.856 KB
 
-  Total wall time in eT (sec):              0.09000
-  Total cpu time in eT (sec):               0.10226
+  Total wall time in eT (sec):              0.04662
+  Total cpu time in eT (sec):               0.06789
 
-  Calculation ended: 2022-02-01 16:10:24 UTC +01:00
+  Calculation ended: 2022-01-24 17:41:02 UTC +01:00
 
   - Implementation references:
 

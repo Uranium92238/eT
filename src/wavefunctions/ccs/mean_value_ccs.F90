@@ -536,4 +536,185 @@ contains
    end subroutine calculate_energy_length_dipole_term_ccs
 !
 !
+   module subroutine calculate_and_print_dipole_ccs(wf)
+!!
+!!    Calculate and print dipole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      use math_utilities, only: norm_R3
+!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu
+!
+      real(dp), dimension(3) :: mu_electronic
+      real(dp), dimension(3) :: mu_nuclear
+!
+      character(len=1), dimension(3) :: components
+!
+      integer :: k
+!
+      mu_electronic = wf%get_electronic_dipole()
+!
+      mu_nuclear = wf%get_nuclear_dipole()
+!
+      mu = mu_electronic + mu_nuclear
+!
+      mu = mu * au_to_debye
+!
+      call output%printf('m', '- Operator: dipole [Debye]', fs='(/t3,a/)')
+!
+      components = ['x', 'y', 'z']
+!
+      do k = 1, 3
+!
+         call output%printf('m', '(a0):     (f14.7)', &
+                            chars=[components(k)], reals=[mu(k)], fs='(t6,a)')
+!
+      enddo
+!
+      call output%printf('m', '|mu|:  (f14.7)', &
+                         reals=[norm_R3(mu)], fs='(/t6,a)')
+!
+   end subroutine calculate_and_print_dipole_ccs
+!
+!
+   module function get_electronic_dipole(wf) result(mu_electronic)
+!!
+!!    Get electronic dipole moment
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019-2021
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+!
+      integer :: k
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_pqk
+!
+!     Get the integrals mu_pqk for components k = 1, 2, 3 in the T1-transformed basis
+!
+      call mem%alloc(mu_pqk, wf%n_mo, wf%n_mo, 3)
+      call wf%get_t1_oei('dipole', mu_pqk)
+!
+!     Get electronic expectation value contribution
+!
+      do k = 1, 3
+!
+         mu_electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%density)
+!
+         if (wf%exists_frozen_fock_terms) then
+!
+            mu_electronic(k) = mu_electronic(k) + wf%frozen_dipole(k)
+!
+         endif
+!
+      enddo
+!
+      call mem%dealloc(mu_pqk, wf%n_mo, wf%n_mo, 3)
+!
+   end function get_electronic_dipole
+!
+!
+   module subroutine calculate_and_print_quadrupole_ccs(wf)
+!!
+!!    Calculate and print quadrupole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      use math_utilities, only: norm_R3
+      use array_utilities, only: remove_trace
+!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q
+!
+      real(dp), dimension(6) :: q_electronic
+      real(dp), dimension(6) :: q_nuclear
+!
+      character(len=2), dimension(6) :: components
+!
+      integer :: k
+!
+      components = ['xx', 'xy', 'xz', 'yy', 'yz', 'zz']
+!
+      q_electronic = wf%get_electronic_quadrupole()
+      q_nuclear = wf%get_nuclear_quadrupole()
+      q = q_electronic + q_nuclear
+      q = q * au_to_debye * bohr_to_angstrom
+!
+      call output%printf('m', '- Operator: quadrupole [Debye*Ang]', fs='(/t3,a/)')
+!
+      do k = 1, 6
+!
+         call output%printf('m', '(a0):     (f14.7)', &
+                            chars=[components(k)], reals=[q(k)], fs='(t6,a)')
+!
+      enddo
+!
+      call remove_trace(q_electronic)
+      call remove_trace(q_nuclear)
+      q = q_electronic + q_nuclear
+      q = q * au_to_debye * bohr_to_angstrom
+!
+      call output%printf('m', 'The traceless quadrupole is calculated as:', fs='(/t6,a)')
+      call output%printf('m', 'Q_ij = 1/2 [3*q_ij - tr(q)*delta_ij]',fs='(t9,a)')
+      call output%printf('m', 'where q_ij is the non-traceless matrix.',fs='(t6,a)')
+!
+      call output%printf('m', '- Operator: traceless quadrupole [Debye*Ang]', fs='(/t3,a/)')
+!
+      do k = 1, 6
+!
+         call output%printf('m', '(a0):     (f14.7)', &
+                            chars=[components(k)], reals=[q(k)], fs='(t6,a)')
+!
+      enddo
+!
+   end subroutine calculate_and_print_quadrupole_ccs
+!
+!
+   module function get_electronic_quadrupole(wf) result(q_electronic)
+!!
+!!    Get quadrupole moment
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q_electronic
+!
+      integer :: k
+!
+      real(dp), dimension(:,:,:), allocatable :: q_pqk
+!
+!     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
+!
+      call mem%alloc(q_pqk, wf%n_mo, wf%n_mo, 6)
+      call wf%get_t1_oei('quadrupole', q_pqk)
+!
+!     Get electronic expectation value contribution
+!
+      do k = 1, 6
+!
+         q_electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%density)
+!
+         if (wf%exists_frozen_fock_terms) then
+!
+            q_electronic(k) = q_electronic(k) + wf%frozen_quadrupole(k)
+!
+         endif
+!
+      enddo
+!
+      call mem%dealloc(q_pqk, wf%n_mo, wf%n_mo, 6)
+!
+   end function get_electronic_quadrupole
+!
+!
 end submodule mean_value_ccs

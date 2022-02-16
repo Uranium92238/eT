@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.6.0 Galaxy (development)
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-01-24 17:56:17 UTC +01:00
+  Git branch:         new-engine-structure
+  Git hash:           abfda7a22651fd955946534c032942d72464ffee
+  Fortran compiler:   GNU 8.4.0
+  C compiler:         GNU 8.4.0
+  C++ compiler:       GNU 8.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:07:29 UTC +01:00
+  Calculation started: 2022-01-24 18:13:07 UTC +01:00
 
 
   :: Input file
@@ -184,17 +184,17 @@
      5          -177.480194080187     0.4312E-03     0.1398E-04
      6          -177.480195433667     0.8262E-04     0.1353E-05
      7          -177.480195516708     0.2289E-04     0.8304E-07
-     8          -177.480195527015     0.4801E-05     0.1031E-07
-     9          -177.480195527843     0.1045E-05     0.8287E-09
-    10          -177.480195527874     0.2388E-06     0.3084E-10
-    11          -177.480195527875     0.5236E-07     0.9948E-12
-    12          -177.480195527875     0.9618E-08     0.8527E-13
-    13          -177.480195527875     0.4310E-08     0.1137E-12
-    14          -177.480195527875     0.1983E-08     0.2842E-13
-    15          -177.480195527875     0.6772E-09     0.5684E-13
-    16          -177.480195527875     0.1634E-09     0.5684E-13
-    17          -177.480195527875     0.4727E-10     0.0000E+00
-    18          -177.480195527875     0.8074E-11     0.5684E-13
+     8          -177.480195527014     0.4801E-05     0.1031E-07
+     9          -177.480195527843     0.1045E-05     0.8289E-09
+    10          -177.480195527874     0.2388E-06     0.3070E-10
+    11          -177.480195527875     0.5236E-07     0.9379E-12
+    12          -177.480195527875     0.9618E-08     0.5684E-13
+    13          -177.480195527875     0.4310E-08     0.1421E-12
+    14          -177.480195527875     0.1983E-08     0.8527E-13
+    15          -177.480195527875     0.6772E-09     0.8527E-13
+    16          -177.480195527875     0.1634E-09     0.2842E-13
+    17          -177.480195527875     0.4727E-10     0.2842E-13
+    18          -177.480195527875     0.8073E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -207,8 +207,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              3.98600
-     Total cpu time (sec):               6.58055
+     Total wall time (sec):              1.38035
+     Total cpu time (sec):               2.72198
 
 
   :: CC2 wavefunction
@@ -227,26 +227,6 @@
 
      Single excitation amplitudes:  280
      Double excitation amplitudes:  39340
-
-
-  :: Mean value coupled cluster engine
-  =======================================
-
-  Calculates the time-independent expectation value of one-electron operators 
-
-  A, < A > = < Λ | A | CC >.
-
-  This is a CC2 mean value calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of ground state properties
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -296,7 +276,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1128E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
 
   - Settings for integral handling:
 
@@ -305,14 +285,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              2.10900
-     Total cpu time (sec):               2.69325
-
-
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.56077
+     Total cpu time (sec):               1.09455
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -382,11 +356,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.52500
-     Total cpu time (sec):               0.64466
-
-
-  4) Calculation of the multipliers (diis algorithm)
+     Total wall time (sec):              0.17016
+     Total cpu time (sec):               0.34215
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -433,10 +404,10 @@
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.64400
-     Total cpu time (sec):               0.60105
+     Total wall time (sec):              0.15449
+     Total cpu time (sec):               0.31049
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -454,23 +425,7 @@
         5      4       -0.008015599057
      ------------------------------------
 
-  - Finished solving the CC2 multipliers equations
-
-     Total wall time (sec):               0.64500
-     Total cpu time (sec):                0.60191
-
-
-  5) Calculation of ground state properties
-
-  - Operator: dipole moment [a.u.]
-
-     x:          0.4803417
-     y:          0.4246666
-     z:          0.0042669
-
-     |mu|:       0.6411615
-
-  - Operator: dipole moment [Debye]
+  - Operator: dipole [Debye]
 
      x:          1.2209069
      y:          1.0793948
@@ -478,19 +433,14 @@
 
      |mu|:       1.6296700
 
-  - Timings for the CC2 mean value calculation
-
-     Total wall time (sec):              3.32600
-     Total cpu time (sec):               3.98484
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 28.066680 MB
+  Peak memory usage during the execution of eT: 28.117872 MB
 
-  Total wall time in eT (sec):              7.39600
-  Total cpu time in eT (sec):              10.64658
+  Total wall time in eT (sec):              2.30053
+  Total cpu time in eT (sec):               4.52136
 
-  Calculation ended: 2022-02-01 16:07:37 UTC +01:00
+  Calculation ended: 2022-01-24 18:13:09 UTC +01:00
 
   - Implementation references:
 

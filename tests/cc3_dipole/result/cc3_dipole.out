@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.6.0 Galaxy (development)
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-01-19 17:50:06 UTC +01:00
+  Git branch:         new-engine-structure
+  Git hash:           8319e8b7b7d93079471be468c9455c3fa1569a3f
+  Fortran compiler:   GNU 11.1.0
+  C compiler:         GNU 11.1.0
+  C++ compiler:       GNU 11.1.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:06:45 UTC +01:00
+  Calculation started: 2022-01-19 17:54:09 UTC +01:00
 
 
   :: Input file
@@ -189,13 +189,13 @@
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7488E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4690E-12
-    11           -78.843851693631     0.5634E-08     0.1421E-13
-    12           -78.843851693631     0.1415E-08     0.4263E-13
-    13           -78.843851693631     0.6806E-09     0.7105E-13
-    14           -78.843851693631     0.1491E-09     0.1421E-13
-    15           -78.843851693631     0.2501E-10     0.2842E-13
-    16           -78.843851693631     0.5171E-11     0.0000E+00
+    10           -78.843851693631     0.2637E-07     0.3979E-12
+    11           -78.843851693631     0.5634E-08     0.4263E-13
+    12           -78.843851693631     0.1415E-08     0.1421E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.2842E-13
+    15           -78.843851693631     0.2501E-10     0.4263E-13
+    16           -78.843851693631     0.5168E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -208,8 +208,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.18500
-     Total cpu time (sec):               1.80545
+     Total wall time (sec):              0.42986
+     Total cpu time (sec):               0.85296
 
 
   :: CC3 wavefunction
@@ -228,26 +228,6 @@
 
      Single excitation amplitudes:  138
      Double excitation amplitudes:  9591
-
-
-  :: Mean value coupled cluster engine
-  =======================================
-
-  Calculates the time-independent expectation value of one-electron operators 
-
-  A, < A > = < Λ | A | CC >.
-
-  This is a CC3 mean value calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (newton-raphson algorithm)
-     4) Calculation of the multipliers (newton-raphson algorithm)
-     5) Calculation of ground state properties
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -306,14 +286,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.46600
-     Total cpu time (sec):               0.65895
-
-
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (newton-raphson algorithm)
+     Total wall time (sec):              0.16732
+     Total cpu time (sec):               0.33530
 
    - Davidson tool settings:
 
@@ -401,11 +375,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              2.82100
-     Total cpu time (sec):               2.45365
-
-
-  4) Calculation of the multipliers (newton-raphson algorithm)
+     Total wall time (sec):              0.45268
+     Total cpu time (sec):               0.90466
 
    - Davidson tool settings:
 
@@ -456,10 +427,10 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              6.16400
-     Total cpu time (sec):               3.95403
+     Total wall time (sec):              0.65578
+     Total cpu time (sec):               1.31174
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -493,23 +464,7 @@
         1      5       1      5       -0.071730388537
      --------------------------------------------------
 
-  - Finished solving the CC3 multipliers equations
-
-     Total wall time (sec):               6.16600
-     Total cpu time (sec):                3.95594
-
-
-  5) Calculation of ground state properties
-
-  - Operator: dipole moment [a.u.]
-
-     x:         -0.0002580
-     y:          0.7664555
-     z:          0.0024404
-
-     |mu|:       0.7664595
-
-  - Operator: dipole moment [Debye]
+  - Operator: dipole [Debye]
 
      x:         -0.0006556
      y:          1.9481356
@@ -517,25 +472,21 @@
 
      |mu|:       1.9481456
 
-  - Timings for the CC3 mean value calculation
-
-     Total wall time (sec):              9.77400
-     Total cpu time (sec):               7.34099
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 15.763288 MB
+  Peak memory usage during the execution of eT: 15.766832 MB
 
-  Total wall time in eT (sec):             11.03900
-  Total cpu time in eT (sec):               9.22009
+  Total wall time in eT (sec):              1.80596
+  Total cpu time in eT (sec):               3.58876
 
-  Calculation ended: 2022-02-01 16:06:56 UTC +01:00
+  Calculation ended: 2022-01-19 17:54:11 UTC +01:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
      CC3: https://doi.org/10.1021/acs.jctc.0c00686
      Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+     Multimodel Newton algorithm: https://doi.org/10.1063/5.0010989
      Multimodel Newton algorithm: https://doi.org/10.1063/5.0010989
 
   eT terminated successfully!

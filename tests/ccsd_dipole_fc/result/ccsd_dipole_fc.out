@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.6.0 Galaxy (development)
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-01-04 16:11:46 UTC +01:00
+  Git branch:         engines
+  Git hash:           2fb210f248519bab9afd255bf707d653a35f9a16
+  Fortran compiler:   GNU 9.3.0
+  C compiler:         GNU 9.3.0
+  C++ compiler:       GNU 9.3.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:17 UTC +01:00
+  Calculation started: 2022-01-04 16:17:34 UTC +01:00
 
 
   :: Input file
@@ -187,13 +187,13 @@
      5           -75.952528906523     0.1809E-03     0.1688E-04
      6           -75.952529042896     0.1214E-04     0.1364E-06
      7           -75.952529044535     0.3369E-05     0.1638E-08
-     8           -75.952529044727     0.8367E-06     0.1927E-09
-     9           -75.952529044742     0.1360E-06     0.1440E-10
-    10           -75.952529044742     0.4602E-08     0.1563E-12
-    11           -75.952529044742     0.6939E-09     0.7105E-13
-    12           -75.952529044742     0.1022E-09     0.0000E+00
-    13           -75.952529044742     0.1158E-10     0.7105E-13
-    14           -75.952529044742     0.6201E-12     0.4263E-13
+     8           -75.952529044727     0.8367E-06     0.1928E-09
+     9           -75.952529044742     0.1360E-06     0.1432E-10
+    10           -75.952529044742     0.4602E-08     0.1137E-12
+    11           -75.952529044742     0.6939E-09     0.4263E-13
+    12           -75.952529044742     0.1022E-09     0.4263E-13
+    13           -75.952529044742     0.1158E-10     0.4263E-13
+    14           -75.952529044742     0.6207E-12     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -206,8 +206,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.19900
-     Total cpu time (sec):               0.29987
+     Total wall time (sec):              0.07866
+     Total cpu time (sec):               0.14539
 
   - Preparation for frozen core approximation
 
@@ -230,26 +230,6 @@
 
      Single excitation amplitudes:  32
      Double excitation amplitudes:  528
-
-
-  :: Mean value coupled cluster engine
-  =======================================
-
-  Calculates the time-independent expectation value of one-electron operators 
-
-  A, < A > = < Λ | A | CC >.
-
-  This is a CCSD mean value calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (davidson algorithm)
-     5) Calculation of ground state properties
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -297,24 +277,19 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.7625E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2311E-15
+     Maximal difference between approximate and actual diagonal:              0.4740E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.2847E-15
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       True
+     ERI matrix in memory:       False
+     T1 ERI matrix in memory:    True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.06000
-     Total cpu time (sec):               0.07815
-
-
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.01967
+     Total cpu time (sec):               0.03968
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -401,19 +376,14 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.12500
-     Total cpu time (sec):               0.13601
-
-
-  4) Calculation of the multipliers (davidson algorithm)
-
-   - Davidson coupled cluster multipliers solver
-  -------------------------------------------------
-
-  A Davidson solver that solves the multiplier equation: t-bar^T A = -η. 
-  This linear equation is solved in a reduced space. A description of 
-  the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
-  (1975).
+     Total wall time (sec):              0.01273
+     Total cpu time (sec):               0.02473
+  execute multipliers task
+  construct fock
+  initialize multipliers
+  initialize solver factory
+  create solver factory
+  Solver factory create: davidson
 
    - Davidson tool settings:
 
@@ -423,32 +393,143 @@
 
      Storage (multipliers_davidson_trials): file
      Storage (multipliers_davidson_transforms): file
+  run
 
   - Davidson solver settings
 
      Residual threshold:              0.10E-10
      Max number of iterations:             100
 
-   Iteration       Residual norm
-  -------------------------------
+  Iteration:                  1
+  Reduced space dimension:    1
+
+   Solution       Residual norm
+  -----------------------------
      1               0.2524E-01
-     2               0.6138E-02
-     3               0.1121E-02
-     4               0.4602E-03
-     5               0.1243E-03
-     6               0.3371E-04
-     7               0.5914E-05
-     8               0.1455E-05
-     9               0.3074E-06
-    10               0.6120E-07
-    11               0.1459E-07
-    12               0.3499E-08
-    13               0.7302E-09
-    14               0.1496E-09
-    15               0.2533E-10
-    16               0.4812E-11
-  -------------------------------
+  -----------------------------
+
+  Iteration:                  2
+  Reduced space dimension:    2
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.6138E-02
+  -----------------------------
+
+  Iteration:                  3
+  Reduced space dimension:    3
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.1121E-02
+  -----------------------------
+
+  Iteration:                  4
+  Reduced space dimension:    4
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.4602E-03
+  -----------------------------
+
+  Iteration:                  5
+  Reduced space dimension:    5
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.1243E-03
+  -----------------------------
+
+  Iteration:                  6
+  Reduced space dimension:    6
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.3371E-04
+  -----------------------------
+
+  Iteration:                  7
+  Reduced space dimension:    7
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.5914E-05
+  -----------------------------
+
+  Iteration:                  8
+  Reduced space dimension:    8
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.1455E-05
+  -----------------------------
+
+  Iteration:                  9
+  Reduced space dimension:    9
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.3074E-06
+  -----------------------------
+
+  Iteration:                 10
+  Reduced space dimension:   10
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.6120E-07
+  -----------------------------
+
+  Iteration:                 11
+  Reduced space dimension:   11
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.1459E-07
+  -----------------------------
+
+  Iteration:                 12
+  Reduced space dimension:   12
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.3499E-08
+  -----------------------------
+
+  Iteration:                 13
+  Reduced space dimension:   13
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.7302E-09
+  -----------------------------
+
+  Iteration:                 14
+  Reduced space dimension:   14
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.1496E-09
+  -----------------------------
+
+  Iteration:                 15
+  Reduced space dimension:   15
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.2533E-10
+  -----------------------------
+
+  Iteration:                 16
+  Reduced space dimension:   16
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.4813E-11
+  -----------------------------
   Convergence criterion met in 16 iterations!
+  cleanup
+  summary
 
   - Davidson CC multipliers solver summary:
 
@@ -483,44 +564,24 @@
         2      2       6      3       -0.076263576600
         7      2       6      3       -0.064468482498
      --------------------------------------------------
+  end
 
-  - Finished solving the CCSD multipliers equations
+  - Operator: dipole [Debye]
 
-     Total wall time (sec):               0.14300
-     Total cpu time (sec):                0.14355
-
-
-  5) Calculation of ground state properties
-
-  - Operator: dipole moment [a.u.]
-
-     x:         -0.0000000
-     y:         -0.0000000
-     z:          0.9623208
-
-     |mu|:       0.9623208
-
-  - Operator: dipole moment [Debye]
-
-     x:         -0.0000000
+     x:          0.0000000
      y:         -0.0000000
      z:          2.4459754
 
      |mu|:       2.4459754
 
-  - Timings for the CCSD mean value calculation
-
-     Total wall time (sec):              0.33600
-     Total cpu time (sec):               0.36498
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 554.388 KB
+  Peak memory usage during the execution of eT: 674.392 KB
 
-  Total wall time in eT (sec):              0.56700
-  Total cpu time in eT (sec):               0.69962
+  Total wall time in eT (sec):              0.13845
+  Total cpu time in eT (sec):               0.25749
 
-  Calculation ended: 2022-02-01 16:10:18 UTC +01:00
+  Calculation ended: 2022-01-04 16:17:34 UTC +01:00
 
   - Implementation references:
 
