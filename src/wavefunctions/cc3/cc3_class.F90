@@ -293,6 +293,8 @@ contains
 !
       class(cc3) :: wf
 !
+      call wf%destruct_gs_density
+!
       call wf%ccsd%cleanup()
 !
       call wf%delete_intermediate_files

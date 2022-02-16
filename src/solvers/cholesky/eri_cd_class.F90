@@ -3091,8 +3091,8 @@ contains
 !
       class(eri_cd) :: this
 !
-      call output%printf('m', ' - ' // trim(this%name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(this%name_)) + 6, '-')
+      call output%printf('m', '' // trim(this%name_), fs='(/t3,a)')
+      call output%print_separator('m', len_trim(this%name_), '-')
 !
       call output%printf('m', this%description1, ffs='(/t3,a)')
       call output%printf('m', this%description2, ffs='(/t3,a)')

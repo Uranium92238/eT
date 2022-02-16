@@ -331,18 +331,22 @@ subroutine cc_calculation(ref_wf)
    use mlcc2_class, only: mlcc2
    use mlccsd_class, only: mlccsd
 !
-   use gs_engine_class, only: gs_engine
-   use es_engine_class, only: es_engine
-   use response_engine_class, only: response_engine
-   use mean_value_engine_class, only: mean_value_engine
-   use td_engine_class, only: td_engine
+   use cc_engine_class, only: cc_engine
+   use cc_gs_engine_class, only: cc_gs_engine
+   use cc_es_engine_class, only: cc_es_engine
+   use cc_gs_mean_value_engine_class, only: cc_gs_mean_value_engine
+   use td_cc_engine_class, only: td_cc_engine
+!
+   use cc_response_engine_factory_class, only: cc_response_engine_factory
 !
    implicit none
 !
    class(hf), intent(in)  :: ref_wf
 !
    class(ccs), allocatable :: cc_wf
-   class(gs_engine), allocatable :: cc_engine
+   class(cc_engine), allocatable :: engine
+!
+   type(cc_response_engine_factory) :: response_engine_factory
 !
    character(len=30) :: cc_wf_name
 !
@@ -398,23 +402,23 @@ subroutine cc_calculation(ref_wf)
 !
    if (input%is_keyword_present('response', 'do')) then
 !
-      cc_engine = response_engine(cc_wf)
+      call response_engine_factory%create(engine)
 !
    elseif (input%is_keyword_present('excited state', 'do')) then
 !
-      cc_engine = es_engine(cc_wf)
+      allocate(cc_es_engine::engine)
 !
    elseif (input%is_keyword_present('mean value', 'do')) then
 !
-      cc_engine = mean_value_engine(cc_wf)
+      allocate(cc_gs_mean_value_engine::engine)
 !
    elseif (input%is_keyword_present('ground state', 'do')) then
 !
-      cc_engine = gs_engine(cc_wf)
+      allocate(cc_gs_engine::engine)
 !
    elseif (input%is_keyword_present('time dependent state', 'do')) then
 !
-      cc_engine = td_engine(cc_wf)
+      allocate(td_cc_engine::engine)
 !
    else
 !
@@ -422,7 +426,7 @@ subroutine cc_calculation(ref_wf)
 !
    endif
 !
-   call cc_engine%ignite(cc_wf)
+   call engine%ignite(cc_wf)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation

@@ -5,6 +5,9 @@
 ### Features
 - Restart for the Lanczos solver. eT-program/eT!1036
 
+### Structure
+- Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968
+
 # eT v1.6.0
 ### Features
 - Print tool for eigen and linear Davidson solvers. eT-program/eT!983

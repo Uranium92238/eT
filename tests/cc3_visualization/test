@@ -34,7 +34,7 @@ for inp in ["cc3_visualization.inp"]:
     ierr += run(options, configure,
                 input_files=inp,
                 filters={"out": f,
-                         "dm_000_000.cube": g,
+                         "cc_gs_density.cube": g,
                          "dm_000_001.cube": g,
                          "dm_001_000.cube": g,
                          "dm_001_001.cube": g})

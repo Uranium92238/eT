@@ -316,6 +316,8 @@ contains
 !
       call solver%close_files()
 !
+      call solver%print_summary(wf, field)
+!
    end subroutine run_cc_propagation
 !
 !
@@ -336,23 +338,16 @@ contains
    end subroutine initializations_cc_propagation
 !
 !
-   subroutine cleanup_cc_propagation(solver, wf, field)
+   subroutine cleanup_cc_propagation(solver, wf)
 !!
 !!    Clean up
 !!    Written by Andreas Skeidsvoll, Oct 2018
-!!
-!!    Clean up the abstract coupled cluster propagation solver.
 !!
       implicit none
 !
       class(cc_propagation), intent(inout) :: solver
 !
-      class(ccs) :: wf
-      class(electric_field) :: field
-!
-      call solver%print_summary(wf, field)
-!
-!     Complex density matrix used to calculate properties
+      class(ccs), intent(inout) :: wf
 !
       if (solver%energy_output             &
           .or. solver%dipole_moment_output &

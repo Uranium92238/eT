@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -14,24 +14,24 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra (development)
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-02-08 15:18:39 UTC +01:00
+  Git branch:         new-engine-structure
+  Git hash:           ca383e2b552f817dbf3230735ee9724c36e4bdc3
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:06:55 UTC +01:00
+  Calculation started: 2022-02-09 10:12:10 UTC +01:00
 
 
   :: Input file
@@ -81,6 +81,10 @@
         threshold: 1.0d-10
      end solver cc multipliers
 
+     visualization
+        plot cc density
+     end visualization
+
      solver cc propagation
         initial time: 0.0
         final time: 0.1
@@ -88,6 +92,7 @@
         integrator: rk4
         energy output
         dipole moment output
+        density matrix output
         implicit threshold: 1.0d-10
         steps between output: 1
      end solver cc propagation
@@ -105,7 +110,7 @@
      end electric field
 
 
-  Running on 2 OMP threads
+  Running on 4 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -207,12 +212,12 @@
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7488E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4547E-12
+    10           -78.843851693631     0.2637E-07     0.3979E-12
     11           -78.843851693631     0.5634E-08     0.2842E-13
-    12           -78.843851693631     0.1415E-08     0.4263E-13
-    13           -78.843851693631     0.6806E-09     0.4263E-13
+    12           -78.843851693631     0.1415E-08     0.2842E-13
+    13           -78.843851693631     0.6806E-09     0.5684E-13
     14           -78.843851693631     0.1491E-09     0.5684E-13
-    15           -78.843851693631     0.2501E-10     0.9948E-13
+    15           -78.843851693631     0.2501E-10     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -225,8 +230,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.43100
-     Total cpu time (sec):               1.69009
+     Total wall time (sec):              0.18553
+     Total cpu time (sec):               0.64426
 
 
   :: CCSD wavefunction
@@ -245,42 +250,6 @@
 
      Single excitation amplitudes:  138
      Double excitation amplitudes:  9591
-
-
-  :: Time dependent coupled cluster engine
-  ===========================================
-
-  Calculates the time dependent CC wavefunction
-
-  This is a CCSD time dependent calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (davidson algorithm)
-     5) Propagation from the ground state
-
-
-  :: Time dependent coupled cluster engine
-  ===========================================
-
-  Calculates the time dependent CC wavefunction
-
-  This is a CCSD time dependent calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (davidson algorithm)
-     5) Propagation from the ground state
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
 
    - Cholesky decomposition of electronic repulsion integrals solver
   ---------------------------------------------------------------------
@@ -340,14 +309,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.73500
-     Total cpu time (sec):               0.71900
-
-
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+     Total wall time (sec):              0.07164
+     Total cpu time (sec):               0.29143
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -385,7 +348,7 @@
     9           -79.100383621794     0.4135E-05     0.5957E-06
    10           -79.100383427012     0.1779E-05     0.1948E-06
    11           -79.100383466393     0.6705E-06     0.3938E-07
-   12           -79.100383474629     0.2989E-06     0.8237E-08
+   12           -79.100383474630     0.2989E-06     0.8237E-08
    13           -79.100383487351     0.1028E-06     0.1272E-07
    14           -79.100383481864     0.3056E-07     0.5487E-08
    15           -79.100383481091     0.6508E-08     0.7730E-09
@@ -436,19 +399,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.56700
-     Total cpu time (sec):               0.84553
-
-
-  4) Calculation of the multipliers (davidson algorithm)
-
-   - Davidson coupled cluster multipliers solver
-  -------------------------------------------------
-
-  A Davidson solver that solves the multiplier equation: t-bar^T A = -η. 
-  This linear equation is solved in a reduced space. A description of 
-  the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
-  (1975).
+     Total wall time (sec):              0.10278
+     Total cpu time (sec):               0.41475
 
    - Davidson tool settings:
 
@@ -486,7 +438,7 @@
   -------------------------------
   Convergence criterion met in 17 iterations!
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -520,18 +472,10 @@
         6      5       6      5       -0.068075967752
      --------------------------------------------------
 
-  - Finished solving the CCSD multipliers equations
-
-     Total wall time (sec):               0.89600
-     Total cpu time (sec):                0.68767
-
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       True
-
-
-  5) Propagation from the ground state
 
    - Runge-Kutta 4 coupled cluster propagation solver
   ------------------------------------------------------
@@ -571,24 +515,53 @@
          z      0.0204440245      0.0000001282
      ------------------------------------------
 
-  - Timings for the CCSD time dependent calculation
+  :: Visualization of orbitals and density
 
-     Total wall time (sec):              7.94500
-     Total cpu time (sec):              14.91586
+     Grid information              x             y             z
+     ------------------------------------------------------------------
+     First (A):                   -2.87         -2.08          3.00
+     Last (A):                     2.73          2.52          9.40
+     Number of grid points:        57            47             65
+     ------------------------------------------------------------------
+
+  - Placing the AOs evaluated on the grid in memory
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
+
+  - Plotting density
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 40.917184 MB
+  Peak memory usage during the execution of eT: 114.206352 MB
 
-  Total wall time in eT (sec):              9.45700
-  Total cpu time in eT (sec):              16.67979
+  Total wall time in eT (sec):              1.36693
+  Total cpu time in eT (sec):               5.30781
 
-  Calculation ended: 2022-02-01 16:07:04 UTC +01:00
+  Calculation ended: 2022-02-09 10:12:11 UTC +01:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
-     Time-dependent CC: https://doi.org/10.1103/PhysRevA.102.023115
      Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!

@@ -172,7 +172,7 @@ contains
          this%chain_length = wf%n_es_amplitudes
 !
          call output%warning_msg('Chain length asked for is reset to: (i0)', &
-              & ints=[this%chain_length])
+                                 ints=[this%chain_length])
 !
       endif
 !

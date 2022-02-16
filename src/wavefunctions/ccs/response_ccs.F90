@@ -758,7 +758,7 @@ contains
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, xiX, state, T_l, T_r, M)
+   module subroutine calculate_lr_transition_strength_ccs(wf, etaX, xiX, state, T_l, T_r, M)
 !!
 !!    Calculate LR transition strength
 !!    Written by Josefine H. Andersen, February 2019
@@ -775,8 +775,6 @@ contains
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
-      real(dp), intent(inout) :: S
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: xiX
@@ -801,10 +799,6 @@ contains
       T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1) + ddot(wf%n_es_amplitudes, M, 1, xiX, 1)
       T_l = ddot(wf%n_es_amplitudes, L, 1, xiX, 1)
 !
-!     Transition strength
-!
-      S  = T_l * T_r
-!
       call mem%dealloc(L, wf%n_es_amplitudes)
       call mem%dealloc(R, wf%n_es_amplitudes)
 !
@@ -816,8 +810,7 @@ contains
                                                         n_initial_states,      &
                                                         initial_states,        &
                                                         compute_es_tdm,        &
-                                                        compute_state_density, &
-                                                        print)
+                                                        compute_state_density)
 !!
 !!    Compute EOM transition moments
 !!    Written by Alexander C. Paul and Sarai D. Folkestad, Apr 2020
@@ -846,7 +839,7 @@ contains
 !
       integer, intent(in) :: n_initial_states
 !
-      logical, intent(in) :: compute_state_density, compute_es_tdm, print
+      logical, intent(in) :: compute_state_density, compute_es_tdm
 !
       integer, dimension(n_initial_states), intent(in) :: initial_states
 !
@@ -897,16 +890,12 @@ contains
 !
             enddo
 !
-            if (print) then ! Store on file
+            write(file_name, '(a, i3.3, a)') 'dm_', state_l, '_000'
+            left_file  = stream_file(trim(file_name))
 !
-               write(file_name, '(a, i3.3, a)') 'dm_', state_l, '_000'
-               left_file  = stream_file(trim(file_name))
-!
-               call left_file%open_('write')
-               call left_file%write_(LTDM, wf%n_mo**2)
-               call left_file%close_('keep')
-!
-            end if
+            call left_file%open_('write')
+            call left_file%write_(LTDM, wf%n_mo**2)
+            call left_file%close_('keep')
 !
          end if
 !
@@ -952,16 +941,13 @@ contains
 !
             enddo
 !
-            if (print) then ! Store density on file
 !
-               write(file_name, '(a, i3.3, a, i3.3)') 'dm_', state_l, '_', state_r
-               density_file = stream_file(trim(file_name))
+            write(file_name, '(a, i3.3, a, i3.3)') 'dm_', state_l, '_', state_r
+            density_file = stream_file(trim(file_name))
 !
-               call density_file%open_('write')
-               call density_file%write_(density, wf%n_mo**2)
-               call density_file%close_('keep')
-!
-            end if
+            call density_file%open_('write')
+            call density_file%write_(density, wf%n_mo**2)
+            call density_file%close_('keep')
 !
          enddo
       enddo
