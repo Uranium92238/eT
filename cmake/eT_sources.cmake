@@ -45,7 +45,6 @@ set(eT_fortran_sources
    src/engines/cc/tasks/cholesky_decomposition_task_class.F90
    src/engines/cc/tasks/ri_task_class.F90
    src/engines/cc/tasks/cc_polarizability_task_class.F90
-   src/engines/cc/tasks/cc_amplitude_response_task_class.F90
    src/engines/cc/tasks/cc_task_class.F90
    src/engines/cc/tasks/cc_multipliers_task_class.F90
    src/engines/cc/tasks/cc_amplitudes_task_class.F90
