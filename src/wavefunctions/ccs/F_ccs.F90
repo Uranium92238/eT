@@ -20,7 +20,7 @@
 submodule (ccs_class) F_ccs
 !
 !!
-!!    F-transformation submodule
+!!    F submodule (CCS)
 !!
 !!    Routines for the linear transform of
 !!    vectors by the F matrix
@@ -51,7 +51,7 @@ contains
 !!
 !!    Directs the transformation by the F matrix.
 !!
-!!     F(tbar)_mu,nu = < tbar | [[H-bar,tau_mu],tau_nu] | HF >
+!!     F_mu,nu = < tbar | [[H-bar,tau_mu],tau_nu] | HF >
 !!
 !!    Modified for ccsd F transformation by
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
@@ -60,17 +60,17 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: c
-      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: rho
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: rho
 !
       real(dp), dimension(:), allocatable :: tbar
 !
-      call mem%alloc(tbar, wf%n_gs_amplitudes)
-      call wf%get_multipliers(tbar)
+      call mem%alloc(tbar, wf%n_es_amplitudes)
+      call wf%get_full_multipliers(tbar)
 !
       call wf%F_x_transformation(c, rho, tbar)
 !
-      call mem%dealloc(tbar, wf%n_gs_amplitudes)
+      call mem%dealloc(tbar, wf%n_es_amplitudes)
 !
    end subroutine F_transformation_ccs
 !
@@ -80,20 +80,20 @@ contains
 !!    F(x) transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    Directs the transformation by the F matrix, defined by
+!!    Directs the transformation by the F(X) matrix, defined by
 !!
 !!     F(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
 !!
-!!    where < X | = < HF | + < mu | X_mu
+!!    where < X | = < HF | + < mu | X_mu.
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: c
-      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: rho
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: rho
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: x
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: x
 !
       call wf%F_x_mu_transformation(c, rho, x)
 !
@@ -104,14 +104,18 @@ contains
 !
    module subroutine F_x_mu_transformation_ccs(wf, c, rho, x)
 !!
-!!    F(x) mu transformation
+!!    F(X) mu transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    Directs the transformation by the F matrix, defined by
+!!    Directs the transformation by the excited configuration contribution (mu) 
+!!    of the F matrix:
 !!
-!!     F(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
+!!       F'(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
 !!
-!!    where < X | = < mu | X_mu
+!!    with < X / = < mu / X_mu. For the full F transformation, see F_transformation
+!!    routine.   
+!!
+!!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
       use array_utilities, only: zero_array
 !

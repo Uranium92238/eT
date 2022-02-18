@@ -1,9 +1,10 @@
 # eT v1.7.0
+### Features
+- Linear response now available at the CC2 level (polarizabilities and transition strengths). eT-program/eT!1039
+- Restart for the Lanczos solver. eT-program/eT!1036
+
 ### Tests
 - Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035
-
-### Features
-- Restart for the Lanczos solver. eT-program/eT!1036
 
 ### Structure
 - Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040 

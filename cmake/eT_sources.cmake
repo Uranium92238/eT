@@ -335,6 +335,7 @@ set(eT_fortran_sources
    src/wavefunctions/doubles/initialize_destruct_doubles.F90
    src/wavefunctions/doubles/mean_value_doubles.F90
    src/wavefunctions/doubles/response_doubles.F90
+   src/wavefunctions/doubles/F_doubles.F90
    src/wavefunctions/doubles/complex_doubles.F90
    src/wavefunctions/doubles/generated_complex_files/initialize_destruct_doubles_complex.F90
    src/wavefunctions/doubles/generated_complex_files/jacobian_transpose_doubles_complex.F90
