@@ -134,6 +134,9 @@ module doubles_class
       procedure :: save_excitation_vector_on_file        => save_excitation_vector_on_file_doubles
       procedure :: get_restart_vector                    => get_restart_vector_doubles
 !
+      procedure :: get_full_multipliers &
+                => get_multipliers_doubles
+!
 !     Projectors for excited and ionized states
 !
       procedure :: get_cvs_projector                     => get_cvs_projector_doubles
@@ -201,7 +204,16 @@ module doubles_class
       procedure :: construct_ntos_or_cntos &
                 => construct_ntos_or_cntos_doubles
 !
-
+!     F transformation
+!
+      procedure :: F_doubles_a1_1 => F_doubles_a1_1_doubles
+      procedure :: F_doubles_a2_1 => F_doubles_a2_1_doubles
+      procedure :: F_doubles_a1_2 => F_doubles_a1_2_doubles
+      procedure :: F_doubles_b1_2 => F_doubles_b1_2_doubles
+      procedure :: F_doubles_c1_2 => F_doubles_c1_2_doubles
+!
+      procedure :: F_x_mu_transformation => F_x_mu_transformation_doubles
+!
    end type doubles
 !
    interface
@@ -214,6 +226,7 @@ module doubles_class
       include "mean_value_doubles_interface.F90"
       include "response_doubles_interface.F90"
       include "complex_doubles_interface.F90"
+      include "F_doubles_interface.F90"
 !
       include "generated_complex_files/initialize_destruct_doubles_complex_interface.F90"
       include "generated_complex_files/jacobian_transpose_doubles_complex_interface.F90"
@@ -559,6 +572,23 @@ contains
       endif
 !
    end subroutine construct_ntos_or_cntos_doubles
-
+!
+!
+   subroutine get_multipliers_doubles(wf, multipliers)
+!!
+!!    Get multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes) :: multipliers
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1), 1)
+!
+   end subroutine get_multipliers_doubles
+!
 !
 end module doubles_class

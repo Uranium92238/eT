@@ -246,6 +246,9 @@ module ccs_class
       procedure :: get_multipliers                               => get_multipliers_ccs
       procedure :: get_multipliers_complex                       => get_multipliers_ccs_complex
 !
+      procedure :: get_full_multipliers &
+                => get_multipliers_ccs
+!
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
 !     Procedures related to the Fock matrix
