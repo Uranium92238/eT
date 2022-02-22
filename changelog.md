@@ -1,3 +1,7 @@
+# eT v1.6.1
+### README
+- Updated README with information for libint and pcmsolver. eT-program/eT!1041
+
 # eT v1.6.0
 ### Features
 - Print tool for eigen and linear Davidson solvers. eT-program/eT!983
