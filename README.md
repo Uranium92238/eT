@@ -19,10 +19,10 @@ Enter the generated folder:
 ```shell
 cd libint-2.7.0-beta.6
 ```
-Compile:
+Compile (with 4 threads (-j flag), increase if more are available):
 ```shell
 cmake . -DCMAKE_INSTALL_PREFIX=/where/you/want/to/install/libint/libint-2.7.0-beta.6 -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DCMAKE_CXX_FLAGS=[C++ compiler flags]
-cmake --build .
+cmake --build . -j 4
 ```
 CMake will attempt to install Libint in the directory specified by `-DCMAKE_INSTALL_PREFIX`.
 Especially on clusters this is important,
@@ -55,6 +55,17 @@ PCMSolver can be cloned from Github and must be compiled separately.
 Instructions for downloading and compiling can be found [here](https://pcmsolver.readthedocs.io/en/stable/).
 A version that compiles on Mac and passes all eT tests with array bound checks is available [here](https://github.com/eirik-kjonstad/pcmsolver).
 Note that PCMSolver requires [Zlib](https://www.zlib.net/) and [Boost](https://www.boost.org).
+Also note that `--prefix=/where/you/want/to/install/pcmsolver/` should be used
+as command line flag when running `setup.py` for PCMSolver.
+CMake should then be able to locate it,
+if the location of PCMSolver is set as the following environment variable:
+```shell
+export PCMSolver_ROOT=/where/you/want/to/install/pcmsolver/
+```
+On the [wiki](https://gitlab.com/eT-program/eT/-/wikis/home),
+we have a
+[bash script](https://gitlab.com/eT-program/eT/-/wikis/Various%20guides/Example%20script%20for%20installing%20PCMSolver)
+that can be used to setup PCMSolver.
 
 
 
@@ -164,10 +175,6 @@ see the [website](https://etprogram.org/setup.html).
 **Optional:**
 To enable PCMSolver,
 you must run `setup.py` with the `--pcm` option.
-It might be a good idea to set the location of PCMSolver as an environment variable to help CMake locate it.
-```shell
-export PCMSolver_ROOT=/path/to/pcmsolver
-```
 
 ## Compilation of eT
 If everything went well,
