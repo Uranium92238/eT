@@ -7,7 +7,11 @@
 - Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035
 
 ### Structure
-- Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040 
+- Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040
+
+# eT v1.6.1
+### README
+- Updated README with information for libint and pcmsolver. eT-program/eT!1041
 
 # eT v1.6.0
 ### Features
