@@ -5,6 +5,7 @@
 
 ### Tests
 - Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035
+- Added for plotting of the active hf density. eT-program/eT!1045
 
 ### Structure
 - Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040, eT-program/eT!1044

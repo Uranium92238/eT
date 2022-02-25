@@ -93,7 +93,7 @@ contains
       type(visualization), allocatable :: plotter
       type(timings) :: timer
 !
-      label = "Plotting active " // wf%name_ // " density"
+      label = "Plotting active " // trim(wf%name_) // " density"
       timer = timings(label)
       call timer%turn_on
 !
@@ -117,11 +117,12 @@ contains
                   D,                         &
                   wf%ao%n)
 !
-      label = "active_" // wf%name_ // '_density'
+      label = "active_" // trim(wf%name_) // '_density'
 !
       call plotter%plot_density(wf%ao, D, label)
 !
       call mem%dealloc(D, wf%ao%n, wf%ao%n)
+      call plotter%cleanup()
 !
       call timer%turn_off
 !
