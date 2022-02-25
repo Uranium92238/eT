@@ -66,8 +66,8 @@ set(eT_fortran_sources
    src/engines/cc/calculators/cc_eom_eta_xi_calculator_class.F90
 #
    src/engines/cc/factories/eri_approximator_factory_class.F90
-   src/engines/cc/factories/cc_multipliers_solver_factory_class.F90
    src/engines/cc/factories/cc_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_multipliers_solver_factory_class.F90
    src/engines/cc/factories/cc_es_amplitudes_solver_factory_class.F90
    src/engines/cc/factories/cc_propagator_factory_class.F90
    src/engines/cc/factories/cc_response_engine_factory_class.F90
@@ -158,7 +158,6 @@ set(eT_fortran_sources
    src/solver_tools/tamm_dancoff_transformation_tool_class.F90
    src/solver_tools/rpa_transformation_tool_class.F90
 #
-   src/solver_tools/cc_multipliers_solver_factory_class.F90
    src/solver_tools/tdhf_solver_factory_class.F90
    src/solver_tools/scf_solver_factory_class.F90
 #
