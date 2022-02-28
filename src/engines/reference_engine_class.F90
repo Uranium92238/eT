@@ -412,7 +412,7 @@ contains
 !     Plot orbitals
 !
       call plotter%plot_orbitals(wf%ao, orbital_coefficients, &
-                                       n_orbitals_to_plot, orbital_file_tags)
+                                 n_orbitals_to_plot, orbital_file_tags)
 !
       call mem%dealloc(orbital_coefficients, wf%ao%n, n_orbitals_to_plot)
       deallocate(orbital_file_tags)

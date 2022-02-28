@@ -1,0 +1,35 @@
+system
+    name: visualize
+    charge: 0
+    cartesian gaussians
+end system
+
+do 
+   ground state
+end do
+
+method
+    hf
+end method
+
+memory
+   available: 8
+end memory
+
+solver scf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+visualization
+   plot hf orbitals: [3,5]
+   file format: cube
+   grid spacing: 0.4
+end visualization
+
+geometry
+basis: cc-pvdz
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+end geometry

@@ -1,3 +1,7 @@
+# eT v1.6.2
+### Bugfixes
+- Fixed visualization with cartesian basis sets. eT-program/eT!1043
+
 # eT v1.6.1
 ### README
 - Updated README with information for libint and pcmsolver. eT-program/eT!1041
