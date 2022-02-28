@@ -29,10 +29,10 @@ module cartesian_d_angular_momentum_class
 !!    https://github.com/evaleev/libint/wiki/using-modern-CPlusPlus-API
 !!
 !
-   use abstract_angular_momentum_class
+   use abstract_cartesian_angular_momentum_class
 !
 !
-   type, extends(abstract_angular_momentum) :: cartesian_d_angular_momentum
+   type, extends(abstract_cartesian_angular_momentum) :: cartesian_d_angular_momentum
    end type
 !
    interface cartesian_d_angular_momentum
@@ -58,9 +58,11 @@ contains
 !
       this%l_letter = 'd'
 !
-      allocate(this%offsets(6))
-      allocate(this%components(6))
-      allocate(this%normalization(6))
+      this%n_functions = 6
+!
+      allocate(this%offsets(this%n_functions))
+      allocate(this%components(this%n_functions))
+      allocate(this%normalization(this%n_functions))
 !
 !     instead of   xx, xy, xz, yy, yz, zz
 !     Molden needs xx, yy, zz, xy, xz, yz

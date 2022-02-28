@@ -261,6 +261,8 @@ set(eT_fortran_sources
    src/various/warning_suppressor.F90
    src/various/angular_momentum/angular_momentum_factory.F90
    src/various/angular_momentum/abstract_angular_momentum_class.F90
+   src/various/angular_momentum/abstract_cartesian_angular_momentum_class.F90
+   src/various/angular_momentum/abstract_spherical_angular_momentum_class.F90
    src/various/angular_momentum/s_angular_momentum.F90
    src/various/angular_momentum/cartesian_p_angular_momentum.F90
    src/various/angular_momentum/cartesian_d_angular_momentum.F90

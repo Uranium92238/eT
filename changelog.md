@@ -10,6 +10,10 @@
 ### Structure
 - Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040, eT-program/eT!1044
 
+# eT v1.6.2
+### Bugfixes
+- Fixed visualization with cartesian basis sets. eT-program/eT!1043
+
 # eT v1.6.1
 ### README
 - Updated README with information for libint and pcmsolver. eT-program/eT!1041

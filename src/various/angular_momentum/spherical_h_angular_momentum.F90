@@ -29,9 +29,9 @@ module spherical_h_angular_momentum_class
 !!    https://github.com/evaleev/libint/wiki/using-modern-CPlusPlus-API
 !!
 !
-   use abstract_angular_momentum_class
+   use abstract_spherical_angular_momentum_class
 !
-   type, extends(abstract_angular_momentum) :: spherical_h_angular_momentum
+   type, extends(abstract_spherical_angular_momentum) :: spherical_h_angular_momentum
    end type
 !
 !
@@ -60,9 +60,11 @@ contains
 !
       this%l_letter = 'h'
 !
-      allocate(this%offsets(11))
-      allocate(this%components(11))
-      allocate(this%normalization(11))
+      this%n_functions = 11
+!
+      allocate(this%offsets(this%n_functions))
+      allocate(this%components(this%n_functions))
+      allocate(this%normalization(this%n_functions))
 !
 !     Molden cannot handle l > 4
       this%offsets = [(i, i=1, 11)]
