@@ -29,9 +29,15 @@ module spherical_d_angular_momentum_class
 !!    https://github.com/evaleev/libint/wiki/using-modern-CPlusPlus-API
 !!
 !
-   use abstract_angular_momentum_class
+   use abstract_spherical_angular_momentum_class
 !
-   type, extends(abstract_angular_momentum) :: spherical_d_angular_momentum
+   type, extends(abstract_spherical_angular_momentum) :: spherical_d_angular_momentum
+!
+      contains
+!
+      procedure :: get_angular_part &
+                => get_angular_part_spherical_d_angular_momentum
+!
    end type
 !
 !
@@ -58,9 +64,11 @@ contains
 !
       this%l_letter = 'd'
 !
-      allocate(this%offsets(5))
-      allocate(this%components(5))
-      allocate(this%normalization(5))
+      this%n_functions = 5
+!
+      allocate(this%offsets(this%n_functions))
+      allocate(this%components(this%n_functions))
+      allocate(this%normalization(this%n_functions))
 !
 !     instead of  -2,-1, 0, 1, 2
 !     Molden needs 0, 1,-1, 2,-2
@@ -71,6 +79,44 @@ contains
       this%normalization = one
 !
    end function new_spherical_d_angular_momentum
+!
+!
+   function get_angular_part_spherical_d_angular_momentum(this, x, y ,z) &
+                                                   result(angular_part)
+!!
+!!    Get angular part
+!!    Written by Alexander C. Paul, June 2021
+!!
+!!    Return angular part of the AOs evaluated at x, y, z
+!!
+      implicit none
+!
+      class(spherical_d_angular_momentum), intent(in) :: this
+!
+      real(dp), intent(in) :: x, y, z
+!
+      real(dp), dimension(this%n_functions) :: angular_part
+!
+      real(dp) :: r_squared
+!
+      r_squared = x**2 + y**2 + z**2
+!
+!     ml = -2, angular part: sqrt(3)xy
+      angular_part(1)   = sqrt_3 * x*y
+!
+!     ml = -1, angular part: sqrt(3)yz
+      angular_part(2) = sqrt_3 * y*z
+!
+!     ml = 0, angular part: 1.5z^2 - 0.5r^2
+      angular_part(3) = half * (three*z**2 - r_squared)
+!
+!     ml = 1, angular part: sqrt(3)xz
+      angular_part(4) = sqrt_3 * x*z
+!
+!     ml = 2, angular part: 1/2 sqrt(3)(x^2 - y^2)
+      angular_part(5) = half*sqrt_3 * (x**2 - y**2)
+!
+end function get_angular_part_spherical_d_angular_momentum
 !
 !
 end module spherical_d_angular_momentum_class

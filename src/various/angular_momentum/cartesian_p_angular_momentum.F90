@@ -29,10 +29,10 @@ module cartesian_p_angular_momentum_class
 !!    https://github.com/evaleev/libint/wiki/using-modern-CPlusPlus-API
 !!
 !
-   use abstract_angular_momentum_class
+   use abstract_cartesian_angular_momentum_class
 !
 !
-   type, extends(abstract_angular_momentum) :: cartesian_p_angular_momentum
+   type, extends(abstract_cartesian_angular_momentum) :: cartesian_p_angular_momentum
    end type
 !
    interface cartesian_p_angular_momentum
@@ -60,9 +60,11 @@ contains
 !
       this%l_letter = 'p'
 !
-      allocate(this%offsets(3))
-      allocate(this%components(3))
-      allocate(this%normalization(3))
+      this%n_functions = 3
+!
+      allocate(this%offsets(this%n_functions))
+      allocate(this%components(this%n_functions))
+      allocate(this%normalization(this%n_functions))
 !
       this%offsets = [(i, i=1, 3)]
       this%components = ['x', 'y', 'z']

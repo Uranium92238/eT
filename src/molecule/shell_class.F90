@@ -24,7 +24,7 @@ module shell_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and Andreas Skeidsvoll, 2019
 !!
 !
-   use kinds
+   use parameters
 !
    use range_class, only: range_
    use global_out, only: output
@@ -80,6 +80,15 @@ module shell_class
 !
       procedure :: get_normalization_factor &
                 => get_normalization_factor_shell
+!
+      procedure :: get_overlap_of_primitives &
+                => get_overlap_of_primitives_shell
+!
+      procedure :: get_radial_part &
+                => get_radial_part_shell
+!
+      procedure :: get_aos_at_point &
+                => get_aos_at_point_shell
 !
       procedure, private :: destruct_exponents &
                          => destruct_exponents_shell
@@ -423,6 +432,118 @@ contains
       l = this%angular_momentum%get_l_integer()
 !
    end function get_angular_momentum_shell
+!
+!
+   function get_overlap_of_primitives_shell(this) result(overlap)
+!!
+!!    Get overlap of primitives
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
+!!
+      implicit none
+!
+      class(shell), intent(in) :: this
+!
+      real(dp) :: overlap, power, base
+!
+      integer :: i, j
+!
+      overlap = zero
+!
+      power = three*half + real(this%get_angular_momentum(), kind=dp)
+!
+      do i = 1, this%n_primitives
+         do j = 1, this%n_primitives
+!
+            base = sqrt(this%exponents(i)*this%exponents(j)) &
+                  / (this%exponents(i) + this%exponents(j))
+!
+            overlap = overlap + this%coefficients(i)*this%coefficients(j) * (base**power)
+!
+         enddo
+      enddo
+!
+      overlap = overlap*(two**power)
+!
+   end function get_overlap_of_primitives_shell
+!
+!
+   function get_radial_part_shell(this, r_squared) result(radial_part)
+!!
+!!    Get radial part
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
+!!
+      use math_utilities, only: double_factorial
+!
+      implicit none
+!
+      class(shell), intent(in) :: this
+!
+      real(dp), intent(in) :: r_squared
+!
+      real(dp) :: radial_part
+      real(dp) :: overlap_primitives, normalization_constant, exponent, coefficient
+      integer  :: l, i
+!
+      radial_part = zero
+!
+      overlap_primitives = this%get_overlap_of_primitives()
+!
+      l = this%get_angular_momentum()
+!
+      do i = 1, this%n_primitives
+!
+         exponent    = this%exponents(i)
+         coefficient = this%coefficients(i)
+!
+!        Normalization constant for primitive containing a Racah's normalized angular part
+!        (from eqn. (94) without Racah's normalization constant and (95)
+!        in Giesea, T. J. HSERILib: Gaussian integral evaluation)
+!
+         normalization_constant = (four*exponent)**(real(l, dp)*half + three*quarter)
+!
+         radial_part = radial_part &
+                       + normalization_constant*coefficient*exp(-exponent*r_squared)
+!
+      enddo
+!
+      normalization_constant = sqrt((two*pi)**(three*half) * overlap_primitives &
+                                    * real(double_factorial(2*l-1), dp))
+!
+      radial_part = radial_part/normalization_constant
+!
+   end function get_radial_part_shell
+!
+!
+   function get_aos_at_point_shell(this, x, y, z) result(aos_at_point)
+!!
+!!    Get AOs at point
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
+!!
+!!    Construct Racah's normalized orbitals for a point
+!!    x,y,z relative to the nucleus
+!!
+      use array_utilities, only: copy_and_scale
+!
+      implicit none
+!
+      class(shell), intent(in) :: this
+!
+      real(dp), intent(in) :: x, y, z
+!
+      real(dp), dimension(this%length) :: aos_at_point
+!
+      real(dp) :: r_squared, radial_part
+!
+      r_squared = x**2 + y**2 + z**2
+!
+      radial_part = this%get_radial_part(r_squared)
+!
+      call copy_and_scale(radial_part, &
+                          this%angular_momentum%get_angular_part(x, y, z), &
+                          aos_at_point, &
+                          this%length)
+!
+   end function get_aos_at_point_shell
 !
 !
    subroutine cleanup_shell(this)
