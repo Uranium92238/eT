@@ -30,8 +30,7 @@ module ao_tool_class
 !!
 !
    use parameters
-   use range_class,           only: range_
-   use named_range_class,     only: named_range
+   use named_range_class
    use iso_c_binding,         only: c_int, c_null_char, c_char
 !
    use global_in,             only: input
@@ -2459,7 +2458,8 @@ contains
 !!
 !!    'aos_at_point' : Value of the aos at the grid point (vector of dim n_ao)
 !!
-      use math_utilities, only: double_factorial, binomial, factorial
+      use math_utilities, only: binomial, factorial
+      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -2468,23 +2468,13 @@ contains
       real(dp), intent(in) :: x, y, z
       real(dp), dimension(ao%n), intent(out) :: aos_at_point
 !
-      integer :: w, n_primitives, i, j, shell, center, t, u, two_v, two_v_m, two_v_max, t_max
-      integer :: floored_term, l, ml, abs_ml, count_ml
+      integer :: w, shell, center, n
 !
-      real(dp) :: x_rel, y_rel, z_rel, r_squared, radial_part, angular_part, N_S_lm, C_lm_tuv
-      real(dp) :: coefficient_i, coefficient_j, exponent_i, exponent_j
-      real(dp) :: normalization_constant_i, overlap_primitives
+      real(dp) :: x_rel, y_rel, z_rel
 !
-      real(dp), parameter :: sqrt_three      = sqrt(three)
-      real(dp), parameter :: sqrt_three_half = sqrt(three*half)
-      real(dp), parameter :: sqrt_fifteen    = sqrt(15.0d0)
-      real(dp), parameter :: sqrt_five_half  = sqrt(five*half)
-!
-      aos_at_point = zero
+      call zero_array(aos_at_point, ao%n)
 !
       w = 1 ! AO index
-!
-!     Loop over atoms
 !
       do center = 1, ao%n_centers
 !
@@ -2496,201 +2486,16 @@ contains
 !
 !        Calculate distance between the point and the nucleus
 !
-         r_squared = x_rel**2 + y_rel**2 + z_rel**2
-!
          do shell = 1, ao%centers(center)%n_shells
 !
-!           Determine angular momentum
+            n = ao%centers(center)%shells(shell)%get_length()
 !
-            l = ao%centers(center)%shells(shell)%get_angular_momentum()
+            aos_at_point(w:w+n-1) = &
+                  ao%centers(center)%shells(shell)%get_aos_at_point(x_rel,y_rel,z_rel)
 !
-!           Determine radial part
-!
-            n_primitives = ao%centers(center)%shells(shell)%get_n_primitives()
-!
-            overlap_primitives = zero
-!
-            do i = 1, n_primitives
-               do j = 1, n_primitives
-!
-                  exponent_i    = ao%centers(center)%shells(shell)%get_exponent_i(i)
-                  exponent_j    = ao%centers(center)%shells(shell)%get_exponent_i(j)
-                  coefficient_i = ao%centers(center)%shells(shell)%get_coefficient_i(i)
-                  coefficient_j = ao%centers(center)%shells(shell)%get_coefficient_i(j)
-!
-                  overlap_primitives = overlap_primitives                  &
-                                       + coefficient_i*coefficient_j       &
-                                       *sqrt(sqrt(exponent_i*exponent_j)  &
-                                       /(exponent_i + exponent_j))**(3 + 2*l)
-!
-               enddo
-            enddo
-!
-            overlap_primitives = overlap_primitives*(two**(three*half + real(l, dp)))
-!
-            radial_part = zero
-!
-            do i = 1, n_primitives
-!
-!              Evaluate linear combination of normalized primitives at point
-!
-               exponent_i    = ao%centers(center)%shells(shell)%get_exponent_i(i)
-               coefficient_i = ao%centers(center)%shells(shell)%get_coefficient_i(i)
-!
-!              Normalization constant for primitive containing a Racah's normalized angular part
-!              (from eqn. (94) without Racah's normalization constant and (95)
-!              in Giesea, T. J. HSERILib: Gaussian integral evaluation)
-!
-               normalization_constant_i = (four*exponent_i)**(real(l, dp)*half + three*quarter)
-!
-               radial_part = radial_part &
-                             + normalization_constant_i*coefficient_i*exp(-exponent_i*r_squared)
-!
-            enddo
-!
-            radial_part = radial_part/(sqrt(overlap_primitives*((two*pi)**(three*half)&
-                                       *(real(double_factorial(2*l-1), dp)))))
-!
-!           Construct Racah's normalized orbitals
-!
-            if (l == 0) then
-!
-!              Cartesian s-shell
-!
-               aos_at_point(w) = radial_part
-!
-            elseif (l == 1) then
-!
-!              Cartesian p-shell
-!
-!              p_x, p_y, p_z (first, second, third in CCA standard)
-!
-               aos_at_point(w)   = radial_part*x_rel
-               aos_at_point(w+1) = radial_part*y_rel
-               aos_at_point(w+2) = radial_part*z_rel
-!
-            elseif (l == 2) then
-!
-!              ml = -2, angular part: sqrt(3)xy
-!
-               aos_at_point(w)   = sqrt_three*x_rel*y_rel*radial_part
-!
-!              ml = -1, angular part: sqrt(3)yz
-!
-               aos_at_point(w+1) = sqrt_three*y_rel*z_rel*radial_part
-!
-!              ml = 0, angular part: 1.5z^2 - 0.5r^2
-!
-               aos_at_point(w+2) = half*(three*z_rel**2 - r_squared)*radial_part
-!
-!              ml = 1, angular part: sqrt(3)xz
-!
-               aos_at_point(w+3) = sqrt_three*x_rel*z_rel*radial_part
-!
-!              ml = 2, angular part: 1/2 sqrt(3)(x^2 - y^2)
-!
-               aos_at_point(w+4) = half*sqrt_three*(x_rel**2 - y_rel**2)*radial_part
-!
-            elseif (l == 3) then
-!
-!              ml = -3, angular part: 1/2 sqrt(5/2) (3x^2 - y^2)y
-!
-               aos_at_point(w) = half*sqrt_five_half*(three*x_rel**2 - y_rel**2)*y_rel*radial_part
-!
-!              ml = -2, angular part: sqrt(15) xyz
-!
-               aos_at_point(w+1) = sqrt_fifteen*x_rel*y_rel*z_rel*radial_part
-!
-!              ml = -1, angular part: 1/2 sqrt(3/2) (5*z**2 - r**2)y
-!              ml =  1, angular part: 1/2 sqrt(3/2) (5*z**2 - r**2)x
-!
-               aos_at_point(w+2) = half*sqrt_three_half*(five*z_rel**2 - r_squared)*radial_part
-               aos_at_point(w+4) = aos_at_point(w+2)*x_rel
-               aos_at_point(w+2) = aos_at_point(w+2)*y_rel
-!
-!              ml = 0, angular part: 1/2(5z**2 - 3r^2)z
-!
-               aos_at_point(w+3) = half*(five*z_rel**2 - three*r_squared)*z_rel*radial_part
-!
-!              ml = 2, angular_part: 1/2 sqrt(15)(x^2-y^2)z
-!
-               aos_at_point(w+5) = half*sqrt_fifteen*(x_rel**2 - y_rel**2)*z_rel*radial_part
-!
-!              ml = 3, angular part: 1/2 sqrt(5/2)(x^2-3y^2)x
-!
-               aos_at_point(w+6) = half*sqrt_five_half*(x_rel**2 - three*y_rel**2)&
-                                    *x_rel*radial_part
-!
-            elseif (l > 3) then
-!
-!              Solid harmonic shell
-!
-               count_ml = 0
-!
-               do ml = -l, l, 1
-!
-                  abs_ml = abs(ml)
-!
-!                 Solid harmonic from Molecular electronic structure theory eqn. (6.4.47)
-!
-                  t_max = (l - abs_ml)/2 ! floors (l - abs_ml)/2, since abs_ml <= the non-negative l
-!
-                  if (ml .ge. 0) then
-                     two_v_m = 0
-                  else
-                     two_v_m = 1
-                  endif
-!
-                  floored_term = (abs_ml - two_v_m)/2 ! floors (abs_ml - two_v_m)/2,
-!                                                       since 2*v_m <= the non-negative abs_ml
-                  two_v_max = 2*floored_term + two_v_m
-!
-!                 Calculate value of solid harmonic at point
-!
-                  angular_part = zero
-!
-                  do t = 0, t_max
-                     do u = 0, t
-                        do two_v = two_v_m, two_v_max, 2
-!
-!                          C_lm_tuv from Molecular electronic structure theory eqn.
-!                          (6.4.48), where (two_v - two_v_m)/2 is an int
-!
-                           C_lm_tuv = (-one)**(t + (two_v - two_v_m)/2)*quarter**t &
-                                      *real(binomial(l, t)*binomial(l-t, abs_ml+t)*&
-                                          binomial(t, u)*binomial(abs_ml, two_v), dp)
-!
-                           angular_part = angular_part                     &
-                                 + C_lm_tuv*x_rel**(2*t+abs_ml-2*u-two_v)  &
-                                 *y_rel**(2*u+two_v)                       &
-                                 *z_rel**(l-2*t-abs_ml)
-
-!
-                        enddo
-                     enddo
-                  enddo
-!
-!                 Multiply by N_S_lm from Molecular electronic structure theory eqn. (6.4.49)
-!
-                  N_S_lm = one/real(2**abs_ml*factorial(l), dp)*sqrt(real(2*factorial(l + abs_ml)&
-                                       *factorial(l - abs_ml), dp))
-!
-                  if (ml == 0) N_S_lm = N_S_lm/sqrt(two)
-!
-                  angular_part = N_S_lm*angular_part
-!
-                  aos_at_point(w + count_ml) = radial_part*angular_part
-!
-                  count_ml = count_ml + 1
-!
-               enddo
-!
-            endif
-!
-            w = w + 2*l + 1
+            w = w + n
 !
          enddo ! end loop over shells
-!
       enddo ! end loop over atoms
 !
    end subroutine evaluate_aos_at_point_ao_tool
@@ -3060,7 +2865,6 @@ contains
                enddo
             enddo
          enddo
-!
       enddo
 !$omp end parallel do
 !
@@ -3192,11 +2996,11 @@ contains
       do c = 1, ao%n_centers
 !
          aos = ao%centers(c)%get_ao_range()
-!  
+!
          if (ao%centers(c)%cartesian) then
 !
             factors(aos%first:aos%get_last()) = &
-              ao%centers(c)%get_ao_normalization_factors()
+               ao%centers(c)%get_ao_normalization_factors()
 !
          else
 !
@@ -3256,6 +3060,7 @@ contains
 !!    NB: Mixed spherical and cartesian basis sets are not supported
 !!
       use output_file_class, only: output_file
+      use string_utilities, only: convert_to_uppercase
 !
       implicit none
 !

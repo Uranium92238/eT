@@ -29,9 +29,9 @@ module spherical_g_angular_momentum_class
 !!    https://github.com/evaleev/libint/wiki/using-modern-CPlusPlus-API
 !!
 !
-   use abstract_angular_momentum_class
+   use abstract_spherical_angular_momentum_class
 !
-   type, extends(abstract_angular_momentum) :: spherical_g_angular_momentum
+   type, extends(abstract_spherical_angular_momentum) :: spherical_g_angular_momentum
    end type
 !
 !
@@ -58,9 +58,11 @@ contains
 !
       this%l_letter = 'g'
 !
-      allocate(this%offsets(9))
-      allocate(this%components(9))
-      allocate(this%normalization(9))
+      this%n_functions = 9
+!
+      allocate(this%offsets(this%n_functions))
+      allocate(this%components(this%n_functions))
+      allocate(this%normalization(this%n_functions))
 !
 !     instead of  -4,-3,-2,-1, 0, 1, 2, 3, 4
 !     Molden needs 0, 1,-1, 2,-2, 3,-3, 4,-4

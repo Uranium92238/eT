@@ -32,6 +32,12 @@ module s_angular_momentum_class
    use abstract_angular_momentum_class
 !
    type, extends(abstract_angular_momentum) :: s_angular_momentum
+!
+      contains
+!
+      procedure :: get_angular_part &
+                => get_angular_part_s_angular_momentum
+!
    end type
 !
    interface s_angular_momentum
@@ -56,15 +62,43 @@ contains
       this%l = 0
       this%l_letter = 's'
 !
-      allocate(this%offsets(1))
-      allocate(this%components(1))
-      allocate(this%normalization(1))
+      this%n_functions = 1
+!
+      allocate(this%offsets(this%n_functions))
+      allocate(this%components(this%n_functions))
+      allocate(this%normalization(this%n_functions))
 !
       this%offsets = 1
       this%components = ''
       this%normalization = one
 !
    end function new_s_angular_momentum
+!
+!
+   function get_angular_part_s_angular_momentum(this, x, y ,z) result(angular_part)
+!!
+!!    Get angular part
+!!    Written by Alexander C. Paul, June 2021
+!!
+!!    Return angular part of the AOs evaluated at x, y, z
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(s_angular_momentum), intent(in) :: this
+!
+      real(dp), intent(in) :: x, y, z
+!
+      real(dp), dimension(this%n_functions) :: angular_part
+!
+      call do_nothing(x)
+      call do_nothing(y)
+      call do_nothing(z)
+!
+      angular_part = one
+!
+   end function get_angular_part_s_angular_momentum
 !
 !
 end module s_angular_momentum_class

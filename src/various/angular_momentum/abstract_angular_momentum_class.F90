@@ -33,7 +33,7 @@ module abstract_angular_momentum_class
 !
    type, abstract :: abstract_angular_momentum
 !
-      integer :: l
+      integer :: l, n_functions
       character(len=1) :: l_letter
       character(len=6), dimension(:), allocatable :: components
 !
@@ -43,13 +43,35 @@ module abstract_angular_momentum_class
 !
    contains
 !
-      procedure, non_overridable :: get_label
-      procedure, non_overridable :: get_molden_offset
-      procedure, non_overridable :: get_normalization_factor
-      procedure, non_overridable :: get_l_integer
-      procedure, non_overridable :: get_l_string
+      procedure, non_overridable, public :: get_label
+      procedure, non_overridable, public :: get_molden_offset
+      procedure, non_overridable, public :: get_normalization_factor
+      procedure, non_overridable, public :: get_l_integer
+      procedure, non_overridable, public :: get_l_string
+!
+      procedure(get_angular_part), deferred, public :: get_angular_part
 !
    end type
+!
+!
+   abstract interface
+!
+      function get_angular_part(this, x, y, z) result(angular_part)
+!
+         use kinds
+         import :: abstract_angular_momentum
+!
+         implicit none
+!
+         class(abstract_angular_momentum), intent(in) :: this
+!
+         real(dp), intent(in) :: x, y, z
+!
+         real(dp), dimension(this%n_functions) :: angular_part
+!
+      end function get_angular_part
+!
+   end interface
 !
 !
 contains
