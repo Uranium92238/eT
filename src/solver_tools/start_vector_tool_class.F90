@@ -38,7 +38,7 @@ module start_vector_tool_class
 !
    abstract interface
 !
-      subroutine get_start_vector_tool(this, start_vector, I)
+      subroutine get_start_vector_tool(this, start_vector, I, energy)
 !!
 !!       Get
 !!       Written by Sarai D. Folkestad, May 2021
@@ -54,6 +54,7 @@ module start_vector_tool_class
          class(start_vector_tool), intent(in) :: this
          real(dp), dimension(this%n_parameters), intent(out) :: start_vector
          integer, intent(in) :: I
+         real(dp), intent(out) :: energy
 !
       end subroutine
 !

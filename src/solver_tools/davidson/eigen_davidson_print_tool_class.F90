@@ -30,8 +30,6 @@ module eigen_davidson_print_tool_class
 !
    type :: eigen_davidson_print_tool
 !
-      integer :: n_solutions, max_iterations
-!
    contains
 !
       procedure, public, nopass :: print_banner &
@@ -43,8 +41,8 @@ module eigen_davidson_print_tool_class
       procedure, public, nopass :: print_settings &
                                 => print_settings_eigen_davidson_print_tool
 !
-      procedure, public, nopass :: print_summary &
-                                => print_summary_eigen_davidson_print_tool
+      procedure, public :: print_summary &
+                           => print_summary_eigen_davidson_print_tool
 !
    end type eigen_davidson_print_tool
 !
@@ -70,8 +68,8 @@ module eigen_davidson_print_tool_class
                     &A description of the algorithm can be &
                     &found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
-      call output%printf('m', ' - ' // trim(name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(name_)) + 6, '-')
+      call output%printf('m', trim(name_), fs='(/t3,a)')
+      call output%print_separator('m', len(trim(name_)), '-')
 !
       call output%printf('n', description, ffs='(/t3,a)', fs='(t3,a)')
 !
@@ -123,8 +121,9 @@ module eigen_davidson_print_tool_class
                          ints=[iteration], fs='(/t3,a)')
       call output%printf('n', 'Reduced space dimension: (i4)', ints=[reduced_dimension])
 !
-      call output%printf('n', ' Root  omega (Re)        omega &
-                         &(Im)         |residual|   Delta omega (Re)', fs='(/t3,a)', ll=120)
+      call output%printf('n', &
+                         'Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)', &
+                         fs='(/t3,a)', ll=120)
 !
       call output%print_separator('n', 73,'-')
 !
@@ -145,17 +144,21 @@ module eigen_davidson_print_tool_class
    end subroutine print_iteration_eigen_davidson_print_tool
 !
 !
-   subroutine print_summary_eigen_davidson_print_tool(n_solutions, converged, iteration)
+   subroutine print_summary_eigen_davidson_print_tool(this, n_solutions, converged, iteration)
 !!
 !!    Print summary
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       use global_out, only: output
+      use warning_suppressor, only: do_nothing
 !
       implicit none
 !
+      class(eigen_davidson_print_tool), intent(in) :: this
       integer, intent(in) :: n_solutions, iteration
       logical, dimension(n_solutions), intent(in) :: converged
+!
+      call do_nothing(this)
 !
       if (.not. all(converged)) then
 !

@@ -189,6 +189,8 @@ module ccs_class
       procedure :: destruct_density_intermediates   &
                 => destruct_density_intermediates_ccs
 !
+      procedure :: initialize_excitation_energies                => initialize_excitation_energies_ccs
+!
       procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
       procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
 !
@@ -230,6 +232,7 @@ module ccs_class
 !     Print summaries
 !
       procedure :: print_gs_summary                              => print_gs_summary_ccs
+      procedure :: print_es_summary                              => print_es_summary_ccs
       procedure :: print_X1_diagnostics                          => print_X1_diagnostics_ccs
 !
 !     Set/get procedures
@@ -303,7 +306,6 @@ module ccs_class
 !
       procedure :: print_banner_davidson_cc_multipliers          => print_banner_davidson_cc_multipliers_ccs
       procedure :: get_initial_cc_multipliers                    => get_initial_cc_multipliers_ccs
-      procedure :: get_cc_multipliers_preconditioner             => get_cc_multipliers_preconditioner_ccs
       procedure :: cc_multipliers_summary                        => cc_multipliers_summary_ccs
 !
 !     Procedures related to the Jacobian transformation
@@ -2661,6 +2663,103 @@ contains
       call wf%print_dominant_amplitudes()
 !
    end subroutine print_gs_summary_ccs
+!
+!
+   subroutine print_es_summary_ccs(wf, side, X_order)
+!!
+!!    Print es summary
+!!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!
+      use string_utilities, only: convert_to_uppercase
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      character(len=*), intent(in) :: side
+!
+      integer, dimension(wf%n_singlet_states), optional, intent(in) :: X_order
+!
+      integer :: I
+!
+      integer, dimension(:), allocatable :: X_order_local
+      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:), allocatable :: energies
+!
+      integer :: state_index
+!
+      character(len=1) :: label ! R or L, depending on whether left or right transformation
+!
+!     Set up list that gives ordering of energies from low to high
+!
+      call mem%alloc(X_order_local, wf%n_singlet_states)
+!
+      if (present(X_order)) then
+!
+         X_order_local = X_order
+!
+      else
+!
+         do I = 1, wf%n_singlet_states
+!
+            X_order_local(I) = I
+!
+         enddo
+!
+      endif
+!
+!
+      call mem%alloc(X, wf%n_es_amplitudes, wf%n_singlet_states)
+      call mem%alloc(energies, wf%n_singlet_states)
+      call wf%read_excited_state(X, 1, wf%n_singlet_states, side, energies)
+!
+!     Print excited state vectors
+!
+      label = trim(adjustl(convert_to_uppercase(side(1:1))))
+!
+      call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
+!
+      do I = 1, wf%n_singlet_states
+!
+         state_index = X_order_local(I)
+!
+         call output%printf('n', 'Electronic state nr. (i0)', ints=[I], fs='(/t6,a)')
+!
+         call output%printf('n', 'Energy (Hartree):             (f19.12)', &
+                            reals=[energies(state_index)], fs='(/t6,a)')
+!
+         call wf%print_X1_diagnostics(X(:,state_index), label)
+         call wf%print_dominant_x_amplitudes(X(1, state_index), label)
+!
+      enddo
+!
+      call mem%dealloc(X_order_local, wf%n_singlet_states)
+!
+      call output%printf('m', '- '//trim(convert_to_uppercase(wf%name_))//' excitation energies:', fs='(/t3,a)')
+!
+      call output%printf('m', 'Excitation energy', fs='(/t39,a)')
+      call output%print_separator('m', 42, '-', fs='(t27,a)')
+      call output%printf('m', ' State                (Hartree)             (eV)', fs='(t6,a)')
+      call output%print_separator('m', 63, '-', fs='(t6,a)')
+!
+      do I = 1, wf%n_singlet_states
+!
+         call output%printf('m', '(i4)             (f19.12)   (f19.12)',   &
+                               ints=[I], reals=[energies(I),               &
+                               energies(I)*Hartree_to_eV], fs='(t6,a)')
+!
+      enddo
+!
+      call output%print_separator('m', 63, '-', fs='(t6,a)')
+!
+      call output%printf('m', 'eV/Hartree (CODATA 2014): (f11.8)', &
+                         reals=[Hartree_to_eV], fs='(t6,a)')
+!
+
+      call mem%dealloc(X, wf%n_es_amplitudes, wf%n_singlet_states)
+      call mem%dealloc(energies, wf%n_singlet_states)
+!
+   end subroutine print_es_summary_ccs
 !
 !
    subroutine print_X1_diagnostics_ccs(wf, X, label)

@@ -99,10 +99,10 @@ contains
 !
       use asymmetric_lanczos_cc_es_class, only: asymmetric_lanczos_cc_es
       use diis_cc_es_class,               only: diis_cc_es
-      use davidson_cc_es_class,           only: davidson_cc_es
       use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
 !
-      use cc_multipliers_task_class, only: cc_multipliers_task
+      use cc_multipliers_task_class,           only: cc_multipliers_task
+      use davidson_cc_es_solver_factory_class, only: davidson_cc_es_solver_factory
 !
       implicit none
 !
@@ -113,6 +113,7 @@ contains
       class(abstract_solver), allocatable, intent(out) :: solver
 !
       class(cc_multipliers_task), allocatable :: multipliers
+      type(davidson_cc_es_solver_factory), allocatable :: davidson_factory
 !
       if (this%algorithm == 'asymmetric lanczos') then
 !
@@ -136,7 +137,8 @@ contains
 !
             end if
 !
-            solver = davidson_cc_es(this%transformation, wf, this%restart)
+            davidson_factory = davidson_cc_es_solver_factory(this%transformation, this%restart)
+            call davidson_factory%create(wf, solver)
 !
          elseif (this%algorithm == 'non-linear davidson') then
 !

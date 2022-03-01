@@ -49,24 +49,29 @@ module es_cvs_start_vector_tool_class
 contains 
 !
 !
-   function new_es_cvs_start_vector_tool(wf) result(tool)
+   function new_es_cvs_start_vector_tool(wf, side, restart) result(this)
 !!
 !!    New ES CVS start vector tool 
 !!    Written by Eirik F. Kjønstad, Sep 2019 
 !!
       implicit none 
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in), target :: wf
 !
-      type(es_cvs_start_vector_tool) :: tool 
+      type(es_cvs_start_vector_tool) :: this
+      character(len=*), intent(in) :: side
+      logical, intent(in) :: restart
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in cvs excitation calculation')
 !
-      tool%n_vectors = wf%n_singlet_states
-      tool%vector_length = wf%n_es_amplitudes
+      this%n_vectors = wf%n_singlet_states
+      this%n_parameters = wf%n_es_amplitudes
+      this%side = side
+      this%wf => wf
+      this%restart = restart
 !
-      allocate(tool%indices(tool%n_vectors))
-      call wf%set_cvs_start_indices(tool%indices)
+      allocate(this%indices(this%n_vectors))
+      call wf%set_cvs_start_indices(this%indices)
 !
    end function new_es_cvs_start_vector_tool
 !

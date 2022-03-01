@@ -51,45 +51,50 @@ module es_manual_start_vector_tool_class
 contains 
 !
 !
-   function new_es_manual_start_vector_tool(wf) result(tool)
+   function new_es_manual_start_vector_tool(wf, side, restart) result(this)
 !!
-!!    New ES valence start vector tool 
+!!    New ES manual start vector tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2021
 !!
       implicit none 
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in), target :: wf
+      character(len=*), intent(in) :: side
+      logical, intent(in) :: restart
 !
-      type(es_manual_start_vector_tool) :: tool 
+      type(es_manual_start_vector_tool) :: this
 !
       integer :: length_state_guesses, state
 !
       integer, dimension(:), allocatable :: occupied, virtual
 !
-      tool%n_vectors = wf%n_singlet_states
-      tool%vector_length = wf%n_es_amplitudes
+      this%n_vectors = wf%n_singlet_states
+      this%n_parameters = wf%n_es_amplitudes
+      this%side = side
+      this%wf => wf
+      this%restart = restart
 !
       length_state_guesses = input%get_n_state_guesses()
 !
-      if (length_state_guesses /= tool%n_vectors) &
+      if (length_state_guesses /= this%n_vectors) &
          call output%error_msg('when manually specifying starting guesses for excited states, &
                                &you need to specify a guess for all states requested.')
 !
-      call mem%alloc(occupied, tool%n_vectors)
-      call mem%alloc(virtual, tool%n_vectors)
+      call mem%alloc(occupied, this%n_vectors)
+      call mem%alloc(virtual, this%n_vectors)
 !
-      call input%get_state_guesses(occupied, virtual, tool%n_vectors)
+      call input%get_state_guesses(occupied, virtual, this%n_vectors)
 !
-      allocate(tool%indices(tool%n_vectors))
+      allocate(this%indices(this%n_vectors))
 !
-      do state = 1, tool%n_vectors
+      do state = 1, this%n_vectors
 !
-         tool%indices(state) = wf%n_v*(occupied(state) - 1) + virtual(state)
+         this%indices(state) = wf%n_v*(occupied(state) - 1) + virtual(state)
 !
       end do 
 !
-      call mem%dealloc(occupied, tool%n_vectors)
-      call mem%dealloc(virtual, tool%n_vectors)
+      call mem%dealloc(occupied, this%n_vectors)
+      call mem%dealloc(virtual, this%n_vectors)
 !
    end function new_es_manual_start_vector_tool
 !

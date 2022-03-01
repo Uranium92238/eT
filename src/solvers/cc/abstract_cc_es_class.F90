@@ -32,7 +32,7 @@ module abstract_cc_es_class
 !!
 !! where A is the coupled cluster Jacobian matrix,
 !!
-!!    A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
+!!    A_mu,nu = < mu |[H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
 !!
 !
    use parameters
@@ -48,8 +48,8 @@ module abstract_cc_es_class
 !
    use precondition_tool_class, only: precondition_tool
 !
-   use es_projection_tool_class, only : es_projection_tool
-   use es_valence_projection_tool_class, only: es_valence_projection_tool
+   use abstract_projection_tool_class, only: abstract_projection_tool
+   use null_projection_tool_class, only: null_projection_tool
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
    use es_rm_core_projection_tool_class, only: es_rm_core_projection_tool
@@ -84,9 +84,9 @@ module abstract_cc_es_class
 !
       type(timings) :: timer
 !
-      class(es_start_vector_tool), allocatable  :: start_vectors
-      class(es_projection_tool), allocatable    :: projector
-      class(precondition_tool), allocatable     :: preconditioner
+      class(es_start_vector_tool), allocatable     :: start_vectors
+      class(abstract_projection_tool), allocatable :: projector
+      class(precondition_tool), allocatable        :: preconditioner
 !
       class(ccs), pointer :: wf
 !
@@ -261,7 +261,7 @@ contains
       class(abstract_cc_es), intent(inout) :: this
 !
       call this%destruct_energies()
-      call this%projector%destruct_projection_vector()
+      call this%projector%cleanup()
 !
       call this%timer%turn_off()
 !
@@ -436,25 +436,35 @@ contains
 !
       if (input%is_keyword_present('state guesses', 'solver cc es')) then
 !
-         this%start_vectors = es_manual_start_vector_tool(this%wf)
+         this%start_vectors = es_manual_start_vector_tool(this%wf, &
+                                                          this%transformation, &
+                                                          this%restart)
 !
       else
 !
          if (trim(this%es_type) == 'valence') then
 !
-            this%start_vectors = es_valence_start_vector_tool(this%wf)
+            this%start_vectors = es_valence_start_vector_tool(this%wf, &
+                                                              this%transformation, &
+                                                              this%restart)
 !
          elseif (trim(this%es_type) == 'core') then
 !
-            this%start_vectors = es_cvs_start_vector_tool(this%wf)
+            this%start_vectors = es_cvs_start_vector_tool(this%wf, &
+                                                          this%transformation, &
+                                                          this%restart)
 !
          elseif (trim(this%es_type) == 'ionize') then
 !
-            this%start_vectors = es_ip_start_vector_tool(this%wf)
+            this%start_vectors = es_ip_start_vector_tool(this%wf, &
+                                                         this%transformation, &
+                                                         this%restart)
 !
          elseif (trim(this%es_type) == 'remove core') then
 !
-            this%start_vectors = es_valence_start_vector_tool(this%wf)
+            this%start_vectors = es_valence_start_vector_tool(this%wf, &
+                                                              this%transformation, &
+                                                              this%restart)
 !
          else
 !
@@ -478,7 +488,7 @@ contains
 !
       if (trim(this%es_type) == 'valence') then
 !
-         this%projector = es_valence_projection_tool()
+         this%projector = null_projection_tool(this%wf%n_es_amplitudes)
 !
       elseif (trim(this%es_type) == 'core') then
 !
@@ -497,6 +507,8 @@ contains
          call output%error_msg('could not recognize excited state type in abstract_cc_es')
 !
       endif
+!
+      call this%projector%initialize()
 !
    end subroutine initialize_projection_tool_abstract_cc_es
 !
@@ -518,12 +530,9 @@ contains
 !
       do state = first, last
 !
-         call this%start_vectors%get(this%wf, state, X(:,state),  &
-                                       this%energies(state), &
-                                       this%transformation,  &
-                                       this%restart)
+         call this%start_vectors%get(X(:,state), state, this%energies(state))
 !
-         if (this%projector%active) call this%projector%do_(X(:,state))
+         if (this%projector%active) call this%projector%project(X(:,state))
 !
       enddo
 !

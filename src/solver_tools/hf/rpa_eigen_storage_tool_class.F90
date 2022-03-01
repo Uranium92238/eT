@@ -50,7 +50,7 @@ contains
 !
    function new_rpa_eigen_storage_tool(wf) result(this)
 !!
-!!    New RPA transformation
+!!    New
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       implicit none

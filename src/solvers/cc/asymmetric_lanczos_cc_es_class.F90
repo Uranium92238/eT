@@ -62,9 +62,9 @@ module asymmetric_lanczos_cc_es_class
    use global_out,            only: output
    use memory_manager_class,  only: mem
 !
-   use es_projection_tool_class,          only: es_projection_tool
-   use es_cvs_projection_tool_class,      only: es_cvs_projection_tool
-   use es_valence_projection_tool_class,  only: es_valence_projection_tool
+   use abstract_projection_tool_class, only: abstract_projection_tool
+   use es_cvs_projection_tool_class,   only: es_cvs_projection_tool
+   use null_projection_tool_class,     only: null_projection_tool
 
    implicit none
 
@@ -85,7 +85,7 @@ module asymmetric_lanczos_cc_es_class
 !
       type(timings) :: timer
 !
-      class(es_projection_tool), allocatable :: projector
+      class(abstract_projection_tool), allocatable :: projector
 !
       class(ccs), pointer :: wf
 !
@@ -186,7 +186,7 @@ contains
 !
       if (trim(this%es_type) == 'valence') then
 !
-         this%projector = es_valence_projection_tool()
+         this%projector = null_projection_tool(wf%n_es_amplitudes)
 !
       elseif (trim(this%es_type) == 'core') then
 !
@@ -250,6 +250,8 @@ contains
       call mem%alloc(xiX, this%wf%n_es_amplitudes)
       call mem%alloc(etaX, this%wf%n_es_amplitudes)
 !
+      call this%projector%initialize()
+!
       do cartesian=1, 3
 !
 !        Construct the eta and xi vectors
@@ -259,8 +261,8 @@ contains
 !
          if (this%projector%active) then
 !
-            call this%projector%do_(xiX)
-            call this%projector%do_(etaX)
+            call this%projector%project(xiX)
+            call this%projector%project(etaX)
 !
          endif
 !
@@ -331,8 +333,8 @@ contains
 !
             if (this%projector%active) then
 !
-               call this%projector%do_(Aq)
-               call this%projector%do_(pA)
+               call this%projector%project(Aq)
+               call this%projector%project(pA)
 !
             endif
 !
@@ -389,6 +391,8 @@ contains
       call mem%dealloc(xiX,this%wf%n_es_amplitudes)
       call mem%dealloc(etaX,this%wf%n_es_amplitudes)
       call mem%dealloc(dipole_length,this%wf%n_mo,this%wf%n_mo,3)
+!
+      call this%projector%cleanup()
 !
    end subroutine run_asymmetric_lanczos_cc_es
 !
@@ -684,8 +688,6 @@ contains
       class(asymmetric_lanczos_cc_es), intent(inout) :: this
 !
       call this%destruct_energies()
-!
-      call this%projector%destruct_projection_vector()
 !
       call this%timer%turn_off()
 !

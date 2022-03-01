@@ -817,9 +817,10 @@ contains
 !!
       use quasi_newton_updater_class, only: quasi_newton_updater
       use diis_cc_gs_class, only: diis_cc_gs
-      use davidson_cc_es_class, only: davidson_cc_es
+      use abstract_solver_class, only: abstract_solver
       use cc2_class, only: cc2
       use global_in, only: input
+      use davidson_cc_es_solver_factory_class, only: davidson_cc_es_solver_factory
 !
       implicit none
 !
@@ -839,7 +840,8 @@ contains
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
       type(quasi_newton_updater), allocatable :: t_updater
 !
-      type(davidson_cc_es), allocatable :: cc_es_solver_davidson
+      class(abstract_solver), allocatable :: cc_es_solver_davidson
+      type(davidson_cc_es_solver_factory), allocatable :: davidson_factory
 !
       type(timings) :: timer_gs, timer_es
 !
@@ -894,7 +896,12 @@ contains
 !
       call cc2_wf%construct_fock('es')
 !
-      cc_es_solver_davidson = davidson_cc_es(transformation, cc2_wf, restart=.false.)
+      davidson_factory = davidson_cc_es_solver_factory(transformation, restart=.false.)
+      call davidson_factory%create(cc2_wf, cc_es_solver_davidson)
+!
+      call cc2_wf%initialize_excited_state_files()
+      call cc2_wf%initialize_excitation_energies()
+!
       call cc_es_solver_davidson%run()
       call cc_es_solver_davidson%cleanup()
 !

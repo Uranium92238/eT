@@ -25,20 +25,21 @@ module eigen_davidson_solver_class
 !!
 !
    use parameters
-   use hf_class, only: hf
    use memory_manager_class, only: mem
    use eigen_davidson_tool_class, only: eigen_davidson_tool
 !
+   use abstract_solver_class,           only: abstract_solver
    use convergence_tool_class,          only: convergence_tool
    use transformation_tool_class,       only: transformation_tool
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use start_vector_tool_class,         only: start_vector_tool
    use preconditioner_getter_class,     only: preconditioner_getter
    use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
+   use abstract_projection_tool_class,  only: abstract_projection_tool
 !
    implicit none
 !
-   type :: eigen_davidson_solver
+   type, extends(abstract_solver) :: eigen_davidson_solver
 !
       integer, private :: n_solutions
       integer, private :: max_iterations
@@ -51,6 +52,8 @@ module eigen_davidson_solver_class
       class(start_vector_tool),         allocatable, private :: start_vector
       class(preconditioner_getter),     allocatable, private :: preconditioner
       class(eigen_davidson_print_tool), allocatable, private :: printer
+      class(abstract_projection_tool),  allocatable, private :: projector
+!
 !
    contains
 !
@@ -76,6 +79,7 @@ contains
                                       start_vector,        &
                                       preconditioner,      &
                                       printer,             &
+                                      projector,           &
                                       n_solutions,         &
                                       max_iterations) result(this)
 !!
@@ -92,10 +96,11 @@ contains
       class(eigen_storage_tool),        intent(in) :: storer
       class(start_vector_tool),         intent(in) :: start_vector
       class(preconditioner_getter),     intent(in) :: preconditioner
+      class(abstract_projection_tool),  intent(in) :: projector
       class(eigen_davidson_print_tool), intent(in) :: printer
       integer,                          intent(in) :: max_iterations, n_solutions
 !
-
+!
       this%davidson            = davidson
       this%transformer         = transformer
       this%convergence_checker = convergence_checker
@@ -103,6 +108,7 @@ contains
       this%start_vector        = start_vector
       this%preconditioner      = preconditioner
       this%printer             = printer
+      this%projector           = projector
       this%n_solutions         = n_solutions
       this%max_iterations      = max_iterations
 !
@@ -118,7 +124,7 @@ contains
 !
       implicit none
 !
-      class(eigen_davidson_solver) :: this
+      class(eigen_davidson_solver), intent(inout) :: this
 
       logical, dimension(:), allocatable :: converged
       logical, dimension(:), allocatable :: residual_lt_lindep
@@ -130,23 +136,28 @@ contains
       complex(dp), dimension(:), allocatable :: new_omega
       real(dp) :: dummy = zero
 !
+!
+      call mem%alloc(omega, this%n_solutions)
+      call mem%alloc(new_omega, this%n_solutions)
+!
       call this%davidson%initialize()
+      call this%transformer%initialize()
 !
       call mem%alloc(c, this%davidson%n_parameters)
       call this%preconditioner%get(c)
       call this%davidson%set_preconditioner(c)
 !
+      call this%projector%initialize()
+!
       do trial = 1,this%n_solutions
 !
-         call this%start_vector%get(c, trial)
+         call this%start_vector%get(c, trial, omega(trial))
          call this%davidson%set_trial(c, trial)
 !
       enddo
 !
-      call this%printer%print_settings(this%n_solutions, this%max_iterations)
 !
-      call mem%alloc(omega, this%n_solutions)
-      call mem%alloc(new_omega, this%n_solutions)
+      call this%printer%print_settings(this%n_solutions, this%max_iterations)
 !
       call zero_array(omega, this%n_solutions)
       call zero_array_complex(new_omega, this%n_solutions)
@@ -172,6 +183,8 @@ contains
 !
             call this%davidson%get_trial(c, trial)
             call this%transformer%transform(c, residual, dummy)
+!
+            call this%projector%project(residual)
             call this%davidson%set_transform(residual, trial)
 !
          enddo
@@ -205,6 +218,8 @@ contains
 !
       call mem%dealloc(omega, this%n_solutions)
       call mem%dealloc(new_omega, this%n_solutions)
+!
+      call this%projector%cleanup()
 !
       call this%davidson%cleanup()
 !
@@ -271,6 +286,7 @@ contains
 !
             else
 !
+!
                call this%davidson%add_new_trial(residual, n)
 !
             endif
@@ -278,6 +294,20 @@ contains
          endif
 !
       enddo
+!
+!     Special case when residuals are below lindep_threshold,
+!     but energy has not converged
+!
+      if (all(residual_lt_lindep) .and. .not. all(converged)) then
+!
+         converged = .true.
+         call output%printf('m', 'Note: all residuals are converged and &
+                            &have norms that are smaller than linear &
+                            &dependence threshold. ' // 'Energy &
+                            &convergence therefore not tested in this &
+                            &calculation.')
+!
+      endif
 !
       call mem%dealloc(residual, this%davidson%n_parameters)
       call mem%dealloc(solution, this%davidson%n_parameters)

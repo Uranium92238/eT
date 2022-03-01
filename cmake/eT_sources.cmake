@@ -127,19 +127,33 @@ set(eT_fortran_sources
    src/solver_tools/cholesky_array_list_class.F90
    src/solver_tools/bfgs_tool_class.F90
    src/solver_tools/diis_tool_class.F90
-   src/solver_tools/davidson_tool_class.F90
-   src/solver_tools/eigen_davidson_tool_class.F90
-   src/solver_tools/linear_davidson_tool_class.F90
    src/solver_tools/es_start_vectors/es_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_manual_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_valence_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_cvs_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_ip_start_vector_tool_class.F90
-   src/solver_tools/es_projectors/es_projection_tool_class.F90
+   src/solver_tools/es_projectors/abstract_projection_tool_class.F90
    src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
    src/solver_tools/es_projectors/es_rm_core_projection_tool_class.F90
-   src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
+   src/solver_tools/es_projectors/null_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
+#
+   src/solver_tools/davidson/davidson_tool_class.F90
+   src/solver_tools/davidson/eigen_davidson_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_tool_class.F90
+   src/solver_tools/davidson/eigen_davidson_print_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_print_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_single_solution_print_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_multiple_solutions_print_tool_class.F90
+#
+   src/solver_tools/cc/cc_multipliers_rhs_tool_class.F90
+   src/solver_tools/cc/cc_es_eigen_davidson_print_tool_class.F90
+   src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
+   src/solver_tools/cc/cc_eigen_storage_tool_class.F90
+   src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
+   src/solver_tools/cc/cc_multipliers_start_vector_tool_class.F90
+   src/solver_tools/cc/cc_multipliers_linear_equation_storage_tool_class.F90
+   src/solver_tools/cc/cc_jacobian_transformation_tool_class.F90
 #
    src/solver_tools/amplitude_updaters/amplitude_updater_class.F90
    src/solver_tools/amplitude_updaters/quasi_newton_updater_class.F90
@@ -148,45 +162,33 @@ set(eT_fortran_sources
    src/solver_tools/amplitude_updaters/approximate_jacobian_transformer_class.F90
    src/solver_tools/amplitude_updaters/jacobian_transformer_class.F90
 #
+   src/solver_tools/hf/tamm_dancoff_transformation_tool_class.F90
+   src/solver_tools/hf/tamm_dancoff_preconditioner_getter_class.F90
+   src/solver_tools/hf/tamm_dancoff_eigen_storage_tool_class.F90
+   src/solver_tools/hf/rpa_transformation_tool_class.F90
+   src/solver_tools/hf/rpa_preconditioner_getter_class.F90
+   src/solver_tools/hf/rpa_eigen_storage_tool_class.F90
+   src/solver_tools/hf/tdhf_start_vector_tool_class.F90
+#
+   src/solver_tools/factories/tdhf_solver_factory_class.F90
+   src/solver_tools/factories/scf_solver_factory_class.F90
+   src/solver_tools/factories/davidson_cc_es_solver_factory_class.F90
+#
+#
+   src/solver_tools/functions/function_class.F90
+   src/solver_tools/functions/hf_energy_function_class.F90
+#
    src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
    src/solver_tools/asymmetric_lanczos_tool_class.F90
    src/solver_tools/convergence_tool_class.F90
 #
-   src/solver_tools/transformation_tool_class.F90
-   src/solver_tools/cc_jacobian_transformation_tool_class.F90
-   src/solver_tools/tamm_dancoff_transformation_tool_class.F90
-   src/solver_tools/rpa_transformation_tool_class.F90
-#
-   src/solver_tools/tdhf_solver_factory_class.F90
-   src/solver_tools/scf_solver_factory_class.F90
-#
    src/solver_tools/start_vector_tool_class.F90
-   src/solver_tools/cc_multipliers_start_vector_tool_class.F90
-   src/solver_tools/tdhf_start_vector_tool_class.F90
-#
    src/solver_tools/preconditioner_getter_class.F90
-   src/solver_tools/cc_multipliers_preconditioner_getter_class.F90
-   src/solver_tools/rpa_preconditioner_getter_class.F90
-   src/solver_tools/tamm_dancoff_preconditioner_getter_class.F90
-#
-   src/solver_tools/eigen_davidson_print_tool_class.F90
-   src/solver_tools/linear_davidson_print_tool_class.F90
-   src/solver_tools/linear_davidson_single_solution_print_tool_class.F90
-   src/solver_tools/linear_davidson_multiple_solutions_print_tool_class.F90
-#
    src/solver_tools/rhs_linear_equation_tool_class.F90
-   src/solver_tools/cc_multipliers_rhs_tool_class.F90
-#
+   src/solver_tools/transformation_tool_class.F90
    src/solver_tools/eigen_storage_tool_class.F90
-   src/solver_tools/tamm_dancoff_eigen_storage_tool_class.F90
-   src/solver_tools/rpa_eigen_storage_tool_class.F90
-#
-   src/solver_tools/linear_storage_tool_class.F90
-   src/solver_tools/cc_multipliers_linear_storage_tool_class.F90
-#
-   src/solver_tools/functions/function_class.F90
-   src/solver_tools/functions/hf_energy_function_class.F90
+   src/solver_tools/linear_equation_storage_tool_class.F90
 #
    src/solvers/abstract_solver_class.F90
    src/solvers/hf/scf_solver_class.F90
@@ -199,7 +201,6 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_linear_equations_class.F90
    src/solvers/cc/nonlinear_davidson_cc_es_class.F90
-   src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/solvers/cholesky/eri_ri_class.F90

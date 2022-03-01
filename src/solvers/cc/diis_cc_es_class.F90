@@ -382,7 +382,7 @@ contains
 !
 !              Project if relevant (CVS, IP)
 !
-               if (this%projector%active) call this%projector%do_(R(:,state))
+               if (this%projector%active) call this%projector%project(R(:,state))
 !
 !              Calculate energy E = X^T R = X^T A X
 !
