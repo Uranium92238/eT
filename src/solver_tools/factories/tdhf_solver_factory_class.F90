@@ -78,6 +78,7 @@ contains
 !!    excitation energies.
 !!
       use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
+      use null_projection_tool_class, only: null_projection_tool
 !
       implicit none
 !
@@ -92,6 +93,7 @@ contains
       class(start_vector_tool),         allocatable :: start_vector
       class(preconditioner_getter),     allocatable :: preconditioner
       class(eigen_davidson_print_tool), allocatable :: printer
+      class(null_projection_tool), allocatable :: projector
 !
       real(dp) :: lindep_threshold
 !
@@ -102,6 +104,7 @@ contains
                                              energy_convergence = this%energy_convergence)
 !
       start_vector = tdhf_start_vector_tool(wf, restart=this%restart)
+      projector = null_projection_tool(wf%n_o*wf%n_v)
 !
       if (this%tamm_dancoff) then
 !
@@ -115,8 +118,7 @@ contains
 !
       endif
 !
-      printer = eigen_davidson_print_tool(n_solutions = this%n_states, &
-                                          max_iterations = this%max_iterations)
+      printer = eigen_davidson_print_tool()
       call printer%print_banner()
 !
       lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
@@ -134,6 +136,7 @@ contains
                                      start_vector          = start_vector,        &
                                      preconditioner        = preconditioner,      &
                                      printer               = printer,             &
+                                     projector             = projector,           &
                                      n_solutions           = this%n_states,       &
                                      max_iterations        = this%max_iterations)
 !

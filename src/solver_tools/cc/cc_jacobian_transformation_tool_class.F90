@@ -53,7 +53,7 @@ module cc_jacobian_transformation_tool_class
 !
    contains
 !
-   function new_cc_jacobian_transformation_tool(wf, side) result(this)
+   function new_cc_jacobian_transformation_tool(wf, side, n_parameters) result(this)
 !!
 !!    New Coupled Cluster Jacobian transformation
 !!    Written by Regina Matveeva, Sept 2021
@@ -62,10 +62,11 @@ module cc_jacobian_transformation_tool_class
 !
       class(ccs), intent(in), target :: wf
       character(len=*), intent(in)   :: side
+      integer, intent(in) :: n_parameters
       type(cc_jacobian_transformation_tool) :: this
 !
       this%wf => wf
-      this%n_parameters = wf%n_gs_amplitudes
+      this%n_parameters = n_parameters
 !
       this%side = side
 !

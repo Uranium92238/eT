@@ -50,16 +50,18 @@ module es_valence_start_vector_tool_class
 contains 
 !
 !
-   function new_es_valence_start_vector_tool(wf) result(tool)
+   function new_es_valence_start_vector_tool(wf, side, restart) result(this)
 !!
 !!    New ES valence start vector tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
       implicit none 
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in), target :: wf
+      character(len=*), intent(in) :: side
+      logical, intent(in) :: restart
 !
-      type(es_valence_start_vector_tool) :: tool 
+      type(es_valence_start_vector_tool) :: this
 !
       real(dp), dimension(:), allocatable :: eps         ! Orbital differences 
       real(dp), dimension(:), allocatable :: lowest_eps  ! Lowest orbital differences 
@@ -67,19 +69,22 @@ contains
       if (wf%bath_orbital) &
          call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
 !
-      tool%n_vectors = wf%n_singlet_states
-      tool%vector_length = wf%n_es_amplitudes
+      this%n_vectors    = wf%n_singlet_states
+      this%n_parameters = wf%n_es_amplitudes
+      this%side         = side
+      this%wf           => wf
+      this%restart      = restart
 !
-      call mem%alloc(eps, tool%vector_length)
-      call wf%get_orbital_differences(eps, tool%vector_length)
+      call mem%alloc(eps, this%n_parameters)
+      call wf%get_orbital_differences(eps, this%n_parameters)
 !
-      call mem%alloc(lowest_eps, tool%n_vectors)
+      call mem%alloc(lowest_eps, this%n_vectors)
 !
-      allocate(tool%indices(tool%n_vectors))
-      call get_n_lowest(tool%n_vectors, tool%vector_length, eps, lowest_eps, tool%indices)
+      allocate(this%indices(this%n_vectors))
+      call get_n_lowest(this%n_vectors, this%n_parameters, eps, lowest_eps, this%indices)
 !
-      call mem%dealloc(lowest_eps, tool%n_vectors)
-      call mem%dealloc(eps, tool%vector_length)
+      call mem%dealloc(lowest_eps, this%n_vectors)
+      call mem%dealloc(eps, this%n_parameters)
 !
    end function new_es_valence_start_vector_tool
 !

@@ -151,12 +151,12 @@ contains
 !!    for the determination of Coupled Cluster multipliers
 !!
       use cc_jacobian_transformation_tool_class,            only: cc_jacobian_transformation_tool
-      use cc_multipliers_linear_storage_tool_class,         only: cc_multipliers_linear_storage_tool
+      use cc_multipliers_linear_equation_storage_tool_class,only: cc_multipliers_linear_equation_storage_tool
       use linear_davidson_tool_class,                       only: linear_davidson_tool
       use general_linear_davidson_solver_class,             only: general_linear_davidson_solver
       use cc_multipliers_rhs_tool_class,                    only: cc_multipliers_rhs_tool
       use cc_multipliers_start_vector_tool_class,           only: cc_multipliers_start_vector_tool
-      use cc_multipliers_preconditioner_getter_class,       only: cc_multipliers_preconditioner_getter
+      use cc_jacobian_preconditioner_getter_class,          only: cc_jacobian_preconditioner_getter
       use linear_davidson_single_solution_print_tool_class, only: linear_davidson_single_solution_print_tool
 !
       implicit none
@@ -167,10 +167,10 @@ contains
 !
       class(linear_davidson_tool),                       allocatable :: davidson
       class(cc_jacobian_transformation_tool),            allocatable :: transformer
-      class(cc_multipliers_linear_storage_tool),         allocatable :: storer
+      class(cc_multipliers_linear_equation_storage_tool),allocatable :: storer
       class(cc_multipliers_rhs_tool),                    allocatable :: rhs_getter
       class(cc_multipliers_start_vector_tool),           allocatable :: start_vector
-      class(cc_multipliers_preconditioner_getter),       allocatable :: preconditioner
+      class(cc_jacobian_preconditioner_getter),          allocatable :: preconditioner
       class(linear_davidson_single_solution_print_tool), allocatable :: printer
 !
       real(dp)               :: lindep_threshold
@@ -191,9 +191,9 @@ contains
                                       records_in_memory = this%records_in_memory)
 !
       start_vector   = cc_multipliers_start_vector_tool(wf, restart=this%restart)
-      transformer    = cc_jacobian_transformation_tool(wf, side='left')
-      storer         = cc_multipliers_linear_storage_tool(wf)
-      preconditioner = cc_multipliers_preconditioner_getter(wf)
+      transformer    = cc_jacobian_transformation_tool(wf, side='left', n_parameters=wf%n_gs_amplitudes)
+      storer         = cc_multipliers_linear_equation_storage_tool(wf)
+      preconditioner = cc_jacobian_preconditioner_getter(wf, wf%n_gs_amplitudes)
       rhs_getter     = cc_multipliers_rhs_tool(wf)
 !
       frequencies = zero

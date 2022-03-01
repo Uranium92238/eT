@@ -27,24 +27,27 @@ module es_start_vector_tool_class
 !!    These depend on the calculation (valence/CVS/IP) and are set accordingly in 
 !!    the constructors of the descendants. 
 !!
-!!    A solver can request the nth start vector R as follows:
+!!    A solver can request the nth start start_vector R as follows:
 !!
-!!       call start_vector_tool%get(R, n).
+!!       call start_vector_this%get(R, n).
 !!
 !!    Initialization depends on the constructor; see descendants. 
 !!
 !
    use parameters
    use array_utilities, only: zero_array
+   use start_vector_tool_class, only: start_vector_tool
+   use ccs_class, only: ccs
 !
    implicit none
 !
-   type, abstract :: es_start_vector_tool
+   type, extends(start_vector_tool), abstract :: es_start_vector_tool
 !
       integer, dimension(:), allocatable :: indices
-!
-      integer :: n_vectors 
-      integer :: vector_length
+      integer :: n_vectors
+      class(ccs), pointer :: wf
+      logical :: restart
+      character(len=200) :: side
 !
    contains
 !
@@ -56,58 +59,51 @@ module es_start_vector_tool_class
 contains 
 !
 !
-   subroutine get_es_start_vector_tool(tool, wf, n, vector, energy, side, restart)
+   subroutine get_es_start_vector_tool(this, start_vector, I, energy)
 !!
 !!    Get
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
 !!    Modified by Alexander C. Paul, Sep 2020 - now also handles restart
 !!
-!!    Returns the nth start vector
-!!    If restart is requested, it checks for the vector on file
-!!    otherwise the start vector are determined from tool%indices.
+!!    Returns the nth start start_vector
+!!    If restart is requested, it checks for the start_vector on file
+!!    otherwise the start start_vector are determined from this%indices.
 !!
       use array_utilities, only: get_l2_norm
-      use ccs_class, only: ccs
 !
       implicit none 
 !
-      class(es_start_vector_tool), intent(in) :: tool
+      class(es_start_vector_tool), intent(in) :: this
+      real(dp), dimension(this%n_parameters), intent(out) :: start_vector
+      integer, intent(in) :: I
 !
-      class(ccs), intent(inout) :: wf
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(tool%vector_length), intent(inout) :: vector
-      real(dp), intent(inout) :: energy
-!
-      logical, intent(in) :: restart
-!
-      character(len=*), intent(in) :: side
+      real(dp), intent(out) :: energy
 !
       logical  :: vector_found
       real(dp) :: norm_
 !
-      if (.not. restart) then
+      if (.not. this%restart) then
 !
          energy = zero
-         call zero_array(vector, tool%vector_length)
-         vector(tool%indices(n)) = one
+         call zero_array(start_vector, this%n_parameters)
+         start_vector(this%indices(I)) = one
 !
       else ! restarting
 !
-         call wf%check_and_get_restart_vector(vector, energy, n, side, vector_found)
+         call this%wf%check_and_get_restart_vector(start_vector, energy, &
+                                                   I, trim(this%side), vector_found)
 !
          if (vector_found) then
 !
-            norm_ = get_l2_norm(vector, tool%vector_length)
-            call dscal(tool%vector_length, one/norm_, vector, 1)
+            norm_ = get_l2_norm(start_vector, this%n_parameters)
+            call dscal(this%n_parameters, one/norm_, start_vector, 1)
 !               
          else
 !
             energy = zero
-            call zero_array(vector, tool%vector_length)
-            vector(tool%indices(n)) = one
+            call zero_array(start_vector, this%n_parameters)
+            start_vector(this%indices(I)) = one
 !
          end if
       end if

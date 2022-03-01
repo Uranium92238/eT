@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module cc_multipliers_linear_storage_tool_class
+module cc_multipliers_linear_equation_storage_tool_class
 !
 !!
 !!    Coupled Cluster multipliers linear storage tool class module
@@ -26,32 +26,32 @@ module cc_multipliers_linear_storage_tool_class
 !
    use global_out, only: output
    use parameters
-   use linear_storage_tool_class, only: linear_storage_tool
+   use linear_equation_storage_tool_class, only: linear_equation_storage_tool
    use ccs_class, only: ccs
 !
    implicit none
 !
-   type, extends(linear_storage_tool) :: cc_multipliers_linear_storage_tool
+   type, extends(linear_equation_storage_tool) :: cc_multipliers_linear_equation_storage_tool
 !
       class(ccs), pointer, private :: wf
 !
    contains
 !
-      procedure, public :: store => store_cc_multipliers_linear_storage_tool
+      procedure, public :: store => store_cc_multipliers_linear_equation_storage_tool
 !
-   end type  cc_multipliers_linear_storage_tool
+   end type  cc_multipliers_linear_equation_storage_tool
 !
 !
-   interface  cc_multipliers_linear_storage_tool
+   interface  cc_multipliers_linear_equation_storage_tool
 !
-      procedure :: new_cc_multipliers_linear_storage_tool
+      procedure :: new_cc_multipliers_linear_equation_storage_tool
 !
-   end interface  cc_multipliers_linear_storage_tool
+   end interface  cc_multipliers_linear_equation_storage_tool
 !
 !
 contains
 !
-   function new_cc_multipliers_linear_storage_tool(wf) result(this)
+   function new_cc_multipliers_linear_equation_storage_tool(wf) result(this)
 !!
 !!    New Coupled Cluster multipliers storage tool
 !!    Written by Sarai D. Folkestad, 2021
@@ -59,15 +59,15 @@ contains
       implicit none
 !
       class(ccs), intent(in), target  :: wf
-      type(cc_multipliers_linear_storage_tool)   :: this
+      type(cc_multipliers_linear_equation_storage_tool)   :: this
 !
       this%wf => wf
       this%n_parameters = wf%n_gs_amplitudes
 !
-   end function new_cc_multipliers_linear_storage_tool
+   end function new_cc_multipliers_linear_equation_storage_tool
 !
 !
-   subroutine store_cc_multipliers_linear_storage_tool(this, solution_vector, n)
+   subroutine store_cc_multipliers_linear_equation_storage_tool(this, solution_vector, n)
 !!
 !!    Store
 !!    Written by Regina Matveeva, Sept 2021
@@ -76,7 +76,7 @@ contains
 !
       implicit none
 !
-      class(cc_multipliers_linear_storage_tool),   intent(inout)     :: this
+      class(cc_multipliers_linear_equation_storage_tool),   intent(inout)     :: this
       integer,                                  intent(in) :: n
       real(dp), dimension(this%n_parameters),   intent(in) :: solution_vector
 !
@@ -85,7 +85,7 @@ contains
       call this%wf%set_multipliers(solution_vector)
       call this%wf%save_multipliers()
 !
-   end subroutine store_cc_multipliers_linear_storage_tool
+   end subroutine store_cc_multipliers_linear_equation_storage_tool
 !
 !
-end module cc_multipliers_linear_storage_tool_class
+end module cc_multipliers_linear_equation_storage_tool_class

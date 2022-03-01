@@ -490,10 +490,6 @@ contains
 !!
 !!       t_aibj = - g_aibj/epsilon_aibj
 !!
-!!   SARAI: FIX -> Note that update_t1_integrals has to be called before this routine.
-!!
-!
-!
       implicit none
 !
       class(ccsd) :: wf
@@ -504,7 +500,7 @@ contains
       integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%eri_t1%get('vovo', g_aibj) ! OBS SARAI NAME ! SHOULD THIS BE T1
+      call wf%eri_t1%get('vovo', g_aibj)
 !
 !$omp parallel do schedule(guided) &
 !$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)

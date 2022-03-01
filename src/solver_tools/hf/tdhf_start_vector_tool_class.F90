@@ -68,19 +68,23 @@ contains
    end function new_tdhf_start_vector_tool
 !
 !
-   subroutine get_tdhf_start_vector_tool(this, start_vector, I)
+   subroutine get_tdhf_start_vector_tool(this, start_vector, I, energy)
 !!
 !!    Get
 !!    Written by Sarai D. Folkestad, May 2021
 !!
 !!    Gets the I'th start vector for some purpose
 !!
+      use warning_suppressor, only: do_nothing
+!
       implicit none
 !
       class(tdhf_start_vector_tool), intent(in) :: this
       real(dp), dimension(this%n_parameters), intent(out) :: start_vector
       integer, intent(in) :: I
+      real(dp), intent(out) :: energy
 !
+      call do_nothing(energy)
       call this%wf%get_tdhf_start_vector(I, start_vector, this%restart)
 !
    end subroutine

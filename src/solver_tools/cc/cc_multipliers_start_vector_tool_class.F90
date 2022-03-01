@@ -71,7 +71,7 @@ contains
    end function new_cc_multipliers_start_vector_tool
 !
 !
-   subroutine get_cc_multipliers_start_vector_tool(this, start_vector, I)
+   subroutine get_cc_multipliers_start_vector_tool(this, start_vector, I, energy)
 !!
 !!    Get
 !!    Written by Regina Matveeva, Sept 2021
@@ -83,8 +83,11 @@ contains
       class(cc_multipliers_start_vector_tool), intent(in) :: this
       real(dp), dimension(this%n_parameters), intent(out) :: start_vector
       integer, intent(in) :: I
+         real(dp), intent(out) :: energy
 !
       call do_nothing(I)
+      call do_nothing(energy)
+!
       call this%wf%get_initial_cc_multipliers(start_vector, this%restart)
 !
    end subroutine

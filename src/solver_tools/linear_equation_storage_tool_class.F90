@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module linear_storage_tool_class
+module linear_equation_storage_tool_class
 !
 !!
 !!    Abstract linear storage tool class module
@@ -33,27 +33,27 @@ module linear_storage_tool_class
 !
    implicit none
 !
-   type, abstract :: linear_storage_tool
+   type, abstract :: linear_equation_storage_tool
 !
       integer :: n_parameters
 !
    contains
 !
-      procedure (store_linear_storage_tool), deferred, public :: store
+      procedure (store_linear_equation_storage_tool), deferred, public :: store
 !
-end type  linear_storage_tool
+end type  linear_equation_storage_tool
 !
    abstract interface
 !
-      subroutine store_linear_storage_tool(this, solution_vector, n)
+      subroutine store_linear_equation_storage_tool(this, solution_vector, n)
 !
          use parameters
 !
-         import linear_storage_tool
+         import linear_equation_storage_tool
 !
          implicit none
 !
-         class(linear_storage_tool),               intent(inout) :: this
+         class(linear_equation_storage_tool),               intent(inout) :: this
          integer,                                  intent(in) :: n
          real(dp), dimension(this%n_parameters),   intent(in) :: solution_vector
 !
@@ -61,4 +61,4 @@ end type  linear_storage_tool
 !
    end interface
 !
-end module linear_storage_tool_class
+end module linear_equation_storage_tool_class
