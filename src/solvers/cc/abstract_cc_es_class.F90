@@ -261,7 +261,6 @@ contains
       class(abstract_cc_es), intent(inout) :: this
 !
       call this%destruct_energies()
-      call this%projector%cleanup()
 !
       call this%timer%turn_off()
 !
@@ -508,8 +507,6 @@ contains
 !
       endif
 !
-      call this%projector%initialize()
-!
    end subroutine initialize_projection_tool_abstract_cc_es
 !
 !
@@ -531,8 +528,7 @@ contains
       do state = first, last
 !
          call this%start_vectors%get(X(:,state), state, this%energies(state))
-!
-         if (this%projector%active) call this%projector%project(X(:,state))
+         call this%projector%project(X(:,state))
 !
       enddo
 !

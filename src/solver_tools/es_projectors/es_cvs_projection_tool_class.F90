@@ -37,7 +37,7 @@ module es_cvs_projection_tool_class
 !
    contains
 !
-      procedure :: get_projector => get_projector_es_cvs_projection_tool
+      procedure :: project => project_es_cvs_projection_tool
 !
    end type es_cvs_projection_tool
 !
@@ -65,25 +65,24 @@ contains
 !
       tool%n_parameters = wf%n_es_amplitudes
 !
-      tool%active = .true.
       tool%wf => wf
 !
    end function new_es_cvs_projection_tool
 !
 !
-   subroutine get_projector_es_cvs_projection_tool(tool, projector)
+   subroutine project_es_cvs_projection_tool(tool, vector)
 !!
-!!    Get projector
+!!    Project
 !!    Written by Sarai D. Folkestad, Feb 2022
 !!
       implicit none
 !
-      class(es_cvs_projection_tool), intent(in) :: tool
-      real(dp), dimension(tool%n_parameters), intent(out) :: projector
+      class(es_cvs_projection_tool),          intent(in)    :: tool
+      real(dp), dimension(tool%n_parameters), intent(inout) :: vector
 !
-      call tool%wf%get_cvs_projector(projector, tool%wf%n_core_MOs, tool%wf%core_MOs)
+      call tool%wf%cvs_projection(vector, tool%wf%n_core_MOs, tool%wf%core_MOs)
 !
-   end subroutine get_projector_es_cvs_projection_tool
+   end subroutine project_es_cvs_projection_tool
 !
 !
 end module es_cvs_projection_tool_class

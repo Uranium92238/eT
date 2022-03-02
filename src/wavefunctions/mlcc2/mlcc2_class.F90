@@ -133,7 +133,7 @@ module mlcc2_class
       procedure :: determine_n_es_amplitudes                         => determine_n_es_amplitudes_mlcc2
       procedure :: determine_n_gs_amplitudes                         => determine_n_gs_amplitudes_mlcc2
 !
-      procedure :: get_cvs_projector                                 => get_cvs_projector_mlcc2
+      procedure :: cvs_projection                                 => cvs_projection_mlcc2
       procedure :: set_cvs_start_indices                             => set_cvs_start_indices_mlcc2
 !
 !     Read input
@@ -951,9 +951,9 @@ contains
    end subroutine construct_t2bar_mlcc2
 !
 !
-   subroutine get_cvs_projector_mlcc2(wf, projector, n_cores, core_MOs)
+   subroutine cvs_projection_mlcc2(wf, vector, n_cores, core_MOs)
 !!
-!!    Get CVS projector
+!!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
       use array_utilities, only: zero_array
@@ -962,55 +962,42 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai, j, b, bj, aibj
+      integer :: i, a, ai, j, b, bj, aibj
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      if (any(core_MOs > wf%n_cc2_o)) &
+         call output%error_msg('one or more core orbitals are not CC2 orbitals')
 !
-      do core = 1, n_cores
+      call wf%ccs%cvs_projection(vector, n_cores, core_MOs)
 !
-         i = core_MOs(core)
 !
-         if ((i .lt. 1) .or. (i  .gt. wf%n_cc2_o)) then
-            call output%error_msg('Core orbital (i0) is not CC2 orbital', ints=[i])
-         end if
-!
-!$omp parallel do private (a, ai)
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-            projector(ai) = one
-!
-         enddo
-!$omp end parallel do
-!
-!$omp parallel do private (a, ai, j, b, bj, aibj)
+!$omp parallel do private(i, a, j, b, ai, bj, aibj) collapse(2)
+      do i = 1, wf%n_cc2_o
          do a = 1, wf%n_cc2_v
-!
-            ai = wf%n_cc2_v*(i - 1) + a
-!
             do j = 1, wf%n_cc2_o
                do b = 1, wf%n_cc2_v
 !
-                  bj = wf%n_cc2_v*(j - 1) + b
+                  if(all(core_MOs /= i) .and. all(core_MOs /= j)) then
 !
-                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+                     ai = wf%n_cc2_v*(i - 1) + a
+                     bj = wf%n_cc2_v*(j - 1) + b
+                     aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
 !
-                  projector(aibj + wf%n_o*wf%n_v) = one
+                     vector(aibj + wf%n_o*wf%n_v) = zero
 !
+                  endif
                enddo
             enddo
          enddo
+      enddo
 !$omp end parallel do
 !
-      enddo
-!
-   end subroutine get_cvs_projector_mlcc2
+   end subroutine cvs_projection_mlcc2
 !
 !
    subroutine set_cvs_start_indices_mlcc2(wf, start_indices)

@@ -10,6 +10,7 @@
 ### Structure
 - Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040, eT-program/eT!1044
 - Using the eigen_davidson_solver for the CC excited state equations instead of the cc_es_davidson_solver. The cc_es_davidson_solver is deleted. eT-program/eT!1038
+- Projection tools now ask CC wave functions to project out unwanted components. The projection vectors have been deleted. eT-program/eT!1048
 
 # eT v1.6.2
 ### Bugfixes
