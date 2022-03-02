@@ -31,7 +31,6 @@ module abstract_projection_tool_class
 !!
 !!    Note that the call (*) is usually not done for Davidson
 !!    algorithms, where the actual projection in done inside the Davidson tool.
-!!    Initialization is still handled by the projection tool.
 !!
 !
    use kinds 
@@ -42,104 +41,33 @@ module abstract_projection_tool_class
 !
    type, abstract :: abstract_projection_tool
 !
-      logical :: active ! Do projection if true, don't if false
-!
       integer :: n_parameters
-      real(dp), dimension(:), allocatable :: projector
-
 !
    contains
 !
-      procedure :: project => project_abstract_projection_tool
-      procedure :: initialize
-      procedure :: cleanup
-      procedure (get_projector_abstract), deferred :: get_projector
+      procedure (project_abstract), deferred :: project
 !
    end type abstract_projection_tool
 !
 !
    abstract interface
 !
-      subroutine get_projector_abstract(tool, projector)
+      subroutine project_abstract(tool, vector)
 !
          use parameters
          import abstract_projection_tool
 !
          implicit none
 !
-         class(abstract_projection_tool), intent(in) :: tool
-         real(dp), dimension(tool%n_parameters), intent(out) :: projector
+         class(abstract_projection_tool),        intent(in)    :: tool
+         real(dp), dimension(tool%n_parameters), intent(inout) :: vector
 !
-      end subroutine get_projector_abstract
+      end subroutine project_abstract
 !
    end interface
 !
 !
 contains 
-!
-!
-   subroutine initialize(tool)
-!!
-!!    Initialize
-!!    Written by Sarai D. Folkestad, 2022
-!!
-      implicit none
-!
-      class(abstract_projection_tool), intent(inout) :: tool
-!
-      if (.not. tool%active) return
-!
-      call mem%alloc(tool%projector, tool%n_parameters)
-      call tool%get_projector(tool%projector)
-!
-   end subroutine initialize
-!
-!
-   subroutine cleanup(tool)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad, 2022
-!!
-      implicit none
-!
-      class(abstract_projection_tool), intent(inout) :: tool
-!
-      if (.not. tool%active) return
-      if (allocated(tool%projector)) call mem%dealloc(tool%projector, tool%n_parameters)
-!
-   end subroutine cleanup
-!
-!
-   subroutine project_abstract_projection_tool(tool, R)
-!!
-!!    Project
-!!    Written by Sarai D. Folkestad, 2018-2019
-!!
-!!    Does the projection operation:
-!!
-!!       R(i) = R(i)*projector(i).
-!!
-!!    The projector is set by the constructor.
-!!
-      implicit none
-!
-      class(abstract_projection_tool), intent(in) :: tool
-!
-      real(dp), dimension(tool%n_parameters), intent(inout) :: R
-!
-      integer :: i
-
-      if (.not. tool%active) return
-!
-!$omp parallel do private(i)
-      do i = 1, tool%n_parameters
-!
-         R(i) = R(i)*tool%projector(i)
-!
-      enddo  
-!$omp end parallel do
-!
-   end subroutine project_abstract_projection_tool
 !
 !
 end module abstract_projection_tool_class

@@ -435,7 +435,7 @@ contains
                                                  R(:,state),            &
                                                  this%energies(state))
 !
-            if (this%projector%active) call this%projector%project(R(:,state))
+            call this%projector%project(R(:,state))
 !
             this%energies(state) = ddot(this%wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
 !
@@ -764,7 +764,7 @@ contains
                                                     residual,                             &
                                                     this%energies(corresponding_state))
 !
-               if (this%projector%active) call this%projector%project(residual)
+               call this%projector%project(residual)
 !
                call this%davidson%set_transform(residual, trial)
 !

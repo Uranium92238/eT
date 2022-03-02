@@ -448,10 +448,10 @@ module ccs_class
 !
 !     Core-valence separation procedures
 !
-      procedure :: get_cvs_projector                             => get_cvs_projector_ccs
+      procedure :: cvs_projection                                => cvs_projection_ccs
       procedure :: set_cvs_start_indices                         => set_cvs_start_indices_ccs
 !
-      procedure :: get_rm_core_projector                         => get_rm_core_projector_ccs
+      procedure :: rm_core_projection                            => rm_core_projection_ccs
 !
 !     Other procedures
 !
@@ -462,7 +462,7 @@ module ccs_class
       procedure :: set_initial_amplitudes_guess                  => set_initial_amplitudes_guess_ccs
       procedure :: set_initial_multipliers_guess                 => set_initial_multipliers_guess_ccs
       procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
-      procedure :: get_ip_projector                              => get_ip_projector_ccs
+      procedure :: ip_projection                                 => ip_projection_ccs
 !
       procedure :: scale_amplitudes                              => scale_amplitudes_ccs
 !
@@ -1026,9 +1026,9 @@ contains
    end subroutine prepare_for_approximate_Jacobians_ccs
 !
 !
-   subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
+   subroutine cvs_projection_ccs(wf, vector, n_cores, core_MOs)
 !!
-!!    Get CVS projector
+!!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
       use array_utilities, only: zero_array
@@ -1037,34 +1037,32 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai
+      integer :: i, a, ai
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      do i = 1, wf%n_o
 !
-      do core = 1, n_cores
-!
-         i = core_MOs(core)
+         if (any(core_MOs == i)) cycle
 !
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
-            projector(ai) = one
+            vector(ai) = zero
 !
          enddo
       enddo
 !
-   end subroutine get_cvs_projector_ccs
+   end subroutine cvs_projection_ccs
 !
 !
-   subroutine get_rm_core_projector_ccs(wf, projector, n_cores, core_MOs)
+   subroutine rm_core_projection_ccs(wf, vector, n_cores, core_MOs)
 !!
-!!    Get remove core projector
+!!    Remove core projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
 !
@@ -1074,29 +1072,27 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai
+      integer :: i, a, ai, core
 !
-      call constant_array(projector, wf%n_es_amplitudes, one)
-!
+!$omp parallel do private(core, i, a, ai)
       do core = 1, n_cores
-!
-         i = core_MOs(core)
-!
          do a = 1, wf%n_v
 !
+            i = core_MOs(core)
             ai = wf%n_v*(i - 1) + a
-            projector(ai) = zero
+            vector(ai) = zero
 !
          enddo
       enddo
+!$omp end parallel do
 !
-   end subroutine get_rm_core_projector_ccs
+   end subroutine rm_core_projection_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
@@ -1381,12 +1377,12 @@ contains
    end subroutine set_ip_start_indices_ccs
 !
 !
-   subroutine get_ip_projector_ccs(wf, projector)
+   subroutine ip_projection_ccs(wf, vector)
 !!
-!!    Get IP projector
+!!    IP projection
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
-!!    Constructs and returns the projector
+!!    Constructs and returns the vector
 !!    for an IP calculation (valence).
 !!
 !!    Only excitations into the last virtual orbital
@@ -1398,22 +1394,22 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes),intent(inout) :: vector
 !
       integer :: A, I, AI
 !
-      call zero_array(projector, wf%n_es_amplitudes)
-!
+!$omp parallel do private(I, A, AI)
       do I = 1, wf%n_o
-         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
+         do A = 1, wf%n_v - wf%n_bath_orbitals
 !
             AI = wf%n_v*(I-1) + A
-            projector(AI) = one
+            vector(AI) = zero
 !
          enddo
       enddo
+!$omp end parallel do
 !
-   end subroutine get_ip_projector_ccs
+   end subroutine ip_projection_ccs
 !
 !
    subroutine approximate_double_excitation_vectors_ccs(wf, R_ai, omega, file_)

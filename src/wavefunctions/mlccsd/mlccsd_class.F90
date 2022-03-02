@@ -206,7 +206,7 @@ module mlccsd_class
 !
 !     CVS
 !
-      procedure :: get_cvs_projector         => get_cvs_projector_mlccsd
+      procedure :: cvs_projection            => cvs_projection_mlccsd
       procedure :: set_cvs_start_indices     => set_cvs_start_indices_mlccsd
 !
 !     Initialize/destruct
@@ -1303,9 +1303,9 @@ contains
    end subroutine print_X1_diagnostics_mlccsd
 !
 !
-   subroutine get_cvs_projector_mlccsd(wf, projector, n_cores, core_MOs)
+   subroutine cvs_projection_mlccsd(wf, vector, n_cores, core_MOs)
 !!
-!!    Get CVS projector
+!!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
       use array_utilities, only: zero_array
@@ -1314,58 +1314,44 @@ contains
 !
       class(mlccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai, j, b, bj, aibj, n_a_o, n_a_v
+      integer :: i, a, ai, j, b, bj, aibj, n_a_o, n_a_v
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      if (any(core_MOs > wf%n_ccsd_o)) &
+         call output%error_msg('one or more core orbitals are not CCSD orbitals')
 !
-      do core = 1, n_cores
-!
-         i = core_MOs(core)
-!
-         if (i  .gt. wf%n_ccsd_o) then
-            call output%error_msg('Core orbital (i0) is not CCSD orbital', ints=[i])
-         end if
-!
-!$omp parallel do private (a, ai)
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-            projector(ai) = one
-!
-         enddo
-!$omp end parallel do
+      call wf%ccs%cvs_projection(vector, n_cores, core_MOs)
 !
       n_a_o = wf%n_ccsd_o + wf%n_cc2_o
       n_a_v = wf%n_ccsd_v + wf%n_cc2_v
 !
-!$omp parallel do private (a, ai, j, b, bj, aibj)
+!$omp parallel do private(i, a, j, b, ai, bj, aibj) collapse(2)
+      do i = 1, n_a_o
          do a = 1, n_a_v
-!
-            ai = n_a_v*(i - 1) + a
-!
             do j = 1, n_a_o
                do b = 1, n_a_v
 !
-                  bj = n_a_v*(j - 1) + b
+                  if(all(core_MOs /= i) .and. all(core_MOs /= j)) then
 !
-                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+                     ai = n_a_v*(i - 1) + a
+                     bj = n_a_v*(j - 1) + b
+                     aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
 !
-                  projector(aibj + wf%n_o*wf%n_v) = one
+                     vector(aibj + wf%n_o*wf%n_v) = zero
 !
+                  endif
                enddo
             enddo
          enddo
+      enddo
 !$omp end parallel do
 !
-      enddo
-!
-   end subroutine get_cvs_projector_mlccsd
+   end subroutine cvs_projection_mlccsd
 !
 !
    subroutine set_cvs_start_indices_mlccsd(wf, start_indices)

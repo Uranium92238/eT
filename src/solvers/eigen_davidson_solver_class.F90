@@ -147,8 +147,6 @@ contains
       call this%preconditioner%get(c)
       call this%davidson%set_preconditioner(c)
 !
-      call this%projector%initialize()
-!
       do trial = 1,this%n_solutions
 !
          call this%start_vector%get(c, trial, omega(trial))
@@ -218,8 +216,6 @@ contains
 !
       call mem%dealloc(omega, this%n_solutions)
       call mem%dealloc(new_omega, this%n_solutions)
-!
-      call this%projector%cleanup()
 !
       call this%davidson%cleanup()
 !

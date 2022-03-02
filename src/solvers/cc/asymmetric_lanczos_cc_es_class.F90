@@ -250,8 +250,6 @@ contains
       call mem%alloc(xiX, this%wf%n_es_amplitudes)
       call mem%alloc(etaX, this%wf%n_es_amplitudes)
 !
-      call this%projector%initialize()
-!
       do cartesian=1, 3
 !
 !        Construct the eta and xi vectors
@@ -259,12 +257,8 @@ contains
          call this%wf%construct_xiX(dipole_length(:,:,cartesian), xiX)
          call this%wf%construct_eom_etaX(dipole_length(:,:,cartesian), xiX, etaX)
 !
-         if (this%projector%active) then
-!
-            call this%projector%project(xiX)
-            call this%projector%project(etaX)
-!
-         endif
+         call this%projector%project(xiX)
+         call this%projector%project(etaX)
 !
 !        Prepare initial seeds (p1,q1) as binormalized etaX and xiX vectors
 !
@@ -331,12 +325,8 @@ contains
             call lanczos%get_p(p_and_q, iteration)
             call this%wf%jacobian_transpose_transformation(p_and_q, pA)
 !
-            if (this%projector%active) then
-!
-               call this%projector%project(Aq)
-               call this%projector%project(pA)
-!
-            endif
+            call this%projector%project(Aq)
+            call this%projector%project(pA)
 !
             call lanczos%expand_subspace(pA, Aq, iteration)
 !
@@ -391,8 +381,6 @@ contains
       call mem%dealloc(xiX,this%wf%n_es_amplitudes)
       call mem%dealloc(etaX,this%wf%n_es_amplitudes)
       call mem%dealloc(dipole_length,this%wf%n_mo,this%wf%n_mo,3)
-!
-      call this%projector%cleanup()
 !
    end subroutine run_asymmetric_lanczos_cc_es
 !

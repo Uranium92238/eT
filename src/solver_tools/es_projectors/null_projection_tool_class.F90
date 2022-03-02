@@ -34,7 +34,7 @@ module null_projection_tool_class
 !
    contains
 !
-      procedure :: get_projector => get_projector_null_projection_tool
+      procedure :: project => project_null_projection_tool
 !
    end type null_projection_tool
 !
@@ -59,34 +59,29 @@ contains
       type(null_projection_tool) :: tool
       integer, intent(in) :: n_parameters
 !
-      tool%active = .false. ! No projection needed
       tool%n_parameters = n_parameters
 !
    end function new_null_projection_tool
 !
 !
 !
-   subroutine get_projector_null_projection_tool(tool, projector)
+   subroutine project_null_projection_tool(tool, vector)
 !!
-!!    Get projector
+!!    Project
 !!    Written by Sarai D. Folkestad, Feb 2022
 !!
+!
+      use warning_suppressor, only: do_nothing
+!
       implicit none
 !
-      class(null_projection_tool), intent(in) :: tool
-      real(dp), dimension(tool%n_parameters), intent(out) :: projector
+      class(null_projection_tool),            intent(in)    :: tool
+      real(dp), dimension(tool%n_parameters), intent(inout) :: vector
 !
-      integer :: i
+      call do_nothing(vector)
 !
-!$omp parallel do private(i)
-      do i = 1, tool%n_parameters
+   end subroutine project_null_projection_tool
 !
-         projector(i) = one
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_projector_null_projection_tool
 !
 !
 end module null_projection_tool_class
