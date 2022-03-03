@@ -150,6 +150,9 @@ contains
                                     &algorithm is not implemented for the method specified.')
          endif
 !
+         call wf%initialize_excited_state_files()
+         call wf%initialize_excitation_energies()
+!
       endif
 !
    end subroutine create

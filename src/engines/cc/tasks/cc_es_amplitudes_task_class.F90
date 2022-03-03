@@ -100,9 +100,6 @@ contains
 !
       call wf%construct_fock(task='es')
 !
-      call wf%initialize_excited_state_files()
-      call wf%initialize_excitation_energies()
-!
       call this%solver%run()
 !
       call this%solver%cleanup()
