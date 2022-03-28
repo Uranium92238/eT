@@ -410,7 +410,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array that is being allocated
 !
-      integer :: size_array ! Total size of array (M)
+      integer(i64) :: size_array ! Total size of array (M)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -451,7 +451,7 @@ contains
 !
       integer, intent(in) :: M, N ! First and second dimension of array that is being allocated
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -492,7 +492,7 @@ contains
 !
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O)
+      integer(i64) :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -533,7 +533,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P)
+      integer(i64) :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -574,7 +574,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P*Q)
+      integer(i64) :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -615,7 +615,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array that is being allocated
 !
-      integer :: size_array ! Total size of array (M)
+      integer(i64) :: size_array ! Total size of array (M)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -656,7 +656,7 @@ contains
 !
       integer, intent(in) :: M, N ! First and second dimension of array that is being allocated
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -697,7 +697,7 @@ contains
 !
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O)
+      integer(i64) :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -738,7 +738,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P)
+      integer(i64) :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -779,7 +779,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array
 !
-      integer :: size_array ! Total size of array (M)
+      integer(i64) :: size_array ! Total size of array (M)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -820,7 +820,7 @@ contains
 !
       integer, intent(in) :: M, N ! First and second dimension of array
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -861,7 +861,7 @@ contains
 !
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O)
+      integer(i64) :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -902,7 +902,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P)
+      integer(i64) :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -943,7 +943,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P*Q)
+      integer(i64) :: size_array ! Total size of array (M*N*O*P*Q)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -984,7 +984,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array
 !
-      integer :: size_array ! Total size of array (M)
+      integer(i64) :: size_array ! Total size of array (M)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1025,7 +1025,7 @@ contains
 !
       integer, intent(in) :: M, N ! First and second dimension of array
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1066,7 +1066,7 @@ contains
 !
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O)
+      integer(i64) :: size_array ! Total size of array (M*N*O)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1107,7 +1107,7 @@ contains
 !
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
-      integer :: size_array ! Total size of array (M*N*O*P)
+      integer(i64) :: size_array ! Total size of array (M*N*O*P)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1148,7 +1148,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array
 !
-      integer :: size_array ! Total size of array (M)
+      integer(i64) :: size_array ! Total size of array (M)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1187,7 +1187,7 @@ contains
 !
       integer, intent(in) :: M, N ! First and second dimension of array
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1226,7 +1226,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1265,7 +1265,7 @@ contains
 !
       integer, intent(in) :: M, N ! First and second dimension of array
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
 !
       character(len=100) :: error_msg
@@ -1304,7 +1304,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array
 !
-      integer :: size_array ! Total size of array (M)
+      integer(i64) :: size_array ! Total size of array (M)
       integer :: error = 0
       integer :: log_size
 !
@@ -1345,7 +1345,7 @@ contains
 !
       integer, intent(in) :: M ! Dimension of array
 !
-      integer :: size_array ! Total size of array (M*N)
+      integer(i64) :: size_array ! Total size of array (M*N)
       integer :: error = 0
       integer :: log_size
 !
@@ -1376,14 +1376,22 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: size_array
+      integer(i64), intent(in) :: size_array
       character (len=*), intent(in) :: error_msg
+!
+      character(len=17) :: number_string
+!
+      if (size_array < 0) &
+         call output%error_msg('Trying to allocate array with negative number of elements. &
+                               &This could be an integer overflow.')
+!
+      write(number_string, '(i0)') size_array
 !
       call output%printf('m', error_msg, fs='(/t3,a)')
       call output%printf('m', 'Note: Error message from gfortran might not be accurate.', &
                           fs='(t3,a)')
-      call output%error_msg('Could not allocate array with #elements = (i0).', &
-                             ints=[size_array], ffs='(t3,a)')
+      call output%error_msg('Could not allocate array with #elements = (a0).', &
+                             chars=[trim(number_string)], ffs='(t3,a)')
 !
    end subroutine print_allocation_error_memory_manager
 !
@@ -1395,13 +1403,17 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: size_array
+      integer(i64), intent(in) :: size_array
       character (len=*), intent(in) :: error_msg
+!
+      character(len=17) :: number_string
+!
+      write(number_string, '(i0)') size_array
 !
       call output%printf('m', error_msg)
       call output%printf('m', 'Note: Error message from gfortran might not be accurate.')
-      call output%error_msg('Could not deallocate array with #elements = (i0).', &
-                             ints=[size_array])
+      call output%error_msg('Could not deallocate array with #elements = (a0).', &
+                             chars=[trim(number_string)])
 !
    end subroutine print_deallocation_error_memory_manager
 !
@@ -1418,19 +1430,27 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer, intent(in) :: size_array, size_type
+      integer(i64), intent(in) :: size_array
+      integer, intent(in) :: size_type
 !
       integer(i64) :: bytes
+      character(len=17) :: number_string
 !
-      bytes = int(size_array*size_type, kind=i64)
+      bytes = size_array*int(size_type, kind=i64)
+!
+      if (bytes < 0) &
+         call output%error_msg('Trying to allocate array with less than 0 B. &
+                               &This could be an integer overflow.')
 !
       mem%available = mem%available - bytes
 !
       if (mem%available .lt. 0) then
 !
+         write(number_string, '(i0)') size_array
+!
          call output%error_msg('User-specified memory insufficient in mem%alloc. &
-                               &Tried to allocate array with (i0) elements.', &
-                                ints=[size_array], ll=50)
+                               &Tried to allocate array with (a0) elements.', &
+                                chars=[trim(number_string)], ll=50)
 !
       endif
 !
@@ -1455,11 +1475,12 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer, intent(in) :: size_array, size_type
+      integer(i64), intent(in) :: size_array
+      integer, intent(in) :: size_type
 !
       integer(i64) :: bytes
 !
-      bytes = int(size_array*size_type, kind=i64)
+      bytes = size_array*int(size_type, kind=i64)
 !
       mem%available = mem%available + bytes
 !
@@ -1595,8 +1616,8 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot = int(req0*e_size, kind=i64)
-      req1_min = int(req1*e_size, kind=i64)
+      req0_tot = int(req0, kind=i64) * int(e_size, kind=i64)
+      req1_min = int(req1, kind=i64) * int(e_size, kind=i64)
 !
       req_min = req0_tot + req1_min
       req_tot = req0_tot + req1_min*int(batch_p%index_dimension, kind=i64)
@@ -1623,7 +1644,7 @@ contains
 !
 !        Determine maximum batch length
 !
-         batch_p%max_length = int((mem%available - req0_tot)/(req1_min))
+         batch_p%max_length = int((mem%available - req0_tot)/req1_min)
 !
 !        Number of full batches
 !
@@ -1718,17 +1739,17 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = int(req0*e_size, kind=i64)
-      req1_p_min = int(req1_p*e_size, kind=i64)
-      req1_q_min = int(req1_q*e_size, kind=i64)
-      req2_min   = int(req2*e_size, kind=i64)
+      req0_tot   = int(req0, kind=i64) * int(e_size, kind=i64)
+      req1_p_min = int(req1_p, kind=i64) * int(e_size, kind=i64)
+      req1_q_min = int(req1_q, kind=i64) * int(e_size, kind=i64)
+      req2_min   = int(req2, kind=i64) * int(e_size, kind=i64)
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req2_min
 !
 !     Determine or copy the memory needed to not batch
 !
       if (present(req_single_batch)) then
-         req_tot = int(req_single_batch*e_size, kind=i64)
+         req_tot = int(req_single_batch, kind=i64)*int(e_size, kind=i64)
       else
 !
          req_tot = req0_tot + req1_p_min*int(batch_p%index_dimension, kind=i64)  &
@@ -1874,7 +1895,7 @@ contains
 !
          if (present(req_single_batch)) then
 !
-            max_memory_usage = int(req_single_batch*e_size, kind=i64)
+            max_memory_usage = int(req_single_batch, kind=i64)*int(e_size, kind=i64)
 !
          endif
 !
@@ -1985,17 +2006,17 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = int(req0*e_size, kind=i64)
+      req0_tot   = int(req0, kind=i64) * int(e_size, kind=i64)
 !
-      req1_p_min = int(req1_p*e_size, kind=i64)
-      req1_q_min = int(req1_q*e_size, kind=i64)
-      req1_r_min = int(req1_r*e_size, kind=i64)
+      req1_p_min = int(req1_p, kind=i64) * int(e_size, kind=i64)
+      req1_q_min = int(req1_q, kind=i64) * int(e_size, kind=i64)
+      req1_r_min = int(req1_r, kind=i64) * int(e_size, kind=i64)
 !
-      req2_pq_min = int(req2_pq*e_size, kind=i64)
-      req2_pr_min = int(req2_pr*e_size, kind=i64)
-      req2_qr_min = int(req2_qr*e_size, kind=i64)
+      req2_pq_min = int(req2_pq, kind=i64) * int(e_size, kind=i64)
+      req2_pr_min = int(req2_pr, kind=i64) * int(e_size, kind=i64)
+      req2_qr_min = int(req2_qr, kind=i64) * int(e_size, kind=i64)
 !
-      req3_min = int(req3*e_size, kind=i64)
+      req3_min = int(req3, kind=i64) * int(e_size, kind=i64)
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req1_r_min &
               + req2_pq_min + req2_pr_min + req2_qr_min + req3_min
@@ -2003,7 +2024,7 @@ contains
 !     Determine or copy the memory needed to not batch
 !
       if (present(req_single_batch)) then
-         req_tot = int(req_single_batch*e_size, kind=i64)
+         req_tot = int(req_single_batch, kind=i64) * int(e_size, kind=i64)
       else
 !
          req_tot = req0_tot + req1_p_min                              &
@@ -2158,7 +2179,7 @@ contains
 !
          if (present(req_single_batch)) then
 !
-            max_memory_usage = int(req_single_batch*e_size, kind=i64)
+            max_memory_usage = int(req_single_batch, kind=i64) * int(e_size, kind=i64)
 !
          endif
 !
