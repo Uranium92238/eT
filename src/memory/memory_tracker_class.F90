@@ -92,15 +92,21 @@ contains
 !
       integer(i64), intent(in) :: bytes_allocated
 !
+      character(len=17) :: current_string, max_string
+!
       this%current = this%current + bytes_allocated
 !
       if (this%current > this%max_used) this%max_used = this%current
 !
       if (this%current .gt. this%max_allowed) then
 !
-         call output%printf('v','Exceeded expected memory in memory tracker. &
-                           &(i0) B used out of (i0) B allowed.', &
-                            ints=[int(this%current), int(this%max_allowed)])
+         write(current_string, '(i0)') this%current
+         write(max_string, '(i0)') this%max_allowed
+!
+         call output%printf('v','Exceeded expected memory in memory tracker: (a0)', &
+                             chars=[this%tag])
+         call output%printf('v', '(a0) B used out of (a0) B allowed.', &
+                            chars=[current_string, max_string])
 !
       endif
 !
@@ -115,13 +121,15 @@ contains
       implicit none
 !
       type(memory_tracker) :: this
-      integer :: difference
+      character(len=17) :: difference, allowed_string, used_string
 !
-      difference = int(this%max_allowed) - int(this%max_used)
+      write(allowed_string, '(i0)') this%max_allowed
+      write(used_string, '(i0)') this%current
+      write(difference,'(i0)') this%max_allowed - this%max_used
 !
       call output%printf('debug', 'Memory tracker finalized - ' // this%tag // ':')
       call output%printf('debug', 'allowed: (i0) B  used: (i0) B  difference: (i0) B', &
-                         ints=[int(this%max_allowed), int(this%max_used), difference], ll=100)
+                         chars=[allowed_string, used_string, difference], ll=100)
 !
    end subroutine destructor
 !

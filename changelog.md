@@ -1,3 +1,8 @@
+# eT v1.6.3
+### Bugfixes
+- Fixed integer overflow in `batch_setup`. The product of two `int32`
+overflowed before being converted into `int64`. eT-program/eT!1053
+
 # eT v1.6.2
 ### Bugfixes
 - Fixed visualization with cartesian basis sets. eT-program/eT!1043
