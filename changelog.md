@@ -12,6 +12,11 @@
 - Using the eigen_davidson_solver for the CC excited state equations instead of the cc_es_davidson_solver. The cc_es_davidson_solver is deleted. eT-program/eT!1038, eT-program/eT!1050
 - Projection tools now ask CC wave functions to project out unwanted components. The projection vectors have been deleted. eT-program/eT!1048
 
+# eT v1.6.3
+### Bugfixes
+- Fixed integer overflow in `batch_setup`. The product of two `int32`
+overflowed before being converted into `int64`. eT-program/eT!1053
+
 # eT v1.6.2
 ### Bugfixes
 - Fixed visualization with cartesian basis sets. eT-program/eT!1043
