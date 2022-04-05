@@ -1,4 +1,7 @@
 # eT v1.7.0
+### Bugfixes
+- QED keyword photons removed. eT-program/eT!1051
+
 ### Features
 - Linear response now available at the CC2 level (polarizabilities and transition strengths). eT-program/eT!1039
 - Restart for the Lanczos solver. eT-program/eT!1036
