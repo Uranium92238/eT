@@ -433,7 +433,6 @@ contains
                      'frequency',          &
                      'hf coherent state',  &
                      'modes',              &
-                     'photons',            &
                      'polarization',       &
                      'quadrupole oei',     &
                      'wavevector']
