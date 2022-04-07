@@ -232,7 +232,7 @@ contains
       endif
 !
       call input%get_keyword('storage', 'solver tdhf', storage)
-      if (trim(storage) == 'file') this%records_in_memory = .false.
+      if (trim(storage) == 'disk') this%records_in_memory = .false.
 !
       this%tamm_dancoff = input%is_keyword_present('tamm-dancoff', 'solver tdhf')
 !

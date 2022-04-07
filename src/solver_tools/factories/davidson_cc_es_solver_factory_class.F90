@@ -99,7 +99,7 @@ contains
 !!       - Start vector tool
 !!       - Preconditioner tool
 !!
-!!    for the determination of CC excitation energies 
+!!    for the determination of CC excitation energies
 !!
       use cc_es_eigen_davidson_print_tool_class, only: cc_es_eigen_davidson_print_tool
       use cc_eigen_storage_tool_class, only: cc_eigen_storage_tool
@@ -214,7 +214,7 @@ contains
       endif
 !
       call input%get_keyword('storage', 'solver cc es', storage)
-      if (trim(storage) == 'file') this%records_in_memory = .false.
+      if (trim(storage) == 'disk') this%records_in_memory = .false.
 !
       this%es_type = 'valence'
       if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
