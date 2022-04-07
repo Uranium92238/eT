@@ -315,6 +315,14 @@ add_eT_runtest(restart_mlccsd_cholesky_pao_es               "eT;short;mlccsd;es;
 add_eT_runtest(restart_orbitals_mlccsd_cholesky_pao         "eT;short;mlccsd;es;cholesky-pao;restart")
 add_eT_runtest(restart_orbitals_mlccsd_cc2_cholesky_pao     "eT;short;mlccsd;es;cholesky-pao;restart")
 #
+add_eT_runtest(fci_energy                                   "eT;short;fci")
+add_eT_runtest(fci_energy_open_shell                        "eT;short;fci,rohf")
+add_eT_runtest(fci_energy_no_symmetry                       "eT;short;fci")
+add_eT_runtest(fci_energy_random_guess                      "eT;short;fci")
+add_eT_runtest(fci_energy_triplet_h2                        "eT;short;fci")
+add_eT_runtest(fci_energy_one_electron                      "eT;short;fci")
+add_eT_runtest(restart_fci                                  "eT;short;fci;restart")
+#
 if(ENABLE_PCMSOLVER)
    add_eT_runtest(hf_energy_pcm                             "eT;short;hf;sad;pcm;pcm_internal")
    add_eT_runtest(hf_energy_pcm_external                    "eT;short;hf;sad;pcm;pcm_external")

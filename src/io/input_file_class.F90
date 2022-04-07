@@ -34,8 +34,9 @@ module input_file_class
 !
       type(section), allocatable, private :: sections(:)
 !
-      character(len=30), allocatable, private :: rf_wfs(:)
-      character(len=30), allocatable, private :: cc_wfs(:)
+      character(len=30), allocatable :: rf_wfs(:)
+      character(len=30), allocatable :: cc_wfs(:)
+      character(len=30), allocatable :: fci_wfs(:)
 !
       integer, private :: n_keyword_lines ! Number of lines excluding the geometry section
       integer, private :: n_qm_atom_lines ! Number of QM atoms
@@ -52,11 +53,34 @@ module input_file_class
 !
    contains
 !
-      procedure :: open_                                    &
-                => open_input_file
+      procedure :: open_                                                => open_input_file
+      procedure :: close_                                               => close_input_file
 !
-      procedure :: close_                                   &
-                => close_input_file
+      procedure :: check_for_errors                                     => check_for_errors_input_file
+!
+      procedure :: get_n_elements_for_keyword
+      procedure :: get_n_atoms                                          => get_n_atoms_input_file
+!
+      procedure :: get_n_mm_atoms                           &
+                => get_n_mm_atoms_input_file
+!
+      procedure :: get_n_mm_molecules                       &
+                => get_n_mm_molecules_input_file
+      procedure :: get_geometry                                         => get_geometry_input_file
+!
+      procedure :: get_mm_geometry_fq                       &
+                => get_mm_geometry_fq_input_file
+!
+      procedure :: get_mm_geometry_non_polarizable          &
+                => get_mm_geometry_non_polarizable_input_file
+!
+      procedure :: get_reference_wf                                     => get_reference_wf_input_file
+      procedure :: get_cc_wf                                            => get_cc_wf_input_file
+      procedure :: get_fci_wf                                           => get_fci_wf_input_file
+!
+      procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
+      procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
+      procedure :: requested_fci_calculation                            => requested_fci_calculation_input_file
 !
       generic :: get_keyword                                &
               => get_integer4_keyword,                      &
@@ -74,59 +98,18 @@ module input_file_class
               => get_integer_array_for_keyword,             &
                  get_real_array_for_keyword
 !
-      procedure :: check_for_errors                         &
-                => check_for_errors_input_file
+      procedure :: is_string_in_cs_list   => is_string_in_cs_list_input_file
+!
+      procedure :: read_keywords_and_geometry => read_keywords_and_geometry_input_file
+!
+      procedure :: cleanup_geometry    => cleanup_geometry_input_file
+      procedure :: cleanup_keywords    => cleanup_keywords_input_file
 !
       procedure :: is_section_present                       &
                 => is_section_present_input_file
 !
       procedure :: is_keyword_present                       &
                 => is_keyword_present_input_file
-!
-      procedure :: get_n_elements_for_keyword               &
-                => get_n_elements_for_keyword
-!
-      procedure :: get_n_atoms                              &
-                => get_n_atoms_input_file
-!
-      procedure :: get_n_mm_atoms                           &
-                => get_n_mm_atoms_input_file
-!
-      procedure :: get_n_mm_molecules                       &
-                => get_n_mm_molecules_input_file
-!
-      procedure :: get_geometry                             &
-                => get_geometry_input_file
-!
-      procedure :: get_mm_geometry_fq                       &
-                => get_mm_geometry_fq_input_file
-!
-      procedure :: get_mm_geometry_non_polarizable          &
-                => get_mm_geometry_non_polarizable_input_file
-!
-      procedure :: get_reference_wf                         &
-                => get_reference_wf_input_file
-!
-      procedure :: get_cc_wf                                &
-                => get_cc_wf_input_file
-!
-      procedure :: requested_reference_calculation          &
-                => requested_reference_calculation_input_file
-!
-      procedure :: requested_cc_calculation                 &
-                => requested_cc_calculation_input_file
-!
-      procedure :: is_string_in_cs_list                     &
-                => is_string_in_cs_list_input_file
-!
-      procedure :: read_keywords_and_geometry               &
-                => read_keywords_and_geometry_input_file
-!
-      procedure :: cleanup_geometry                         &
-                => cleanup_geometry_input_file
-!
-      procedure :: cleanup_keywords                         &
-                => cleanup_keywords_input_file
 !
       procedure :: is_embedding_on                          &
                 => is_embedding_on_input_file
@@ -207,6 +190,7 @@ contains
       type(section) :: solver_cc_propagation
       type(section) :: solver_fft_dipole_moment
       type(section) :: solver_fft_electric_field
+      type(section) :: solver_fci
       type(section) :: electric_field
       type(section) :: active_atoms
       type(section) :: cc
@@ -253,10 +237,13 @@ contains
                         'mlcc2',          &
                         'mlccsd']
 !
-      allocate(method%keywords(size(this%rf_wfs) &
-                             + size(this%cc_wfs)))
+      this%fci_wfs = [character(len=30) :: 'fci']
 !
-      method%keywords = [this%rf_wfs, this%cc_wfs]
+      allocate(method%keywords(size(this%rf_wfs) &
+                             + size(this%cc_wfs) &
+                             + size(this%fci_wfs)))
+!
+      method%keywords = [this%rf_wfs, this%cc_wfs, this%fci_wfs]
 !
 !     Set other sections in alphabetical order
 !
@@ -365,6 +352,17 @@ contains
                            'ri',                 &
                            't1 eri in memory']
 !
+      solver_fci%name_    = 'solver fci'
+      solver_fci%required = .false.
+      solver_fci%keywords = [character(len=30) ::     &
+                             'energy threshold ',     &
+                             'max iterations',        &
+                             'max reduced dimension', &
+                             'residual threshold',    &
+                             'restart',               &
+                             'start guess',           &
+                             'states',                &
+                             'storage']
 !
       memory%name_    = 'memory'
       memory%required = .false.
@@ -665,6 +663,7 @@ contains
                        solver_cholesky,           &
                        solver_fft_dipole_moment,  &
                        solver_fft_electric_field, &
+                       solver_fci,                &
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &
@@ -1086,6 +1085,77 @@ contains
          & Did you forget to specify all wavefunctions for the calculation?')
 !
    end function get_wf
+!
+!
+   logical function requested_fci_calculation_input_file(this)
+!!
+!!    Requested FCI calculation
+!!    Written by Enrico Ronca, 2020
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: this
+!
+      integer :: n_fci_wfs, k
+!
+      n_fci_wfs = 0
+      do k = 1, size(this%fci_wfs)
+!
+         if (this%is_keyword_present(this%fci_wfs(k), 'method')) then
+!
+            n_fci_wfs = n_fci_wfs + 1
+!
+         endif
+!
+      enddo
+!
+      if (n_fci_wfs == 1) then
+!
+         requested_fci_calculation_input_file = .true.
+!
+      elseif (n_fci_wfs > 1) then
+!
+         requested_fci_calculation_input_file = .false.
+         call output%error_msg('Requested more than one FCI wavefunction.')
+!
+      else
+!
+         requested_fci_calculation_input_file = .false.
+!
+      endif
+!
+   end function requested_fci_calculation_input_file
+!
+!
+   character(len=30) function get_fci_wf_input_file(this)
+!!
+!!    Get FCI wavefunction
+!!    Written by Enrico Ronca, Apr 2020
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: this
+!
+      integer :: k
+!
+      logical :: recognized
+!
+      recognized = .false.
+!
+      do k = 1, size(this%fci_wfs)
+!
+         if (this%is_keyword_present(this%fci_wfs(k),'method')) then
+!
+            get_fci_wf_input_file = this%fci_wfs(k)
+            recognized = .true.
+!
+         endif
+!
+      enddo
+!
+      if (.not. recognized) call output%error_msg('Tried to read FCI wavefunction, but could not find any.')
+!
+   end function get_fci_wf_input_file
 !
 !
 !

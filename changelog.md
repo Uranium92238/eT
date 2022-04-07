@@ -5,6 +5,7 @@
 ### Features
 - Linear response now available at the CC2 level (polarizabilities and transition strengths). eT-program/eT!1039
 - Restart for the Lanczos solver. eT-program/eT!1036
+- FCI for ground and excited states of closed and open-shell systems. eT-program/eT!1060
 
 ### Tests
 - Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035

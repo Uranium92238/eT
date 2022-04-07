@@ -171,18 +171,26 @@ contains
 !!
 !!    Binomial coefficient
 !!
-!!    Written by Sarai D. Folkestad, Dec 2018
+!!    Written by Enrico Ronca and Tor S. Haugland, 2020
+!!
+!!    b = n!/(k!(n-k)!)
 !!
 !
       implicit none
 !
       integer, intent(in) :: n, k
       integer :: b
+      integer :: i
 !
       if (k .gt. n) then
 !
          call output%error_msg('k ((i0)) is greater than n ((i0)) in binomial function.', &
                                ints=[k,n])
+!
+      else if (k < 0) then
+!
+         call output%error_msg('k ((i0)) is smaller than zero in binomial function.', &
+                               ints=[k])
 !
       endif
 !
@@ -193,10 +201,26 @@ contains
 !
       endif
 !
-      b = factorial(n)/(factorial(k)*factorial(n-k))
+      b = 1
+      if (n - k >= k) then ! consider n!/(n-k)! explicitly, then divide by k!
+
+         do i = n - k + 1, n
+            b = b * i
+         end do
+
+         b = b/factorial(k)
+
+      else  ! consider n!/(k)! explicitly, then divide by (n-k)!
+!
+         do i = k + 1, n
+            b = b * i
+         end do
+!
+         b = b/factorial(n-k)
+!
+      end if
 !
    end function binomial
-!
 !
    function cross_product_R3(r1, r2) result(r3)
 !!
@@ -366,6 +390,36 @@ contains
    end function least_positive_n1s1_n2s2
 !
 !
+   subroutine convert_integer_to_binary_string(b, i, n_bits)
+!!
+!!    Convert integer to binary string
+!!    Written by Enrico Ronca, 2020
+!!
+!!    Converts integer to binary in little endian format
+!!
+      implicit none
+!
+      integer,               intent(in)  :: i, n_bits
+      integer, dimension(:), intent(out) :: b
+!
+      integer :: bit, remainder
+!
+      remainder = i
+!
+      b = zero
+!
+      do bit = n_bits, 1, -1
+!
+         if (remainder == 0) return
+!
+         b(bit) = mod(remainder,2)
+         remainder = remainder/2
+!
+      end do
+!
+   end subroutine convert_integer_to_binary_string
+!
+!
    pure function get_n_values_greater_sum(dim_, values, sum_) result(n)
 !!
 !!    Get n values greater sum
@@ -373,7 +427,7 @@ contains
 !!
 !!    Get the n first values that add up to sum or more
 !!
-      implicit none 
+      implicit none
 !
       integer, intent(in) :: dim_
 !

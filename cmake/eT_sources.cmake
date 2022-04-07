@@ -27,6 +27,8 @@ set(eT_fortran_sources
 #
    src/sad/sad_tool_class.F90
 #
+   src/engines/fci_engine_class.F90
+#
    src/engines/hf/abstract_engine_class.F90
    src/engines/hf/reference_engine_class.F90
    src/engines/hf/hf_geoopt_engine_class.F90
@@ -189,6 +191,12 @@ set(eT_fortran_sources
    src/solver_tools/transformation_tool_class.F90
    src/solver_tools/eigen_storage_tool_class.F90
    src/solver_tools/linear_equation_storage_tool_class.F90
+#
+   src/solver_tools/factories/fci_solver_factory_class.F90
+   src/solver_tools/fci/fci_start_vector_tool_class.F90
+   src/solver_tools/fci/fci_transformation_tool_class.F90
+   src/solver_tools/fci/fci_preconditioner_getter_class.F90
+   src/solver_tools/fci/fci_eigen_storage_tool_class.F90
 #
    src/solvers/abstract_solver_class.F90
    src/solvers/hf/scf_solver_class.F90
@@ -412,5 +420,14 @@ set(eT_fortran_sources
    src/wavefunctions/mlccsd/file_handling_mlccsd.F90
    src/wavefunctions/mlccsd/set_get_mlccsd.F90
    src/wavefunctions/mlccsd/jacobian_mlccsd.F90
+#
+   src/wavefunctions/fci/fci_class.F90
+   src/wavefunctions/fci/initialize_destruct_fci.F90
+   src/wavefunctions/fci/strings_fci.F90
+   src/wavefunctions/fci/preconditioning_fci.F90
+   src/wavefunctions/fci/integrals_fci.F90
+   src/wavefunctions/fci/contract_fci.F90
+   src/wavefunctions/fci/spin_operators_fci.F90
+   src/wavefunctions/fci/file_handling_fci.F90
    src/wavefunctions/mlccsd/fock_mlccsd.F90
 )

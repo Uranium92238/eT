@@ -954,9 +954,11 @@ contains
 !
       call wf%set_orbital_coefficients_from_orthonormal_ao_C(C(:,:,1), wf%orbital_coefficients_a)
       call wf%set_orbital_coefficients_from_orthonormal_ao_C(C(:,:,2), wf%orbital_coefficients_b)
+      call dcopy(wf%n_mo*wf%ao%n, wf%orbital_coefficients_b, 1, wf%orbital_coefficients, 1)
 !
       call dcopy(wf%n_mo, e(:,1), 1, wf%orbital_energies_a, 1)
       call dcopy(wf%n_mo, e(:,2), 1, wf%orbital_energies_b, 1)
+      call dcopy(wf%n_mo, e(:,2), 1, wf%orbital_energies, 1)
 !
       call wf%update_ao_density() ! C => D
 !
