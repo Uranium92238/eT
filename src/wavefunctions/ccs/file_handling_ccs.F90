@@ -783,7 +783,8 @@ contains
    end subroutine remove_parallel_states_from_file_ccs
 !
 !
-   module function get_density_for_plotting_ccs(wf, density, state_p, state_q) result(c_D_ct)
+   module subroutine get_density_for_plotting_ccs(wf, c_D_ct, density, state_p, &
+                                                state_q, file_read)
 !!
 !!    Get density for plotting
 !!    Written by Alexander C. Paul, May 2021
@@ -792,10 +793,11 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
+      real(dp), dimension(wf%ao%n, wf%ao%n), intent(out) :: c_D_ct
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: density
       integer, intent(in) :: state_p, state_q
 !
-      real(dp), dimension(wf%ao%n, wf%ao%n) :: c_D_ct
+      logical, intent(out) :: file_read
 !
       character(len=10) :: file_name
       type(stream_file) :: density_file
@@ -804,14 +806,21 @@ contains
 !
       density_file = stream_file(file_name)
 !
-      call density_file%open_('read')
-      call density_file%read_(density, wf%n_mo**2)
+      file_read = .false.
 !
-      call wf%add_t1_terms_and_transform(density, c_D_ct)
+      if (density_file%exists()) then
 !
-      call density_file%close_('keep')
+         call density_file%open_('read')
+         call density_file%read_(density, wf%n_mo**2)
 !
-   end function get_density_for_plotting_ccs
+         file_read = .true.
+         call wf%add_t1_terms_and_transform(density, c_D_ct)
+!
+         call density_file%close_('keep')
+!
+      end if
+!
+   end subroutine get_density_for_plotting_ccs
 !
 !
 end submodule file_handling_ccs

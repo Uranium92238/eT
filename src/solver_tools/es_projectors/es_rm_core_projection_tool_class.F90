@@ -24,16 +24,20 @@ module es_rm_core_projection_tool_class
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
-   use es_projection_tool_class
+   use abstract_projection_tool_class
    use ccs_class, only: ccs 
    use eigen_davidson_tool_class, only: eigen_davidson_tool
    use memory_manager_class, only: mem
 !
    implicit none
 !
-   type, extends(es_projection_tool) :: es_rm_core_projection_tool
+   type, extends(abstract_projection_tool) :: es_rm_core_projection_tool
+!
+      class(ccs), pointer, private :: wf
 !
    contains
+!
+      procedure :: project => project_es_rm_core_projection_tool
 !
    end type es_rm_core_projection_tool
 !
@@ -57,15 +61,27 @@ contains
 !
       type(es_rm_core_projection_tool) :: tool 
 !
-      class(ccs) :: wf 
+      class(ccs), target :: wf
 !
-      tool%vector_length = wf%n_es_amplitudes
-      call mem%alloc(tool%projector, tool%vector_length)
+      tool%n_parameters = wf%n_es_amplitudes
 !
-      tool%active = .true.
-      call wf%get_rm_core_projector(tool%projector, wf%n_core_MOs, wf%core_MOs)
+      tool%wf => wf
 !
    end function new_es_rm_core_projection_tool
+!
+   subroutine project_es_rm_core_projection_tool(tool, vector)
+!!
+!!    Project
+!!    Written by Sarai D. Folkestad, Feb 2022
+!!
+      implicit none
+!
+      class(es_rm_core_projection_tool),      intent(in)    :: tool
+      real(dp), dimension(tool%n_parameters), intent(inout) :: vector
+!
+      call tool%wf%rm_core_projection(vector, tool%wf%n_core_MOs, tool%wf%core_MOs)
+!
+   end subroutine project_es_rm_core_projection_tool
 !
 !
 end module es_rm_core_projection_tool_class

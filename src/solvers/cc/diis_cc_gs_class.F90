@@ -174,15 +174,13 @@ contains
 !
       else
 !
-         call output%error_msg('Could not recognize keyword storage in solver: ' // &
-                                 trim(storage))
+         call output%error_msg('Could not recognize keyword storage in solver: ' // trim(storage))
 !
       endif
 !
-!
-      this%diis = diis_tool('cc_gs_diis',          &
-                        this%wf%n_gs_amplitudes,          &
-                        this%wf%n_gs_amplitudes,          &
+      this%diis = diis_tool('cc_gs_diis',            &
+                        this%wf%n_gs_amplitudes,     &
+                        this%wf%n_gs_amplitudes,     &
                         dimension_=diis_dimension,   &
                         crop=crop,                   &
                         records_in_memory=records_in_memory)

@@ -390,6 +390,7 @@ contains
 
       character(len=1)  :: l_label = 'h'
 
+      length = 11
       offsets = [(p, p=1, length)]
       components = ['-5','-4','-3','-2','-1',' 0',' 1',' 2',' 3',' 4', ' 5']
       normalization = [(one, p=1, length)]
@@ -417,6 +418,7 @@ contains
 
       character(len=1) :: l_label = 'i'
 
+      length = 13
       offsets = [(p, p=1, length)]
       components = ['-6','-5','-4','-3','-2','-1',' 0',' 1',' 2',' 3',' 4', ' 5', ' 6']
       normalization = [(one, p=1, length)]

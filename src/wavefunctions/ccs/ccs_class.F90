@@ -189,6 +189,8 @@ module ccs_class
       procedure :: destruct_density_intermediates   &
                 => destruct_density_intermediates_ccs
 !
+      procedure :: initialize_excitation_energies                => initialize_excitation_energies_ccs
+!
       procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
       procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
 !
@@ -230,6 +232,7 @@ module ccs_class
 !     Print summaries
 !
       procedure :: print_gs_summary                              => print_gs_summary_ccs
+      procedure :: print_es_summary                              => print_es_summary_ccs
       procedure :: print_X1_diagnostics                          => print_X1_diagnostics_ccs
 !
 !     Set/get procedures
@@ -245,6 +248,9 @@ module ccs_class
 !
       procedure :: get_multipliers                               => get_multipliers_ccs
       procedure :: get_multipliers_complex                       => get_multipliers_ccs_complex
+!
+      procedure :: get_full_multipliers &
+                => get_multipliers_ccs
 !
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
 !
@@ -300,7 +306,6 @@ module ccs_class
 !
       procedure :: print_banner_davidson_cc_multipliers          => print_banner_davidson_cc_multipliers_ccs
       procedure :: get_initial_cc_multipliers                    => get_initial_cc_multipliers_ccs
-      procedure :: get_cc_multipliers_preconditioner             => get_cc_multipliers_preconditioner_ccs
       procedure :: cc_multipliers_summary                        => cc_multipliers_summary_ccs
 !
 !     Procedures related to the Jacobian transformation
@@ -371,6 +376,15 @@ module ccs_class
       procedure :: density_mu_mu_oo                              => density_mu_mu_oo_ccs
       procedure :: density_mu_ref                                => density_mu_ref_ccs
 !
+      procedure, public :: calculate_and_print_dipole &
+                        => calculate_and_print_dipole_ccs
+!
+      procedure, public :: calculate_and_print_quadrupole &
+                        => calculate_and_print_quadrupole_ccs
+!
+      procedure, private :: get_electronic_dipole
+      procedure, private :: get_electronic_quadrupole
+!
       procedure :: construct_etaX                                => construct_etaX_ccs
       procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
       procedure :: etaX_ccs_a1                                   => etaX_ccs_a1_ccs
@@ -434,10 +448,10 @@ module ccs_class
 !
 !     Core-valence separation procedures
 !
-      procedure :: get_cvs_projector                             => get_cvs_projector_ccs
+      procedure :: cvs_projection                                => cvs_projection_ccs
       procedure :: set_cvs_start_indices                         => set_cvs_start_indices_ccs
 !
-      procedure :: get_rm_core_projector                         => get_rm_core_projector_ccs
+      procedure :: rm_core_projection                            => rm_core_projection_ccs
 !
 !     Other procedures
 !
@@ -448,7 +462,7 @@ module ccs_class
       procedure :: set_initial_amplitudes_guess                  => set_initial_amplitudes_guess_ccs
       procedure :: set_initial_multipliers_guess                 => set_initial_multipliers_guess_ccs
       procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
-      procedure :: get_ip_projector                              => get_ip_projector_ccs
+      procedure :: ip_projection                                 => ip_projection_ccs
 !
       procedure :: scale_amplitudes                              => scale_amplitudes_ccs
 !
@@ -1012,9 +1026,9 @@ contains
    end subroutine prepare_for_approximate_Jacobians_ccs
 !
 !
-   subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
+   subroutine cvs_projection_ccs(wf, vector, n_cores, core_MOs)
 !!
-!!    Get CVS projector
+!!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
       use array_utilities, only: zero_array
@@ -1023,34 +1037,32 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai
+      integer :: i, a, ai
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      do i = 1, wf%n_o
 !
-      do core = 1, n_cores
-!
-         i = core_MOs(core)
+         if (any(core_MOs == i)) cycle
 !
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
-            projector(ai) = one
+            vector(ai) = zero
 !
          enddo
       enddo
 !
-   end subroutine get_cvs_projector_ccs
+   end subroutine cvs_projection_ccs
 !
 !
-   subroutine get_rm_core_projector_ccs(wf, projector, n_cores, core_MOs)
+   subroutine rm_core_projection_ccs(wf, vector, n_cores, core_MOs)
 !!
-!!    Get remove core projector
+!!    Remove core projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
 !
@@ -1060,29 +1072,27 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai
+      integer :: i, a, ai, core
 !
-      call constant_array(projector, wf%n_es_amplitudes, one)
-!
+!$omp parallel do private(core, i, a, ai)
       do core = 1, n_cores
-!
-         i = core_MOs(core)
-!
          do a = 1, wf%n_v
 !
+            i = core_MOs(core)
             ai = wf%n_v*(i - 1) + a
-            projector(ai) = zero
+            vector(ai) = zero
 !
          enddo
       enddo
+!$omp end parallel do
 !
-   end subroutine get_rm_core_projector_ccs
+   end subroutine rm_core_projection_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
@@ -1367,12 +1377,12 @@ contains
    end subroutine set_ip_start_indices_ccs
 !
 !
-   subroutine get_ip_projector_ccs(wf, projector)
+   subroutine ip_projection_ccs(wf, vector)
 !!
-!!    Get IP projector
+!!    IP projection
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
-!!    Constructs and returns the projector
+!!    Constructs and returns the vector
 !!    for an IP calculation (valence).
 !!
 !!    Only excitations into the last virtual orbital
@@ -1384,22 +1394,22 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes),intent(inout) :: vector
 !
       integer :: A, I, AI
 !
-      call zero_array(projector, wf%n_es_amplitudes)
-!
+!$omp parallel do private(I, A, AI)
       do I = 1, wf%n_o
-         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
+         do A = 1, wf%n_v - wf%n_bath_orbitals
 !
             AI = wf%n_v*(I-1) + A
-            projector(AI) = one
+            vector(AI) = zero
 !
          enddo
       enddo
+!$omp end parallel do
 !
-   end subroutine get_ip_projector_ccs
+   end subroutine ip_projection_ccs
 !
 !
    subroutine approximate_double_excitation_vectors_ccs(wf, R_ai, omega, file_)
@@ -2649,6 +2659,103 @@ contains
       call wf%print_dominant_amplitudes()
 !
    end subroutine print_gs_summary_ccs
+!
+!
+   subroutine print_es_summary_ccs(wf, side, X_order)
+!!
+!!    Print es summary
+!!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!
+      use string_utilities, only: convert_to_uppercase
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      character(len=*), intent(in) :: side
+!
+      integer, dimension(wf%n_singlet_states), optional, intent(in) :: X_order
+!
+      integer :: I
+!
+      integer, dimension(:), allocatable :: X_order_local
+      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:), allocatable :: energies
+!
+      integer :: state_index
+!
+      character(len=1) :: label ! R or L, depending on whether left or right transformation
+!
+!     Set up list that gives ordering of energies from low to high
+!
+      call mem%alloc(X_order_local, wf%n_singlet_states)
+!
+      if (present(X_order)) then
+!
+         X_order_local = X_order
+!
+      else
+!
+         do I = 1, wf%n_singlet_states
+!
+            X_order_local(I) = I
+!
+         enddo
+!
+      endif
+!
+!
+      call mem%alloc(X, wf%n_es_amplitudes, wf%n_singlet_states)
+      call mem%alloc(energies, wf%n_singlet_states)
+      call wf%read_excited_state(X, 1, wf%n_singlet_states, side, energies)
+!
+!     Print excited state vectors
+!
+      label = trim(adjustl(convert_to_uppercase(side(1:1))))
+!
+      call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
+!
+      do I = 1, wf%n_singlet_states
+!
+         state_index = X_order_local(I)
+!
+         call output%printf('n', 'Electronic state nr. (i0)', ints=[I], fs='(/t6,a)')
+!
+         call output%printf('n', 'Energy (Hartree):             (f19.12)', &
+                            reals=[energies(state_index)], fs='(/t6,a)')
+!
+         call wf%print_X1_diagnostics(X(:,state_index), label)
+         call wf%print_dominant_x_amplitudes(X(1, state_index), label)
+!
+      enddo
+!
+      call mem%dealloc(X_order_local, wf%n_singlet_states)
+!
+      call output%printf('m', '- '//trim(convert_to_uppercase(wf%name_))//' excitation energies:', fs='(/t3,a)')
+!
+      call output%printf('m', 'Excitation energy', fs='(/t39,a)')
+      call output%print_separator('m', 42, '-', fs='(t27,a)')
+      call output%printf('m', ' State                (Hartree)             (eV)', fs='(t6,a)')
+      call output%print_separator('m', 63, '-', fs='(t6,a)')
+!
+      do I = 1, wf%n_singlet_states
+!
+         call output%printf('m', '(i4)             (f19.12)   (f19.12)',   &
+                               ints=[I], reals=[energies(I),               &
+                               energies(I)*Hartree_to_eV], fs='(t6,a)')
+!
+      enddo
+!
+      call output%print_separator('m', 63, '-', fs='(t6,a)')
+!
+      call output%printf('m', 'eV/Hartree (CODATA 2014): (f11.8)', &
+                         reals=[Hartree_to_eV], fs='(t6,a)')
+!
+
+      call mem%dealloc(X, wf%n_es_amplitudes, wf%n_singlet_states)
+      call mem%dealloc(energies, wf%n_singlet_states)
+!
+   end subroutine print_es_summary_ccs
 !
 !
    subroutine print_X1_diagnostics_ccs(wf, X, label)

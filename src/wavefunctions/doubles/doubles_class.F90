@@ -134,11 +134,14 @@ module doubles_class
       procedure :: save_excitation_vector_on_file        => save_excitation_vector_on_file_doubles
       procedure :: get_restart_vector                    => get_restart_vector_doubles
 !
+      procedure :: get_full_multipliers &
+                => get_multipliers_doubles
+!
 !     Projectors for excited and ionized states
 !
-      procedure :: get_cvs_projector                     => get_cvs_projector_doubles
-      procedure :: get_rm_core_projector                 => get_rm_core_projector_doubles
-      procedure :: get_ip_projector                      => get_ip_projector_doubles
+      procedure :: cvs_projection                        => cvs_projection_doubles
+      procedure :: rm_core_projection                    => rm_core_projection_doubles
+      procedure :: ip_projection                         => ip_projection_doubles
 !
 !     Properties and densities
 !
@@ -201,7 +204,16 @@ module doubles_class
       procedure :: construct_ntos_or_cntos &
                 => construct_ntos_or_cntos_doubles
 !
-
+!     F transformation
+!
+      procedure :: F_doubles_a1_1 => F_doubles_a1_1_doubles
+      procedure :: F_doubles_a2_1 => F_doubles_a2_1_doubles
+      procedure :: F_doubles_a1_2 => F_doubles_a1_2_doubles
+      procedure :: F_doubles_b1_2 => F_doubles_b1_2_doubles
+      procedure :: F_doubles_c1_2 => F_doubles_c1_2_doubles
+!
+      procedure :: F_x_mu_transformation => F_x_mu_transformation_doubles
+!
    end type doubles
 !
    interface
@@ -214,6 +226,7 @@ module doubles_class
       include "mean_value_doubles_interface.F90"
       include "response_doubles_interface.F90"
       include "complex_doubles_interface.F90"
+      include "F_doubles_interface.F90"
 !
       include "generated_complex_files/initialize_destruct_doubles_complex_interface.F90"
       include "generated_complex_files/jacobian_transpose_doubles_complex_interface.F90"
@@ -243,9 +256,9 @@ contains
    end subroutine print_amplitude_info_doubles
 !
 !
-   subroutine get_cvs_projector_doubles(wf, projector, n_cores, core_MOs)
+   subroutine cvs_projection_doubles(wf, vector, n_cores, core_MOs)
 !!
-!!    Get CVS projector
+!!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
       use array_utilities, only: zero_array
@@ -254,47 +267,43 @@ contains
 !
       class(doubles), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai, j, b, bj, aibj
+      integer :: i, a, ai, j, b, bj, aibj
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      call wf%ccs%cvs_projection(vector, n_cores, core_MOs)
 !
-      do core = 1, n_cores
-!
-         i = core_MOs(core)
-!
-!$omp parallel do private (a, ai, j, b, bj, aibj)
+!$omp parallel do private(i, a, j, b, ai, bj, aibj) collapse(2)
+      do i = 1, wf%n_o
          do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-            projector(ai) = one
-!
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
-                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+                  if(all(core_MOs /= i) .and. all(core_MOs /= j)) then
 !
-                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
+                     ai = wf%n_v*(i - 1) + a
+                     bj = wf%n_v*(j - 1) + b
+                     aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+!
+                     vector(aibj + (wf%n_o)*(wf%n_v)) = zero
+                  endif
 !
                enddo
             enddo
          enddo
+      enddo
 !$omp end parallel do
 !
-      enddo
-!
-   end subroutine get_cvs_projector_doubles
+   end subroutine cvs_projection_doubles
 !
 !
-   subroutine get_rm_core_projector_doubles(wf, projector, n_cores, core_MOs)
+   subroutine rm_core_projection_doubles(wf, vector, n_cores, core_MOs)
 !!
-!!    Get remove core projector
+!!    Remove core projection
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
@@ -304,47 +313,43 @@ contains
 !
       class(doubles), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: vector
 !
       integer, intent(in) :: n_cores
 !
       integer, dimension(n_cores), intent(in) :: core_MOs
 !
-      integer :: core, i, a, ai, j, b, bj, aibj
+      integer :: i, a, ai, j, b, bj, aibj, core
 !
-      call constant_array(projector, wf%n_es_amplitudes, one)
+      call wf%ccs%rm_core_projection(vector(1:wf%n_t1), n_cores, core_MOs)
 !
+!$omp parallel do private(i, a, j, b, ai, bj, aibj, core) collapse(2)
       do core = 1, n_cores
-!
-         i = core_MOs(core)
-!
-!$omp parallel do private (a, ai, j, b, bj, aibj)
          do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-            projector(ai) = zero
-!
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
+                  i = core_MOs(core)
+!
+                  ai = wf%n_v*(i - 1) + a
                   bj = wf%n_v*(j - 1) + b
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
 !
-                  projector(aibj + (wf%n_o)*(wf%n_v)) = zero
+                  vector(aibj + (wf%n_o)*(wf%n_v)) = zero
 !
                enddo
             enddo
          enddo
+      enddo
+
 !$omp end parallel do
 !
-      enddo
-!
-   end subroutine get_rm_core_projector_doubles
+   end subroutine rm_core_projection_doubles
 !
 !
-   subroutine get_ip_projector_doubles(wf, projector)
+   subroutine ip_projection_doubles(wf, vector)
 !!
-!!    Get IP projector
+!!    IP projection
 !!    Written by Sarai D. Folkestad, Aug 2019
 !!
 !!    Constructs and returns the projector
@@ -357,33 +362,36 @@ contains
 !
       class(doubles), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes),intent(inout) :: vector
 !
       integer :: A, I, AI, B, J, BJ, AIBJ
 !
-      call zero_array(projector, wf%n_es_amplitudes)
+      call wf%ccs%ip_projection(vector)
 !
+!$omp parallel do private(i, a, j, b, ai, bj, aibj) collapse(2)
       do I = 1, wf%n_o
-         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
-!
-            AI = wf%n_v*(I-1) + A
-            projector(AI) = one
-!
+         do A = 1, wf%n_v
             do J = 1, wf%n_o
                do B = 1, wf%n_v
 !
-                  BJ = wf%n_v*(J-1) + B
-                  AIBJ = max(AI, BJ)*(max(AI, BJ)-3)/2 + AI + BJ
+                  if ((A <= wf%n_v - wf%n_bath_orbitals) .and. &
+                      (B <= wf%n_v - wf%n_bath_orbitals)) then
 !
-                  projector(wf%n_t1 + AIBJ) = one
+                     AI = wf%n_v*(I-1) + A
+                     BJ = wf%n_v*(J-1) + B
+                     AIBJ = max(AI, BJ)*(max(AI, BJ)-3)/2 + AI + BJ
+!
+                     vector(wf%n_t1 + AIBJ) = zero
+                  endif
 !
                enddo
             enddo
 !
          enddo
       enddo
+!$omp end parallel do
 !
-   end subroutine get_ip_projector_doubles
+   end subroutine ip_projection_doubles
 !
 !
    subroutine get_orbital_differences_doubles(wf, orbital_differences, N)
@@ -559,6 +567,23 @@ contains
       endif
 !
    end subroutine construct_ntos_or_cntos_doubles
-
+!
+!
+   subroutine get_multipliers_doubles(wf, multipliers)
+!!
+!!    Get multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes) :: multipliers
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1), 1)
+!
+   end subroutine get_multipliers_doubles
+!
 !
 end module doubles_class

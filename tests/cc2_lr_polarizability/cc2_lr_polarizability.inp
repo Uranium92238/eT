@@ -1,0 +1,50 @@
+system
+  name: H2O He
+  charge: 0
+  multiplicity: 1
+end system
+
+do
+  response
+end do
+
+method
+  hf
+  cc2
+end method
+
+solver scf
+  gradient threshold: 1.0d-11
+end solver scf
+
+solver cholesky
+  threshold: 1.0d-11
+end solver cholesky
+
+cc response
+  lr
+  polarizabilities: {11,13}
+  frequencies: {0.02d0, 0.04d0, 0.06d0}
+  dipole length
+end cc response
+
+solver cc multipliers
+  threshold: 1.0d-11
+end solver cc multipliers
+
+solver cc gs
+  omega threshold: 1.0d-11
+end solver cc gs
+
+solver cc response
+  threshold: 1.0d-11
+end solver cc response
+
+geometry
+units: bohr
+  basis: cc-pVDZ
+  H    1.638033502034   1.136556880358   9.448630622825  
+  H   -1.638033502034   1.136556880358   9.448630622825   
+  O    0.000000000000  -0.143222342981   9.448630622825   
+  He   0.188972612457   0.188972612457  14.172945934238
+end geometry

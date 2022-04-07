@@ -40,6 +40,10 @@ solver cc multipliers
    threshold: 1.0d-10
 end solver cc multipliers
 
+visualization
+   plot cc density
+end visualization
+
 solver cc propagation
    initial time: 0.0
    final time: 0.1
@@ -47,6 +51,7 @@ solver cc propagation
    integrator: rk4
    energy output
    dipole moment output
+   density matrix output
    implicit threshold: 1.0d-10
    steps between output: 1
 end solver cc propagation

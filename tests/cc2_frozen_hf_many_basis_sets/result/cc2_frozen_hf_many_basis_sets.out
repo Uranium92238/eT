@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:07:41 UTC +01:00
+  Calculation started: 2022-04-07 12:34:50 UTC -07:00
 
 
   :: Input file
@@ -198,34 +199,34 @@
     16          -151.989926624402     0.3685E-04     0.1354E-07
     17          -151.989926629205     0.2194E-04     0.4803E-08
     18          -151.989926630908     0.1308E-04     0.1703E-08
-    19          -151.989926631512     0.7793E-05     0.6039E-09
+    19          -151.989926631512     0.7793E-05     0.6038E-09
     20          -151.989926631726     0.4645E-05     0.2143E-09
-    21          -151.989926631802     0.2767E-05     0.7574E-10
+    21          -151.989926631802     0.2767E-05     0.7580E-10
     22          -151.989926631829     0.1649E-05     0.2700E-10
-    23          -151.989926631838     0.9827E-06     0.9607E-11
-    24          -151.989926631842     0.5856E-06     0.3382E-11
-    25          -151.989926631843     0.3490E-06     0.1052E-11
-    26          -151.989926631843     0.2080E-06     0.5400E-12
-    27          -151.989926631844     0.1239E-06     0.2558E-12
-    28          -151.989926631844     0.7385E-07     0.1137E-12
-    29          -151.989926631844     0.4401E-07     0.1990E-12
-    30          -151.989926631844     0.2623E-07     0.2842E-13
+    23          -151.989926631838     0.9827E-06     0.9578E-11
+    24          -151.989926631842     0.5856E-06     0.3496E-11
+    25          -151.989926631843     0.3490E-06     0.9948E-12
+    26          -151.989926631844     0.2080E-06     0.6537E-12
+    27          -151.989926631844     0.1239E-06     0.1137E-12
+    28          -151.989926631844     0.7385E-07     0.8527E-13
+    29          -151.989926631844     0.4401E-07     0.1137E-12
+    30          -151.989926631844     0.2623E-07     0.1990E-12
     31          -151.989926631844     0.1563E-07     0.1705E-12
-    32          -151.989926631844     0.9314E-08     0.8527E-13
-    33          -151.989926631844     0.5551E-08     0.2842E-13
-    34          -151.989926631844     0.3308E-08     0.8527E-13
+    32          -151.989926631844     0.9314E-08     0.2842E-13
+    33          -151.989926631844     0.5551E-08     0.5684E-13
+    34          -151.989926631844     0.3308E-08     0.1137E-12
     35          -151.989926631844     0.1971E-08     0.2842E-13
     36          -151.989926631844     0.1175E-08     0.2842E-13
-    37          -151.989926631844     0.7001E-09     0.2842E-13
-    38          -151.989926631844     0.4173E-09     0.5684E-13
-    39          -151.989926631844     0.2487E-09     0.5684E-13
-    40          -151.989926631844     0.1482E-09     0.1137E-12
-    41          -151.989926631844     0.8832E-10     0.5684E-13
-    42          -151.989926631844     0.5264E-10     0.2842E-13
-    43          -151.989926631844     0.3137E-10     0.1990E-12
-    44          -151.989926631844     0.1870E-10     0.2274E-12
-    45          -151.989926631844     0.1115E-10     0.8527E-13
-    46          -151.989926631844     0.6648E-11     0.1137E-12
+    37          -151.989926631844     0.7001E-09     0.0000E+00
+    38          -151.989926631844     0.4172E-09     0.1421E-12
+    39          -151.989926631844     0.2487E-09     0.3126E-12
+    40          -151.989926631844     0.1482E-09     0.3126E-12
+    41          -151.989926631844     0.8831E-10     0.2558E-12
+    42          -151.989926631844     0.5263E-10     0.3126E-12
+    43          -151.989926631844     0.3136E-10     0.2558E-12
+    44          -151.989926631844     0.1869E-10     0.1705E-12
+    45          -151.989926631844     0.1114E-10     0.2274E-12
+    46          -151.989926631844     0.6637E-11     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 46 iterations!
 
@@ -238,10 +239,10 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              5.22400
-     Total cpu time (sec):               8.20236
+     Total wall time (sec):              1.90900
+     Total cpu time (sec):               1.77215
 
-     The smallest diagonal after decomposition is:  -0.1110E-15
+     The smallest diagonal after decomposition is:  -0.6200E-16
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -267,23 +268,11 @@
      Double excitation amplitudes:  2485
 
 
-  :: Ground state coupled cluster engine
-  =========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
-
-  This is a CC2 ground state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -331,7 +320,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7525E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1664E-14
 
   - Settings for integral handling:
 
@@ -340,14 +329,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.91000
-     Total cpu time (sec):               1.25494
+     Total wall time (sec):              0.53400
+     Total cpu time (sec):               0.35486
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -384,8 +371,8 @@
     8          -152.181450878107     0.1090E-07     0.2124E-09
     9          -152.181450878094     0.2179E-08     0.1327E-10
    10          -152.181450878097     0.5842E-09     0.2842E-11
-   11          -152.181450878097     0.2867E-10     0.2842E-13
-   12          -152.181450878097     0.4691E-11     0.1137E-12
+   11          -152.181450878097     0.2867E-10     0.5684E-13
+   12          -152.181450878097     0.4692E-11     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -399,36 +386,31 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        7      3        0.008388942823
+        7      3        0.008388942824
         6      2        0.004602171538
         2      3        0.004597611956
-        5      5        0.004154237964
+        5      5        0.004154237963
         9      4        0.003420124752
        14      3       -0.003213822442
         3      3       -0.002743927678
-        6      4       -0.002734638912
+        6      4       -0.002734638911
        13      4       -0.002451416432
         6      3       -0.002437599651
      ------------------------------------
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.10800
-     Total cpu time (sec):               0.09348
-
-  - Timings for the CC2 ground state calculation
-
-     Total wall time (sec):              1.01900
-     Total cpu time (sec):               1.35060
+     Total wall time (sec):              0.15100
+     Total cpu time (sec):               0.06035
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 4.699672 MB
 
-  Total wall time in eT (sec):              6.51800
-  Total cpu time in eT (sec):               9.85250
+  Total wall time in eT (sec):              2.67400
+  Total cpu time in eT (sec):               2.26550
 
-  Calculation ended: 2022-02-01 16:07:48 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:53 UTC -07:00
 
   - Implementation references:
 

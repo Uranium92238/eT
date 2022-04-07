@@ -1,0 +1,692 @@
+
+
+
+                     eT 1.7 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.7.0 Hydra
+  ------------------------------------------------------------
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2022-04-07 12:35:58 UTC -07:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2O-He
+        charge: 0
+        multiplicity: 1
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     method
+        hf
+        fci
+     end method
+
+     solver cholesky
+        threshold: 1e-11
+     end solver cholesky
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+        diis dimension: 8
+     end solver scf
+
+     solver fci
+        states: 5
+        residual threshold: 1.0d-10
+     end solver fci
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: sto-3g
+        1  O     0.000000000000     0.000000000000     0.000000000000        1
+        2  H     0.000000000000     0.000000000000     0.950000000000        2
+        3  H     0.895670000000     0.000000000000    -0.316663000000        3
+        4 He     0.500000000000     0.700000000000     0.300000000000        4
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: sto-3g
+        1  O     0.000000000000     0.000000000000     0.000000000000        1
+        2  H     0.000000000000     0.000000000000     1.795239818337        2
+        3  H     1.692570997989     0.000000000000    -0.598406343783        3
+        4 He     0.944863062283     1.322808287196     0.566917837370        4
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               8
+     Number of orthonormal atomic orbitals:   8
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:          2
+     Number of molecular orbitals:        8
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -78.582658360539
+     Number of electrons in guess:           12.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -76.727185766914     0.9427E-01     0.7673E+02
+     2           -76.759316005434     0.1398E-01     0.3213E-01
+     3           -76.760223638410     0.2959E-02     0.9076E-03
+     4           -76.760462402680     0.1840E-02     0.2388E-03
+     5           -76.760611518525     0.4185E-03     0.1491E-03
+     6           -76.760622261769     0.1348E-03     0.1074E-04
+     7           -76.760622833957     0.4713E-04     0.5722E-06
+     8           -76.760622887227     0.1257E-04     0.5327E-07
+     9           -76.760622890071     0.3166E-05     0.2844E-08
+    10           -76.760622890153     0.9333E-07     0.8147E-10
+    11           -76.760622890153     0.1806E-07     0.1137E-12
+    12           -76.760622890153     0.1483E-08     0.8527E-13
+    13           -76.760622890153     0.2096E-09     0.5684E-13
+    14           -76.760622890153     0.3801E-10     0.2842E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 14 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.565943688269
+     Nuclear repulsion energy:      20.573163732549
+     Electronic energy:            -97.333786622702
+     Total energy:                 -76.760622890153
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.04400
+     Total cpu time (sec):               0.04069
+
+
+  :: FCI wavefunction
+  ======================
+
+   - Number of orbitals:
+
+     Alpha electrons:          6
+     Virtual alpha orbitals:   2
+     Beta electrons:           6
+     Virtual beta orbitals:    2
+     Molecular orbitals:       8
+
+   - Number of determinants:
+     Alpha Determinants:       28
+     Beta Determinants:        28
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                     8
+     Total number of shell pairs:            21
+     Total number of AO pairs:               36
+
+     Significant shell pairs:                21
+     Significant AO pairs:                   36
+
+     Construct shell pairs:                  21
+     Construct AO pairs:                     36
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1                29 /      16       0.47851E+01          21             10               290
+     2                 8 /       8       0.46408E-01          22             28               224
+     3                 3 /       3       0.21537E-03           5             33                99
+     4                 0 /       0       0.19151E-05           3             36                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 36
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.3197E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.2712E-15
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.02200
+     Total cpu time (sec):               0.01694
+
+
+  :: Full CI engine
+  ====================
+
+  Calculates the FCI states and energies
+
+  This is a FCI fci calculation.
+  The following tasks will be performed:
+
+     1) Diagonalization of the Hamiltonian (davidson algorithm)
+
+  Davidson eigenvalue equation solver
+  -----------------------------------
+
+  A Davidson solver that solves an eigenvalue equation: M x = omega x. 
+  This equation is solved in a reduced space. A description of the algorithm 
+  can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
+
+   - Davidson tool settings:
+
+     Number of parameters:                  784
+     Number of requested solutions:           5
+     Max reduced space dimension:           100
+
+     Storage (fci_davidson_trials): file
+     Storage (fci_davidson_transforms): file
+
+  - Davidson solver settings
+
+     Number of singlet states:               5
+     Max number of iterations:             100
+
+  Iteration:                  1
+  Reduced space dimension:    5
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.760622890153    0.000000000000     0.3274E+00   0.7676E+02
+     2 -76.708064134291    0.000000000000     0.3180E+00   0.7671E+02
+     3 -76.239554115719    0.000000000000     0.3224E+00   0.7624E+02
+     4 -76.039050389213    0.000000000000     0.2440E+00   0.7604E+02
+     5 -75.874685304359    0.000000000000     0.3141E+00   0.7587E+02
+  -------------------------------------------------------------------------
+
+  Iteration:                  2
+  Reduced space dimension:   10
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.820623280295    0.000000000000     0.9928E-01   0.6000E-01
+     2 -76.763677543407    0.000000000000     0.2880E+00   0.5561E-01
+     3 -76.657126728818    0.000000000000     0.3384E+00   0.4176E+00
+     4 -76.301371571430    0.000000000000     0.2897E+00   0.2623E+00
+     5 -76.180490732906    0.000000000000     0.3343E+00   0.3058E+00
+  -------------------------------------------------------------------------
+
+  Iteration:                  3
+  Reduced space dimension:   15
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.825781221546    0.000000000000     0.2611E-01   0.5158E-02
+     2 -76.810294703792    0.000000000000     0.6457E-01   0.4662E-01
+     3 -76.729710503629    0.000000000000     0.9687E-01   0.7258E-01
+     4 -76.358536073515    0.000000000000     0.9159E-01   0.5716E-01
+     5 -76.258247775710    0.000000000000     0.1348E+00   0.7776E-01
+  -------------------------------------------------------------------------
+
+  Iteration:                  4
+  Reduced space dimension:   20
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826227910685    0.000000000000     0.9561E-02   0.4467E-03
+     2 -76.812326074942    0.000000000000     0.1278E-01   0.2031E-02
+     3 -76.734043655289    0.000000000000     0.1832E-01   0.4333E-02
+     4 -76.363992426150    0.000000000000     0.3260E-01   0.5456E-02
+     5 -76.349461886589    0.000000000000     0.6225E+00   0.9121E-01
+  -------------------------------------------------------------------------
+
+  Iteration:                  5
+  Reduced space dimension:   25
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826299505155    0.000000000000     0.3981E-02   0.7159E-04
+     2 -76.812404862576    0.000000000000     0.2267E-02   0.7879E-04
+     3 -76.734256972707    0.000000000000     0.7486E-02   0.2133E-03
+     4 -76.533134456327    0.000000000000     0.2947E+00   0.1691E+00
+     5 -76.481625048331    0.000000000000     0.2871E+00   0.1322E+00
+  -------------------------------------------------------------------------
+
+  Iteration:                  6
+  Reduced space dimension:   30
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826306973183    0.000000000000     0.1030E-02   0.7468E-05
+     2 -76.812407565830    0.000000000000     0.4522E-03   0.2703E-05
+     3 -76.734290350741    0.000000000000     0.2613E-02   0.3338E-04
+     4 -76.573054632474    0.000000000000     0.1064E+00   0.3992E-01
+     5 -76.529432519732    0.000000000000     0.1033E+00   0.4781E-01
+  -------------------------------------------------------------------------
+
+  Iteration:                  7
+  Reduced space dimension:   35
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307403162    0.000000000000     0.2322E-03   0.4300E-06
+     2 -76.812407672139    0.000000000000     0.1226E-03   0.1063E-06
+     3 -76.734293640043    0.000000000000     0.7183E-03   0.3289E-05
+     4 -76.578750668390    0.000000000000     0.4640E-01   0.5696E-02
+     5 -76.534663559160    0.000000000000     0.4039E-01   0.5231E-02
+  -------------------------------------------------------------------------
+
+  Iteration:                  8
+  Reduced space dimension:   40
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307427152    0.000000000000     0.5125E-04   0.2399E-07
+     2 -76.812407681739    0.000000000000     0.3539E-04   0.9601E-08
+     3 -76.734293890606    0.000000000000     0.1790E-03   0.2506E-06
+     4 -76.626738553721    0.000000000000     0.1783E+00   0.4799E-01
+     5 -76.592326562364    0.000000000000     0.1482E+00   0.5766E-01
+  -------------------------------------------------------------------------
+
+  Iteration:                  9
+  Reduced space dimension:   45
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428343    0.000000000000     0.1093E-04   0.1191E-08
+     2 -76.812407682325    0.000000000000     0.6819E-05   0.5852E-09
+     3 -76.734293905378    0.000000000000     0.4289E-04   0.1477E-07
+     4 -76.646201209913    0.000000000000     0.5114E-01   0.1946E-01
+     5 -76.603140387012    0.000000000000     0.3529E-01   0.1081E-01
+  -------------------------------------------------------------------------
+
+  Iteration:                 10
+  Reduced space dimension:   50
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428397    0.000000000000     0.2195E-05   0.5340E-10
+     2 -76.812407682345    0.000000000000     0.1171E-05   0.2018E-10
+     3 -76.734293906236    0.000000000000     0.8050E-05   0.8581E-09
+     4 -76.647580108107    0.000000000000     0.1119E-01   0.1379E-02
+     5 -76.603726530836    0.000000000000     0.7990E-02   0.5861E-03
+  -------------------------------------------------------------------------
+
+  Iteration:                 11
+  Reduced space dimension:   55
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.3319E-06   0.1279E-11
+     2 -76.812407682345    0.000000000000     0.2047E-06   0.2842E-12
+     3 -76.734293906263    0.000000000000     0.1597E-05   0.2704E-10
+     4 -76.647641775646    0.000000000000     0.2597E-02   0.6167E-04
+     5 -76.603758027208    0.000000000000     0.1861E-02   0.3150E-04
+  -------------------------------------------------------------------------
+
+  Iteration:                 12
+  Reduced space dimension:   60
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.4527E-07   0.1563E-12
+     2 -76.812407682345    0.000000000000     0.4056E-07   0.1847E-12
+     3 -76.734293906265    0.000000000000     0.3304E-06   0.1322E-11
+     4 -76.647645364343    0.000000000000     0.5897E-03   0.3589E-05
+     5 -76.603759862492    0.000000000000     0.4876E-03   0.1835E-05
+  -------------------------------------------------------------------------
+
+  Iteration:                 13
+  Reduced space dimension:   65
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.7175E-08   0.2842E-13
+     2 -76.812407682345    0.000000000000     0.8372E-08   0.7105E-13
+     3 -76.734293906265    0.000000000000     0.7085E-07   0.2274E-12
+     4 -76.647645554374    0.000000000000     0.1438E-03   0.1900E-06
+     5 -76.603759979072    0.000000000000     0.1124E-03   0.1166E-06
+  -------------------------------------------------------------------------
+
+  Iteration:                 14
+  Reduced space dimension:   70
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428397    0.000000000000     0.1285E-08   0.6537E-12
+     2 -76.812407682346    0.000000000000     0.1519E-08   0.5116E-12
+     3 -76.734293906264    0.000000000000     0.1588E-07   0.4832E-12
+     4 -76.647645566305    0.000000000000     0.3538E-04   0.1193E-07
+     5 -76.603759984101    0.000000000000     0.1879E-04   0.5030E-08
+  -------------------------------------------------------------------------
+
+  Iteration:                 15
+  Reduced space dimension:   75
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.2709E-09   0.5684E-12
+     2 -76.812407682345    0.000000000000     0.2922E-09   0.5542E-12
+     3 -76.734293906265    0.000000000000     0.3356E-08   0.3268E-12
+     4 -76.647645566958    0.000000000000     0.8165E-05   0.6525E-09
+     5 -76.603759984238    0.000000000000     0.3472E-05   0.1363E-09
+  -------------------------------------------------------------------------
+
+  Iteration:                 16
+  Reduced space dimension:   80
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.5074E-10   0.2700E-12
+     2 -76.812407682345    0.000000000000     0.5449E-10   0.4263E-13
+     3 -76.734293906265    0.000000000000     0.6216E-09   0.2274E-12
+     4 -76.647645566993    0.000000000000     0.1936E-05   0.3553E-10
+     5 -76.603759984243    0.000000000000     0.8325E-06   0.5684E-11
+  -------------------------------------------------------------------------
+
+  Iteration:                 17
+  Reduced space dimension:   83
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.4102E-10   0.6111E-12
+     2 -76.812407682345    0.000000000000     0.3302E-10   0.5684E-13
+     3 -76.734293906265    0.000000000000     0.1080E-09   0.5684E-13
+     4 -76.647645566996    0.000000000000     0.4144E-06   0.2430E-11
+     5 -76.603759984243    0.000000000000     0.1811E-06   0.2558E-12
+  -------------------------------------------------------------------------
+
+  Iteration:                 18
+  Reduced space dimension:   86
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.4028E-10   0.4405E-12
+     2 -76.812407682345    0.000000000000     0.3306E-10   0.1421E-12
+     3 -76.734293906264    0.000000000000     0.1783E-10   0.3268E-12
+     4 -76.647645566995    0.000000000000     0.7704E-07   0.4832E-12
+     5 -76.603759984243    0.000000000000     0.3535E-07   0.2274E-12
+  -------------------------------------------------------------------------
+
+  Iteration:                 19
+  Reduced space dimension:   88
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.3861E-10   0.1421E-13
+     2 -76.812407682345    0.000000000000     0.3264E-10   0.2416E-12
+     3 -76.734293906264    0.000000000000     0.1233E-10   0.5684E-13
+     4 -76.647645566995    0.000000000000     0.1314E-07   0.5684E-13
+     5 -76.603759984243    0.000000000000     0.5933E-08   0.1847E-12
+  -------------------------------------------------------------------------
+
+  Iteration:                 20
+  Reduced space dimension:   90
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.3853E-10   0.2274E-12
+     2 -76.812407682345    0.000000000000     0.3248E-10   0.1421E-13
+     3 -76.734293906265    0.000000000000     0.1235E-10   0.2274E-12
+     4 -76.647645566995    0.000000000000     0.2464E-08   0.5684E-13
+     5 -76.603759984244    0.000000000000     0.1110E-08   0.2700E-12
+  -------------------------------------------------------------------------
+
+  Iteration:                 21
+  Reduced space dimension:   92
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428399    0.000000000000     0.3858E-10   0.1052E-11
+     2 -76.812407682345    0.000000000000     0.3250E-10   0.2132E-12
+     3 -76.734293906264    0.000000000000     0.1226E-10   0.5258E-12
+     4 -76.647645566995    0.000000000000     0.4367E-09   0.9948E-13
+     5 -76.603759984243    0.000000000000     0.1922E-09   0.4832E-12
+  -------------------------------------------------------------------------
+
+  Iteration:                 22
+  Reduced space dimension:   94
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1 -76.826307428398    0.000000000000     0.3787E-10   0.7390E-12
+     2 -76.812407682345    0.000000000000     0.3218E-10   0.4263E-13
+     3 -76.734293906265    0.000000000000     0.1211E-10   0.7532E-12
+     4 -76.647645566995    0.000000000000     0.7371E-10   0.2416E-12
+     5 -76.603759984243    0.000000000000     0.3250E-10   0.2984E-12
+  -------------------------------------------------------------------------
+  Convergence criterion met in 22 iterations!
+
+  - CI amplitudes:
+
+     Electronic state nr. 1
+
+     Energy (Hartree):    -76.826307428398   Spin Multiplicity:     1.0
+
+     Largest CI amplitudes:
+     ----------------------------
+     00222222     -0.946863959448
+     02022222      0.201635730158
+     0ba22222      0.117362533503
+     0ab22222      0.117362533503
+     20220222      0.070745837035
+     abb2a222      0.053053115276
+     baa2b222      0.053053115276
+     aba2b222      0.052242959706
+     bab2a222      0.052242959706
+     02a222b2      0.033565555492
+     ----------------------------
+
+     Electronic state nr. 2
+
+     Energy (Hartree):    -76.812407682345   Spin Multiplicity:     3.0
+
+     Largest CI amplitudes:
+     ----------------------------
+     0ba22222     -0.693599856528
+     0ab22222      0.693599856528
+     bab2a222      0.055972508662
+     aba2b222     -0.055972508662
+     2ba20222      0.052035310452
+     2ab20222     -0.052035310450
+     b022a222     -0.042702356589
+     a022b222      0.042702356589
+     20ab2222     -0.041507464828
+     20ba2222      0.041507464827
+     ----------------------------
+
+     Electronic state nr. 3
+
+     Energy (Hartree):    -76.734293906265   Spin Multiplicity:     1.0
+
+     Largest CI amplitudes:
+     ----------------------------
+     0ab22222     -0.645987770636
+     0ba22222     -0.645987770635
+     02022222     -0.248475306964
+     00222222     -0.222489482363
+     0b2a2222      0.082282838356
+     0a2b2222      0.082282838356
+     baa2b222     -0.048930853054
+     abb2a222     -0.048930853054
+     2ab20222      0.046201533661
+     2ba20222      0.046201533661
+     ----------------------------
+
+     Electronic state nr. 4
+
+     Energy (Hartree):    -76.647645566995   Spin Multiplicity:     3.0
+
+     Largest CI amplitudes:
+     ----------------------------
+     a0b22222     -0.673854307803
+     b0a22222      0.673854307802
+     ab022222     -0.123760359624
+     ba022222      0.123760359619
+     02a2b222      0.078969864819
+     02b2a222     -0.078969864817
+     baba2222     -0.067303752094
+     abab2222      0.067303752090
+     0b22a222      0.063584756580
+     0a22b222     -0.063584756580
+     ----------------------------
+
+     Electronic state nr. 5
+
+     Energy (Hartree):    -76.603759984243   Spin Multiplicity:     1.0
+
+     Largest CI amplitudes:
+     ----------------------------
+     b0a22222      0.647749687670
+     a0b22222      0.647749687670
+     ab022222      0.219113130744
+     ba022222      0.219113130744
+     02a2b222      0.082300433577
+     02b2a222      0.082300433577
+     b02a2222     -0.078416303330
+     a02b2222     -0.078416303327
+     a0222b22      0.043281689838
+     b0222a22      0.043281689837
+     ----------------------------
+
+  - Electronic energies:
+
+                                      Energy
+                          ------------------------------------------
+      State                (Hartree)             (eV)
+     ---------------------------------------------------------------
+        1                -76.826307428398    -2090.550307925338
+        2                -76.812407682345    -2090.172076569912
+        3                -76.734293906265    -2088.046492455506
+        4                -76.647645566995    -2085.688671047640
+        5                -76.603759984243    -2084.494483514679
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  - Timings for the FCI fci calculation
+
+     Total wall time (sec):              0.47700
+     Total cpu time (sec):               0.19009
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 1.087768 MB
+
+  Total wall time in eT (sec):              0.55200
+  Total cpu time in eT (sec):               0.25695
+
+  Calculation ended: 2022-04-07 12:35:58 UTC -07:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!

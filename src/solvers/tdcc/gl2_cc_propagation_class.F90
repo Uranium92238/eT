@@ -52,8 +52,7 @@ module gl2_cc_propagation_class
       procedure :: step => gl2_step
 !
       procedure :: initializations => initializations_gl2_cc_propagation
-!
-      final :: destructor_gl2_cc_propagation
+      procedure :: cleanup => cleanup_gl2_cc_propagation
 !
    end type gl2_cc_propagation
 !
@@ -105,20 +104,23 @@ contains
    end subroutine initializations_gl2_cc_propagation
 !
 !
-   subroutine destructor_gl2_cc_propagation(solver)
+   subroutine cleanup_gl2_cc_propagation(solver, wf)
 !!
 !!    Destructor
 !!    Written by Andreas Skeidsvoll, Oct 2018
 !!
-!!    Deallocates arrays.
-!!
       implicit none
 !
-      type(gl2_cc_propagation), intent(inout) :: solver
+      class(gl2_cc_propagation), intent(inout) :: solver
+      class(ccs), intent(inout) :: wf
 !
-      if (allocated(solver%z1_guess)) call mem%dealloc(solver%z1_guess, solver%vector_length)
+      if (solver%energy_output             &
+          .or. solver%dipole_moment_output &
+          .or. solver%density_matrix_output) call wf%destruct_gs_density_complex()
 !
-   end subroutine destructor_gl2_cc_propagation
+      call mem%dealloc(solver%z1_guess, solver%vector_length)
+!
+   end subroutine cleanup_gl2_cc_propagation
 !
 !
    subroutine gl2_step(solver, wf, field, ti, dt, ui, uf, n)

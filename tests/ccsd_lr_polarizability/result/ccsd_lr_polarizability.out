@@ -1,0 +1,1506 @@
+
+
+
+                     eT 1.7 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.7.0 Hydra
+  ------------------------------------------------------------
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2022-04-07 12:35:03 UTC -07:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+       name: HOF He
+       charge: 0
+       multiplicity: 1
+     end system
+
+     do
+       response
+     end do
+
+     method
+       hf
+       ccsd
+     end method
+
+     solver scf
+       gradient threshold: 1.0d-11
+     end solver scf
+
+     solver cholesky
+       threshold: 1.0d-11
+     end solver cholesky
+
+     cc response
+       lr
+       polarizabilities: {11,12,13,21,22,23,31,32,33}
+       frequencies: {0.0d0, 0.05d0}
+       dipole length
+       transition moments
+     end cc response
+
+     solver cc es
+       singlet states: 4
+       residual threshold: 1.0d-10
+     end solver cc es
+
+     solver cc multipliers
+       threshold: 1.0d-10
+     end solver cc multipliers
+
+     solver cc gs
+       omega threshold: 1.0d-10
+     end solver cc gs
+
+     solver cc response
+       threshold: 1.0d-10
+     end solver cc response
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O     0.059000000000     0.059000000000     0.000000000000        1
+        2  H    -0.081000000000     1.022000000000    -0.000000000000        2
+        3  H     1.022000000000    -0.081000000000    -0.000000000000        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  O     0.111493841349     0.111493841349     0.000000000000        1
+        2  H    -0.153067816090     1.931300099305    -0.000000000000        2
+        3  H     1.931300099305    -0.153067816090    -0.000000000000        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         5
+     Number of virtual orbitals:         19
+     Number of molecular orbitals:       24
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -75.862793192451
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-16
+     Exchange screening threshold:   0.1000E-14
+     ERI cutoff:                     0.1000E-16
+     One-electron integral  cutoff:  0.1000E-21
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-10
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -75.985658786335     0.8296E-01     0.7599E+02
+     2           -76.015502001833     0.5191E-01     0.2984E-01
+     3           -76.025145357325     0.3592E-02     0.9643E-02
+     4           -76.025342514464     0.1326E-02     0.1972E-03
+     5           -76.025358129184     0.2421E-03     0.1561E-04
+     6           -76.025358669736     0.4222E-04     0.5406E-06
+     7           -76.025358682157     0.2558E-05     0.1242E-07
+     8           -76.025358682271     0.5413E-06     0.1142E-09
+     9           -76.025358682280     0.1152E-06     0.9038E-11
+    10           -76.025358682280     0.9988E-08     0.4121E-12
+    11           -76.025358682280     0.3027E-08     0.9948E-13
+    12           -76.025358682280     0.7372E-09     0.1421E-13
+    13           -76.025358682280     0.8067E-10     0.1421E-13
+    14           -76.025358682280     0.6096E-11     0.9948E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 14 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.674443682593
+     Nuclear repulsion energy:       9.039923556543
+     Electronic energy:            -85.065282238824
+     Total energy:                 -76.025358682280
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.30900
+     Total cpu time (sec):               0.33899
+
+
+  :: CCSD wavefunction
+  =======================
+
+     Bath orbital(s):         False
+
+   - Number of orbitals:
+
+     Occupied orbitals:    5
+     Virtual orbitals:     19
+     Molecular orbitals:   24
+     Atomic orbitals:      24
+
+   - Number of ground state amplitudes:
+
+     Single excitation amplitudes:  95
+     Double excitation amplitudes:  4560
+
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                    24
+     Total number of shell pairs:            78
+     Total number of AO pairs:              300
+
+     Significant shell pairs:                78
+     Significant AO pairs:                  300
+
+     Construct shell pairs:                  78
+     Construct AO pairs:                    300
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               285 /      71       0.47383E+01         146             30              8550
+     2               220 /      60       0.46798E-01         242            101             22220
+     3               140 /      46       0.45615E-03         155            159             22260
+     4               100 /      32       0.41034E-05         119            226             22600
+     5                12 /       8       0.39041E-07          55            271              3252
+     6                 0 /       0       0.26209E-09           9            279                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 279
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.2102E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
+
+  - Settings for integral handling:
+
+     Cholesky vectors in memory: True
+     ERI matrix in memory:       True
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.26200
+     Total cpu time (sec):               0.13904
+
+
+  Determining CC cluster amplitudes
+  =================================
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - CC ground state solver settings:
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Max number of iterations:      100
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (cc_gs_diis_errors): file
+     Storage (cc_gs_diis_parameters): file
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1           -76.230221353328     0.7627E-01     0.7623E+02
+    2           -76.235044125323     0.2162E-01     0.4823E-02
+    3           -76.239076205846     0.5244E-02     0.4032E-02
+    4           -76.239563756023     0.1206E-02     0.4876E-03
+    5           -76.239571465089     0.2659E-03     0.7709E-05
+    6           -76.239582385469     0.9975E-04     0.1092E-04
+    7           -76.239579992306     0.2416E-04     0.2393E-05
+    8           -76.239579234997     0.5225E-05     0.7573E-06
+    9           -76.239579079348     0.1229E-05     0.1556E-06
+   10           -76.239579017939     0.2835E-06     0.6141E-07
+   11           -76.239579036182     0.6506E-07     0.1824E-07
+   12           -76.239579034486     0.1068E-07     0.1696E-08
+   13           -76.239579034993     0.2382E-08     0.5068E-09
+   14           -76.239579034857     0.5118E-09     0.1362E-09
+   15           -76.239579034840     0.1415E-09     0.1700E-10
+   16           -76.239579034833     0.2900E-10     0.7091E-11
+  ---------------------------------------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):   -76.239579034833
+
+     Correlation energy (a.u.):           -0.214220352553
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        1      4       -0.008074337155
+       13      3        0.007501895815
+        2      3       -0.005781518033
+       14      4       -0.005114275297
+        7      3        0.004773913201
+        5      2       -0.004402729755
+        1      2        0.003894974170
+       10      5       -0.003299572462
+        4      4        0.003192556496
+        6      5       -0.003161080922
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)
+     --------------------------------------------------
+        6      5       6      5       -0.051460919220
+        3      3       3      3       -0.036299488709
+        5      4       5      4       -0.036274648268
+        2      3       2      3       -0.030391700661
+        4      3       4      3       -0.029444354290
+        5      4       6      5       -0.029028154203
+        3      4       3      4       -0.025451393072
+        7      3       6      5       -0.022500963288
+        4      3       3      4        0.022016476674
+        2      3       6      5       -0.021976239348
+     --------------------------------------------------
+
+  - Finished solving the CCSD ground state equations
+
+     Total wall time (sec):              0.40000
+     Total cpu time (sec):               0.16900
+
+
+  Determining CC multipliers
+  ==========================
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           1
+     Max reduced space dimension:            50
+
+     Storage (multipliers_davidson_trials): file
+     Storage (multipliers_davidson_transforms): file
+
+  - Davidson solver settings
+
+     Residual threshold:              0.10E-09
+     Max number of iterations:             100
+
+   Iteration       Residual norm
+  -------------------------------
+     1               0.2877E-01
+     2               0.5203E-02
+     3               0.8890E-03
+     4               0.3832E-03
+     5               0.1073E-03
+     6               0.2865E-04
+     7               0.5931E-05
+     8               0.1234E-05
+     9               0.2341E-06
+    10               0.4755E-07
+    11               0.9775E-08
+    12               0.1699E-08
+    13               0.3706E-09
+    14               0.6896E-10
+  -------------------------------
+  Convergence criterion met in 14 iterations!
+
+  - CC multipliers solver summary:
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         tbar(a,i)
+     -----------------------------------
+       13      3        0.012598108373
+        1      4       -0.011732133355
+        7      3        0.008855863251
+       14      4       -0.008496018634
+        2      3       -0.007494066946
+        5      2       -0.007454175932
+        4      4        0.006384333949
+        1      2        0.005849088039
+        8      4        0.004969978143
+       10      5       -0.004886909077
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         tbar(ai,bj)
+     --------------------------------------------------
+        6      5       6      5       -0.102495846007
+        5      4       6      5       -0.098554837678
+        7      3       6      5       -0.077255465272
+        2      3       6      5       -0.076612727541
+        5      4       5      4       -0.071834737954
+        3      3       3      3       -0.070924280944
+        2      3       5      4       -0.067978222206
+        2      3       2      3       -0.059421678750
+        4      3       4      3       -0.057143630899
+        1      2       6      5        0.056197341900
+     --------------------------------------------------
+
+
+  Determining CC polarizabilities
+  ===============================
+
+   - Davidson coupled cluster linear equations solver
+  ------------------------------------------------------
+  A Davidson solver that solves linear equations involving the Jacobian 
+  transformation. When solving multiple linear equations, it builds a 
+  shared reduced space in which to express each of the solutions to the 
+  equations.
+
+  Solving for the       amplitude response vectors in CC     response 
+  theory.
+
+  - Davidson CC linear equations solver settings:
+
+     Residual threshold:        0.10E-09
+     Max number of iterations:       100
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           2
+     Max reduced space dimension:           100
+
+     Storage (davidson_t_response_trials): file
+     Storage (davidson_t_response_transforms): file
+
+  - Entering iterative loop to solve equations.
+
+  Iteration:               1
+  Reduced space dimension: 2
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.57E+00
+  -0.50E-01      0.53E+00
+  ------------------------------
+
+  Iteration:               2
+  Reduced space dimension: 4
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.10E+00
+  -0.50E-01      0.92E-01
+  ------------------------------
+
+  Iteration:               3
+  Reduced space dimension: 6
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.25E-01
+  -0.50E-01      0.21E-01
+  ------------------------------
+
+  Iteration:               4
+  Reduced space dimension: 8
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.58E-02
+  -0.50E-01      0.46E-02
+  ------------------------------
+
+  Iteration:               5
+  Reduced space dimension: 10
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.12E-02
+  -0.50E-01      0.91E-03
+  ------------------------------
+
+  Iteration:               6
+  Reduced space dimension: 12
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.27E-03
+  -0.50E-01      0.19E-03
+  ------------------------------
+
+  Iteration:               7
+  Reduced space dimension: 14
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.56E-04
+  -0.50E-01      0.36E-04
+  ------------------------------
+
+  Iteration:               8
+  Reduced space dimension: 16
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.13E-04
+  -0.50E-01      0.74E-05
+  ------------------------------
+
+  Iteration:               9
+  Reduced space dimension: 18
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.27E-05
+  -0.50E-01      0.14E-05
+  ------------------------------
+
+  Iteration:               10
+  Reduced space dimension: 20
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.58E-06
+  -0.50E-01      0.29E-06
+  ------------------------------
+
+  Iteration:               11
+  Reduced space dimension: 22
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.11E-06
+  -0.50E-01      0.54E-07
+  ------------------------------
+
+  Iteration:               12
+  Reduced space dimension: 24
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.20E-07
+  -0.50E-01      0.94E-08
+  ------------------------------
+
+  Iteration:               13
+  Reduced space dimension: 26
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.37E-08
+  -0.50E-01      0.17E-08
+  ------------------------------
+
+  Iteration:               14
+  Reduced space dimension: 28
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.74E-09
+  -0.50E-01      0.32E-09
+  ------------------------------
+
+  Iteration:               15
+  Reduced space dimension: 30
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.14E-09
+  -0.50E-01      0.59E-10
+  ------------------------------
+
+  Iteration:               16
+  Reduced space dimension: 31
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.28E-10
+  -0.50E-01      0.19E-10
+  ------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Finished solving the CCSD linear equations
+
+     Total wall time (sec):               0.73900
+     Total cpu time (sec):                0.28889
+
+   - Davidson coupled cluster linear equations solver
+  ------------------------------------------------------
+  A Davidson solver that solves linear equations involving the Jacobian 
+  transformation. When solving multiple linear equations, it builds a 
+  shared reduced space in which to express each of the solutions to the 
+  equations.
+
+  Solving for the       amplitude response vectors in CC     response 
+  theory.
+
+  - Davidson CC linear equations solver settings:
+
+     Residual threshold:        0.10E-09
+     Max number of iterations:       100
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           2
+     Max reduced space dimension:           100
+
+     Storage (davidson_t_response_trials): file
+     Storage (davidson_t_response_transforms): file
+
+  - Entering iterative loop to solve equations.
+
+  Iteration:               1
+  Reduced space dimension: 2
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.57E+00
+   0.50E-01      0.62E+00
+  ------------------------------
+
+  Iteration:               2
+  Reduced space dimension: 4
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.10E+00
+   0.50E-01      0.12E+00
+  ------------------------------
+
+  Iteration:               3
+  Reduced space dimension: 6
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.25E-01
+   0.50E-01      0.31E-01
+  ------------------------------
+
+  Iteration:               4
+  Reduced space dimension: 8
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.56E-02
+   0.50E-01      0.73E-02
+  ------------------------------
+
+  Iteration:               5
+  Reduced space dimension: 10
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.12E-02
+   0.50E-01      0.16E-02
+  ------------------------------
+
+  Iteration:               6
+  Reduced space dimension: 12
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.25E-03
+   0.50E-01      0.37E-03
+  ------------------------------
+
+  Iteration:               7
+  Reduced space dimension: 14
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.51E-04
+   0.50E-01      0.85E-04
+  ------------------------------
+
+  Iteration:               8
+  Reduced space dimension: 16
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.11E-04
+   0.50E-01      0.20E-04
+  ------------------------------
+
+  Iteration:               9
+  Reduced space dimension: 18
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.22E-05
+   0.50E-01      0.46E-05
+  ------------------------------
+
+  Iteration:               10
+  Reduced space dimension: 20
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.46E-06
+   0.50E-01      0.10E-05
+  ------------------------------
+
+  Iteration:               11
+  Reduced space dimension: 22
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.86E-07
+   0.50E-01      0.20E-06
+  ------------------------------
+
+  Iteration:               12
+  Reduced space dimension: 24
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.15E-07
+   0.50E-01      0.37E-07
+  ------------------------------
+
+  Iteration:               13
+  Reduced space dimension: 26
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.29E-08
+   0.50E-01      0.71E-08
+  ------------------------------
+
+  Iteration:               14
+  Reduced space dimension: 28
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.54E-09
+   0.50E-01      0.14E-08
+  ------------------------------
+
+  Iteration:               15
+  Reduced space dimension: 30
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.10E-09
+   0.50E-01      0.28E-09
+  ------------------------------
+
+  Iteration:               16
+  Reduced space dimension: 32
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.19E-10
+   0.50E-01      0.53E-10
+  ------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Finished solving the CCSD linear equations
+
+     Total wall time (sec):               0.65300
+     Total cpu time (sec):                0.29525
+
+   - Davidson coupled cluster linear equations solver
+  ------------------------------------------------------
+  A Davidson solver that solves linear equations involving the Jacobian 
+  transformation. When solving multiple linear equations, it builds a 
+  shared reduced space in which to express each of the solutions to the 
+  equations.
+
+  Solving for the       amplitude response vectors in CC     response 
+  theory.
+
+  - Davidson CC linear equations solver settings:
+
+     Residual threshold:        0.10E-09
+     Max number of iterations:       100
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           2
+     Max reduced space dimension:           100
+
+     Storage (davidson_t_response_trials): file
+     Storage (davidson_t_response_transforms): file
+
+  - Entering iterative loop to solve equations.
+
+  Iteration:               1
+  Reduced space dimension: 2
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.57E+00
+  -0.50E-01      0.53E+00
+  ------------------------------
+
+  Iteration:               2
+  Reduced space dimension: 4
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.10E+00
+  -0.50E-01      0.92E-01
+  ------------------------------
+
+  Iteration:               3
+  Reduced space dimension: 6
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.25E-01
+  -0.50E-01      0.21E-01
+  ------------------------------
+
+  Iteration:               4
+  Reduced space dimension: 8
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.58E-02
+  -0.50E-01      0.46E-02
+  ------------------------------
+
+  Iteration:               5
+  Reduced space dimension: 10
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.12E-02
+  -0.50E-01      0.91E-03
+  ------------------------------
+
+  Iteration:               6
+  Reduced space dimension: 12
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.27E-03
+  -0.50E-01      0.19E-03
+  ------------------------------
+
+  Iteration:               7
+  Reduced space dimension: 14
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.56E-04
+  -0.50E-01      0.36E-04
+  ------------------------------
+
+  Iteration:               8
+  Reduced space dimension: 16
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.13E-04
+  -0.50E-01      0.74E-05
+  ------------------------------
+
+  Iteration:               9
+  Reduced space dimension: 18
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.27E-05
+  -0.50E-01      0.14E-05
+  ------------------------------
+
+  Iteration:               10
+  Reduced space dimension: 20
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.58E-06
+  -0.50E-01      0.29E-06
+  ------------------------------
+
+  Iteration:               11
+  Reduced space dimension: 22
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.11E-06
+  -0.50E-01      0.54E-07
+  ------------------------------
+
+  Iteration:               12
+  Reduced space dimension: 24
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.20E-07
+  -0.50E-01      0.94E-08
+  ------------------------------
+
+  Iteration:               13
+  Reduced space dimension: 26
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.37E-08
+  -0.50E-01      0.17E-08
+  ------------------------------
+
+  Iteration:               14
+  Reduced space dimension: 28
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.74E-09
+  -0.50E-01      0.32E-09
+  ------------------------------
+
+  Iteration:               15
+  Reduced space dimension: 30
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.14E-09
+  -0.50E-01      0.59E-10
+  ------------------------------
+
+  Iteration:               16
+  Reduced space dimension: 31
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.28E-10
+  -0.50E-01      0.19E-10
+  ------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Finished solving the CCSD linear equations
+
+     Total wall time (sec):               0.72300
+     Total cpu time (sec):                0.30146
+
+   - Davidson coupled cluster linear equations solver
+  ------------------------------------------------------
+  A Davidson solver that solves linear equations involving the Jacobian 
+  transformation. When solving multiple linear equations, it builds a 
+  shared reduced space in which to express each of the solutions to the 
+  equations.
+
+  Solving for the       amplitude response vectors in CC     response 
+  theory.
+
+  - Davidson CC linear equations solver settings:
+
+     Residual threshold:        0.10E-09
+     Max number of iterations:       100
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           2
+     Max reduced space dimension:           100
+
+     Storage (davidson_t_response_trials): file
+     Storage (davidson_t_response_transforms): file
+
+  - Entering iterative loop to solve equations.
+
+  Iteration:               1
+  Reduced space dimension: 2
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.57E+00
+   0.50E-01      0.62E+00
+  ------------------------------
+
+  Iteration:               2
+  Reduced space dimension: 4
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.10E+00
+   0.50E-01      0.12E+00
+  ------------------------------
+
+  Iteration:               3
+  Reduced space dimension: 6
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.25E-01
+   0.50E-01      0.31E-01
+  ------------------------------
+
+  Iteration:               4
+  Reduced space dimension: 8
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.56E-02
+   0.50E-01      0.73E-02
+  ------------------------------
+
+  Iteration:               5
+  Reduced space dimension: 10
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.12E-02
+   0.50E-01      0.16E-02
+  ------------------------------
+
+  Iteration:               6
+  Reduced space dimension: 12
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.25E-03
+   0.50E-01      0.37E-03
+  ------------------------------
+
+  Iteration:               7
+  Reduced space dimension: 14
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.51E-04
+   0.50E-01      0.85E-04
+  ------------------------------
+
+  Iteration:               8
+  Reduced space dimension: 16
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.11E-04
+   0.50E-01      0.20E-04
+  ------------------------------
+
+  Iteration:               9
+  Reduced space dimension: 18
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.22E-05
+   0.50E-01      0.46E-05
+  ------------------------------
+
+  Iteration:               10
+  Reduced space dimension: 20
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.46E-06
+   0.50E-01      0.10E-05
+  ------------------------------
+
+  Iteration:               11
+  Reduced space dimension: 22
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.86E-07
+   0.50E-01      0.20E-06
+  ------------------------------
+
+  Iteration:               12
+  Reduced space dimension: 24
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.15E-07
+   0.50E-01      0.37E-07
+  ------------------------------
+
+  Iteration:               13
+  Reduced space dimension: 26
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.29E-08
+   0.50E-01      0.71E-08
+  ------------------------------
+
+  Iteration:               14
+  Reduced space dimension: 28
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.54E-09
+   0.50E-01      0.14E-08
+  ------------------------------
+
+  Iteration:               15
+  Reduced space dimension: 30
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.10E-09
+   0.50E-01      0.28E-09
+  ------------------------------
+
+  Iteration:               16
+  Reduced space dimension: 32
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.19E-10
+   0.50E-01      0.53E-10
+  ------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Finished solving the CCSD linear equations
+
+     Total wall time (sec):               0.74800
+     Total cpu time (sec):                0.31650
+
+   - Davidson coupled cluster linear equations solver
+  ------------------------------------------------------
+  A Davidson solver that solves linear equations involving the Jacobian 
+  transformation. When solving multiple linear equations, it builds a 
+  shared reduced space in which to express each of the solutions to the 
+  equations.
+
+  Solving for the       amplitude response vectors in CC     response 
+  theory.
+
+  - Davidson CC linear equations solver settings:
+
+     Residual threshold:        0.10E-09
+     Max number of iterations:       100
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           2
+     Max reduced space dimension:           100
+
+     Storage (davidson_t_response_trials): file
+     Storage (davidson_t_response_transforms): file
+
+  - Entering iterative loop to solve equations.
+
+  Iteration:               1
+  Reduced space dimension: 2
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.35E+00
+  -0.50E-01      0.32E+00
+  ------------------------------
+
+  Iteration:               2
+  Reduced space dimension: 4
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.63E-01
+  -0.50E-01      0.52E-01
+  ------------------------------
+
+  Iteration:               3
+  Reduced space dimension: 6
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.13E-01
+  -0.50E-01      0.97E-02
+  ------------------------------
+
+  Iteration:               4
+  Reduced space dimension: 8
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.22E-02
+  -0.50E-01      0.17E-02
+  ------------------------------
+
+  Iteration:               5
+  Reduced space dimension: 10
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.43E-03
+  -0.50E-01      0.33E-03
+  ------------------------------
+
+  Iteration:               6
+  Reduced space dimension: 12
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.79E-04
+  -0.50E-01      0.58E-04
+  ------------------------------
+
+  Iteration:               7
+  Reduced space dimension: 14
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.14E-04
+  -0.50E-01      0.10E-04
+  ------------------------------
+
+  Iteration:               8
+  Reduced space dimension: 16
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.26E-05
+  -0.50E-01      0.19E-05
+  ------------------------------
+
+  Iteration:               9
+  Reduced space dimension: 18
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.41E-06
+  -0.50E-01      0.29E-06
+  ------------------------------
+
+  Iteration:               10
+  Reduced space dimension: 20
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.64E-07
+  -0.50E-01      0.44E-07
+  ------------------------------
+
+  Iteration:               11
+  Reduced space dimension: 22
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.11E-07
+  -0.50E-01      0.75E-08
+  ------------------------------
+
+  Iteration:               12
+  Reduced space dimension: 24
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.17E-08
+  -0.50E-01      0.11E-08
+  ------------------------------
+
+  Iteration:               13
+  Reduced space dimension: 26
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.26E-09
+  -0.50E-01      0.17E-09
+  ------------------------------
+
+  Iteration:               14
+  Reduced space dimension: 28
+
+  Frequency      Residual norm
+  ------------------------------
+  -0.00E+00      0.41E-10
+  -0.50E-01      0.26E-10
+  ------------------------------
+  Convergence criterion met in 14 iterations!
+
+  - Finished solving the CCSD linear equations
+
+     Total wall time (sec):               0.64500
+     Total cpu time (sec):                0.27625
+
+   - Davidson coupled cluster linear equations solver
+  ------------------------------------------------------
+  A Davidson solver that solves linear equations involving the Jacobian 
+  transformation. When solving multiple linear equations, it builds a 
+  shared reduced space in which to express each of the solutions to the 
+  equations.
+
+  Solving for the       amplitude response vectors in CC     response 
+  theory.
+
+  - Davidson CC linear equations solver settings:
+
+     Residual threshold:        0.10E-09
+     Max number of iterations:       100
+
+   - Davidson tool settings:
+
+     Number of parameters:                 4655
+     Number of requested solutions:           2
+     Max reduced space dimension:           100
+
+     Storage (davidson_t_response_trials): file
+     Storage (davidson_t_response_transforms): file
+
+  - Entering iterative loop to solve equations.
+
+  Iteration:               1
+  Reduced space dimension: 2
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.35E+00
+   0.50E-01      0.38E+00
+  ------------------------------
+
+  Iteration:               2
+  Reduced space dimension: 4
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.61E-01
+   0.50E-01      0.77E-01
+  ------------------------------
+
+  Iteration:               3
+  Reduced space dimension: 6
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.12E-01
+   0.50E-01      0.17E-01
+  ------------------------------
+
+  Iteration:               4
+  Reduced space dimension: 8
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.22E-02
+   0.50E-01      0.29E-02
+  ------------------------------
+
+  Iteration:               5
+  Reduced space dimension: 10
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.42E-03
+   0.50E-01      0.58E-03
+  ------------------------------
+
+  Iteration:               6
+  Reduced space dimension: 12
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.77E-04
+   0.50E-01      0.11E-03
+  ------------------------------
+
+  Iteration:               7
+  Reduced space dimension: 14
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.14E-04
+   0.50E-01      0.19E-04
+  ------------------------------
+
+  Iteration:               8
+  Reduced space dimension: 16
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.26E-05
+   0.50E-01      0.37E-05
+  ------------------------------
+
+  Iteration:               9
+  Reduced space dimension: 18
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.39E-06
+   0.50E-01      0.57E-06
+  ------------------------------
+
+  Iteration:               10
+  Reduced space dimension: 20
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.60E-07
+   0.50E-01      0.91E-07
+  ------------------------------
+
+  Iteration:               11
+  Reduced space dimension: 22
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.10E-07
+   0.50E-01      0.16E-07
+  ------------------------------
+
+  Iteration:               12
+  Reduced space dimension: 24
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.16E-08
+   0.50E-01      0.24E-08
+  ------------------------------
+
+  Iteration:               13
+  Reduced space dimension: 26
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.24E-09
+   0.50E-01      0.38E-09
+  ------------------------------
+
+  Iteration:               14
+  Reduced space dimension: 28
+
+  Frequency      Residual norm
+  ------------------------------
+   0.00E+00      0.38E-10
+   0.50E-01      0.61E-10
+  ------------------------------
+  Convergence criterion met in 14 iterations!
+
+  - Finished solving the CCSD linear equations
+
+     Total wall time (sec):               0.61000
+     Total cpu time (sec):                0.26460
+     The convention applied here defines the polarizabilities as the response 
+     functions, without negative sign.
+     << mu_x, mu_x >>(0.00E+00):     -6.374090836796
+     << mu_y, mu_x >>(0.00E+00):      1.033539205822
+     << mu_y, mu_y >>(0.00E+00):     -6.374090836793
+     << mu_z, mu_x >>(0.00E+00):     -0.000000000000
+     << mu_z, mu_y >>(0.00E+00):      0.000000000000
+     << mu_z, mu_z >>(0.00E+00):     -3.160401018558
+     << mu_x, mu_x >>(0.50E-01):     -6.416395764927
+     << mu_y, mu_x >>(0.50E-01):      1.036318000870
+     << mu_y, mu_y >>(0.50E-01):     -6.416395764924
+     << mu_z, mu_x >>(0.50E-01):     -0.000000000000
+     << mu_z, mu_y >>(0.50E-01):      0.000000000000
+     << mu_z, mu_z >>(0.50E-01):     -3.188335793446
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 7.434144 MB
+
+  Total wall time in eT (sec):              5.86000
+  Total cpu time in eT (sec):               2.67939
+
+  Calculation ended: 2022-04-07 12:35:09 UTC -07:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!

@@ -1,0 +1,59 @@
+system
+   name: plot active hf density
+   charge: 0
+   pure gaussians
+end system
+
+do
+   ground state
+end do
+
+memory
+   available: 8
+end memory
+
+method
+   hf
+   cc2
+end method
+
+solver scf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver cc gs
+   energy threshold: 1.0d-11
+   omega threshold:  1.0d-11
+end solver cc gs
+
+frozen orbitals
+   hf
+end frozen orbitals
+
+active atoms
+   selection type: range
+   cc2: [1,3]
+   hf: [4,6]
+end active atoms
+
+visualization
+   plot hf active density
+   file format: cube
+   grid spacing: 0.4
+end visualization
+
+geometry
+basis: 6-31G
+ O       -6.1575145287      0.4572902589     -0.0231167407
+ H       -5.1894996777      0.6390139380      0.0772511061
+ H       -6.4671824548      1.1322824014     -0.6772960905
+basis: sto-3G
+ O       -3.0163665292     -0.8732223023     -0.0372256611
+ H       -2.0305856913     -0.9553932182      0.0192150076
+ H       -3.3529360620     -1.7929894098      0.1017898878
+end geometry

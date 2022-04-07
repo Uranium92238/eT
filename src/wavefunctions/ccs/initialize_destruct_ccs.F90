@@ -294,6 +294,19 @@ contains
 !
    end subroutine destruct_gs_density_ccs
 !
+   module subroutine initialize_excitation_energies_ccs(wf)
+!!
+!!    Initialize excitation energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%initialize_right_excitation_energies()
+      call wf%initialize_left_excitation_energies()
+!
+   end subroutine initialize_excitation_energies_ccs
 !
    module subroutine initialize_right_excitation_energies_ccs(wf)
 !!

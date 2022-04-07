@@ -1,0 +1,352 @@
+
+
+
+                     eT 1.7 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.7.0 Hydra
+  ------------------------------------------------------------
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+  Calculation started: 2022-04-07 12:35:59 UTC -07:00
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: H2+
+        charge: 1
+        multiplicity: 2
+     end system
+
+     do
+        ground state
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     method
+        rohf
+        fci
+     end method
+
+     solver cholesky
+        threshold: 1e-11
+     end solver cholesky
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-10
+        gradient threshold: 1.0d-10
+        diis dimension: 8
+     end solver scf
+
+     solver fci
+        states: 1
+     end solver fci
+
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+  Warning: ROHF orbital energies are not uniquely defined,  and may not 
+           fulfill Koopmans theorem
+
+
+  :: ROHF wavefunction
+  =======================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 3-21g
+        1  H     0.000000000000     0.000000000000     0.000000000000        1
+        2  H     0.000000000000     0.000000000000     0.900000000000        2
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: 3-21g
+        1  H     0.000000000000     0.000000000000     0.000000000000        1
+        2  H     0.000000000000     0.000000000000     1.700753512109        2
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               4
+     Number of orthonormal atomic orbitals:   4
+
+  - Molecular orbital details:
+
+     Number of alpha electrons:               1
+     Number of beta electrons:                0
+     Number of virtual alpha orbitals:        3
+     Number of virtual beta orbitals:         4
+     Number of molecular orbitals:            4
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a ROHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:                -1.260738511850
+     Number of electrons in guess:            2.000000000000
+     Overall charge:                                       1
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-15
+     Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1            -0.570015475062     0.3662E-01     0.5700E+00
+     2            -0.577721092395     0.9702E-02     0.7706E-02
+     3            -0.578298965841     0.1075E-15     0.5779E-03
+     4            -0.578298965841     0.1541E-15     0.2220E-15
+  ---------------------------------------------------------------
+  Convergence criterion met in 4 iterations!
+
+  - Summary of ROHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap (alpha):          0.922707925387
+     Nuclear repulsion energy:       0.587974678800
+     Electronic energy:             -1.166273644641
+     Total energy:                  -0.578298965841
+
+  - ROHF wavefunction spin expectation values:
+
+     Sz:                   0.50000000
+     Sz(Sz + 1):           0.75000000
+     S^2:                  0.75000000
+     Spin contamination:   0.00000000
+
+  - Timings for the ROHF ground state calculation
+
+     Total wall time (sec):              0.02800
+     Total cpu time (sec):               0.01744
+
+
+  :: FCI wavefunction
+  ======================
+
+   - Number of orbitals:
+
+     Alpha electrons:          1
+     Virtual alpha orbitals:   3
+     Beta electrons:           0
+     Virtual beta orbitals:    4
+     Molecular orbitals:       4
+
+   - Number of determinants:
+     Alpha Determinants:       4
+     Beta Determinants:        1
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition ao details:
+
+     Total number of AOs:                     4
+     Total number of shell pairs:            10
+     Total number of AO pairs:               10
+
+     Significant shell pairs:                10
+     Significant AO pairs:                   10
+
+     Construct shell pairs:                  10
+     Construct AO pairs:                     10
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1                 6 /       6       0.11401E+01          10              4                24
+     2                 0 /       0       0.86108E-02           6             10                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 10
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.3606E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.2043E-15
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.01500
+     Total cpu time (sec):               0.00642
+
+
+  :: Full CI engine
+  ====================
+
+  Calculates the FCI states and energies
+
+  This is a FCI fci calculation.
+  The following tasks will be performed:
+
+     1) Diagonalization of the Hamiltonian (davidson algorithm)
+
+  Davidson eigenvalue equation solver
+  -----------------------------------
+
+  A Davidson solver that solves an eigenvalue equation: M x = omega x. 
+  This equation is solved in a reduced space. A description of the algorithm 
+  can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
+
+   - Davidson tool settings:
+
+     Number of parameters:                    4
+     Number of requested solutions:           1
+     Max reduced space dimension:             4
+
+     Storage (fci_davidson_trials): file
+     Storage (fci_davidson_transforms): file
+
+  - Davidson solver settings
+
+     Number of singlet states:               1
+     Max number of iterations:             100
+
+  Iteration:                  1
+  Reduced space dimension:    1
+
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1  -0.578298965841    0.000000000000     0.7980E-15   0.5783E+00
+  -------------------------------------------------------------------------
+  Convergence criterion met in 1 iterations!
+
+  - CI amplitudes:
+
+     Electronic state nr. 1
+
+     Energy (Hartree):     -0.578298965841   Spin Multiplicity:     2.0
+
+     Largest CI amplitudes:
+     ------------------------
+     000a      1.000000000000
+     00a0      0.000000000000
+     0a00      0.000000000000
+     a000      0.000000000000
+     ------------------------
+
+  - Electronic energies:
+
+                                      Energy
+                          ------------------------------------------
+      State                (Hartree)             (eV)
+     ---------------------------------------------------------------
+        1                 -0.578298965841      -15.736316394464
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  - Timings for the FCI fci calculation
+
+     Total wall time (sec):              0.00600
+     Total cpu time (sec):               0.00225
+
+  ------------------------------------------------------------
+
+  Peak memory usage during the execution of eT: 21.056 KB
+
+  :: There was 1 warning during the execution of eT. ::
+
+  Total wall time in eT (sec):              0.06100
+  Total cpu time in eT (sec):               0.03571
+
+  Calculation ended: 2022-04-07 12:35:59 UTC -07:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+     Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
+
+  eT terminated successfully!

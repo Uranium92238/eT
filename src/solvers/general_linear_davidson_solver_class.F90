@@ -48,12 +48,12 @@ module general_linear_davidson_solver_class
    use memory_manager_class, only: mem
    use linear_davidson_tool_class, only: linear_davidson_tool
 !
-   use transformation_tool_class,        only: transformation_tool
-   use linear_storage_tool_class,        only: linear_storage_tool
-   use start_vector_tool_class,          only: start_vector_tool
-   use preconditioner_getter_class,      only: preconditioner_getter
-   use rhs_linear_equation_tool_class,   only: rhs_linear_equation_tool
-   use linear_davidson_print_tool_class, only: linear_davidson_print_tool
+   use transformation_tool_class,         only: transformation_tool
+   use linear_equation_storage_tool_class,only: linear_equation_storage_tool
+   use start_vector_tool_class,           only: start_vector_tool
+   use preconditioner_getter_class,       only: preconditioner_getter
+   use rhs_linear_equation_tool_class,    only: rhs_linear_equation_tool
+   use linear_davidson_print_tool_class,  only: linear_davidson_print_tool
 !
    use abstract_solver_class, only: abstract_solver
 !
@@ -70,7 +70,7 @@ module general_linear_davidson_solver_class
       class(linear_davidson_tool), allocatable, private :: davidson
 !
       class(transformation_tool),         allocatable          :: transformer
-      class(linear_storage_tool),         allocatable, private :: storer
+      class(linear_equation_storage_tool),         allocatable, private :: storer
       class(start_vector_tool),           allocatable, private :: start_vector
       class(preconditioner_getter),       allocatable, private :: preconditioner
       class(rhs_linear_equation_tool),    allocatable, private :: rhs_getter
@@ -115,7 +115,7 @@ contains
 !
       class(transformation_tool),        intent(in) :: transformer
       type(linear_davidson_tool),        intent(in) :: davidson
-      class(linear_storage_tool),        intent(in) :: storer
+      class(linear_equation_storage_tool),        intent(in) :: storer
       class(start_vector_tool),          intent(in) :: start_vector
       class(preconditioner_getter),      intent(in) :: preconditioner
       class(rhs_linear_equation_tool),   intent(in) :: rhs_getter
@@ -218,7 +218,7 @@ contains
       call this%davidson%set_preconditioner(c)
 !
       do trial = 1, this%n_solutions
-         call this%start_vector%get(c, trial)
+         call this%start_vector%get(c, trial, dummy)
          call this%davidson%set_trial(c, trial)
       end do
 !

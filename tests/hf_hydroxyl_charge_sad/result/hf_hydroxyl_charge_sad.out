@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:31 UTC +01:00
+  Calculation started: 2022-04-07 12:34:37 UTC -07:00
 
 
   :: Input file
@@ -160,11 +161,11 @@
      4           -74.815300882334     0.1129E-02     0.1327E-03
      5           -74.815315506256     0.9692E-04     0.1462E-04
      6           -74.815315619728     0.5209E-05     0.1135E-06
-     7           -74.815315619823     0.4491E-06     0.9446E-10
-     8           -74.815315619823     0.6271E-07     0.7816E-12
-     9           -74.815315619823     0.2374E-08     0.4263E-13
+     7           -74.815315619823     0.4491E-06     0.9449E-10
+     8           -74.815315619823     0.6271E-07     0.8100E-12
+     9           -74.815315619823     0.2374E-08     0.1421E-13
     10           -74.815315619823     0.2247E-09     0.4263E-13
-    11           -74.815315619823     0.2957E-10     0.0000E+00
+    11           -74.815315619823     0.2957E-10     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -177,17 +178,17 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.08300
-     Total cpu time (sec):               0.10223
+     Total wall time (sec):              0.05100
+     Total cpu time (sec):               0.04206
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 27.076 KB
 
-  Total wall time in eT (sec):              0.09800
-  Total cpu time in eT (sec):               0.11668
+  Total wall time in eT (sec):              0.06000
+  Total cpu time in eT (sec):               0.04704
 
-  Calculation ended: 2022-02-01 16:10:32 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:37 UTC -07:00
 
   - Implementation references:
 

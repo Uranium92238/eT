@@ -12,7 +12,7 @@ def get_general_filter():
 
 
 def get_hf_filter(
-    tolerance, convergence=False, restart=False, idempotent=True, z_matrix=False
+    tolerance, convergence=False, restart=False, idempotent=True, HOMO_LUMO=True
 ):
     """
     Returns filters for a HF calculation.
@@ -25,9 +25,13 @@ def get_hf_filter(
     g = [
         # Energy quantities
         get_filter(string="Nuclear repulsion energy:", abs_tolerance=tolerance),
-        get_filter(string="HOMO-LUMO gap", abs_tolerance=tolerance),
         get_filter(string="Total energy:", abs_tolerance=tolerance),
     ]
+
+    if HOMO_LUMO:
+        g.append(
+            get_filter(string="HOMO-LUMO gap", abs_tolerance=tolerance),
+        )
 
     if idempotent:
         g.append(
@@ -46,12 +50,6 @@ def get_hf_filter(
         g.append(
             # non-idempotent SAD
             get_filter(string="Energy of initial guess:", abs_tolerance=1.0e-6)
-        )
-
-    if z_matrix:
-        g.append(
-            # first line in geometries
-            get_filter(from_string="Z-matrix (", abs_tolerance=1.0e-6, num_lines=4)
         )
 
     f.extend(g)
@@ -88,7 +86,6 @@ def get_tdhf_filter(
     convergence=False,
     restart=False,
     idempotent=True,
-    z_matrix=False,
 ):
     """
     Returns filters for a TDHF calculation.
@@ -96,7 +93,7 @@ def get_tdhf_filter(
 
     from runtest import get_filter
 
-    f = get_hf_filter(tolerance, convergence, restart, idempotent, z_matrix)
+    f = get_hf_filter(tolerance, convergence, restart, idempotent)
     g = [
         get_filter(
             from_string="State                (Hartree)             (eV)",
@@ -289,19 +286,70 @@ def get_spin_filter(tolerance):
     return f
 
 
-def get_polarizability_filter(tolerance):
+def get_polarizability_filter(tolerance, components):
     """
     Returns filter for polarizability summary
     """
     from runtest import get_filter
 
+    f = []
+
+    for i in components:
+        if i == 11:
+            f.append(get_filter(string="<< mu_x, mu_x >>", abs_tolerance=tolerance))
+        elif i == 12 or i == 21:
+            f.append(get_filter(string="<< mu_y, mu_x >>", abs_tolerance=tolerance))
+        elif i == 13 or i == 31:
+            f.append(get_filter(string="<< mu_z, mu_x >>", abs_tolerance=tolerance))
+        elif i == 22:
+            f.append(get_filter(string="<< mu_y, mu_y >>", abs_tolerance=tolerance))
+        elif i == 23 or i == 32:
+            f.append(get_filter(string="<< mu_z, mu_y >>", abs_tolerance=tolerance))
+        elif i == 33:
+            f.append(get_filter(string="<< mu_z, mu_z >>", abs_tolerance=tolerance))
+
+    return f
+
+
+def get_fci_filter(
+    tolerance, n_states, convergence=True, restart=False, HOMO_LUMO=True
+):
+    """
+    Returns filters for a FCI calculation.
+    """
+    from runtest import get_filter
+
+    f = get_hf_filter(tolerance, convergence, restart, HOMO_LUMO=HOMO_LUMO)
+
+    g = [
+        get_filter(
+            from_string="State                (Hartree)             (eV)",
+            num_lines=2 + n_states,
+            abs_tolerance=tolerance,
+        ),
+        get_filter(string="Spin Multiplicity:", abs_tolerance=tolerance),
+        get_filter(
+            from_string="Largest CI amplitudes",
+            to_re=r"^$",
+            abs_tolerance=tolerance,
+            ignore_sign=True,
+            ignore_order=True,
+        ),
+    ]
+
+    f.extend(g)
+    return f
+
+
+def get_z_matrix_filter():
+    """
+    Returns filter for the geometry print in z-matrix format
+    """
+    from runtest import get_filter
+
     f = [
-        get_filter(string="<< mu_x, mu_x >>(0.20E-01):", abs_tolerance=tolerance),
-        get_filter(string="<< mu_z, mu_x >>(0.20E-01):", abs_tolerance=tolerance),
-        get_filter(string="<< mu_x, mu_x >>(0.40E-01):", abs_tolerance=tolerance),
-        get_filter(string="<< mu_z, mu_x >>(0.40E-01):", abs_tolerance=tolerance),
-        get_filter(string="<< mu_x, mu_x >>(0.60E-01):", abs_tolerance=tolerance),
-        get_filter(string="<< mu_z, mu_x >>(0.60E-01):", abs_tolerance=tolerance),
+        # first line in geometries
+        get_filter(from_string="Z-matrix (", abs_tolerance=1.0e-6, num_lines=4)
     ]
 
     return f

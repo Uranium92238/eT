@@ -545,6 +545,7 @@ def list_restart_files(restart_dir):
         "*nto*transformation",
         "mlhf_restart_file",
         "tdhf_eigenvectors_*",
+        "asymmetric_lanczos_*",
     ]
     rfiles = []
     for regex in regexs:

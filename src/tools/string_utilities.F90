@@ -430,7 +430,7 @@ contains
    subroutine remove_delimiter_from_string(string, delimiter)
 !!
 !!    Remove delimiter from string
-!!    Written by Sarai D. Folkestad, Dec 2021
+!!    Written by Enrico Ronca, 2022
 !!
       implicit none
 !
@@ -438,13 +438,18 @@ contains
 !
       character, intent(in) :: delimiter
 !
-      integer :: i
+      integer :: i, n
 !
+      n = 1
       do i = 1, len(string)
 !
-         if (string(i:i) == delimiter) string(i:) = string(i+1:)
+         if (string(i:i) /= delimiter) then
+            string(n:n) = string(i:i)
+            n = n + 1
+         endif
 !
       enddo
+      string(n: ) = ''
 !
    end subroutine remove_delimiter_from_string
 !

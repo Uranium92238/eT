@@ -88,6 +88,9 @@ module ccsd_class
       procedure :: get_multipliers                            => get_multipliers_ccsd
       procedure :: get_multipliers_complex                    => get_multipliers_ccsd_complex
 !
+      procedure :: get_full_multipliers &
+                => get_multipliers_ccsd
+!
 !     Procedures related to omega
 !
       procedure :: construct_omega                            => construct_omega_ccsd
@@ -269,28 +272,24 @@ module ccsd_class
 !
 !     F transformation
 !
-      procedure :: F_x_mu_transformation => F_x_mu_transformation_ccsd
+      procedure :: F_x_mu_transformation & 
+                => F_x_mu_transformation_ccsd
 !
-      procedure :: F_ccsd_a1_1      => F_ccsd_a1_1_ccsd
-      procedure :: F_ccsd_a2_1      => F_ccsd_a2_1_ccsd
-      procedure :: F_ccsd_a1_2      => F_ccsd_a1_2_ccsd
-      procedure :: F_ccsd_b1_2      => F_ccsd_b1_2_ccsd
-      procedure :: F_ccsd_c1_2      => F_ccsd_c1_2_ccsd
-      procedure :: F_ccsd_d1_2      => F_ccsd_d1_2_ccsd
-      procedure :: F_ccsd_e1_2      => F_ccsd_e1_2_ccsd
-      procedure :: F_ccsd_f1_2      => F_ccsd_f1_2_ccsd
-      procedure :: F_ccsd_g1_2      => F_ccsd_g1_2_ccsd
-      procedure :: F_ccsd_h1_2      => F_ccsd_h1_2_ccsd
-      procedure :: F_ccsd_i1_2      => F_ccsd_i1_2_ccsd
-      procedure :: F_ccsd_j1_2      => F_ccsd_j1_2_ccsd
-      procedure :: F_ccsd_a2_2      => F_ccsd_a2_2_ccsd
-      procedure :: F_ccsd_b2_2      => F_ccsd_b2_2_ccsd
-      procedure :: F_ccsd_c2_2      => F_ccsd_c2_2_ccsd
-      procedure :: F_ccsd_d2_2      => F_ccsd_d2_2_ccsd
-      procedure :: F_ccsd_e2_2      => F_ccsd_e2_2_ccsd
-      procedure :: F_ccsd_f2_2      => F_ccsd_f2_2_ccsd
-      procedure :: F_ccsd_g2_2      => F_ccsd_g2_2_ccsd
-      procedure :: F_ccsd_h2_2      => F_ccsd_h2_2_ccsd
+      procedure :: F_ccsd_d1_2 => F_ccsd_d1_2_ccsd
+      procedure :: F_ccsd_e1_2 => F_ccsd_e1_2_ccsd
+      procedure :: F_ccsd_f1_2 => F_ccsd_f1_2_ccsd
+      procedure :: F_ccsd_g1_2 => F_ccsd_g1_2_ccsd
+      procedure :: F_ccsd_h1_2 => F_ccsd_h1_2_ccsd
+      procedure :: F_ccsd_a2_2 => F_ccsd_a2_2_ccsd
+      procedure :: F_ccsd_b2_2 => F_ccsd_b2_2_ccsd
+      procedure :: F_ccsd_c2_2 => F_ccsd_c2_2_ccsd
+      procedure :: F_ccsd_d2_2 => F_ccsd_d2_2_ccsd
+      procedure :: F_ccsd_e2_2 => F_ccsd_e2_2_ccsd
+      procedure :: F_ccsd_f2_2 => F_ccsd_f2_2_ccsd
+      procedure :: F_ccsd_g2_2 => F_ccsd_g2_2_ccsd
+      procedure :: F_ccsd_h2_2 => F_ccsd_h2_2_ccsd
+      procedure :: F_ccsd_i1_2 => F_ccsd_i1_2_ccsd
+      procedure :: F_ccsd_j1_2 => F_ccsd_j1_2_ccsd
 !
    end type ccsd
 !
@@ -491,10 +490,6 @@ contains
 !!
 !!       t_aibj = - g_aibj/epsilon_aibj
 !!
-!!   SARAI: FIX -> Note that update_t1_integrals has to be called before this routine.
-!!
-!
-!
       implicit none
 !
       class(ccsd) :: wf
@@ -505,7 +500,7 @@ contains
       integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%eri_t1%get('vovo', g_aibj) ! OBS SARAI NAME ! SHOULD THIS BE T1
+      call wf%eri_t1%get('vovo', g_aibj)
 !
 !$omp parallel do schedule(guided) &
 !$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)

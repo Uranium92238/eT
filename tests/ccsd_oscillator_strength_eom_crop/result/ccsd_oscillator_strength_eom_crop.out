@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:05:17 UTC +01:00
+  Calculation started: 2022-04-07 12:35:04 UTC -07:00
 
 
   :: Input file
@@ -191,15 +192,15 @@
      6          -177.480195433217     0.7552E-04     0.1333E-05
      7          -177.480195516154     0.2127E-04     0.8294E-07
      8          -177.480195526844     0.4990E-05     0.1069E-07
-     9          -177.480195527826     0.1544E-05     0.9820E-09
-    10          -177.480195527872     0.5606E-06     0.4644E-10
-    11          -177.480195527875     0.1718E-06     0.2899E-11
-    12          -177.480195527875     0.2537E-07     0.1705E-12
-    13          -177.480195527875     0.9499E-08     0.5684E-13
-    14          -177.480195527875     0.3900E-08     0.0000E+00
-    15          -177.480195527875     0.1805E-08     0.1137E-12
-    16          -177.480195527875     0.4213E-09     0.1137E-12
-    17          -177.480195527875     0.9108E-10     0.1705E-12
+     9          -177.480195527826     0.1544E-05     0.9821E-09
+    10          -177.480195527872     0.5606E-06     0.4647E-10
+    11          -177.480195527875     0.1718E-06     0.2814E-11
+    12          -177.480195527875     0.2537E-07     0.1137E-12
+    13          -177.480195527875     0.9499E-08     0.8527E-13
+    14          -177.480195527875     0.3900E-08     0.5684E-13
+    15          -177.480195527875     0.1805E-08     0.1705E-12
+    16          -177.480195527875     0.4213E-09     0.8527E-13
+    17          -177.480195527875     0.9108E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -212,8 +213,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              3.56000
-     Total cpu time (sec):               5.83092
+     Total wall time (sec):              1.07200
+     Total cpu time (sec):               1.17241
 
 
   :: CCSD wavefunction
@@ -234,28 +235,11 @@
      Double excitation amplitudes:  39340
 
 
-  :: Coupled cluster response engine
-  =====================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates dipole transition moments and oscillator strengths between 
-
-  the ground state and the excited states.
-
-  This is a CCSD response calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited states (diis algorithm)
-     6) Calculation of excited state properties (EOM)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -302,7 +286,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1128E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.2440E-14
 
   - Settings for integral handling:
 
@@ -311,14 +295,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.77600
-     Total cpu time (sec):               2.60930
+     Total wall time (sec):              0.78700
+     Total cpu time (sec):               0.63654
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -347,10 +329,10 @@
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -177.877001409673     0.1168E+00     0.1779E+03
-    2          -177.886677470622     0.3120E-01     0.9676E-02
+    2          -177.886677470623     0.3120E-01     0.9676E-02
     3          -177.894835530802     0.8696E-02     0.8158E-02
     4          -177.896138458909     0.2772E-02     0.1303E-02
-    5          -177.895894970644     0.9274E-03     0.2435E-03
+    5          -177.895894970645     0.9274E-03     0.2435E-03
     6          -177.895939855361     0.4302E-03     0.4488E-04
     7          -177.895997325385     0.1161E-03     0.5747E-04
     8          -177.895984484102     0.3848E-04     0.1284E-04
@@ -408,11 +390,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.68700
-     Total cpu time (sec):               3.36837
+     Total wall time (sec):              1.32000
+     Total cpu time (sec):               0.94002
 
 
-  4) Calculation of the multipliers (diis algorithm)
+  Determining CC multipliers
+  ==========================
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -465,10 +448,10 @@
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              2.55500
-     Total cpu time (sec):               2.73779
+     Total wall time (sec):              1.30200
+     Total cpu time (sec):               0.97754
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -502,14 +485,9 @@
         6      9       4     10        0.052190751159
      --------------------------------------------------
 
-  - Finished solving the CCSD multipliers equations
 
-     Total wall time (sec):               2.55700
-     Total cpu time (sec):                2.74019
-
-
-  5) Calculation of the excited states (diis algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -725,7 +703,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.204566001090       0.3935E-09
-     2      0.321008275436       0.1492E-07
+     2      0.321008275437       0.1492E-07
   -----------------------------------------------
 
   Iteration:                 23
@@ -777,7 +755,7 @@
         a       i         R(a,i)
      -----------------------------------
         1     10        0.960302407238
-        3     10        0.136219055683
+        3     10        0.136219055682
         2     10        0.045809047315
         1      7        0.045498210684
        13     10       -0.024180057795
@@ -832,7 +810,7 @@
         1      9       1      9       -0.093698585104
         1      9       3      9       -0.060461193582
         1      6       1      9       -0.041409217691
-        1      9       2      9       -0.032826089095
+        1      9       2      9       -0.032826089094
         1      6       2      8       -0.031589599742
         7      8       1      9        0.026868588646
         2      8       1      9        0.025782030519
@@ -854,12 +832,12 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              6.24000
-     Total cpu time (sec):               6.54762
+     Total wall time (sec):              3.13200
+     Total cpu time (sec):               2.31284
 
 
-  5) Calculation of the excited states (diis algorithm)
-     Calculating left vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -965,7 +943,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.204565140000       0.4589E-04
-     2      0.321013639063       0.5489E-03
+     2      0.321013639064       0.5489E-03
   -----------------------------------------------
 
   Iteration:                  9
@@ -989,7 +967,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.204566103365       0.5305E-05
-     2      0.321006439439       0.5860E-04
+     2      0.321006439440       0.5860E-04
   -----------------------------------------------
 
   Iteration:                 12
@@ -1085,7 +1063,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.204566001089       0.8190E-09
-     2      0.321008275735       0.2528E-08
+     2      0.321008275735       0.2529E-08
   -----------------------------------------------
 
   Iteration:                 24
@@ -1192,17 +1170,22 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.204566001089        5.566524422210
-        2                  0.321008275574        8.735080102262
+        2                  0.321008275574        8.735080102263
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              6.22500
-     Total cpu time (sec):               6.48859
+     Total wall time (sec):              3.29800
+     Total cpu time (sec):               2.29844
 
 
-  6) Calculation of excited state properties (EOM)
+  Biorthonormalization of excited CC states
+  =========================================
+
+
+  Determining CC EOM transition moments
+  =====================================
 
   :: EOM properties calculation
 
@@ -1242,19 +1225,14 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.158112693810
 
-  - Timings for the CCSD response calculation
-
-     Total wall time (sec):             18.55600
-     Total cpu time (sec):              21.90028
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 40.964356 MB
+  Peak memory usage during the execution of eT: 40.964368 MB
 
-  Total wall time in eT (sec):             22.20100
-  Total cpu time in eT (sec):              27.80562
+  Total wall time in eT (sec):             10.98800
+  Total cpu time in eT (sec):               8.39620
 
-  Calculation ended: 2022-02-01 16:05:39 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:15 UTC -07:00
 
   - Implementation references:
 

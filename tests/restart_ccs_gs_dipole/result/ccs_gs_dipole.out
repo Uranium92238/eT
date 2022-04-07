@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:24 UTC +01:00
+  Calculation started: 2022-04-07 12:34:45 UTC -07:00
 
 
   :: Input file
@@ -170,14 +171,14 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.889701962820     0.1071E+00     0.7489E+02
+     1           -74.889701962821     0.1071E+00     0.7489E+02
      2           -74.940474931397     0.1469E-01     0.5077E-01
      3           -74.942054999957     0.2353E-02     0.1580E-02
-     4           -74.942080036554     0.5610E-04     0.2504E-04
+     4           -74.942080036553     0.5610E-04     0.2504E-04
      5           -74.942080053363     0.1780E-04     0.1681E-07
      6           -74.942080057695     0.2053E-06     0.4333E-08
-     7           -74.942080057696     0.9667E-09     0.4121E-12
-     8           -74.942080057696     0.7843E-12     0.4263E-13
+     7           -74.942080057696     0.9667E-09     0.3979E-12
+     8           -74.942080057696     0.7838E-12     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -190,8 +191,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.04200
-     Total cpu time (sec):               0.04950
+     Total wall time (sec):              0.02200
+     Total cpu time (sec):               0.01878
 
 
   :: CCS wavefunction
@@ -211,27 +212,11 @@
      Single excitation amplitudes:  10
 
 
-  :: Mean value coupled cluster engine
-  =======================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the time-independent expectation value of one-electron operators 
-
-  A, < A > = < Λ | A | CC >.
-
-  This is a CCS mean value calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of ground state properties
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -275,8 +260,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2858E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.4037E-16
+     Maximal difference between approximate and actual diagonal:              0.2342E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1216E-15
 
   - Settings for integral handling:
 
@@ -285,14 +270,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.01700
-     Total cpu time (sec):               0.02208
+     Total wall time (sec):              0.00800
+     Total cpu time (sec):               0.00655
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -318,7 +301,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -74.942080057696     0.1201E-11     0.7494E+02
+    1           -74.942080057696     0.1203E-11     0.7494E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -346,11 +329,12 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00300
-     Total cpu time (sec):               0.00316
+     Total wall time (sec):              0.00100
+     Total cpu time (sec):               0.00121
 
 
-  4) Calculation of the multipliers (diis algorithm)
+  Determining CC multipliers
+  ==========================
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -377,16 +361,16 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.2403E-11
+    1          0.2408E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00100
-     Total cpu time (sec):               0.00163
+     Total wall time (sec):              0.00000
+     Total cpu time (sec):               0.00056
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -404,23 +388,11 @@
         2      5        0.000000000000
      ------------------------------------
 
-  - Finished solving the CCS multipliers equations
 
-     Total wall time (sec):               0.00200
-     Total cpu time (sec):                0.00224
+  Determining CC mean values
+  ==========================
 
-
-  5) Calculation of ground state properties
-
-  - Operator: dipole moment [a.u.]
-
-     x:          0.0000000
-     y:          0.6035218
-     z:          0.0000000
-
-     |mu|:       0.6035218
-
-  - Operator: dipole moment [Debye]
+  - Operator: dipole [Debye]
 
      x:          0.0000000
      y:          1.5339994
@@ -428,19 +400,14 @@
 
      |mu|:       1.5339994
 
-  - Timings for the CCS mean value calculation
-
-     Total wall time (sec):              0.02600
-     Total cpu time (sec):               0.03186
-
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 59.492 KB
 
-  Total wall time in eT (sec):              0.09000
-  Total cpu time in eT (sec):               0.10226
+  Total wall time in eT (sec):              0.04300
+  Total cpu time in eT (sec):               0.03668
 
-  Calculation ended: 2022-02-01 16:10:24 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:45 UTC -07:00
 
   - Implementation references:
 

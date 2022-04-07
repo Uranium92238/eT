@@ -1,3 +1,22 @@
+# eT v1.7.0
+### Bugfixes
+- QED keyword photons removed. eT-program/eT!1051
+
+### Features
+- Linear response now available at the CC2 level (polarizabilities and transition strengths). eT-program/eT!1039
+- Restart for the Lanczos solver. eT-program/eT!1036
+- FCI for ground and excited states of closed and open-shell systems. eT-program/eT!1060
+
+### Tests
+- Added unit tests for for untested routines in `tools/maps`. eT-program/eT!1035
+- Added for plotting of the active hf density. eT-program/eT!1045
+
+### Structure
+- Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040, eT-program/eT!1044
+- Using the eigen_davidson_solver for the CC excited state equations instead of the cc_es_davidson_solver. The cc_es_davidson_solver is deleted. eT-program/eT!1038, eT-program/eT!1050
+- Projection tools now ask CC wave functions to project out unwanted components. The projection vectors have been deleted. eT-program/eT!1048
+- eT stops with error if there are no electrons. eT-program/eT!1061 
+
 # eT v1.6.4
 ### CI
 - Updated black to version 22.3.0 because a dependency of black was updated making black 22.1.0 crash. eT-program/eT!1057

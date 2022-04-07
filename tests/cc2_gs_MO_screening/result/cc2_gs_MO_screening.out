@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:09:51 UTC +01:00
+  Calculation started: 2022-04-07 12:34:46 UTC -07:00
 
 
   :: Input file
@@ -174,17 +175,17 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4547E-12
-    11           -78.843851693631     0.5634E-08     0.4263E-13
-    12           -78.843851693631     0.1415E-08     0.9948E-13
-    13           -78.843851693631     0.6806E-09     0.0000E+00
-    14           -78.843851693631     0.1491E-09     0.4263E-13
-    15           -78.843851693631     0.2501E-10     0.2842E-13
-    16           -78.843851693631     0.5167E-11     0.2842E-13
-    17           -78.843851693631     0.1343E-11     0.1421E-13
-    18           -78.843851693631     0.2419E-12     0.0000E+00
+    10           -78.843851693631     0.2637E-07     0.4974E-12
+    11           -78.843851693631     0.5634E-08     0.1421E-13
+    12           -78.843851693631     0.1415E-08     0.5684E-13
+    13           -78.843851693631     0.6806E-09     0.1421E-13
+    14           -78.843851693631     0.1491E-09     0.0000E+00
+    15           -78.843851693631     0.2501E-10     0.4263E-13
+    16           -78.843851693631     0.5167E-11     0.1421E-13
+    17           -78.843851693631     0.1340E-11     0.2842E-13
+    18           -78.843851693631     0.2420E-12     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -197,8 +198,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.29800
-     Total cpu time (sec):               1.86813
+     Total wall time (sec):              0.38700
+     Total cpu time (sec):               0.44608
 
 
   :: CC2 wavefunction
@@ -219,23 +220,11 @@
      Double excitation amplitudes:  9591
 
 
-  :: Ground state coupled cluster engine
-  =========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
-
-  This is a CC2 ground state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -294,14 +283,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.50500
-     Total cpu time (sec):               0.73000
+     Total wall time (sec):              0.60500
+     Total cpu time (sec):               0.21909
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -339,11 +326,11 @@
     9           -79.085769729230     0.3393E-07     0.9095E-12
    10           -79.085769729553     0.4633E-08     0.3225E-09
    11           -79.085769729585     0.9303E-09     0.3266E-10
-   12           -79.085769729574     0.2416E-09     0.1073E-10
+   12           -79.085769729575     0.2416E-09     0.1073E-10
    13           -79.085769729575     0.4926E-10     0.4547E-12
-   14           -79.085769729575     0.6368E-11     0.3837E-12
-   15           -79.085769729575     0.1345E-11     0.8527E-13
-   16           -79.085769729575     0.3275E-12     0.1421E-13
+   14           -79.085769729575     0.6370E-11     0.3837E-12
+   15           -79.085769729575     0.1344E-11     0.8527E-13
+   16           -79.085769729575     0.3264E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -371,22 +358,17 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.13000
-     Total cpu time (sec):               0.17169
-
-  - Timings for the CC2 ground state calculation
-
-     Total wall time (sec):              0.63700
-     Total cpu time (sec):               0.90418
+     Total wall time (sec):              0.23800
+     Total cpu time (sec):               0.08854
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 10.600584 MB
 
-  Total wall time in eT (sec):              2.04400
-  Total cpu time in eT (sec):               2.83742
+  Total wall time in eT (sec):              1.24900
+  Total cpu time in eT (sec):               0.77268
 
-  Calculation ended: 2022-02-01 16:09:53 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:47 UTC -07:00
 
   - Implementation references:
 

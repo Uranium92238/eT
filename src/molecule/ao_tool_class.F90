@@ -317,7 +317,7 @@ contains
 !
       ao%libint_epsilon = ao%eri_cutoff**2
 !
-      call input%get_keyword('integral precision',  &
+      call input%get_keyword('integral precision',             &
                                         'solver scf',          &
                                         ao%libint_epsilon)
 !
@@ -399,6 +399,8 @@ contains
 !
       call ao%determine_linearly_independent_aos()
       call ao%construct_cs_eri_max_screenings()
+!
+      if (ao%get_n_electrons() == 0) call output%error_msg('no electrons in system')
 !
       call timer%turn_off()
 !

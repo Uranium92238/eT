@@ -38,7 +38,6 @@ module qed_tool_class
    type :: qed_tool
 !
       integer, private :: n_ao, n_el
-      integer, public :: n_ph    ! n_photons per mode
       integer, public :: n_modes
 !
       real(dp), dimension(:), allocatable, public :: frequency

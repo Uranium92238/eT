@@ -142,24 +142,6 @@ contains
    end subroutine get_initial_cc_multipliers_ccs
 !
 !
-   module subroutine get_cc_multipliers_preconditioner_ccs(wf, preconditioner)
-!!
-!!    Get CC multipliers preconditioner
-!!    Written by Regina Matveeva, Sep 2021
-!!
-!!    Sets precondition vector to orbital differences
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes) :: preconditioner
-!
-      call wf%get_orbital_differences(preconditioner, wf%n_gs_amplitudes)
-!
-   end subroutine get_cc_multipliers_preconditioner_ccs
-!
-!
    module subroutine print_banner_davidson_cc_multipliers_ccs(wf)
 !!
 !!    Print banner
@@ -206,7 +188,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: multipliers
 !
-      call output%printf('n', '- Davidson CC multipliers solver summary:', fs='(/t3,a)')
+      call output%printf('n', '- CC multipliers solver summary:', fs='(/t3,a)')
 !
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
 

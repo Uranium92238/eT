@@ -86,6 +86,16 @@ program eT_program
          class(hf), intent(in)  :: ref_wf
 !
       end subroutine cc_calculation
+
+      subroutine fci_calculation(ref_wf)
+!
+         use hf_class, only: hf
+!
+         implicit none
+!
+         class(hf), intent(in)  :: ref_wf
+!
+      end subroutine fci_calculation
 !
       subroutine print_compilation_info(file_)
 !
@@ -176,6 +186,10 @@ program eT_program
 !
          call ref_wf%prepare_for_cc()
          call cc_calculation(ref_wf)
+!
+      else if (input%requested_fci_calculation()) then
+!
+         call fci_calculation(ref_wf)
 !
       endif
 !
@@ -331,18 +345,22 @@ subroutine cc_calculation(ref_wf)
    use mlcc2_class, only: mlcc2
    use mlccsd_class, only: mlccsd
 !
-   use gs_engine_class, only: gs_engine
-   use es_engine_class, only: es_engine
-   use response_engine_class, only: response_engine
-   use mean_value_engine_class, only: mean_value_engine
-   use td_engine_class, only: td_engine
+   use cc_engine_class, only: cc_engine
+   use cc_gs_engine_class, only: cc_gs_engine
+   use cc_es_engine_class, only: cc_es_engine
+   use cc_gs_mean_value_engine_class, only: cc_gs_mean_value_engine
+   use td_cc_engine_class, only: td_cc_engine
+!
+   use cc_response_engine_factory_class, only: cc_response_engine_factory
 !
    implicit none
 !
    class(hf), intent(in)  :: ref_wf
 !
    class(ccs), allocatable :: cc_wf
-   class(gs_engine), allocatable :: cc_engine
+   class(cc_engine), allocatable :: engine
+!
+   type(cc_response_engine_factory) :: response_engine_factory
 !
    character(len=30) :: cc_wf_name
 !
@@ -398,23 +416,23 @@ subroutine cc_calculation(ref_wf)
 !
    if (input%is_keyword_present('response', 'do')) then
 !
-      cc_engine = response_engine(cc_wf)
+      call response_engine_factory%create(engine)
 !
    elseif (input%is_keyword_present('excited state', 'do')) then
 !
-      cc_engine = es_engine(cc_wf)
+      allocate(cc_es_engine::engine)
 !
    elseif (input%is_keyword_present('mean value', 'do')) then
 !
-      cc_engine = mean_value_engine(cc_wf)
+      allocate(cc_gs_mean_value_engine::engine)
 !
    elseif (input%is_keyword_present('ground state', 'do')) then
 !
-      cc_engine = gs_engine(cc_wf)
+      allocate(cc_gs_engine::engine)
 !
    elseif (input%is_keyword_present('time dependent state', 'do')) then
 !
-      cc_engine = td_engine(cc_wf)
+      allocate(td_cc_engine::engine)
 !
    else
 !
@@ -422,10 +440,57 @@ subroutine cc_calculation(ref_wf)
 !
    endif
 !
-   call cc_engine%ignite(cc_wf)
+   call engine%ignite(cc_wf)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!
+!
+subroutine fci_calculation(ref_wf)
+!!
+!! Full Configuration Interaction Calculation
+!! Written by Enrico Ronca, 2020
+!!
+!! Directs the FCI calculation for eT
+!!
+   use global_in,  only: input
+   use global_out, only: output
+!
+   use hf_class, only: hf
+!
+   use fci_class, only: fci
+!
+   use fci_engine_class, only: fci_engine
+!
+   implicit none
+!
+   class(hf), intent(in)  :: ref_wf
+!
+   class(fci), allocatable :: fci_wf
+!
+   character(len=30) :: fci_wf_name
+   class(fci_engine), allocatable :: engine
+!
+   fci_wf_name = input%get_fci_wf()
+!
+   if (trim(fci_wf_name) == 'fci') then
+!
+      allocate(fci::fci_wf)
+!
+   else
+!
+      call output%error_msg('could not recognize FCI method ' // trim(fci_wf_name) // '.')
+!
+   end if
+!
+   call fci_wf%initialize(ref_wf)
+!
+   engine = fci_engine()
+!
+   call engine%ignite(fci_wf)
+   call fci_wf%cleanup()
+!
+end subroutine fci_calculation
 !
 !
 subroutine do_eri_cholesky()
@@ -534,6 +599,7 @@ subroutine print_program_banner()
                            'R. H. Myhre, '            // &
                            'A. C. Paul, '             // &
                            'S. Roet, '                // &
+                           'E. Ronca'                 // &
                            'M. Scavino, '             // &
                            'A. K. Schnack-Petersen, ' // &
                            'A. S. Skeidsvoll, '       // &

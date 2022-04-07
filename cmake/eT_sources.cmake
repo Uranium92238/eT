@@ -27,15 +27,52 @@ set(eT_fortran_sources
 #
    src/sad/sad_tool_class.F90
 #
-   src/engines/abstract_engine_class.F90
-   src/engines/reference_engine_class.F90
-   src/engines/hf_geoopt_engine_class.F90
-   src/engines/tdhf_engine_class.F90
-   src/engines/gs_engine_class.F90
-   src/engines/es_engine_class.F90
-   src/engines/mean_value_engine_class.F90
-   src/engines/response_engine_class.F90
-   src/engines/td_engine_class.F90
+   src/engines/fci_engine_class.F90
+#
+   src/engines/hf/abstract_engine_class.F90
+   src/engines/hf/reference_engine_class.F90
+   src/engines/hf/hf_geoopt_engine_class.F90
+   src/engines/hf/tdhf_engine_class.F90
+#
+   src/engines/cc/cc_engine_class.F90
+   src/engines/cc/cc_gs_engine_class.F90
+   src/engines/cc/cc_gs_mean_value_engine_class.F90
+   src/engines/cc/cc_es_engine_class.F90
+   src/engines/cc/td_cc_engine_class.F90
+   src/engines/cc/cc_polarizability_engine_class.F90
+   src/engines/cc/lr_transition_moment_engine_class.F90
+   src/engines/cc/eom_transition_moment_engine_class.F90
+#
+   src/engines/cc/tasks/eri_approximator_task_class.F90
+   src/engines/cc/tasks/cholesky_decomposition_task_class.F90
+   src/engines/cc/tasks/ri_task_class.F90
+   src/engines/cc/tasks/cc_polarizability_task_class.F90
+   src/engines/cc/tasks/cc_task_class.F90
+   src/engines/cc/tasks/cc_multipliers_task_class.F90
+   src/engines/cc/tasks/cc_amplitudes_task_class.F90
+   src/engines/cc/tasks/cc_es_amplitudes_task_class.F90
+   src/engines/cc/tasks/cc_mean_values_task_class.F90
+   src/engines/cc/tasks/cc_visualization_task_class.F90
+   src/engines/cc/tasks/cc_propagation_task_class.F90
+   src/engines/cc/tasks/biorthonormalization_task_class.F90
+   src/engines/cc/tasks/cc_transition_moments_task_class.F90
+   src/engines/cc/tasks/cc_eom_transition_moments_task_class.F90
+   src/engines/cc/tasks/cc_lr_transition_moments_task_class.F90
+   src/engines/cc/tasks/fft_task_class.F90
+#
+   src/engines/cc/calculators/cc_F_transformation_class.F90
+   src/engines/cc/calculators/cc_null_F_transformation_class.F90
+   src/engines/cc/calculators/cc_lr_F_transformation_class.F90
+   src/engines/cc/calculators/cc_eta_xi_calculator_class.F90
+   src/engines/cc/calculators/cc_lr_eta_xi_calculator_class.F90
+   src/engines/cc/calculators/cc_eom_eta_xi_calculator_class.F90
+#
+   src/engines/cc/factories/eri_approximator_factory_class.F90
+   src/engines/cc/factories/cc_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_multipliers_solver_factory_class.F90
+   src/engines/cc/factories/cc_es_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_propagator_factory_class.F90
+   src/engines/cc/factories/cc_response_engine_factory_class.F90
 #
    src/eri_tool/eri_tool_class.F90
    src/eri_tool/eri_adapter_class.F90
@@ -92,19 +129,33 @@ set(eT_fortran_sources
    src/solver_tools/cholesky_array_list_class.F90
    src/solver_tools/bfgs_tool_class.F90
    src/solver_tools/diis_tool_class.F90
-   src/solver_tools/davidson_tool_class.F90
-   src/solver_tools/eigen_davidson_tool_class.F90
-   src/solver_tools/linear_davidson_tool_class.F90
    src/solver_tools/es_start_vectors/es_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_manual_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_valence_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_cvs_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_ip_start_vector_tool_class.F90
-   src/solver_tools/es_projectors/es_projection_tool_class.F90
+   src/solver_tools/es_projectors/abstract_projection_tool_class.F90
    src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
    src/solver_tools/es_projectors/es_rm_core_projection_tool_class.F90
-   src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
+   src/solver_tools/es_projectors/null_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
+#
+   src/solver_tools/davidson/davidson_tool_class.F90
+   src/solver_tools/davidson/eigen_davidson_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_tool_class.F90
+   src/solver_tools/davidson/eigen_davidson_print_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_print_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_single_solution_print_tool_class.F90
+   src/solver_tools/davidson/linear_davidson_multiple_solutions_print_tool_class.F90
+#
+   src/solver_tools/cc/cc_multipliers_rhs_tool_class.F90
+   src/solver_tools/cc/cc_es_eigen_davidson_print_tool_class.F90
+   src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
+   src/solver_tools/cc/cc_eigen_storage_tool_class.F90
+   src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
+   src/solver_tools/cc/cc_multipliers_start_vector_tool_class.F90
+   src/solver_tools/cc/cc_multipliers_linear_equation_storage_tool_class.F90
+   src/solver_tools/cc/cc_jacobian_transformation_tool_class.F90
 #
    src/solver_tools/amplitude_updaters/amplitude_updater_class.F90
    src/solver_tools/amplitude_updaters/quasi_newton_updater_class.F90
@@ -113,46 +164,39 @@ set(eT_fortran_sources
    src/solver_tools/amplitude_updaters/approximate_jacobian_transformer_class.F90
    src/solver_tools/amplitude_updaters/jacobian_transformer_class.F90
 #
+   src/solver_tools/hf/tamm_dancoff_transformation_tool_class.F90
+   src/solver_tools/hf/tamm_dancoff_preconditioner_getter_class.F90
+   src/solver_tools/hf/tamm_dancoff_eigen_storage_tool_class.F90
+   src/solver_tools/hf/rpa_transformation_tool_class.F90
+   src/solver_tools/hf/rpa_preconditioner_getter_class.F90
+   src/solver_tools/hf/rpa_eigen_storage_tool_class.F90
+   src/solver_tools/hf/tdhf_start_vector_tool_class.F90
+#
+   src/solver_tools/factories/tdhf_solver_factory_class.F90
+   src/solver_tools/factories/scf_solver_factory_class.F90
+   src/solver_tools/factories/davidson_cc_es_solver_factory_class.F90
+#
+#
+   src/solver_tools/functions/function_class.F90
+   src/solver_tools/functions/hf_energy_function_class.F90
+#
    src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
    src/solver_tools/asymmetric_lanczos_tool_class.F90
    src/solver_tools/convergence_tool_class.F90
 #
-   src/solver_tools/transformation_tool_class.F90
-   src/solver_tools/cc_jacobian_transformation_tool_class.F90
-   src/solver_tools/tamm_dancoff_transformation_tool_class.F90
-   src/solver_tools/rpa_transformation_tool_class.F90
-#
-   src/solver_tools/cc_multipliers_solver_factory_class.F90
-   src/solver_tools/tdhf_solver_factory_class.F90
-   src/solver_tools/scf_solver_factory_class.F90
-#
    src/solver_tools/start_vector_tool_class.F90
-   src/solver_tools/cc_multipliers_start_vector_tool_class.F90
-   src/solver_tools/tdhf_start_vector_tool_class.F90
-#
    src/solver_tools/preconditioner_getter_class.F90
-   src/solver_tools/cc_multipliers_preconditioner_getter_class.F90
-   src/solver_tools/rpa_preconditioner_getter_class.F90
-   src/solver_tools/tamm_dancoff_preconditioner_getter_class.F90
-#
-   src/solver_tools/eigen_davidson_print_tool_class.F90
-   src/solver_tools/linear_davidson_print_tool_class.F90
-   src/solver_tools/linear_davidson_single_solution_print_tool_class.F90
-   src/solver_tools/linear_davidson_multiple_solutions_print_tool_class.F90
-#
    src/solver_tools/rhs_linear_equation_tool_class.F90
-   src/solver_tools/cc_multipliers_rhs_tool_class.F90
-#
+   src/solver_tools/transformation_tool_class.F90
    src/solver_tools/eigen_storage_tool_class.F90
-   src/solver_tools/tamm_dancoff_eigen_storage_tool_class.F90
-   src/solver_tools/rpa_eigen_storage_tool_class.F90
+   src/solver_tools/linear_equation_storage_tool_class.F90
 #
-   src/solver_tools/linear_storage_tool_class.F90
-   src/solver_tools/cc_multipliers_linear_storage_tool_class.F90
-#
-   src/solver_tools/functions/function_class.F90
-   src/solver_tools/functions/hf_energy_function_class.F90
+   src/solver_tools/factories/fci_solver_factory_class.F90
+   src/solver_tools/fci/fci_start_vector_tool_class.F90
+   src/solver_tools/fci/fci_transformation_tool_class.F90
+   src/solver_tools/fci/fci_preconditioner_getter_class.F90
+   src/solver_tools/fci/fci_eigen_storage_tool_class.F90
 #
    src/solvers/abstract_solver_class.F90
    src/solvers/hf/scf_solver_class.F90
@@ -165,7 +209,6 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_linear_equations_class.F90
    src/solvers/cc/nonlinear_davidson_cc_es_class.F90
-   src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/solvers/cholesky/eri_ri_class.F90
@@ -214,6 +257,7 @@ set(eT_fortran_sources
    src/tools/orbitals/nto_tool_class.F90
    src/tools/orbitals/cnto_tool_class.F90
    src/tools/redundant_internal_coords_class.F90
+   src/tools/banner_printer_class.F90
 #
    src/tools/citation_printer_class.F90
    src/tools/citation_class.F90
@@ -242,6 +286,7 @@ set(eT_fortran_sources
    src/various/angular_momentum/spherical_i_angular_momentum.F90
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
+   src/wavefunctions/cc_wavefunctions_class.F90
 
    src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/hf/hf_class.F90
@@ -300,6 +345,7 @@ set(eT_fortran_sources
    src/wavefunctions/doubles/initialize_destruct_doubles.F90
    src/wavefunctions/doubles/mean_value_doubles.F90
    src/wavefunctions/doubles/response_doubles.F90
+   src/wavefunctions/doubles/F_doubles.F90
    src/wavefunctions/doubles/complex_doubles.F90
    src/wavefunctions/doubles/generated_complex_files/initialize_destruct_doubles_complex.F90
    src/wavefunctions/doubles/generated_complex_files/jacobian_transpose_doubles_complex.F90
@@ -374,5 +420,14 @@ set(eT_fortran_sources
    src/wavefunctions/mlccsd/file_handling_mlccsd.F90
    src/wavefunctions/mlccsd/set_get_mlccsd.F90
    src/wavefunctions/mlccsd/jacobian_mlccsd.F90
+#
+   src/wavefunctions/fci/fci_class.F90
+   src/wavefunctions/fci/initialize_destruct_fci.F90
+   src/wavefunctions/fci/strings_fci.F90
+   src/wavefunctions/fci/preconditioning_fci.F90
+   src/wavefunctions/fci/integrals_fci.F90
+   src/wavefunctions/fci/contract_fci.F90
+   src/wavefunctions/fci/spin_operators_fci.F90
+   src/wavefunctions/fci/file_handling_fci.F90
    src/wavefunctions/mlccsd/fock_mlccsd.F90
 )

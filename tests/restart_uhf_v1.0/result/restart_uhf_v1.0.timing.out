@@ -1,10 +1,10 @@
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -19,7 +19,7 @@
   One-electron integrals (overlap)             0.00            0.00        --
   Cholesky decomposition of AO        
   overlap                                      0.00            0.00        --
-  Time initializing AO tool                    0.04            0.04      1.04
+  Time initializing AO tool                    0.01            0.01      1.12
 
   :: Hartree-Fock engine
   =========================
@@ -29,12 +29,12 @@
   Description                                 wall[s]         cpu[s]    cpu/wall
   -------------------------------------------------------------------------------------
   One-electron integrals              
-  (hamiltonian)                                0.00            0.00      0.76
-  AO Fock construction                         0.09            0.16      1.91
-  SCF solver                                   0.00            0.00      0.51
-  Hartree-Fock engine                          0.09            0.17      1.88
+  (hamiltonian)                                0.00            0.00        --
+  AO Fock construction                         0.02            0.04      1.79
+  SCF solver                                   0.00            0.00        --
+  Hartree-Fock engine                          0.03            0.04      1.45
 
 
   :: Total time
   ================
-  Total time in eT                             0.13            0.21      1.59
+  Total time in eT                             0.04            0.05      1.21
