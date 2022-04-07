@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:07:36 UTC +01:00
+  Calculation started: 2022-04-07 12:35:32 UTC -07:00
 
 
   :: Input file
@@ -179,18 +180,18 @@
      1           -78.796357979401     0.9791E-01     0.7880E+02
      2           -78.828453237453     0.7078E-01     0.3210E-01
      3           -78.843281517241     0.6747E-02     0.1483E-01
-     4           -78.843608975052     0.2753E-02     0.3275E-03
+     4           -78.843608975051     0.2753E-02     0.3275E-03
      5           -78.843645123311     0.3974E-03     0.3615E-04
      6           -78.843646182586     0.5223E-04     0.1059E-05
      7           -78.843646204409     0.6084E-05     0.2182E-07
      8           -78.843646205153     0.2132E-05     0.7440E-09
      9           -78.843646205256     0.3153E-06     0.1025E-09
     10           -78.843646205256     0.2623E-07     0.4121E-12
-    11           -78.843646205256     0.5559E-08     0.0000E+00
-    12           -78.843646205256     0.1724E-08     0.0000E+00
-    13           -78.843646205256     0.7589E-09     0.2842E-13
-    14           -78.843646205256     0.1286E-09     0.8527E-13
-    15           -78.843646205256     0.2324E-10     0.5684E-13
+    11           -78.843646205256     0.5559E-08     0.4263E-13
+    12           -78.843646205256     0.1724E-08     0.1421E-13
+    13           -78.843646205256     0.7589E-09     0.1421E-13
+    14           -78.843646205256     0.1286E-09     0.2842E-13
+    15           -78.843646205256     0.2324E-10     0.4263E-13
     16           -78.843646205256     0.4593E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
@@ -204,8 +205,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.19700
-     Total cpu time (sec):               1.81489
+     Total wall time (sec):              0.34600
+     Total cpu time (sec):               0.41572
 
   - Preparation for frozen core approximation
 
@@ -230,24 +231,11 @@
      Double excitation amplitudes:  6670
 
 
-  :: Excited state coupled cluster engine
-  ==========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the coupled cluster excitation vectors and excitation energies
-
-  This is a CC3 excited state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (newton-raphson algorithm)
-     4) Calculation of the excited state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -303,14 +291,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.52700
-     Total cpu time (sec):               0.64770
+     Total wall time (sec):              0.38800
+     Total cpu time (sec):               0.21880
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (newton-raphson algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - Davidson tool settings:
 
@@ -398,12 +384,12 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              2.12200
-     Total cpu time (sec):               1.77030
+     Total wall time (sec):              1.76300
+     Total cpu time (sec):               0.88522
 
 
-  4) Calculation of the excited state (diis algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -653,28 +639,23 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247301791911        6.729424523129
+        1                  0.247301791911        6.729424523130
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              4.12100
-     Total cpu time (sec):               3.58004
-
-  - Timings for the CC3 excited state calculation
-
-     Total wall time (sec):              6.78500
-     Total cpu time (sec):               6.02232
+     Total wall time (sec):              3.16800
+     Total cpu time (sec):               1.92273
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 14.020980 MB
+  Peak memory usage during the execution of eT: 14.020988 MB
 
-  Total wall time in eT (sec):              8.09800
-  Total cpu time in eT (sec):               7.96531
+  Total wall time in eT (sec):              5.70300
+  Total cpu time in eT (sec):               3.47970
 
-  Calculation ended: 2022-02-01 16:07:44 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:38 UTC -07:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-01-24 17:56:17 UTC +01:00
-  Git branch:         new-engine-structure
-  Git hash:           abfda7a22651fd955946534c032942d72464ffee
-  Fortran compiler:   GNU 8.4.0
-  C compiler:         GNU 8.4.0
-  C++ compiler:       GNU 8.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-24 18:13:07 UTC +01:00
+  Calculation started: 2022-04-07 12:34:46 UTC -07:00
 
 
   :: Input file
@@ -178,23 +179,23 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.452460025510     0.7565E-01     0.1775E+03
-     2          -177.479057956533     0.1129E-01     0.2660E-01
+     2          -177.479057956534     0.1129E-01     0.2660E-01
      3          -177.480052448592     0.4142E-02     0.9945E-03
      4          -177.480180104061     0.1387E-02     0.1277E-03
      5          -177.480194080187     0.4312E-03     0.1398E-04
      6          -177.480195433667     0.8262E-04     0.1353E-05
      7          -177.480195516708     0.2289E-04     0.8304E-07
-     8          -177.480195527014     0.4801E-05     0.1031E-07
-     9          -177.480195527843     0.1045E-05     0.8289E-09
-    10          -177.480195527874     0.2388E-06     0.3070E-10
-    11          -177.480195527875     0.5236E-07     0.9379E-12
-    12          -177.480195527875     0.9618E-08     0.5684E-13
-    13          -177.480195527875     0.4310E-08     0.1421E-12
-    14          -177.480195527875     0.1983E-08     0.8527E-13
+     8          -177.480195527015     0.4801E-05     0.1031E-07
+     9          -177.480195527844     0.1045E-05     0.8289E-09
+    10          -177.480195527874     0.2388E-06     0.3078E-10
+    11          -177.480195527875     0.5236E-07     0.7958E-12
+    12          -177.480195527875     0.9618E-08     0.1421E-12
+    13          -177.480195527875     0.4310E-08     0.8527E-13
+    14          -177.480195527875     0.1983E-08     0.2842E-13
     15          -177.480195527875     0.6772E-09     0.8527E-13
-    16          -177.480195527875     0.1634E-09     0.2842E-13
-    17          -177.480195527875     0.4727E-10     0.2842E-13
-    18          -177.480195527875     0.8073E-11     0.5684E-13
+    16          -177.480195527875     0.1634E-09     0.0000E+00
+    17          -177.480195527875     0.4727E-10     0.1137E-12
+    18          -177.480195527875     0.8075E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -207,8 +208,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.38035
-     Total cpu time (sec):               2.72198
+     Total wall time (sec):              1.55300
+     Total cpu time (sec):               1.23142
 
 
   :: CC2 wavefunction
@@ -228,8 +229,12 @@
      Single excitation amplitudes:  280
      Double excitation amplitudes:  39340
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -276,7 +281,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.2440E-14
 
   - Settings for integral handling:
 
@@ -285,8 +290,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.56077
-     Total cpu time (sec):               1.09455
+     Total wall time (sec):              0.84200
+     Total cpu time (sec):               0.58755
+
+
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -356,8 +365,12 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.17016
-     Total cpu time (sec):               0.34215
+     Total wall time (sec):              0.32500
+     Total cpu time (sec):               0.21490
+
+
+  Determining CC multipliers
+  ==========================
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -404,8 +417,8 @@
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.15449
-     Total cpu time (sec):               0.31049
+     Total wall time (sec):              0.38100
+     Total cpu time (sec):               0.22586
 
   - CC multipliers solver summary:
 
@@ -425,6 +438,10 @@
         5      4       -0.008015599057
      ------------------------------------
 
+
+  Determining CC mean values
+  ==========================
+
   - Operator: dipole [Debye]
 
      x:          1.2209069
@@ -435,12 +452,12 @@
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 28.117872 MB
+  Peak memory usage during the execution of eT: 28.066680 MB
 
-  Total wall time in eT (sec):              2.30053
-  Total cpu time in eT (sec):               4.52136
+  Total wall time in eT (sec):              3.14600
+  Total cpu time in eT (sec):               2.30117
 
-  Calculation ended: 2022-01-24 18:13:09 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:50 UTC -07:00
 
   - Implementation references:
 

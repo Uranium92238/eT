@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-04-06 22:17:48 UTC +02:00
-  Git branch:         fci-aes
-  Git hash:           31322094b352dc049da5d49a29cc25afabcfefc4
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-04-07 14:17:31 UTC +02:00
+  Calculation started: 2022-04-07 12:35:58 UTC -07:00
 
 
   :: Input file
@@ -67,7 +68,6 @@
         energy threshold:   1.0d-10
         gradient threshold: 1.0d-10
         diis dimension: 8
-         print orbitals
      end solver scf
 
      solver fci
@@ -174,18 +174,18 @@
      2            -0.826047064194     0.3887E-02     0.1230E-02
      3            -0.826139150071     0.2040E-04     0.9209E-04
      4            -0.826139153875     0.1842E-06     0.3804E-08
-     5            -0.826139153873     0.4628E-06     0.1683E-11
-     6            -0.826139153875     0.1724E-06     0.1722E-11
-     7            -0.826139153875     0.1860E-06     0.4519E-13
-     8            -0.826139153875     0.7444E-07     0.2717E-12
-     9            -0.826139153875     0.1400E-06     0.1326E-12
-    10            -0.826139153875     0.5355E-11     0.1840E-12
+     5            -0.826139153875     0.5932E-07     0.2855E-12
+     6            -0.826139153875     0.1831E-06     0.2801E-12
+     7            -0.826139153875     0.1043E-06     0.2092E-12
+     8            -0.826139153821     0.2417E-05     0.5447E-10
+     9            -0.826139153858     0.1370E-05     0.3704E-10
+    10            -0.826139153875     0.4320E-11     0.1753E-10
   ---------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
   - Summary of ROHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          1.136757200640
+     HOMO-LUMO gap (alpha):          1.136757200372
      Nuclear repulsion energy:       0.587974678800
      Electronic energy:             -1.414113832675
      Total energy:                  -0.826139153875
@@ -199,8 +199,8 @@
 
   - Timings for the ROHF ground state calculation
 
-     Total wall time (sec):              0.01782
-     Total cpu time (sec):               0.02344
+     Total wall time (sec):              0.02800
+     Total cpu time (sec):               0.01994
 
 
   :: FCI wavefunction
@@ -262,12 +262,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.3606E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.1555E-16
+     Minimal element of difference between approximate and actual diagonal:  -0.2043E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00103
-     Total cpu time (sec):               0.00503
+     Total wall time (sec):              0.00800
+     Total cpu time (sec):               0.00586
 
 
   :: Full CI engine
@@ -330,7 +330,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -0.826805367547    0.000000000000     0.3041E-15   0.1962E-10
+     1  -0.826805367547    0.000000000000     0.8169E-15   0.1962E-10
   -------------------------------------------------------------------------
   Convergence criterion met in 4 iterations!
 
@@ -344,10 +344,10 @@
      ------------------------
      00aa      0.999843488026
      aa00     -0.017688208781
-     a00a     -0.000305681041
-     0aa0     -0.000182430267
-     0a0a      0.000000000000
-     a0a0     -0.000000000000
+     a00a     -0.000305681038
+     0aa0     -0.000182430265
+     a0a0      0.000000000000
+     0a0a     -0.000000000000
      ------------------------
 
   - Electronic energies:
@@ -362,19 +362,19 @@
 
   - Timings for the FCI fci calculation
 
-     Total wall time (sec):              0.00135
-     Total cpu time (sec):               0.00135
+     Total wall time (sec):              0.00900
+     Total cpu time (sec):               0.00590
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 34.928 KB
+  Peak memory usage during the execution of eT: 21.384 KB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.02722
-  Total cpu time in eT (sec):               0.03846
+  Total wall time in eT (sec):              0.05500
+  Total cpu time in eT (sec):               0.04023
 
-  Calculation ended: 2022-04-07 14:17:31 UTC +02:00
+  Calculation ended: 2022-04-07 12:35:58 UTC -07:00
 
   - Implementation references:
 

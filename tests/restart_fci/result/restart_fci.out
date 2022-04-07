@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 15:40:08 UTC +02:00
-  Git branch:         fci-aes
-  Git hash:           da3fb44af81b0f53083a81e92ff11465a85af2f5
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-04-07 15:40:21 UTC +02:00
+  Calculation started: 2022-04-07 12:35:59 UTC -07:00
 
 
   :: Input file
@@ -163,7 +164,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.959292303910     0.1295E-12     0.7496E+02
+     1           -74.959292303910     0.1300E-12     0.7496E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -176,8 +177,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.01444
-     Total cpu time (sec):               0.01660
+     Total wall time (sec):              0.00200
+     Total cpu time (sec):               0.00227
 
 
   :: FCI wavefunction
@@ -239,13 +240,13 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2854E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2854E-15
+     Maximal difference between approximate and actual diagonal:              0.2754E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.7651E-16
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00490
-     Total cpu time (sec):               0.00890
+     Total wall time (sec):              0.01300
+     Total cpu time (sec):               0.00941
 
 
   :: Full CI engine
@@ -292,10 +293,10 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1 -75.007116016036    0.000000000000     0.4316E-10   0.7501E+02
-     2 -74.610617220395    0.000000000000     0.5599E-10   0.7461E+02
-     3 -74.550949193651    0.000000000000     0.3481E-10   0.7455E+02
-     4 -74.515608319901    0.000000000000     0.2528E-10   0.7452E+02
+     1 -75.007116016036    0.000000000000     0.4315E-10   0.7501E+02
+     2 -74.610617220395    0.000000000000     0.5600E-10   0.7461E+02
+     3 -74.550949193651    0.000000000000     0.3482E-10   0.7455E+02
+     4 -74.515608319901    0.000000000000     0.2531E-10   0.7452E+02
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -325,8 +326,8 @@
 
      Largest CI amplitudes:
      ---------------------------
-     0ab2222     -0.692078645965
-     0ba2222      0.692078645964
+     0ba2222      0.692078645965
+     0ab2222     -0.692078645964
      bab2a22     -0.098013611253
      aba2b22      0.098013611250
      2ba2022     -0.049366250121
@@ -352,7 +353,7 @@
      02a22b2      0.062669057601
      02b22a2      0.062669057599
      02ba222     -0.054724518781
-     02ab222     -0.054724518779
+     02ab222     -0.054724518778
      ---------------------------
 
      Electronic state nr. 4
@@ -361,16 +362,16 @@
 
      Largest CI amplitudes:
      ---------------------------
-     0a2b222     -0.685162874544
-     0b2a222      0.685162874543
-     a022b22     -0.117456878156
-     b022a22      0.117456878155
-     ab2ab22      0.075091722017
-     ba2ba22     -0.075091722014
-     0a222b2      0.058988030435
-     0b222a2     -0.058988030433
-     2a2b022      0.056148702069
-     2b2a022     -0.056148702068
+     0a2b222      0.685162874544
+     0b2a222     -0.685162874543
+     b022a22     -0.117456878156
+     a022b22      0.117456878156
+     ab2ab22     -0.075091722017
+     ba2ba22      0.075091722014
+     0a222b2     -0.058988030435
+     0b222a2      0.058988030433
+     2a2b022     -0.056148702069
+     2b2a022      0.056148702068
      ---------------------------
 
   - Electronic energies:
@@ -379,26 +380,26 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                -75.007116016036    -2041.047588159274
+        1                -75.007116016036    -2041.047588159273
         2                -74.610617220395    -2030.258306374619
-        3                -74.550949193651    -2028.634656665839
-        4                -74.515608319901    -2027.672982507944
+        3                -74.550949193651    -2028.634656665840
+        4                -74.515608319901    -2027.672982507943
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Timings for the FCI fci calculation
 
-     Total wall time (sec):              0.00236
-     Total cpu time (sec):               0.00636
+     Total wall time (sec):              0.01400
+     Total cpu time (sec):               0.00725
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 439.152 KB
+  Peak memory usage during the execution of eT: 428.360 KB
 
-  Total wall time in eT (sec):              0.02886
-  Total cpu time in eT (sec):               0.03903
+  Total wall time in eT (sec):              0.03800
+  Total cpu time in eT (sec):               0.02754
 
-  Calculation ended: 2022-04-07 15:40:21 UTC +02:00
+  Calculation ended: 2022-04-07 12:35:59 UTC -07:00
 
   - Implementation references:
 

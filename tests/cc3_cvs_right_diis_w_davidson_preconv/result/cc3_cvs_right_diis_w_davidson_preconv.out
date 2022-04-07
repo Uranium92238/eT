@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:05:57 UTC +01:00
+  Calculation started: 2022-04-07 12:35:36 UTC -07:00
 
 
   :: Input file
@@ -177,8 +178,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02100
-     Total cpu time (sec):               0.03709
+     Total wall time (sec):              0.00500
+     Total cpu time (sec):               0.00953
 
 
   :: CC3 wavefunction
@@ -199,24 +200,11 @@
      Double excitation amplitudes:  4560
 
 
-  :: Excited state coupled cluster engine
-  ==========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the coupled cluster excitation vectors and excitation energies
-
-  This is a CC3 excited state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (newton-raphson algorithm)
-     4) Calculation of the excited state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -271,14 +259,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.36700
-     Total cpu time (sec):               0.42997
+     Total wall time (sec):              0.12600
+     Total cpu time (sec):               0.12839
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (newton-raphson algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - Davidson tool settings:
 
@@ -365,12 +351,12 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.93300
-     Total cpu time (sec):               0.71871
+     Total wall time (sec):              0.94000
+     Total cpu time (sec):               0.46515
 
 
-  4) Calculation of the excited state (diis algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -521,7 +507,7 @@
    1      19.733599620814      0.3799E-02        0.6151E-04
    2      19.804317127434      0.3284E-02        0.1717E-03
    3      20.243884064190      0.4768E-02        0.4744E-03
-   4      20.254850440136      0.4416E-02        0.2156E-03
+   4      20.254850440135      0.4416E-02        0.2156E-03
    5      20.396430702707      0.2445E-01        0.5262E-01
   ------------------------------------------------------------
 
@@ -571,7 +557,7 @@
   ------------------------------------------------------------
    1      19.734386890862      0.1256E-03        0.4802E-07
    2      19.804917241394      0.4575E-03        0.4560E-07
-   3      20.244903314919      0.3302E-03        0.3003E-06
+   3      20.244903314918      0.3302E-03        0.3003E-06
    4      20.255813807832      0.4103E-03        0.3308E-06
    5      20.386433205287      0.5433E-03        0.5600E-03
   ------------------------------------------------------------
@@ -655,7 +641,7 @@
 
      Electronic state nr. 3
 
-     Energy (Hartree):                 20.244903314919
+     Energy (Hartree):                 20.244903314918
      Fraction singles (|R1|/|R|):       0.905122136777
 
      Largest single amplitudes:
@@ -707,7 +693,7 @@
        11      1       -0.010889868687
        17      1       -0.008945362178
         9      1       -0.008210283472
-        3      1       -0.000000043835
+        3      1       -0.000000043834
         6      1       -0.000000008737
      ------------------------------------
 
@@ -736,32 +722,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        6      1       -0.017482638268
-       15      1        0.005493558578
-       10      1        0.004726433996
-        8      1       -0.000000001754
-        5      1        0.000000000827
-       16      1       -0.000000000805
-        3      1       -0.000000000751
-        9      1        0.000000000634
-        1      1       -0.000000000448
-        7      1        0.000000000443
+        6      1        0.017482638268
+       15      1       -0.005493558578
+       10      1       -0.004726433996
+        8      1        0.000000001754
+        5      1       -0.000000000827
+       16      1        0.000000000805
+        3      1        0.000000000753
+        9      1       -0.000000000634
+        1      1        0.000000000448
+        7      1       -0.000000000442
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        1      1       1      5        0.859271173623
-        2      1       2      5       -0.331968054200
-        4      1       1      5       -0.196250230393
-        1      1       4      5       -0.194843502903
-        2      1       3      5       -0.101078750852
-        3      1       2      5       -0.099529958154
-        2      1       7      5       -0.087093953725
-        1      1       5      5        0.084510247993
-        7      1       2      5       -0.082262298104
-        5      1       1      5        0.073398657205
+        1      1       1      5       -0.859271173623
+        2      1       2      5        0.331968054200
+        4      1       1      5        0.196250230393
+        1      1       4      5        0.194843502903
+        2      1       3      5        0.101078750852
+        3      1       2      5        0.099529958154
+        2      1       7      5        0.087093953725
+        1      1       5      5       -0.084510247993
+        7      1       2      5        0.082262298104
+        5      1       1      5       -0.073398657205
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -771,17 +757,17 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                 19.734386890862      537.000019555273
-        2                 19.804917241394      538.919248149737
-        3                 20.244903314919      550.891879039825
-        4                 20.255813807832      551.188768674151
+        2                 19.804917241394      538.919248149736
+        3                 20.244903314918      550.891879039825
+        4                 20.255813807832      551.188768674150
         5                 20.386433205287      554.743103520014
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              5.45500
-     Total cpu time (sec):               4.76701
+     Total wall time (sec):              5.73600
+     Total cpu time (sec):               3.60798
 
   Finished preconvergence! The DIIS solver will now restart from the preconverged 
   solutions.
@@ -1019,7 +1005,7 @@
        13      1        0.066347741225
        19      1        0.006760087485
        12      1        0.005958047978
-        4      1        0.000000042513
+        4      1        0.000000042512
         5      1       -0.000000007076
         6      1        0.000000006466
         1      1        0.000000004823
@@ -1081,38 +1067,38 @@
      Electronic state nr. 5
 
      Energy (Hartree):                 20.386533275502
-     Fraction singles (|R1|/|R|):       0.018975977499
+     Fraction singles (|R1|/|R|):       0.018975977503
 
      Largest single amplitudes:
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        6      1       -0.017547173737
-       15      1        0.005503839325
-       10      1        0.004678906769
-        1      1        0.000000012498
-        2      1        0.000000010151
-        8      1       -0.000000001781
-        4      1        0.000000001760
-        7      1        0.000000001322
-        9      1        0.000000000968
-       11      1        0.000000000906
+        6      1        0.017547173742
+       15      1       -0.005503839325
+       10      1       -0.004678906769
+        1      1       -0.000000012500
+        2      1       -0.000000010162
+        8      1        0.000000001781
+        4      1       -0.000000001760
+        7      1       -0.000000001331
+        9      1       -0.000000000968
+       11      1       -0.000000000906
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        1      1       1      5        0.859311836269
-        2      1       2      5       -0.332144013604
-        4      1       1      5       -0.196089495327
-        1      1       4      5       -0.194684064259
-        2      1       3      5       -0.101094745936
-        3      1       2      5       -0.099545481463
-        2      1       7      5       -0.087084371543
-        1      1       5      5        0.084419854044
-        7      1       2      5       -0.082250369165
-        5      1       1      5        0.073312577150
+        1      1       1      5       -0.859311836267
+        2      1       2      5        0.332144013605
+        4      1       1      5        0.196089495327
+        1      1       4      5        0.194684064260
+        2      1       3      5        0.101094745937
+        3      1       2      5        0.099545481464
+        2      1       7      5        0.087084371544
+        1      1       5      5       -0.084419854044
+        7      1       2      5        0.082250369166
+        5      1       1      5       -0.073312577151
      --------------------------------------------------
 
      - Electronic excitation energies:
@@ -1121,32 +1107,27 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.734373184448      536.999646584742
+        1                 19.734373184448      536.999646584741
         2                 19.804921086922      538.919352791881
         3                 20.244874155619      550.891085574870
-        4                 20.255779792839      551.187843079067
+        4                 20.255779792839      551.187843079066
         5                 20.386533275502      554.745826569253
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              8.58500
-     Total cpu time (sec):               7.66577
-
-  - Timings for the CC3 excited state calculation
-
-     Total wall time (sec):              9.89400
-     Total cpu time (sec):               8.82756
+     Total wall time (sec):              9.17900
+     Total cpu time (sec):               5.91823
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 8.057344 MB
+  Peak memory usage during the execution of eT: 8.020144 MB
 
-  Total wall time in eT (sec):              9.98500
-  Total cpu time in eT (sec):               8.93032
+  Total wall time in eT (sec):             10.27400
+  Total cpu time in eT (sec):               6.54373
 
-  Calculation ended: 2022-02-01 16:06:07 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:46 UTC -07:00
 
   - Implementation references:
 

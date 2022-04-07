@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:07 UTC +01:00
+  Calculation started: 2022-04-07 12:35:54 UTC -07:00
 
 
   :: Input file
@@ -178,7 +179,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2418E-12     0.7884E+02
+     1           -78.843851693631     0.2419E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -191,8 +192,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.03200
-     Total cpu time (sec):               0.05995
+     Total wall time (sec):              0.00900
+     Total cpu time (sec):               0.01449
 
 
   :: MLCC2 wavefunction
@@ -208,24 +209,11 @@
      Atomic orbitals:      29
 
 
-  :: Excited state coupled cluster engine
-  ==========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the coupled cluster excitation vectors and excitation energies
-
-  This is a MLCC2 excited state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the excited state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -282,11 +270,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.41800
-     Total cpu time (sec):               0.65700
-
-
-  2) Preparation of MO basis and integrals
+     Total wall time (sec):              0.18700
+     Total cpu time (sec):               0.21698
   Requested restart for NTOs, reading orbital transformation matrix
 
   - MLCC2 orbital partitioning:
@@ -300,7 +285,8 @@
      Number virtual ccs orbitals:    17
 
 
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -329,7 +315,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.870509609882     0.4253E-12     0.7887E+02
+    1           -78.870509609882     0.4255E-12     0.7887E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -357,12 +343,12 @@
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.00900
-     Total cpu time (sec):               0.01014
+     Total wall time (sec):              0.00800
+     Total cpu time (sec):               0.00656
 
 
-  4) Calculation of the excited state (diis algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -408,8 +394,8 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.260537408846       0.2610E-12
-     2      0.329538704894       0.6567E-12
+     1      0.260537408846       0.2633E-12
+     2      0.329538704894       0.6576E-12
   -----------------------------------------------
 
   Note: residual of all states converged  in first iteration.
@@ -481,29 +467,24 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.260537408846        7.089584004758
-        2                  0.329538704894        8.967204907410
+        1                  0.260537408846        7.089584004759
+        2                  0.329538704894        8.967204907412
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCC2 excited state equations (right)
 
      Total wall time (sec):              0.01500
-     Total cpu time (sec):               0.01646
-
-  - Timings for the MLCC2 excited state calculation
-
-     Total wall time (sec):              0.45800
-     Total cpu time (sec):               0.70750
+     Total cpu time (sec):               0.01074
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 10.665736 MB
 
-  Total wall time in eT (sec):              0.55200
-  Total cpu time in eT (sec):               0.83015
+  Total wall time in eT (sec):              0.25200
+  Total cpu time in eT (sec):               0.28051
 
-  Calculation ended: 2022-02-01 16:10:07 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:54 UTC -07:00
 
   - Implementation references:
 

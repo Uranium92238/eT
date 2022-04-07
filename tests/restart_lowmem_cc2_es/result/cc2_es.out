@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:07:05 UTC +01:00
+  Calculation started: 2022-04-07 12:34:53 UTC -07:00
 
 
   :: Input file
@@ -180,14 +181,14 @@
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7488E-09
-     9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4690E-12
-    11           -78.843851693631     0.5634E-08     0.0000E+00
-    12           -78.843851693631     0.1415E-08     0.1421E-13
-    13           -78.843851693631     0.6806E-09     0.1421E-13
-    14           -78.843851693631     0.1491E-09     0.1421E-13
-    15           -78.843851693631     0.2501E-10     0.0000E+00
-    16           -78.843851693631     0.5169E-11     0.1421E-13
+     9           -78.843851693630     0.3151E-06     0.1028E-09
+    10           -78.843851693631     0.2637E-07     0.4263E-12
+    11           -78.843851693631     0.5634E-08     0.1421E-13
+    12           -78.843851693631     0.1415E-08     0.5684E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.4263E-13
+    15           -78.843851693631     0.2501E-10     0.8527E-13
+    16           -78.843851693631     0.5167E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -200,8 +201,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.20500
-     Total cpu time (sec):               1.97425
+     Total wall time (sec):              0.42700
+     Total cpu time (sec):               0.44968
 
 
   :: LOW MEMORY CC2 wavefunction
@@ -221,24 +222,11 @@
      Single excitation amplitudes:  138
 
 
-  :: Excited state coupled cluster engine
-  ==========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the coupled cluster excitation vectors and excitation energies
-
-  This is a LOW MEMORY CC2 excited state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the excited state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -295,14 +283,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.61900
-     Total cpu time (sec):               0.78590
+     Total wall time (sec):              0.33000
+     Total cpu time (sec):               0.21428
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -336,13 +322,13 @@
     5           -79.085769937826     0.3615E-04     0.1352E-05
     6           -79.085769725742     0.6004E-05     0.2121E-06
     7           -79.085769729164     0.2063E-05     0.3422E-08
-    8           -79.085769729229     0.3646E-06     0.6527E-10
+    8           -79.085769729229     0.3646E-06     0.6526E-10
     9           -79.085769729230     0.3393E-07     0.9095E-12
    10           -79.085769729553     0.4633E-08     0.3225E-09
    11           -79.085769729585     0.9303E-09     0.3266E-10
    12           -79.085769729575     0.2416E-09     0.1073E-10
    13           -79.085769729575     0.4926E-10     0.4547E-12
-   14           -79.085769729576     0.6368E-11     0.3979E-12
+   14           -79.085769729576     0.6370E-11     0.3979E-12
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -370,12 +356,12 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.25900
-     Total cpu time (sec):               0.24094
+     Total wall time (sec):              0.25800
+     Total cpu time (sec):               0.12019
 
 
-  4) Calculation of the excited state (diis algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -543,7 +529,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441336       0.4185E-08
+     1      0.245983441335       0.4185E-08
      2      0.354257073627       0.2066E-05
      3      0.312493137695       0.2513E-06
   -----------------------------------------------
@@ -588,7 +574,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072913       0.9035E-09
      3      0.312493140828       0.4576E-09
   -----------------------------------------------
@@ -597,27 +583,27 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072917       0.1016E-09
-     3      0.312493140823       0.7898E-10
+     3      0.312493140823       0.7882E-10
   -----------------------------------------------
 
   Iteration:                 21
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
-     2      0.354257072916       0.1860E-10
-     3      0.312493140824       0.2236E-11
+     1      0.245983441338       0.1814E-11
+     2      0.354257072916       0.1861E-10
+     3      0.312493140824       0.2651E-11
   -----------------------------------------------
 
   Iteration:                 22
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1813E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072916       0.4676E-11
-     3      0.312493140824       0.2236E-11
+     3      0.312493140824       0.2651E-11
   -----------------------------------------------
   Convergence criterion met in 22 iterations!
 
@@ -658,7 +644,7 @@
         a       i         R(a,i)
      -----------------------------------
         2      6        0.983888959785
-        3      6        0.161510332236
+        3      6        0.161510332237
         7      6       -0.071460933883
        14      6        0.021752345804
         2      3       -0.011826768100
@@ -697,29 +683,24 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.245983441338        6.693550376780
-        2                  0.312493140824        8.503371483559
-        3                  0.354257072916        9.639825961441
+        2                  0.312493140824        8.503371483560
+        3                  0.354257072916        9.639825961440
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              2.12900
-     Total cpu time (sec):               2.17114
-
-  - Timings for the LOW MEMORY CC2 excited state calculation
-
-     Total wall time (sec):              3.01300
-     Total cpu time (sec):               3.20146
+     Total wall time (sec):              1.11200
+     Total cpu time (sec):               0.66452
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 10.665728 MB
 
-  Total wall time in eT (sec):              4.29000
-  Total cpu time in eT (sec):               5.24255
+  Total wall time in eT (sec):              2.15300
+  Total cpu time in eT (sec):               1.46975
 
-  Calculation ended: 2022-02-01 16:07:09 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:55 UTC -07:00
 
   - Implementation references:
 

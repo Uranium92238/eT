@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-01-24 16:47:15 UTC +01:00
-  Git branch:         new-engine-structure
-  Git hash:           7a0b945b8751e7c4621e7fbc2a8e30a0e6d9539d
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-24 16:47:48 UTC +01:00
+  Calculation started: 2022-04-07 12:35:02 UTC -07:00
 
 
   :: Input file
@@ -181,20 +182,20 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.129994637280     0.5310E-01     0.1771E+03
-     2          -177.154832203453     0.9832E-02     0.2484E-01
-     3          -177.155813768895     0.2660E-02     0.9816E-03
+     2          -177.154832203452     0.9832E-02     0.2484E-01
+     3          -177.155813768895     0.2857E-02     0.9816E-03
      4          -177.155840699875     0.7471E-03     0.2693E-04
-     5          -177.155843966041     0.2175E-03     0.3266E-05
-     6          -177.155844164055     0.1721E-04     0.1980E-06
-     7          -177.155844168042     0.6510E-05     0.3987E-08
-     8          -177.155844168442     0.1445E-05     0.4001E-09
-     9          -177.155844168510     0.1895E-06     0.6850E-10
-    10          -177.155844168511     0.3569E-07     0.4547E-12
-    11          -177.155844168511     0.3203E-08     0.1137E-12
-    12          -177.155844168511     0.3458E-09     0.2274E-12
-    13          -177.155844168511     0.6426E-10     0.5684E-13
-    14          -177.155844168511     0.1048E-10     0.5684E-13
-    15          -177.155844168511     0.2264E-11     0.2842E-13
+     5          -177.155843966041     0.2219E-03     0.3266E-05
+     6          -177.155844164054     0.1709E-04     0.1980E-06
+     7          -177.155844168042     0.6721E-05     0.3987E-08
+     8          -177.155844168442     0.1445E-05     0.4000E-09
+     9          -177.155844168510     0.1895E-06     0.6858E-10
+    10          -177.155844168511     0.3572E-07     0.5684E-12
+    11          -177.155844168511     0.3693E-08     0.1705E-12
+    12          -177.155844168511     0.3582E-09     0.5684E-13
+    13          -177.155844168511     0.6427E-10     0.1137E-12
+    14          -177.155844168511     0.1073E-10     0.1137E-12
+    15          -177.155844168511     0.2267E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -207,8 +208,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.27923
-     Total cpu time (sec):               0.51755
+     Total wall time (sec):              0.25100
+     Total cpu time (sec):               0.27914
 
 
   :: CCSD wavefunction
@@ -228,8 +229,12 @@
      Single excitation amplitudes:  120
      Double excitation amplitudes:  7260
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -276,7 +281,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9540E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.5519E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.7040E-15
 
   - Settings for integral handling:
 
@@ -285,8 +290,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.10045
-     Total cpu time (sec):               0.20045
+     Total wall time (sec):              0.19300
+     Total cpu time (sec):               0.13494
+
+
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -313,13 +322,13 @@
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -177.375746488561     0.8585E-01     0.1774E+03
-    2          -177.383006003619     0.2670E-01     0.7260E-02
+    2          -177.383006003618     0.2670E-01     0.7260E-02
     3          -177.388411873089     0.6514E-02     0.5406E-02
     4          -177.389360947551     0.1749E-02     0.9491E-03
-    5          -177.389376863418     0.6002E-03     0.1592E-04
+    5          -177.389376863417     0.6002E-03     0.1592E-04
     6          -177.389340718068     0.2356E-03     0.3615E-04
     7          -177.389330999065     0.5834E-04     0.9719E-05
-    8          -177.389329720255     0.1466E-04     0.1279E-05
+    8          -177.389329720254     0.1466E-04     0.1279E-05
     9          -177.389330044906     0.3062E-05     0.3247E-06
    10          -177.389330040012     0.7870E-06     0.4894E-08
    11          -177.389330030454     0.2159E-06     0.9558E-08
@@ -327,7 +336,7 @@
    13          -177.389330033027     0.2208E-07     0.2075E-08
    14          -177.389330034827     0.3977E-08     0.1801E-08
    15          -177.389330035155     0.1083E-08     0.3280E-09
-   16          -177.389330035173     0.2403E-09     0.1705E-10
+   16          -177.389330035172     0.2403E-09     0.1705E-10
    17          -177.389330035161     0.6799E-10     0.1182E-10
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
@@ -350,7 +359,7 @@
         1      8       -0.004533549400
         8      9       -0.004447871203
        10      9        0.004073617711
-        9     10       -0.003860385717
+        9     10       -0.003860385716
         5      8       -0.003725881596
      ------------------------------------
 
@@ -372,8 +381,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.05917
-     Total cpu time (sec):               0.11917
+     Total wall time (sec):              0.52000
+     Total cpu time (sec):               0.16235
+
+
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -443,6 +456,10 @@
         3      6       3     10       -0.044230599784
         9     10       9     10       -0.044197359763
      --------------------------------------------------
+
+
+  Determining CC polarizabilities
+  ===============================
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -617,8 +634,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.12480
-     Total cpu time (sec):                0.24878
+     Total wall time (sec):               0.96200
+     Total cpu time (sec):                0.36062
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -793,8 +810,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.12219
-     Total cpu time (sec):                0.24218
+     Total wall time (sec):               0.92700
+     Total cpu time (sec):                0.36383
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -978,8 +995,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.13352
-     Total cpu time (sec):                0.26948
+     Total wall time (sec):               0.97400
+     Total cpu time (sec):                0.39899
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1163,8 +1180,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.13333
-     Total cpu time (sec):                0.26533
+     Total wall time (sec):               1.01500
+     Total cpu time (sec):                0.40347
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1330,8 +1347,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.11726
-     Total cpu time (sec):                0.23326
+     Total wall time (sec):               0.85800
+     Total cpu time (sec):                0.35653
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1506,11 +1523,11 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.12385
-     Total cpu time (sec):                0.24785
+     Total wall time (sec):               0.85900
+     Total cpu time (sec):                0.34777
      The convention applied here defines the polarizabilities as the response 
      functions, without negative sign.
-     << mu_x, mu_x >>(0.00E+00):     -4.193815374019
+     << mu_x, mu_x >>(0.00E+00):     -4.193815374018
      << mu_y, mu_x >>(0.00E+00):      1.922638308373
      << mu_y, mu_y >>(0.00E+00):     -7.059479678328
      << mu_z, mu_x >>(0.00E+00):     -0.000000000000
@@ -1525,12 +1542,12 @@
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 6.494176 MB
+  Peak memory usage during the execution of eT: 6.491176 MB
 
-  Total wall time in eT (sec):              1.31958
-  Total cpu time in eT (sec):               2.59048
+  Total wall time in eT (sec):              7.45800
+  Total cpu time in eT (sec):               3.16633
 
-  Calculation ended: 2022-01-24 16:47:49 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:10 UTC -07:00
 
   - Implementation references:
 

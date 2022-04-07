@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:06:30 UTC +01:00
+  Calculation started: 2022-04-07 12:35:38 UTC -07:00
 
 
   :: Input file
@@ -186,13 +187,13 @@
      6           -78.806369659203     0.1193E-04     0.1355E-06
      7           -78.806369660762     0.3301E-05     0.1558E-08
      8           -78.806369660945     0.8317E-06     0.1829E-09
-     9           -78.806369660959     0.1352E-06     0.1414E-10
-    10           -78.806369660959     0.4496E-08     0.9948E-13
-    11           -78.806369660959     0.2386E-08     0.7105E-13
-    12           -78.806369660959     0.8987E-09     0.2842E-13
-    13           -78.806369660959     0.1587E-09     0.1421E-13
-    14           -78.806369660959     0.1518E-10     0.2842E-13
-    15           -78.806369660959     0.2113E-11     0.2842E-13
+     9           -78.806369660959     0.1352E-06     0.1418E-10
+    10           -78.806369660959     0.4496E-08     0.7105E-13
+    11           -78.806369660959     0.2386E-08     0.0000E+00
+    12           -78.806369660959     0.8987E-09     0.5684E-13
+    13           -78.806369660959     0.1587E-09     0.4263E-13
+    14           -78.806369660959     0.1519E-10     0.4263E-13
+    15           -78.806369660959     0.2113E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -205,8 +206,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.28700
-     Total cpu time (sec):               0.40323
+     Total wall time (sec):              0.12000
+     Total cpu time (sec):               0.14322
 
 
   :: CC3 wavefunction
@@ -227,28 +228,11 @@
      Double excitation amplitudes:  1485
 
 
-  :: Coupled cluster response engine
-  =====================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates dipole transition moments and oscillator strengths between 
-
-  the ground state and the excited states.
-
-  This is a CC3 response calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (newton-raphson algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited states (non-linear davidson algorithm)
-     6) Calculation of excited state properties (EOM)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -295,7 +279,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4523E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.2572E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.4462E-15
 
   - Settings for integral handling:
 
@@ -304,14 +288,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.07900
-     Total cpu time (sec):               0.11139
+     Total wall time (sec):              0.06200
+     Total cpu time (sec):               0.05034
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (newton-raphson algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - Davidson tool settings:
 
@@ -398,11 +380,12 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.69400
-     Total cpu time (sec):               0.59462
+     Total wall time (sec):              1.13900
+     Total cpu time (sec):               0.57626
 
 
-  4) Calculation of the multipliers (diis algorithm)
+  Determining CC multipliers
+  ==========================
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -456,10 +439,10 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              1.78600
-     Total cpu time (sec):               1.31286
+     Total wall time (sec):              2.42200
+     Total cpu time (sec):               1.52275
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -493,14 +476,9 @@
         2      4       6      5        0.077222511765
      --------------------------------------------------
 
-  - Finished solving the CC3 multipliers equations
 
-     Total wall time (sec):               1.78800
-     Total cpu time (sec):                1.31438
-
-
-  5) Calculation of the excited states (non-linear davidson algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - Non-linear Davidson coupled cluster excited state solver
   --------------------------------------------------------------
@@ -666,7 +644,7 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971447      0.3870E-08        0.7855E-08
+   1      19.710778971448      0.3870E-08        0.7855E-08
    2      19.778696975905      0.3983E-08        0.2986E-08
   ------------------------------------------------------------
 
@@ -680,7 +658,7 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971442      0.4289E-09        0.5627E-11
+   1      19.710778971442      0.4289E-09        0.5670E-11
    2      19.778696975878      0.2313E-09        0.2750E-10
   ------------------------------------------------------------
 
@@ -694,8 +672,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971513      0.2746E-10        0.7134E-10
-   2      19.778696975905      0.1758E-10        0.2665E-10
+   1      19.710778971513      0.2746E-10        0.7137E-10
+   2      19.778696975905      0.1759E-10        0.2664E-10
   ------------------------------------------------------------
 
   Warning: Linear dependence threshold was set to  0.50E-11, which is 
@@ -712,8 +690,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971514      0.5130E-11        0.4725E-12
-   2      19.778696975905      0.2487E-11        0.5080E-12
+   1      19.710778971514      0.5129E-11        0.4832E-12
+   2      19.778696975905      0.2463E-11        0.4938E-12
   ------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -799,19 +777,19 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.710778971514      536.357615348757
+        1                 19.710778971514      536.357615348758
         2                 19.778696975905      538.205758383959
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              4.39800
-     Total cpu time (sec):               3.34139
+     Total wall time (sec):              5.83200
+     Total cpu time (sec):               3.80942
 
 
-  5) Calculation of the excited states (non-linear davidson algorithm)
-     Calculating left vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - Non-linear Davidson coupled cluster excited state solver
   --------------------------------------------------------------
@@ -951,7 +929,7 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778972223      0.4398E-08        0.1987E-07
+   1      19.710778972224      0.4398E-08        0.1987E-07
    2      19.778696975214      0.1058E-07        0.6669E-08
   ------------------------------------------------------------
 
@@ -980,7 +958,7 @@
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
    1      19.710778971521      0.9686E-10        0.1828E-09
-   2      19.778696975891      0.9516E-10        0.1041E-09
+   2      19.778696975891      0.9515E-10        0.1041E-09
   ------------------------------------------------------------
 
   Warning: Linear dependence threshold was set to  0.97E-11, which is 
@@ -997,8 +975,8 @@
 
   Root     Eigenvalue (Re)     Residual norm     Delta E
   ------------------------------------------------------------
-   1      19.710778971511      0.7135E-11        0.9329E-11
-   2      19.778696975906      0.6879E-11        0.1505E-10
+   1      19.710778971511      0.7132E-11        0.9315E-11
+   2      19.778696975906      0.6874E-11        0.1506E-10
   ------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -1085,17 +1063,22 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                 19.710778971511      536.357615348695
-        2                 19.778696975906      538.205758383977
+        2                 19.778696975906      538.205758383978
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              3.74800
-     Total cpu time (sec):               3.08733
+     Total wall time (sec):              3.92300
+     Total cpu time (sec):               2.50976
 
 
-  6) Calculation of excited state properties (EOM)
+  Biorthonormalization of excited CC states
+  =========================================
+
+
+  Determining CC EOM transition moments
+  =====================================
 
   :: EOM properties calculation
 
@@ -1105,7 +1088,7 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:          19.710778971514
-     Excitation energy [eV]:          536.357615348757
+     Excitation energy [eV]:          536.357615348758
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1139,7 +1122,7 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.067918004391
-     Excitation energy [eV]:            1.848143035202
+     Excitation energy [eV]:            1.848143035201
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1169,21 +1152,16 @@
      Norm       122.950661       0.956304       0.234412       0.334696
      -------------------------------------------------------------------
 
-  - Timings for the CC3 response calculation
-
-     Total wall time (sec):             11.35500
-     Total cpu time (sec):               9.05252
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 1.430104 MB
+  Peak memory usage during the execution of eT: 1.417780 MB
 
   :: There were 2 warnings during the execution of eT. ::
 
-  Total wall time in eT (sec):             11.67600
-  Total cpu time in eT (sec):               9.48727
+  Total wall time in eT (sec):             14.37100
+  Total cpu time in eT (sec):               9.04410
 
-  Calculation ended: 2022-02-01 16:06:42 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:53 UTC -07:00
 
   - Implementation references:
 

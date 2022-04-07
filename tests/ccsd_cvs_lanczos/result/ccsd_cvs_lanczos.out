@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:09:18 UTC +01:00
+  Calculation started: 2022-04-07 12:35:02 UTC -07:00
 
 
   :: Input file
@@ -184,17 +185,17 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
-     9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4121E-12
-    11           -78.843851693631     0.5634E-08     0.0000E+00
+     8           -78.843851693527     0.2137E-05     0.7487E-09
+     9           -78.843851693630     0.3151E-06     0.1028E-09
+    10           -78.843851693631     0.2637E-07     0.4832E-12
+    11           -78.843851693631     0.5634E-08     0.1421E-13
     12           -78.843851693631     0.1415E-08     0.8527E-13
-    13           -78.843851693631     0.6806E-09     0.2842E-13
-    14           -78.843851693631     0.1491E-09     0.2842E-13
-    15           -78.843851693631     0.2501E-10     0.0000E+00
-    16           -78.843851693631     0.5168E-11     0.2842E-13
-    17           -78.843851693631     0.1342E-11     0.7105E-13
-    18           -78.843851693631     0.2423E-12     0.7105E-13
+    13           -78.843851693631     0.6806E-09     0.8527E-13
+    14           -78.843851693631     0.1491E-09     0.1421E-13
+    15           -78.843851693631     0.2501E-10     0.8527E-13
+    16           -78.843851693631     0.5166E-11     0.4263E-13
+    17           -78.843851693631     0.1342E-11     0.1421E-13
+    18           -78.843851693631     0.2422E-12     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -207,8 +208,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.15800
-     Total cpu time (sec):               2.00803
+     Total wall time (sec):              0.48000
+     Total cpu time (sec):               0.48313
 
 
   :: CCSD wavefunction
@@ -229,25 +230,11 @@
      Double excitation amplitudes:  9591
 
 
-  :: Excited state coupled cluster engine
-  ==========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the coupled cluster excitation vectors and excitation energies
-
-  This is a CCSD excited state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited state (asymmetric lanczos algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -304,14 +291,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.47100
-     Total cpu time (sec):               0.68174
+     Total wall time (sec):              0.30500
+     Total cpu time (sec):               0.20090
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -349,19 +334,19 @@
     9           -79.100383621794     0.4135E-05     0.5957E-06
    10           -79.100383427012     0.1779E-05     0.1948E-06
    11           -79.100383466393     0.6705E-06     0.3938E-07
-   12           -79.100383474630     0.2989E-06     0.8237E-08
+   12           -79.100383474629     0.2989E-06     0.8237E-08
    13           -79.100383487351     0.1028E-06     0.1272E-07
    14           -79.100383481864     0.3056E-07     0.5487E-08
-   15           -79.100383481092     0.6508E-08     0.7730E-09
+   15           -79.100383481091     0.6508E-08     0.7730E-09
    16           -79.100383481302     0.2112E-08     0.2109E-09
    17           -79.100383481484     0.6588E-09     0.1819E-09
    18           -79.100383481546     0.1594E-09     0.6158E-10
    19           -79.100383481554     0.5326E-10     0.7901E-11
    20           -79.100383481555     0.2008E-10     0.1208E-11
-   21           -79.100383481556     0.7516E-11     0.6679E-12
+   21           -79.100383481556     0.7517E-11     0.6679E-12
    22           -79.100383481556     0.3071E-11     0.2984E-12
-   23           -79.100383481556     0.1337E-11     0.2842E-13
-   24           -79.100383481556     0.5369E-12     0.4263E-13
+   23           -79.100383481556     0.1336E-11     0.2842E-13
+   24           -79.100383481556     0.5371E-12     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 24 iterations!
 
@@ -405,15 +390,16 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.56100
-     Total cpu time (sec):               0.98520
+     Total wall time (sec):              0.70200
+     Total cpu time (sec):               0.39710
 
 
-  5) Calculation of the excited state (asymmetric lanczos algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
 
-  4) Calculation of the multipliers (diis algorithm)
+  Determining CC multipliers
+  ==========================
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -462,19 +448,19 @@
    20          0.1098E-09
    21          0.3681E-10
    22          0.1219E-10
-   23          0.4638E-11
+   23          0.4639E-11
    24          0.2169E-11
-   25          0.1048E-11
-   26          0.3462E-12
+   25          0.1049E-11
+   26          0.3463E-12
   ----------------------------
   Convergence criterion met in 26 iterations!
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.71700
-     Total cpu time (sec):               0.79900
+     Total wall time (sec):              0.78600
+     Total cpu time (sec):               0.40974
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -485,7 +471,7 @@
         7      4        0.014297181950
         4      5        0.011712306720
        15      5       -0.010007216962
-        6      2        0.009083547622
+        6      2        0.009083547621
        13      5        0.008770531160
         2      4        0.006954460285
         5      6        0.006820250284
@@ -507,11 +493,6 @@
         3      4       3      4       -0.071282985174
         6      5       6      5       -0.068075967748
      --------------------------------------------------
-
-  - Finished solving the CCSD multipliers equations
-
-     Total wall time (sec):               0.71800
-     Total cpu time (sec):                0.80055
 
    - Asymmetric Lanczos excited state solver
   ---------------------------------------------
@@ -538,15 +519,15 @@
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
         1       19.798261999832     538.738149802521      0.044279942378
-        2       20.259302807770     551.283709198289      0.010202925951
-        3       20.648274711695     561.868173826934      0.002283723743
-        4       20.704491225347     563.397903080624      0.059443054438
-        5       21.384460904987     581.900820515191      0.004341104062
-        6       21.613821914973     588.142051495869      0.022985415235
-        7       22.264207641561     605.839948563952      0.002655196359
-        8       23.025231707168     626.548468183684      0.004260067857
-        9       23.518708107493     639.976645004683      0.003455911458
-       10       24.245051701200     659.741460916199      0.001575672966
+        2       20.259302807770     551.283709198288      0.010202925951
+        3       20.648274711691     561.868173826817      0.002283723742
+        4       20.704491225347     563.397903080618      0.059443054438
+        5       21.384460904985     581.900820515158      0.004341104062
+        6       21.613821914973     588.142051495861      0.022985415235
+        7       22.264207641561     605.839948563937      0.002655196359
+        8       23.025231707167     626.548468183669      0.004260067857
+        9       23.518708107492     639.976645004667      0.003455911458
+       10       24.245051701199     659.741460916188      0.001575672966
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos30_X
 
@@ -555,15 +536,15 @@
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
         1       19.741969189852     537.206344419998      0.024680371461
-        2       20.277115902866     551.768428205175      0.020517273232
-        3       20.592063201530     560.338580725065      0.058339304963
-        4       20.990817336277     571.189233412737      0.004569319519
-        5       21.361858135219     581.285767821922      0.005647195992
-        6       21.682168069374     590.001845086252      0.014673665588
-        7       22.405337078792     609.680276159240      0.002631253545
-        8       22.987664664211     625.526216876168      0.005518224301
-        9       23.666728275566     644.004478936870      0.001779598083
-       10       24.358961768686     662.841111734147      0.001059457302
+        2       20.277115902866     551.768428205173      0.020517273232
+        3       20.592063201530     560.338580725066      0.058339304963
+        4       20.990817336277     571.189233412736      0.004569319519
+        5       21.361858135219     581.285767821915      0.005647195992
+        6       21.682168069374     590.001845086250      0.014673665588
+        7       22.405337078792     609.680276159236      0.002631253545
+        8       22.987664664211     625.526216876166      0.005518224301
+        9       23.666728275566     644.004478936863      0.001779598083
+       10       24.358961768686     662.841111734141      0.001059457302
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos30_Y
 
@@ -571,37 +552,32 @@
 
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
-        1       19.742130881139     537.210744264034      0.000006434633
-        2       20.260676273322     551.321083099617      0.000007808350
-        3       20.553563827573     559.290959398793      0.095054116581
-        4       20.944716224216     569.934758256508      0.000385006859
-        5       21.277351357922     578.986221283591      0.005316497696
-        6       21.763440099276     592.213369664539      0.001761270388
-        7       22.369749113034     608.711878285311      0.002654029213
-        8       22.796442049577     620.322784493606      0.004004551440
-        9       23.586890655166     641.831986629255      0.001655277107
-       10       24.131842462708     656.660880626565      0.000703681550
+        1       19.742130881139     537.210744264033      0.000006434633
+        2       20.260676273321     551.321083099592      0.000007808350
+        3       20.553563827573     559.290959398794      0.095054116581
+        4       20.944716224214     569.934758256452      0.000385006859
+        5       21.277351357922     578.986221283582      0.005316497696
+        6       21.763440099274     592.213369664505      0.001761270388
+        7       22.369749113032     608.711878285268      0.002654029213
+        8       22.796442049576     620.322784493582      0.004004551440
+        9       23.586890655165     641.831986629225      0.001655277107
+       10       24.131842462706     656.660880626518      0.000703681550
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos30_Z
 
   - Finished solving the CCSD excited state equations.
 
-     Total wall time (sec):              6.54400
-     Total cpu time (sec):               6.03166
-
-  - Timings for the CCSD excited state calculation
-
-     Total wall time (sec):              8.30900
-     Total cpu time (sec):               8.52910
+     Total wall time (sec):              4.29400
+     Total cpu time (sec):               2.68690
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 14.768868 MB
+  Peak memory usage during the execution of eT: 14.691036 MB
 
-  Total wall time in eT (sec):              9.53100
-  Total cpu time in eT (sec):              10.60064
+  Total wall time in eT (sec):              6.61100
+  Total cpu time in eT (sec):               4.20944
 
-  Calculation ended: 2022-02-01 16:09:28 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:08 UTC -07:00
 
   - Implementation references:
 

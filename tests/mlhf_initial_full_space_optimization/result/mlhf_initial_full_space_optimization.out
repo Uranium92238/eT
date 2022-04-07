@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:08:33 UTC +01:00
+  Calculation started: 2022-04-07 12:34:42 UTC -07:00
 
 
   :: Input file
@@ -194,15 +195,15 @@
      2          -152.058302192275     0.4069E-03     0.6276E-06
      3          -152.058302306403     0.7494E-04     0.1141E-06
      4          -152.058302307904     0.1886E-04     0.1501E-08
-     5          -152.058302308077     0.4225E-05     0.1730E-09
+     5          -152.058302308077     0.4225E-05     0.1729E-09
      6          -152.058302308086     0.9786E-06     0.8953E-11
-     7          -152.058302308087     0.1118E-06     0.5684E-12
-     8          -152.058302308087     0.3255E-07     0.2274E-12
-     9          -152.058302308087     0.7923E-08     0.5684E-13
+     7          -152.058302308086     0.1118E-06     0.4547E-12
+     8          -152.058302308087     0.3255E-07     0.1990E-12
+     9          -152.058302308087     0.7923E-08     0.0000E+00
     10          -152.058302308087     0.2454E-08     0.5684E-13
-    11          -152.058302308087     0.8600E-10     0.1137E-12
-    12          -152.058302308087     0.1929E-10     0.0000E+00
-    13          -152.058302308087     0.8159E-11     0.5684E-13
+    11          -152.058302308087     0.8600E-10     0.0000E+00
+    12          -152.058302308087     0.1929E-10     0.5684E-13
+    13          -152.058302308087     0.8154E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -215,23 +216,23 @@
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.799512917236
+     Active energy:               -104.799512917235
      Active-inactive energy:        19.316446319109
      Inactive energy:             -103.961630943354
 
   - Timings for the MLHF ground state calculation
 
-     Total wall time (sec):              5.00200
-     Total cpu time (sec):               7.51033
+     Total wall time (sec):              1.38800
+     Total cpu time (sec):               1.29525
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 703.584 KB
 
-  Total wall time in eT (sec):              5.05600
-  Total cpu time in eT (sec):               7.56445
+  Total wall time in eT (sec):              1.39900
+  Total cpu time in eT (sec):               1.30765
 
-  Calculation ended: 2022-02-01 16:08:38 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:43 UTC -07:00
 
   - Implementation references:
 

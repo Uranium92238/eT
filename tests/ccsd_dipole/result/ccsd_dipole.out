@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-01-03 14:50:41 UTC +01:00
-  Git branch:         engines
-  Git hash:           2fb210f248519bab9afd255bf707d653a35f9a16
-  Fortran compiler:   GNU 9.3.0
-  C compiler:         GNU 9.3.0
-  C++ compiler:       GNU 9.3.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-03 14:54:44 UTC +01:00
+  Calculation started: 2022-04-07 12:34:55 UTC -07:00
 
 
   :: Input file
@@ -184,8 +185,8 @@
      4           -77.772786825286     0.2758E-04     0.2423E-04
      5           -77.772786829161     0.8793E-05     0.3875E-08
      6           -77.772786829753     0.2077E-06     0.5914E-09
-     7           -77.772786829753     0.3365E-09     0.3126E-12
-     8           -77.772786829753     0.1298E-12     0.7105E-13
+     7           -77.772786829753     0.3365E-09     0.3411E-12
+     8           -77.772786829753     0.1293E-12     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -198,8 +199,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.05546
-     Total cpu time (sec):               0.06172
+     Total wall time (sec):              0.03100
+     Total cpu time (sec):               0.02669
 
 
   :: CCSD wavefunction
@@ -219,8 +220,12 @@
      Single excitation amplitudes:  12
      Double excitation amplitudes:  78
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -264,18 +269,21 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.6185E-13
-     Minimal element of difference between approximate and actual diagonal:  -0.1695E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.9336E-16
 
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
-     ERI matrix in memory:       False
-     T1 ERI matrix in memory:    True
+     ERI matrix in memory:       True
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00628
-     Total cpu time (sec):               0.01032
+     Total wall time (sec):              0.01400
+     Total cpu time (sec):               0.01121
+
+
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -306,7 +314,7 @@
     2           -77.821312411457     0.2140E-01     0.1023E-01
     3           -77.826294068160     0.2885E-02     0.4982E-02
     4           -77.826488240846     0.6015E-03     0.1942E-03
-    5           -77.826499546255     0.7938E-04     0.1131E-04
+    5           -77.826499546254     0.7938E-04     0.1131E-04
     6           -77.826493023104     0.1279E-04     0.6523E-05
     7           -77.826493725131     0.3150E-05     0.7020E-06
     8           -77.826493488194     0.7383E-06     0.2369E-06
@@ -339,7 +347,7 @@
         2      5        0.000000000001
         1      4        0.000000000000
         2      2       -0.000000000000
-        2      6        0.000000000000
+        2      1        0.000000000000
      ------------------------------------
 
      Largest double amplitudes:
@@ -360,8 +368,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01009
-     Total cpu time (sec):               0.02205
+     Total wall time (sec):              0.18500
+     Total cpu time (sec):               0.06333
+
+
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -377,120 +389,26 @@
      Residual threshold:              0.10E-10
      Max number of iterations:             100
 
-  Iteration:                  1
-  Reduced space dimension:    1
-
-   Solution       Residual norm
-  -----------------------------
+   Iteration       Residual norm
+  -------------------------------
      1               0.6577E-02
-  -----------------------------
-
-  Iteration:                  2
-  Reduced space dimension:    2
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.9595E-03
-  -----------------------------
-
-  Iteration:                  3
-  Reduced space dimension:    3
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.2464E-03
-  -----------------------------
-
-  Iteration:                  4
-  Reduced space dimension:    4
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.6467E-04
-  -----------------------------
-
-  Iteration:                  5
-  Reduced space dimension:    5
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.1496E-04
-  -----------------------------
-
-  Iteration:                  6
-  Reduced space dimension:    6
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.3763E-05
-  -----------------------------
-
-  Iteration:                  7
-  Reduced space dimension:    7
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.6410E-06
-  -----------------------------
-
-  Iteration:                  8
-  Reduced space dimension:    8
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.9052E-07
-  -----------------------------
-
-  Iteration:                  9
-  Reduced space dimension:    9
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.1973E-07
-  -----------------------------
-
-  Iteration:                 10
-  Reduced space dimension:   10
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.2893E-08
-  -----------------------------
-
-  Iteration:                 11
-  Reduced space dimension:   11
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.7835E-09
-  -----------------------------
-
-  Iteration:                 12
-  Reduced space dimension:   12
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.1544E-09
-  -----------------------------
-
-  Iteration:                 13
-  Reduced space dimension:   13
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.2087E-10
-  -----------------------------
-
-  Iteration:                 14
-  Reduced space dimension:   14
-
-   Solution       Residual norm
-  -----------------------------
-     1               0.4982E-11
-  -----------------------------
+     2               0.9595E-03
+     3               0.2464E-03
+     4               0.6467E-04
+     5               0.1496E-04
+     6               0.3763E-05
+     7               0.6410E-06
+     8               0.9052E-07
+     9               0.1973E-07
+    10               0.2893E-08
+    11               0.7835E-09
+    12               0.1544E-09
+    13               0.2087E-10
+    14               0.4982E-11
+  -------------------------------
   Convergence criterion met in 14 iterations!
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -524,6 +442,10 @@
         1      4       2      5        0.050505832813
      --------------------------------------------------
 
+
+  Determining CC mean values
+  ==========================
+
   - Operator: dipole [Debye]
 
      x:          0.8984993
@@ -534,12 +456,12 @@
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 113.272 KB
+  Peak memory usage during the execution of eT: 111.176 KB
 
-  Total wall time in eT (sec):              0.09029
-  Total cpu time in eT (sec):               0.12454
+  Total wall time in eT (sec):              0.38800
+  Total cpu time in eT (sec):               0.18576
 
-  Calculation ended: 2022-01-03 14:54:44 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:55 UTC -07:00
 
   - Implementation references:
 

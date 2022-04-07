@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:09:59 UTC +01:00
+  Calculation started: 2022-04-07 12:34:39 UTC -07:00
 
 
   :: Input file
@@ -207,7 +208,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.788161655089     0.3252E-01     0.7579E+02
+     1           -75.788161655090     0.3252E-01     0.7579E+02
      2           -75.808941489083     0.1152E-01     0.2078E-01
      3           -75.811265221222     0.6642E-02     0.2324E-02
      4           -75.811810403468     0.1736E-02     0.5452E-03
@@ -216,16 +217,16 @@
      7           -75.812190840523     0.2121E-03     0.4079E-04
      8           -75.812202157492     0.6723E-04     0.1132E-04
      9           -75.812203027757     0.1211E-04     0.8703E-06
-    10           -75.812203037793     0.3984E-05     0.1004E-07
+    10           -75.812203037794     0.3984E-05     0.1004E-07
     11           -75.812203039026     0.1178E-05     0.1233E-08
-    12           -75.812203039125     0.2772E-06     0.9847E-10
-    13           -75.812203039128     0.7015E-07     0.3922E-11
-    14           -75.812203039129     0.1986E-07     0.2842E-12
-    15           -75.812203039129     0.8196E-08     0.1421E-13
-    16           -75.812203039129     0.2014E-08     0.4263E-13
-    17           -75.812203039129     0.5363E-09     0.4263E-13
+    12           -75.812203039125     0.2772E-06     0.9844E-10
+    13           -75.812203039129     0.7015E-07     0.3951E-11
+    14           -75.812203039129     0.1986E-07     0.3126E-12
+    15           -75.812203039129     0.8196E-08     0.0000E+00
+    16           -75.812203039129     0.2014E-08     0.2842E-13
+    17           -75.812203039129     0.5363E-09     0.1421E-13
     18           -75.812203039129     0.1928E-09     0.5684E-13
-    19           -75.812203039129     0.3314E-10     0.0000E+00
+    19           -75.812203039129     0.3314E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -251,17 +252,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              1.60200
-     Total cpu time (sec):               2.77260
+     Total wall time (sec):              0.68500
+     Total cpu time (sec):               0.63007
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 213.176 KB
 
-  Total wall time in eT (sec):              1.64400
-  Total cpu time in eT (sec):               2.81285
+  Total wall time in eT (sec):              0.69800
+  Total cpu time in eT (sec):               0.64164
 
-  Calculation ended: 2022-02-01 16:10:00 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:40 UTC -07:00
 
   - Implementation references:
 

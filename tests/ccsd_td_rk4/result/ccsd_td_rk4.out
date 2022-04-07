@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-08 15:18:39 UTC +01:00
-  Git branch:         new-engine-structure
-  Git hash:           ca383e2b552f817dbf3230735ee9724c36e4bdc3
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
   Fortran compiler:   GNU 11.2.0
   C compiler:         GNU 11.2.0
   C++ compiler:       GNU 11.2.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-09 10:12:10 UTC +01:00
+  Calculation started: 2022-04-07 12:35:13 UTC -07:00
 
 
   :: Input file
@@ -110,7 +111,7 @@
      end electric field
 
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -210,14 +211,14 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.3979E-12
-    11           -78.843851693631     0.5634E-08     0.2842E-13
-    12           -78.843851693631     0.1415E-08     0.2842E-13
-    13           -78.843851693631     0.6806E-09     0.5684E-13
-    14           -78.843851693631     0.1491E-09     0.5684E-13
-    15           -78.843851693631     0.2501E-10     0.1421E-13
+    10           -78.843851693631     0.2637E-07     0.4690E-12
+    11           -78.843851693631     0.5634E-08     0.4263E-13
+    12           -78.843851693631     0.1415E-08     0.1279E-12
+    13           -78.843851693631     0.6806E-09     0.9948E-13
+    14           -78.843851693631     0.1491E-09     0.0000E+00
+    15           -78.843851693631     0.2501E-10     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -230,8 +231,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.18553
-     Total cpu time (sec):               0.64426
+     Total wall time (sec):              0.32300
+     Total cpu time (sec):               0.40450
 
 
   :: CCSD wavefunction
@@ -251,8 +252,12 @@
      Single excitation amplitudes:  138
      Double excitation amplitudes:  9591
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -309,8 +314,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.07164
-     Total cpu time (sec):               0.29143
+     Total wall time (sec):              0.34400
+     Total cpu time (sec):               0.23173
+
+
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -348,7 +357,7 @@
     9           -79.100383621794     0.4135E-05     0.5957E-06
    10           -79.100383427012     0.1779E-05     0.1948E-06
    11           -79.100383466393     0.6705E-06     0.3938E-07
-   12           -79.100383474630     0.2989E-06     0.8237E-08
+   12           -79.100383474629     0.2989E-06     0.8237E-08
    13           -79.100383487351     0.1028E-06     0.1272E-07
    14           -79.100383481864     0.3056E-07     0.5487E-08
    15           -79.100383481091     0.6508E-08     0.7730E-09
@@ -399,8 +408,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.10278
-     Total cpu time (sec):               0.41475
+     Total wall time (sec):              0.69700
+     Total cpu time (sec):               0.34533
+
+
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -477,6 +490,10 @@
      Cholesky vectors in memory: True
      ERI matrix in memory:       True
 
+
+  Propagating CC amplitudes
+  =========================
+
    - Runge-Kutta 4 coupled cluster propagation solver
   ------------------------------------------------------
 
@@ -552,16 +569,17 @@
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 114.206352 MB
+  Peak memory usage during the execution of eT: 114.202856 MB
 
-  Total wall time in eT (sec):              1.36693
-  Total cpu time in eT (sec):               5.30781
+  Total wall time in eT (sec):              6.99500
+  Total cpu time in eT (sec):               5.84550
 
-  Calculation ended: 2022-02-09 10:12:11 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:20 UTC -07:00
 
   - Implementation references:
 
      eT: https://doi.org/10.1063/5.0004713
+     Time-dependent CC: https://doi.org/10.1103/PhysRevA.102.023115
      Cholesky decomposition of ERIs: https://doi.org/10.1063/1.5083802
 
   eT terminated successfully!
