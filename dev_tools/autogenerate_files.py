@@ -212,7 +212,13 @@ def autogenerate_interfaces(src_dir):
             write_license(interface_file)
 
             for line, code_line in iterator:
-                if code_line.startswith(("module subroutine", "module function")):
+                if code_line.startswith(
+                    (
+                        "module subroutine",
+                        "module function",
+                        "recursive module subroutine",
+                    )
+                ):
 
                     interface_file.write("!\n!\n" + line)
 

@@ -86,6 +86,16 @@ program eT_program
          class(hf), intent(in)  :: ref_wf
 !
       end subroutine cc_calculation
+
+      subroutine fci_calculation(ref_wf)
+!
+         use hf_class, only: hf
+!
+         implicit none
+!
+         class(hf), intent(in)  :: ref_wf
+!
+      end subroutine fci_calculation
 !
       subroutine print_compilation_info(file_)
 !
@@ -176,6 +186,10 @@ program eT_program
 !
          call ref_wf%prepare_for_cc()
          call cc_calculation(ref_wf)
+!
+      else if (input%requested_fci_calculation()) then
+!
+         call fci_calculation(ref_wf)
 !
       endif
 !
@@ -432,6 +446,53 @@ subroutine cc_calculation(ref_wf)
 end subroutine cc_calculation
 !
 !
+subroutine fci_calculation(ref_wf)
+!!
+!! Full Configuration Interaction Calculation
+!! Written by Enrico Ronca, 2020
+!!
+!! Directs the FCI calculation for eT
+!!
+   use global_in,  only: input
+   use global_out, only: output
+!
+   use hf_class, only: hf
+!
+   use fci_class, only: fci
+!
+   use fci_engine_class, only: fci_engine
+!
+   implicit none
+!
+   class(hf), intent(in)  :: ref_wf
+!
+   class(fci), allocatable :: fci_wf
+!
+   character(len=30) :: fci_wf_name
+   class(fci_engine), allocatable :: engine
+!
+   fci_wf_name = input%get_fci_wf()
+!
+   if (trim(fci_wf_name) == 'fci') then
+!
+      allocate(fci::fci_wf)
+!
+   else
+!
+      call output%error_msg('could not recognize FCI method ' // trim(fci_wf_name) // '.')
+!
+   end if
+!
+   call fci_wf%initialize(ref_wf)
+!
+   engine = fci_engine()
+!
+   call engine%ignite(fci_wf)
+   call fci_wf%cleanup()
+!
+end subroutine fci_calculation
+!
+!
 subroutine do_eri_cholesky()
 !!
 !! Do ERI Cholesky
@@ -538,6 +599,7 @@ subroutine print_program_banner()
                            'R. H. Myhre, '            // &
                            'A. C. Paul, '             // &
                            'S. Roet, '                // &
+                           'E. Ronca'                 // &
                            'M. Scavino, '             // &
                            'A. K. Schnack-Petersen, ' // &
                            'A. S. Skeidsvoll, '       // &

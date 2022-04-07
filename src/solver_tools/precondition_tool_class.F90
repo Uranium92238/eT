@@ -152,7 +152,11 @@ contains
 !$omp parallel do private(i)
       do i = 1, tool%dim_
 !
-         R(i) = prefactor_local*R(i)/(tool%preconditioner(i) - shift_local)
+         if (abs(tool%preconditioner(i) - shift_local)<1d-8) then
+            R(i) = prefactor_local*R(i)
+         else
+            R(i) = prefactor_local*R(i)/(tool%preconditioner(i) - shift_local)
+         end if
 !
       enddo  
 !$omp end parallel do

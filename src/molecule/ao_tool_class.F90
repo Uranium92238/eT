@@ -317,7 +317,7 @@ contains
 !
       ao%libint_epsilon = ao%eri_cutoff**2
 !
-      call input%get_keyword('integral precision',  &
+      call input%get_keyword('integral precision',             &
                                         'solver scf',          &
                                         ao%libint_epsilon)
 !

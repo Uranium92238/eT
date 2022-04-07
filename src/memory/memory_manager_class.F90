@@ -108,6 +108,7 @@ module memory_manager_class
       procedure :: alloc_c_4_memory_manager
       procedure :: alloc_i_1_memory_manager
       procedure :: alloc_i_2_memory_manager
+      procedure :: alloc_i_3_memory_manager
       procedure :: alloc_l_1_memory_manager
       generic   :: alloc             => alloc_r_1_memory_manager,       &
                                         alloc_r_2_memory_manager,       &
@@ -120,6 +121,7 @@ module memory_manager_class
                                         alloc_c_4_memory_manager,       &
                                         alloc_i_1_memory_manager,       &
                                         alloc_i_2_memory_manager,       &
+                                        alloc_i_3_memory_manager,       &
                                         alloc_l_1_memory_manager
 !
       procedure :: dealloc_r_1_memory_manager
@@ -133,6 +135,7 @@ module memory_manager_class
       procedure :: dealloc_c_4_memory_manager
       procedure :: dealloc_i_1_memory_manager
       procedure :: dealloc_i_2_memory_manager
+      procedure :: dealloc_i_3_memory_manager
       procedure :: dealloc_l_1_memory_manager
       generic   :: dealloc           => dealloc_r_1_memory_manager,     &
                                         dealloc_r_2_memory_manager,     &
@@ -145,6 +148,7 @@ module memory_manager_class
                                         dealloc_c_4_memory_manager,     &
                                         dealloc_i_1_memory_manager,     &
                                         dealloc_i_2_memory_manager,     &
+                                        dealloc_i_3_memory_manager,     &
                                         dealloc_l_1_memory_manager
 !
 !     Routines for determining the number of batches
@@ -1210,6 +1214,45 @@ contains
    end subroutine alloc_i_2_memory_manager
 !
 !
+   subroutine alloc_i_3_memory_manager(mem, array, M, N, K)
+!!
+!!    Alloc int (memory manager)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Allocates a three dimensional integer array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      integer, dimension(:,:,:), allocatable :: array
+!
+      integer, intent(in) :: M, N, K ! First and second dimension of array
+!
+      integer(i64) :: size_array! Total size of array (M*N*K)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*K
+!
+!     Allocate array and check whether allocation was successful
+!
+      allocate(array(M,N,K), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!     Check integer size
+!
+      call mem%update_memory_after_alloc(size_array, int_size)
+!
+   end subroutine alloc_i_3_memory_manager
+!
+!
    subroutine dealloc_i_1_memory_manager(mem, array, M)
 !!
 !!    Dealloc int (memory manager)
@@ -1286,6 +1329,45 @@ contains
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_i_2_memory_manager
+!
+!
+   subroutine dealloc_i_3_memory_manager(mem, array, M, N, K)
+!!
+!!    Dealloc int (memory manager)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Deallocates a three dimensional integer array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      integer, dimension(:,:,:), allocatable :: array
+!
+      integer, intent(in) :: M, N, K ! First and second dimension of array
+!
+      integer(i64) :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N*K
+!
+!     Deallocate array and check whether deallocation was successful
+!
+      deallocate(array, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!     Check integer size
+!
+      mem%available = mem%available + int_size*size_array
+!
+   end subroutine dealloc_i_3_memory_manager
 !
 !
    subroutine alloc_l_1_memory_manager(mem, array, M)

@@ -1,0 +1,43 @@
+system
+   name: H2O
+   charge: 0
+   multiplicity: 1
+end system
+
+do
+   ground state
+end do
+
+memory
+   available: 8
+end memory
+
+method
+   hf
+   fci
+end method
+
+solver cholesky
+   threshold: 1e-11
+end solver cholesky
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+   diis dimension: 8
+end solver scf
+
+solver fci
+   states: 4
+   residual threshold: 1.0d-10
+   energy threshold: 1.0d-10
+   storage: memory
+end solver fci
+
+geometry
+basis: sto-3g
+O     0.000000     0.000000     0.000000
+H     0.000000     0.000000     0.950000
+H     0.895670     0.000000    -0.316663
+end geometry
