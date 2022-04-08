@@ -1,3 +1,5 @@
+# eT v1.8.0
+
 # eT v1.7.1
 ### Bugfixes
 - Fixed OpenMP bug where thread-integer was not private. Happened only with -O0 flag. eT-program/eT!1066
