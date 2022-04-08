@@ -122,7 +122,7 @@ contains
 !$omp parallel do &
 !$omp shared(sp_ci_coefficients, ci_coefficients, creation_alpha_strings, &
 !$omp destruction_beta_strings , creation_alpha_signs, destruction_beta_signs) &
-!$omp private(p, Jb, Ja, Ka, Kb, parity_JaJb)
+!$omp private(p, Jb, Ja, Ka, Kb, parity_JaJb, thread_n)
       do Jb = 1, wf%n_beta_strings
 !
 !$       thread_n = omp_get_thread_num() + 1
