@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:21 UTC +01:00
+  Calculation started: 2022-04-07 12:34:35 UTC -07:00
 
 
   :: Input file
@@ -159,42 +160,43 @@
   ---------------------------------------------------------------
      1          -177.356080045603     0.3880E-01     0.1774E+03
      2          -177.377821959496     0.1077E-01     0.2174E-01
-     3          -177.378988428493     0.4874E-02     0.1166E-02
-     4          -177.379063207047     0.1497E-02     0.7478E-04
-     5          -177.379075570899     0.2967E-03     0.1236E-04
-     6          -177.379076272557     0.9517E-04     0.7017E-06
+     3          -177.378988428493     0.5125E-02     0.1166E-02
+     4          -177.379063207046     0.1497E-02     0.7478E-04
+     5          -177.379075570899     0.3010E-03     0.1236E-04
+     6          -177.379076272557     0.1000E-03     0.7017E-06
      7          -177.379076321353     0.1140E-04     0.4880E-07
      8          -177.379076324265     0.2261E-05     0.2912E-08
-     9          -177.379076324394     0.4231E-06     0.1293E-09
-    10          -177.379076324396     0.1037E-06     0.1791E-11
-    11          -177.379076324396     0.1332E-07     0.1421E-12
-    12          -177.379076324396     0.5329E-08     0.5684E-13
-    13          -177.379076324396     0.1195E-08     0.8527E-13
-    14          -177.379076324396     0.2273E-09     0.1137E-12
-    15          -177.379076324396     0.9606E-10     0.2842E-13
+     9          -177.379076324395     0.4231E-06     0.1293E-09
+    10          -177.379076324396     0.1046E-06     0.1734E-11
+    11          -177.379076324396     0.1319E-07     0.1137E-12
+    12          -177.379076324396     0.5278E-08     0.2842E-13
+    13          -177.379076324396     0.1184E-08     0.0000E+00
+    14          -177.379076324396     0.2273E-09     0.2842E-13
+    15          -177.379076324396     0.1018E-09     0.0000E+00
+    16          -177.379076324396     0.3425E-10     0.2842E-13
   ---------------------------------------------------------------
-  Convergence criterion met in 15 iterations!
+  Convergence criterion met in 16 iterations!
 
   - Summary of RHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap:                  0.627561422394
+     HOMO-LUMO gap:                  0.627561422231
      Nuclear repulsion energy:      48.518317619727
-     Electronic energy:           -225.897393944123
+     Electronic energy:           -225.897393944124
      Total energy:                -177.379076324396
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.48000
-     Total cpu time (sec):               0.82861
+     Total wall time (sec):              0.23200
+     Total cpu time (sec):               0.23469
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 105.412 KB
 
-  Total wall time in eT (sec):              0.49800
-  Total cpu time in eT (sec):               0.84664
+  Total wall time in eT (sec):              0.24000
+  Total cpu time in eT (sec):               0.24022
 
-  Calculation ended: 2022-02-01 16:10:22 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:36 UTC -07:00
 
   - Implementation references:
 

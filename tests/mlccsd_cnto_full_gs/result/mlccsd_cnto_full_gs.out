@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:28 UTC +01:00
+  Calculation started: 2022-04-07 12:35:54 UTC -07:00
 
 
   :: Input file
@@ -189,15 +190,15 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
-     9           -78.843851693630     0.3151E-06     0.1026E-09
-    10           -78.843851693631     0.2637E-07     0.5542E-12
-    11           -78.843851693631     0.5634E-08     0.7105E-13
-    12           -78.843851693631     0.1415E-08     0.8527E-13
-    13           -78.843851693631     0.6806E-09     0.4263E-13
-    14           -78.843851693631     0.1491E-09     0.0000E+00
-    15           -78.843851693631     0.2501E-10     0.2842E-13
-    16           -78.843851693631     0.5166E-11     0.7105E-13
+     8           -78.843851693528     0.2137E-05     0.7487E-09
+     9           -78.843851693630     0.3151E-06     0.1027E-09
+    10           -78.843851693631     0.2637E-07     0.4405E-12
+    11           -78.843851693631     0.5634E-08     0.2842E-13
+    12           -78.843851693631     0.1415E-08     0.2842E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.8527E-13
+    15           -78.843851693631     0.2501E-10     0.1563E-12
+    16           -78.843851693631     0.5165E-11     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -210,8 +211,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.89300
-     Total cpu time (sec):               1.57724
+     Total wall time (sec):              0.32200
+     Total cpu time (sec):               0.44129
 
 
   :: MLCCSD wavefunction
@@ -227,23 +228,11 @@
      Atomic orbitals:      29
 
 
-  :: Ground state coupled cluster engine
-  =========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
-
-  This is a MLCCSD ground state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -300,11 +289,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.43300
-     Total cpu time (sec):               0.67349
-
-
-  2) Preparation of MO basis and integrals
+     Total wall time (sec):              0.23300
+     Total cpu time (sec):               0.21408
 
   Running CCS calculation for NTOs/CNTOs.
 
@@ -313,8 +299,8 @@
      Wall time for CCS ground calculation (sec):                   0.00
      CPU time for CCS ground calculation (sec):                    0.00
 
-     Wall time for CCS excited calculation (sec):                  0.11
-     CPU time for CCS excited calculation (sec):                   0.12
+     Wall time for CCS excited calculation (sec):                  0.07
+     CPU time for CCS excited calculation (sec):                   0.06
 
   - MLCCSD orbital partitioning:
 
@@ -333,7 +319,8 @@
            standard ccsd code.
 
 
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -375,12 +362,12 @@
    13           -79.100383487352     0.1028E-06     0.1272E-07
    14           -79.100383481865     0.3056E-07     0.5487E-08
    15           -79.100383481092     0.6508E-08     0.7730E-09
-   16           -79.100383481303     0.2112E-08     0.2110E-09
+   16           -79.100383481303     0.2112E-08     0.2109E-09
    17           -79.100383481484     0.6588E-09     0.1819E-09
-   18           -79.100383481546     0.1594E-09     0.6156E-10
+   18           -79.100383481546     0.1594E-09     0.6158E-10
    19           -79.100383481554     0.5326E-10     0.7915E-11
-   20           -79.100383481555     0.2008E-10     0.1208E-11
-   21           -79.100383481556     0.7516E-11     0.6679E-12
+   20           -79.100383481555     0.2008E-10     0.1194E-11
+   21           -79.100383481556     0.7515E-11     0.6679E-12
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
 
@@ -408,24 +395,19 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.60100
-     Total cpu time (sec):               0.86667
-
-  - Timings for the MLCCSD ground state calculation
-
-     Total wall time (sec):              1.20700
-     Total cpu time (sec):               1.72906
+     Total wall time (sec):              0.58900
+     Total cpu time (sec):               0.25963
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 12.119300 MB
+  Peak memory usage during the execution of eT: 12.344580 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              2.16500
-  Total cpu time in eT (sec):               3.37079
+  Total wall time in eT (sec):              1.27500
+  Total cpu time in eT (sec):               1.02230
 
-  Calculation ended: 2022-02-01 16:10:30 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:55 UTC -07:00
 
   - Implementation references:
 

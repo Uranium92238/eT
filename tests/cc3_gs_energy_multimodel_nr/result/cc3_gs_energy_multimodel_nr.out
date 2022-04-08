@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:08:38 UTC +01:00
+  Calculation started: 2022-04-07 12:36:00 UTC -07:00
 
 
   :: Input file
@@ -189,23 +190,23 @@
   Fock matrix construction using density differences
      7           -78.843851692779     0.6096E-05     0.2185E-07
   Fock matrix construction using density differences
-     8           -78.843851693528     0.2137E-05     0.7487E-09
+     8           -78.843851693528     0.2137E-05     0.7488E-09
   Fock matrix construction using density differences
      9           -78.843851693630     0.3151E-06     0.1027E-09
   Fock matrix construction using density differences
     10           -78.843851693631     0.2637E-07     0.4832E-12
   Fock matrix construction using density differences
-    11           -78.843851693631     0.5634E-08     0.0000E+00
+    11           -78.843851693631     0.5634E-08     0.2842E-13
   Fock matrix construction using density differences
-    12           -78.843851693631     0.1415E-08     0.2842E-13
+    12           -78.843851693631     0.1415E-08     0.4263E-13
   Fock matrix construction using density differences
-    13           -78.843851693631     0.6806E-09     0.8527E-13
+    13           -78.843851693631     0.6806E-09     0.0000E+00
   Fock matrix construction using density differences
-    14           -78.843851693631     0.1491E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.4263E-13
   Fock matrix construction using density differences
-    15           -78.843851693631     0.2501E-10     0.1421E-13
+    15           -78.843851693631     0.2501E-10     0.5684E-13
   Fock matrix construction using density differences
-    16           -78.843851693631     0.5169E-11     0.2842E-13
+    16           -78.843851693631     0.5168E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -218,8 +219,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.18200
-     Total cpu time (sec):               1.91518
+     Total wall time (sec):              0.30600
+     Total cpu time (sec):               0.41989
 
   No frozen fock contributions!
 
@@ -244,23 +245,11 @@
      Double excitation amplitudes:  9591
 
 
-  :: Ground state coupled cluster engine
-  =========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
-
-  This is a CC3 ground state calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (newton-raphson algorithm)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -319,15 +308,13 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.59700
-     Total cpu time (sec):               0.77574
-
-
-  2) Preparation of MO basis and integrals
+     Total wall time (sec):              0.15800
+     Total cpu time (sec):               0.20055
   No MO preparations for cc3
 
 
-  3) Calculation of the ground state (newton-raphson algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - Davidson tool settings:
 
@@ -435,7 +422,7 @@
        4           0.1487E-10
      -----------------------------
 
-    8           -79.104388533034     0.9443E-10     0.4637E-10
+    8           -79.104388533034     0.9443E-10     0.4638E-10
 
      Iteration     Residual norm
      -----------------------------
@@ -489,13 +476,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              2.71700
-     Total cpu time (sec):               2.64972
-
-  - Timings for the CC3 ground state calculation
-
-     Total wall time (sec):              3.32600
-     Total cpu time (sec):               3.45247
+     Total wall time (sec):              1.34400
+     Total cpu time (sec):               1.08259
 
   - Cleaning up cc3 wavefunction
 
@@ -503,10 +485,10 @@
 
   Peak memory usage during the execution of eT: 14.671536 MB
 
-  Total wall time in eT (sec):              4.59300
-  Total cpu time in eT (sec):               5.44351
+  Total wall time in eT (sec):              1.83400
+  Total cpu time in eT (sec):               1.72802
 
-  Calculation ended: 2022-02-01 16:08:43 UTC +01:00
+  Calculation ended: 2022-04-07 12:36:02 UTC -07:00
 
   - Implementation references:
 

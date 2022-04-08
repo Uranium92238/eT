@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:05:40 UTC +01:00
+  Calculation started: 2022-04-07 12:34:39 UTC -07:00
 
 
   :: Input file
@@ -123,7 +124,7 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:             -7530.568190922046
+     Energy of initial guess:             -7530.568190922048
      Number of electrons in guess:           55.000000000000
 
   - Screening and integral thresholds:
@@ -153,26 +154,26 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1         -7530.542527047887     0.4281E-01     0.7531E+04
-     2         -7530.543242039052     0.1751E-02     0.7150E-03
-     3         -7530.543343909520     0.6922E-03     0.1019E-03
-     4         -7530.543363599998     0.6722E-04     0.1969E-04
-     5         -7530.543363805162     0.7224E-05     0.2052E-06
-     6         -7530.543363806804     0.3314E-05     0.1643E-08
-     7         -7530.543363807134     0.2769E-06     0.3292E-09
-     8         -7530.543363807134     0.1487E-07     0.0000E+00
-     9         -7530.543363807136     0.2640E-09     0.2728E-11
-    10         -7530.543363807134     0.4193E-10     0.1819E-11
+     1         -7530.542527047884     0.4281E-01     0.7531E+04
+     2         -7530.543242039053     0.1751E-02     0.7150E-03
+     3         -7530.543343909523     0.6922E-03     0.1019E-03
+     4         -7530.543363599997     0.6722E-04     0.1969E-04
+     5         -7530.543363805163     0.7224E-05     0.2052E-06
+     6         -7530.543363806804     0.3314E-05     0.1642E-08
+     7         -7530.543363807132     0.2769E-06     0.3274E-09
+     8         -7530.543363807135     0.1487E-07     0.3638E-11
+     9         -7530.543363807137     0.2639E-09     0.1819E-11
+    10         -7530.543363807135     0.4195E-10     0.1819E-11
   ---------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
   - Summary of UHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.289543124727
+     HOMO-LUMO gap (alpha):          0.289543124728
      HOMO-LUMO gap (beta):           0.696523627897
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:          -7530.543363807134
-     Total energy:               -7530.543363807134
+     Electronic energy:          -7530.543363807135
+     Total energy:               -7530.543363807135
 
   - UHF wavefunction spin expectation values:
 
@@ -183,17 +184,17 @@
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):             15.25800
-     Total cpu time (sec):              26.06360
+     Total wall time (sec):              3.17300
+     Total cpu time (sec):               2.43024
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 488.300 KB
 
-  Total wall time in eT (sec):             15.29200
-  Total cpu time in eT (sec):              26.09976
+  Total wall time in eT (sec):              3.18800
+  Total cpu time in eT (sec):               2.43684
 
-  Calculation ended: 2022-02-01 16:05:55 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:42 UTC -07:00
 
   - Implementation references:
 

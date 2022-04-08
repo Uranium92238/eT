@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:06:07 UTC +01:00
+  Calculation started: 2022-04-07 12:35:14 UTC -07:00
 
 
   :: Input file
@@ -219,14 +220,14 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
-     9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4121E-12
-    11           -78.843851693631     0.5634E-08     0.2842E-13
-    12           -78.843851693631     0.1415E-08     0.5684E-13
-    13           -78.843851693631     0.6806E-09     0.2842E-13
-    14           -78.843851693631     0.1491E-09     0.5684E-13
-    15           -78.843851693631     0.2500E-10     0.2842E-13
+     8           -78.843851693528     0.2137E-05     0.7487E-09
+     9           -78.843851693630     0.3151E-06     0.1028E-09
+    10           -78.843851693631     0.2637E-07     0.4405E-12
+    11           -78.843851693631     0.5634E-08     0.5684E-13
+    12           -78.843851693631     0.1415E-08     0.2842E-13
+    13           -78.843851693631     0.6806E-09     0.1421E-13
+    14           -78.843851693631     0.1491E-09     0.1421E-13
+    15           -78.843851693631     0.2501E-10     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -239,8 +240,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.02600
-     Total cpu time (sec):               1.69552
+     Total wall time (sec):              0.35100
+     Total cpu time (sec):               0.41699
 
 
   :: CCSD wavefunction
@@ -261,47 +262,11 @@
      Double excitation amplitudes:  9591
 
 
-  :: Time dependent coupled cluster engine
-  ===========================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates the time dependent CC wavefunction
-
-  This is a CCSD time dependent calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (davidson algorithm)
-     5) Propagation from the ground state
-     6) FFT of the time dependent dipole moment
-     7) FFT of the time dependent electric field
-
-
-  :: Time dependent coupled cluster engine
-  ===========================================
-
-  Calculates the time dependent CC wavefunction
-
-  This is a CCSD time dependent calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (davidson algorithm)
-     5) Propagation from the ground state
-     6) FFT of the time dependent dipole moment
-     7) FFT of the time dependent electric field
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -358,14 +323,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.49300
-     Total cpu time (sec):               0.69561
+     Total wall time (sec):              0.38000
+     Total cpu time (sec):               0.23878
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -403,10 +366,10 @@
     9           -79.100383621794     0.4135E-05     0.5957E-06
    10           -79.100383427012     0.1779E-05     0.1948E-06
    11           -79.100383466393     0.6705E-06     0.3938E-07
-   12           -79.100383474630     0.2989E-06     0.8237E-08
+   12           -79.100383474629     0.2989E-06     0.8237E-08
    13           -79.100383487351     0.1028E-06     0.1272E-07
-   14           -79.100383481865     0.3056E-07     0.5487E-08
-   15           -79.100383481092     0.6508E-08     0.7730E-09
+   14           -79.100383481864     0.3056E-07     0.5487E-08
+   15           -79.100383481091     0.6508E-08     0.7730E-09
    16           -79.100383481302     0.2112E-08     0.2110E-09
    17           -79.100383481484     0.6588E-09     0.1819E-09
    18           -79.100383481546     0.1594E-09     0.6158E-10
@@ -454,19 +417,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.55200
-     Total cpu time (sec):               0.91529
+     Total wall time (sec):              0.63400
+     Total cpu time (sec):               0.33052
 
 
-  4) Calculation of the multipliers (davidson algorithm)
-
-   - Davidson coupled cluster multipliers solver
-  -------------------------------------------------
-
-  A Davidson solver that solves the multiplier equation: t-bar^T A = -η. 
-  This linear equation is solved in a reduced space. A description of 
-  the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
-  (1975).
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -504,7 +460,7 @@
   -------------------------------
   Convergence criterion met in 17 iterations!
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -512,7 +468,7 @@
      -----------------------------------
         1      5        0.022790118911
        14      4       -0.015907507086
-        7      4        0.014297181953
+        7      4        0.014297181952
         4      5        0.011712306731
        15      5       -0.010007216957
         6      2        0.009083547622
@@ -538,18 +494,14 @@
         6      5       6      5       -0.068075967752
      --------------------------------------------------
 
-  - Finished solving the CCSD multipliers equations
-
-     Total wall time (sec):               0.63500
-     Total cpu time (sec):                0.67360
-
   - Settings for integral handling:
 
      Cholesky vectors in memory: True
      ERI matrix in memory:       True
 
 
-  5) Propagation from the ground state
+  Propagating CC amplitudes
+  =========================
 
    - Euler coupled cluster propagation solver
   ----------------------------------------------
@@ -610,7 +562,8 @@
      ------------------------------------------
 
 
-  6) FFT of the time dependent dipole moment
+  Fast fourier transform of dipole moment
+  =======================================
 
    - Complex FFT dipole moment solver
   --------------------------------------
@@ -622,7 +575,8 @@
   written to file.
 
 
-  7) FFT of the time dependent electric field
+  Fast fourier transform of electric field
+  ========================================
 
    - Complex FFT electric field solver
   ---------------------------------------
@@ -633,19 +587,14 @@
   Complex FFT finished successfully, angular frequency series has been 
   written to file.
 
-  - Timings for the CCSD time dependent calculation
-
-     Total wall time (sec):             10.55400
-     Total cpu time (sec):              22.92827
-
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 39.983200 MB
 
-  Total wall time in eT (sec):             11.66400
-  Total cpu time in eT (sec):              24.69891
+  Total wall time in eT (sec):              8.03500
+  Total cpu time in eT (sec):               5.61582
 
-  Calculation ended: 2022-02-01 16:06:18 UTC +01:00
+  Calculation ended: 2022-04-07 12:35:22 UTC -07:00
 
   - Implementation references:
 

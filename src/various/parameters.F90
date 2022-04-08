@@ -34,10 +34,10 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 7
+   integer, parameter :: minor_version = 8
    integer, parameter :: patch_version = 0
 !
-   character(len=27), parameter :: version_name = "Hydra (development)"
+   character(len=27), parameter :: version_name = "I (development)"
 !
 !  Integers
 !

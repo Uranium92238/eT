@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-01-24 16:47:15 UTC +01:00
-  Git branch:         new-engine-structure
-  Git hash:           7a0b945b8751e7c4621e7fbc2a8e30a0e6d9539d
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-24 17:32:47 UTC +01:00
+  Calculation started: 2022-04-07 12:34:55 UTC -07:00
 
 
   :: Input file
@@ -187,13 +188,13 @@
      5           -75.952528906523     0.1809E-03     0.1688E-04
      6           -75.952529042896     0.1214E-04     0.1364E-06
      7           -75.952529044535     0.3369E-05     0.1638E-08
-     8           -75.952529044727     0.8367E-06     0.1927E-09
-     9           -75.952529044742     0.1360E-06     0.1438E-10
+     8           -75.952529044727     0.8367E-06     0.1928E-09
+     9           -75.952529044742     0.1360E-06     0.1430E-10
     10           -75.952529044742     0.4602E-08     0.1421E-12
     11           -75.952529044742     0.6939E-09     0.4263E-13
-    12           -75.952529044742     0.1022E-09     0.5684E-13
-    13           -75.952529044742     0.1158E-10     0.1421E-13
-    14           -75.952529044742     0.6199E-12     0.0000E+00
+    12           -75.952529044742     0.1022E-09     0.4263E-13
+    13           -75.952529044742     0.1158E-10     0.2842E-13
+    14           -75.952529044742     0.6202E-12     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -206,8 +207,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.07051
-     Total cpu time (sec):               0.13657
+     Total wall time (sec):              0.07900
+     Total cpu time (sec):               0.09394
 
   - Preparation for frozen core approximation
 
@@ -231,8 +232,12 @@
      Single excitation amplitudes:  32
      Double excitation amplitudes:  528
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -277,8 +282,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.4740E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2847E-15
+     Maximal difference between approximate and actual diagonal:              0.3611E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3611E-15
 
   - Settings for integral handling:
 
@@ -287,8 +292,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.01945
-     Total cpu time (sec):               0.03935
+     Total wall time (sec):              0.04100
+     Total cpu time (sec):               0.03287
+
+
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -331,7 +340,7 @@
    14           -76.101053247325     0.5917E-09     0.2810E-09
    15           -76.101053247322     0.1517E-09     0.2998E-11
    16           -76.101053247312     0.3286E-10     0.9848E-11
-   17           -76.101053247312     0.8604E-11     0.5969E-12
+   17           -76.101053247312     0.8605E-11     0.5969E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -375,8 +384,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01432
-     Total cpu time (sec):               0.02793
+     Total wall time (sec):              0.24900
+     Total cpu time (sec):               0.07603
+
+
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -409,7 +422,7 @@
     13               0.7302E-09
     14               0.1496E-09
     15               0.2533E-10
-    16               0.4812E-11
+    16               0.4813E-11
   -------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -447,11 +460,15 @@
         7      2       6      3       -0.064468482498
      --------------------------------------------------
 
+
+  Determining CC mean values
+  ==========================
+
   - Operator: quadrupole [Debye*Ang]
 
      xx:         -7.5792034
      xy:          0.0000000
-     xz:         -0.0000000
+     xz:          0.0000000
      yy:         -4.2536963
      yz:         -0.0000000
      zz:         -5.9846545
@@ -464,19 +481,19 @@
 
      xx:         -2.4600280
      xy:          0.0000000
-     xz:         -0.0000000
+     xz:          0.0000000
      yy:          2.5282326
      yz:         -0.0000000
      zz:         -0.0682046
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 555.768 KB
+  Peak memory usage during the execution of eT: 554.388 KB
 
-  Total wall time in eT (sec):              0.12920
-  Total cpu time in eT (sec):               0.24725
+  Total wall time in eT (sec):              0.70400
+  Total cpu time in eT (sec):               0.29749
 
-  Calculation ended: 2022-01-24 17:32:47 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:56 UTC -07:00
 
   - Implementation references:
 

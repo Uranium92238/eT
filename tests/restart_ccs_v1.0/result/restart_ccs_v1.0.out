@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:10:13 UTC +01:00
+  Calculation started: 2022-04-07 12:34:45 UTC -07:00
 
 
   :: Input file
@@ -177,7 +178,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.5868E-12     0.7884E+02
+     1           -78.843851693631     0.5876E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -190,8 +191,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02700
-     Total cpu time (sec):               0.05121
+     Total wall time (sec):              0.00900
+     Total cpu time (sec):               0.01582
 
 
   :: CCS wavefunction
@@ -211,28 +212,11 @@
      Single excitation amplitudes:  138
 
 
-  :: Coupled cluster response engine
-  =====================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates dipole transition moments and oscillator strengths between 
-
-  the ground state and the excited states.
-
-  This is a CCS response calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (diis algorithm)
-     4) Calculation of the multipliers (davidson algorithm)
-     5) Calculation of the excited states (davidson algorithm)
-     6) Calculation of excited state properties (EOM)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -289,14 +273,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.41900
-     Total cpu time (sec):               0.65629
+     Total wall time (sec):              0.16500
+     Total cpu time (sec):               0.18517
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (diis algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -325,7 +307,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.843851693631     0.1551E-11     0.7884E+02
+    1           -78.843851693631     0.1552E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -353,19 +335,12 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.02600
-     Total cpu time (sec):               0.01133
+     Total wall time (sec):              0.00500
+     Total cpu time (sec):               0.00417
 
 
-  4) Calculation of the multipliers (davidson algorithm)
-
-   - Davidson coupled cluster multipliers solver
-  -------------------------------------------------
-
-  A Davidson solver that solves the multiplier equation: t-bar^T A = -η. 
-  This linear equation is solved in a reduced space. A description of 
-  the algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 
-  (1975).
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -378,7 +353,7 @@
 
   Right hand side is zero to within threshold .1E-10.
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -396,38 +371,16 @@
        10      1        0.000000000000
      ------------------------------------
 
-  - Finished solving the CCS multipliers equations
 
-     Total wall time (sec):               0.00100
-     Total cpu time (sec):                0.00116
+  Determining CC excited state amplitudes
+  =======================================
 
+  Davidson eigenvalue equation solver
+  -----------------------------------
 
-  5) Calculation of the excited states (davidson algorithm)
-     Calculating right vectors
-
-   - Davidson coupled cluster excited state solver
-  ---------------------------------------------------
-
-  A Davidson solver that calculates the lowest eigenvalues and the right 
-  or left eigenvectors of the Jacobian matrix, A. The eigenvalue problem 
-  is solved in a reduced space, the dimension of which is expanded until 
-  the convergence criteria are met.
-
-  A complete description of the algorithm can be found in E. R. Davidson, 
-  J. Comput. Phys. 17, 87 (1975).
-
-  - Settings for coupled cluster excited state solver (Davidson):
-
-     Calculation type:    valence
-     Excitation vectors:  right
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
-     Number of singlet states:               3
-     Max number of iterations:             100
+  A Davidson solver that solves an eigenvalue equation: M x = omega x. 
+  This equation is solved in a reduced space. A description of the algorithm 
+  can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
 
    - Davidson tool settings:
 
@@ -435,21 +388,26 @@
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
+     Storage (cc_es_davidson_trials): memory
+     Storage (cc_es_davidson_transforms): memory
      Restarting right vector 1 from file r_001.
      Restarting right vector 2 from file r_002.
      Restarting right vector 3 from file r_003.
 
+  - Davidson solver settings
+
+     Number of singlet states:               3
+     Max number of iterations:             100
+
   Iteration:                  1
   Reduced space dimension:    3
 
-   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
-  ------------------------------------------------------------------------
-     1   0.283140803896    0.000000000000     0.6993E-12   0.1438E-13
-     2   0.336575862688    0.000000000000     0.3866E-11   0.1188E-13
-     3   0.381521396005    0.000000000000     0.2565E-11   0.6772E-14
-  ------------------------------------------------------------------------
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1   0.283140803896    0.000000000000     0.6987E-12   0.2831E+00
+     2   0.336575862688    0.000000000000     0.3866E-11   0.3366E+00
+     3   0.381521396005    0.000000000000     0.2565E-11   0.3815E+00
+  -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
   - Excitation vector amplitudes:
@@ -517,7 +475,7 @@
        10      5        0.017857942703
      ------------------------------------
 
-     - Electronic excitation energies:
+  - CCS excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -529,38 +487,16 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Finished solving the CCS excited state equations (right)
 
-     Total wall time (sec):              0.02300
-     Total cpu time (sec):               0.02084
+  Determining CC excited state amplitudes
+  =======================================
 
+  Davidson eigenvalue equation solver
+  -----------------------------------
 
-  5) Calculation of the excited states (davidson algorithm)
-     Calculating left vectors
-
-   - Davidson coupled cluster excited state solver
-  ---------------------------------------------------
-
-  A Davidson solver that calculates the lowest eigenvalues and the right 
-  or left eigenvectors of the Jacobian matrix, A. The eigenvalue problem 
-  is solved in a reduced space, the dimension of which is expanded until 
-  the convergence criteria are met.
-
-  A complete description of the algorithm can be found in E. R. Davidson, 
-  J. Comput. Phys. 17, 87 (1975).
-
-  - Settings for coupled cluster excited state solver (Davidson):
-
-     Calculation type:    valence
-     Excitation vectors:  left
-
-  - Convergence thresholds
-
-     Residual threshold:            0.1000E-10
-     Energy threshold:              0.1000E-10
-
-     Number of singlet states:               3
-     Max number of iterations:             100
+  A Davidson solver that solves an eigenvalue equation: M x = omega x. 
+  This equation is solved in a reduced space. A description of the algorithm 
+  can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
 
    - Davidson tool settings:
 
@@ -568,21 +504,26 @@
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
+     Storage (cc_es_davidson_trials): memory
+     Storage (cc_es_davidson_transforms): memory
      Restarting left vector 1 from file l_001.
      Restarting left vector 2 from file l_002.
      Restarting left vector 3 from file l_003.
 
+  - Davidson solver settings
+
+     Number of singlet states:               3
+     Max number of iterations:             100
+
   Iteration:                  1
   Reduced space dimension:    3
 
-   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
-  ------------------------------------------------------------------------
-     1   0.283140803896    0.000000000000     0.6995E-12   0.1432E-13
-     2   0.336575862688    0.000000000000     0.3865E-11   0.1166E-13
-     3   0.381521396005    0.000000000000     0.2563E-11   0.6883E-14
-  ------------------------------------------------------------------------
+  Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
+  -------------------------------------------------------------------------
+     1   0.283140803896    0.000000000000     0.6994E-12   0.2831E+00
+     2   0.336575862688    0.000000000000     0.3865E-11   0.3366E+00
+     3   0.381521396005    0.000000000000     0.2563E-11   0.3815E+00
+  -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
   - Excitation vector amplitudes:
@@ -650,7 +591,7 @@
        10      5        0.017857942703
      ------------------------------------
 
-     - Electronic excitation energies:
+  - CCS excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -662,13 +603,13 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Finished solving the CCS excited state equations (left)
 
-     Total wall time (sec):              0.02100
-     Total cpu time (sec):               0.01787
+  Biorthonormalization of excited CC states
+  =========================================
 
 
-  6) Calculation of excited state properties (EOM)
+  Determining CC EOM transition moments
+  =====================================
 
   :: EOM properties calculation
 
@@ -725,21 +666,16 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.104573008326
 
-  - Timings for the CCS response calculation
-
-     Total wall time (sec):              0.50900
-     Total cpu time (sec):               0.72263
-
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 10.665732 MB
+  Peak memory usage during the execution of eT: 10.665728 MB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.58500
-  Total cpu time in eT (sec):               0.82406
+  Total wall time in eT (sec):              0.23300
+  Total cpu time in eT (sec):               0.24266
 
-  Calculation ended: 2022-02-01 16:10:14 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:46 UTC -07:00
 
   - Implementation references:
 

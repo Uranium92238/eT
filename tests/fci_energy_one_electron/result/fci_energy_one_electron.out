@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 15:01:27 UTC +02:00
-  Git branch:         fci-aes
-  Git hash:           31e2b8240477975dcf32288097142d4fa6f3bec5
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-04-07 15:01:48 UTC +02:00
+  Calculation started: 2022-04-07 12:35:59 UTC -07:00
 
 
   :: Input file
@@ -171,14 +172,14 @@
   ---------------------------------------------------------------
      1            -0.570015475062     0.3662E-01     0.5700E+00
      2            -0.577721092395     0.9702E-02     0.7706E-02
-     3            -0.578298965841     0.2741E-15     0.5779E-03
-     4            -0.578298965841     0.2094E-15     0.7772E-15
+     3            -0.578298965841     0.1075E-15     0.5779E-03
+     4            -0.578298965841     0.1541E-15     0.2220E-15
   ---------------------------------------------------------------
   Convergence criterion met in 4 iterations!
 
   - Summary of ROHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.922344554458
+     HOMO-LUMO gap (alpha):          0.922707925387
      Nuclear repulsion energy:       0.587974678800
      Electronic energy:             -1.166273644641
      Total energy:                  -0.578298965841
@@ -192,8 +193,8 @@
 
   - Timings for the ROHF ground state calculation
 
-     Total wall time (sec):              0.01527
-     Total cpu time (sec):               0.02284
+     Total wall time (sec):              0.02800
+     Total cpu time (sec):               0.01744
 
 
   :: FCI wavefunction
@@ -255,12 +256,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.3606E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.1555E-16
+     Minimal element of difference between approximate and actual diagonal:  -0.2043E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00103
-     Total cpu time (sec):               0.00103
+     Total wall time (sec):              0.01500
+     Total cpu time (sec):               0.00642
 
 
   :: Full CI engine
@@ -299,7 +300,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -0.578298965841    0.000000000000     0.8300E-15   0.5783E+00
+     1  -0.578298965841    0.000000000000     0.7980E-15   0.5783E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -329,19 +330,19 @@
 
   - Timings for the FCI fci calculation
 
-     Total wall time (sec):              0.00083
-     Total cpu time (sec):               0.00483
+     Total wall time (sec):              0.00600
+     Total cpu time (sec):               0.00225
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 34.272 KB
+  Peak memory usage during the execution of eT: 21.056 KB
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.02466
-  Total cpu time in eT (sec):               0.03667
+  Total wall time in eT (sec):              0.06100
+  Total cpu time in eT (sec):               0.03571
 
-  Calculation ended: 2022-04-07 15:01:48 UTC +02:00
+  Calculation ended: 2022-04-07 12:35:59 UTC -07:00
 
   - Implementation references:
 

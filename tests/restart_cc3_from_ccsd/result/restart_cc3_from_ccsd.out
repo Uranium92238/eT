@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,19 +9,20 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-01 15:59:21 UTC +01:00
-  Git branch:         release-v1.6.0
-  Git hash:           2abe95f42f8b4eabde880c038dd204ec81d587da
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
   LAPACK type:        SYSTEM_NATIVE
   BLAS type:          SYSTEM_NATIVE
   64-bit integers:    OFF
@@ -31,7 +32,7 @@
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-01 16:04:51 UTC +01:00
+  Calculation started: 2022-04-07 12:35:45 UTC -07:00
 
 
   :: Input file
@@ -178,7 +179,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.5165E-11     0.7884E+02
+     1           -78.843851693631     0.5178E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -191,8 +192,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.04300
-     Total cpu time (sec):               0.07222
+     Total wall time (sec):              0.00800
+     Total cpu time (sec):               0.01549
 
 
   :: CC3 wavefunction
@@ -213,28 +214,11 @@
      Double excitation amplitudes:  9591
 
 
-  :: Coupled cluster response engine
-  =====================================
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
 
-  Calculates dipole transition moments and oscillator strengths between 
-
-  the ground state and the excited states.
-
-  This is a CC3 response calculation.
-  The following tasks will be performed:
-
-     1) Cholesky decomposition of the electron repulsion integrals
-     2) Preparation of MO basis and integrals
-     3) Calculation of the ground state (newton-raphson algorithm)
-     4) Calculation of the multipliers (diis algorithm)
-     5) Calculation of the excited states (diis algorithm)
-     6) Calculation of excited state properties (EOM)
-
-
-  1) Cholesky decomposition of the electron repulsion integrals
-
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -291,14 +275,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.69100
-     Total cpu time (sec):               0.80749
+     Total wall time (sec):              0.20200
+     Total cpu time (sec):               0.25960
 
 
-  2) Preparation of MO basis and integrals
-
-
-  3) Calculation of the ground state (newton-raphson algorithm)
+  Determining CC cluster amplitudes
+  =================================
 
    - Davidson tool settings:
 
@@ -341,8 +323,8 @@
     3           -79.104387146376     0.3657E-04     0.1617E-03
     4           -79.104388475969     0.2510E-05     0.1330E-05
     5           -79.104388533038     0.2086E-06     0.5707E-07
-    6           -79.104388533055     0.1346E-07     0.1648E-10
-    7           -79.104388533033     0.4337E-09     0.2193E-10
+    6           -79.104388533055     0.1346E-07     0.1647E-10
+    7           -79.104388533033     0.4337E-09     0.2191E-10
     8           -79.104388533033     0.1620E-10     0.2700E-12
     9           -79.104388533033     0.8782E-12     0.2984E-12
   ---------------------------------------------------------------
@@ -388,11 +370,12 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              2.97700
-     Total cpu time (sec):               2.54925
+     Total wall time (sec):              2.16800
+     Total cpu time (sec):               1.38724
 
 
-  4) Calculation of the multipliers (diis algorithm)
+  Determining CC multipliers
+  ==========================
 
    - DIIS coupled cluster multipliers solver
   ---------------------------------------------
@@ -446,10 +429,10 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              5.81000
-     Total cpu time (sec):               4.49564
+     Total wall time (sec):              4.12500
+     Total cpu time (sec):               2.59419
 
-  - Davidson CC multipliers solver summary:
+  - CC multipliers solver summary:
 
      Largest single amplitudes:
      -----------------------------------
@@ -483,14 +466,9 @@
         1      5       1      5       -0.071730388537
      --------------------------------------------------
 
-  - Finished solving the CC3 multipliers equations
 
-     Total wall time (sec):               5.81300
-     Total cpu time (sec):                4.49746
-
-
-  5) Calculation of the excited states (diis algorithm)
-     Calculating right vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -755,12 +733,12 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              7.52200
-     Total cpu time (sec):               5.92338
+     Total wall time (sec):              5.48800
+     Total cpu time (sec):               2.63235
 
 
-  5) Calculation of the excited states (diis algorithm)
-     Calculating left vectors
+  Determining CC excited state amplitudes
+  =======================================
 
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
@@ -1032,11 +1010,16 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              6.94400
-     Total cpu time (sec):               5.97142
+     Total wall time (sec):              4.67100
+     Total cpu time (sec):               2.78750
 
 
-  6) Calculation of excited state properties (EOM)
+  Biorthonormalization of excited CC states
+  =========================================
+
+
+  Determining CC EOM transition moments
+  =====================================
 
   :: EOM properties calculation
 
@@ -1059,19 +1042,14 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.012976254400
 
-  - Timings for the CC3 response calculation
-
-     Total wall time (sec):             25.12400
-     Total cpu time (sec):              20.92884
-
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 16.450620 MB
 
-  Total wall time in eT (sec):             25.26700
-  Total cpu time in eT (sec):              21.07568
+  Total wall time in eT (sec):             17.14300
+  Total cpu time in eT (sec):              10.23427
 
-  Calculation ended: 2022-02-01 16:05:16 UTC +01:00
+  Calculation ended: 2022-04-07 12:36:02 UTC -07:00
 
   - Implementation references:
 

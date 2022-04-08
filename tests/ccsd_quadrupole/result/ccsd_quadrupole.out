@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.6 - an electronic structure program
+                     eT 1.7 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.6.0 Galaxy (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-01-24 16:47:15 UTC +01:00
-  Git branch:         new-engine-structure
-  Git hash:           7a0b945b8751e7c4621e7fbc2a8e30a0e6d9539d
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-01-24 17:32:46 UTC +01:00
+  Calculation started: 2022-04-07 12:34:55 UTC -07:00
 
 
   :: Input file
@@ -184,8 +185,8 @@
      4           -77.772786825286     0.2758E-04     0.2423E-04
      5           -77.772786829161     0.8793E-05     0.3875E-08
      6           -77.772786829753     0.2077E-06     0.5914E-09
-     7           -77.772786829753     0.3365E-09     0.3979E-12
-     8           -77.772786829753     0.1301E-12     0.0000E+00
+     7           -77.772786829753     0.3365E-09     0.3553E-12
+     8           -77.772786829753     0.1296E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -198,8 +199,8 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.05841
-     Total cpu time (sec):               0.06734
+     Total wall time (sec):              0.03200
+     Total cpu time (sec):               0.02872
 
 
   :: CCSD wavefunction
@@ -219,8 +220,12 @@
      Single excitation amplitudes:  12
      Double excitation amplitudes:  78
 
-   - Cholesky decomposition of electronic repulsion integrals solver
-  ---------------------------------------------------------------------
+
+  Cholesky-decomposing electron repulsion integrals
+  =================================================
+
+  Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------
 
   Performs a Cholesky decomposition of the two-electron electronic repulsion 
   integrals in the atomic orbital basis,
@@ -264,7 +269,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.6185E-13
-     Minimal element of difference between approximate and actual diagonal:  -0.1695E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.9653E-16
 
   - Settings for integral handling:
 
@@ -273,8 +278,12 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00754
-     Total cpu time (sec):               0.01559
+     Total wall time (sec):              0.01300
+     Total cpu time (sec):               0.01127
+
+
+  Determining CC cluster amplitudes
+  =================================
 
    - DIIS coupled cluster ground state solver
   ----------------------------------------------
@@ -359,8 +368,12 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.00956
-     Total cpu time (sec):               0.02142
+     Total wall time (sec):              0.10900
+     Total cpu time (sec):               0.05486
+
+
+  Determining CC multipliers
+  ==========================
 
    - Davidson tool settings:
 
@@ -429,6 +442,10 @@
         1      4       2      5        0.050505832813
      --------------------------------------------------
 
+
+  Determining CC mean values
+  ==========================
+
   - Operator: quadrupole [Debye*Ang]
 
      xx:         -8.8293335
@@ -453,12 +470,12 @@
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 111.872 KB
+  Peak memory usage during the execution of eT: 111.176 KB
 
-  Total wall time in eT (sec):              0.09424
-  Total cpu time in eT (sec):               0.13108
+  Total wall time in eT (sec):              0.31100
+  Total cpu time in eT (sec):               0.17551
 
-  Calculation ended: 2022-01-24 17:32:46 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:56 UTC -07:00
 
   - Implementation references:
 

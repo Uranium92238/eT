@@ -9,29 +9,30 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra (development)
+   This is eT 1.7.0 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-02-25 10:50:28 UTC +01:00
-  Git branch:         detached HEAD
-  Git hash:           8152885d16e1b1dd16c773a31f93ada66abf36be
-  Fortran compiler:   GNU 11.1.0
-  C compiler:         GNU 11.1.0
-  C++ compiler:       GNU 11.1.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-04-07 12:33:31 UTC -07:00
+  Git branch:         release-v1.7.0
+  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Fortran compiler:   GNU 11.2.0
+  C compiler:         GNU 11.2.0
+  C++ compiler:       GNU 11.2.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
 
-  Calculation started: 2022-02-25 10:50:45 UTC +01:00
+  Calculation started: 2022-04-07 12:34:38 UTC -07:00
 
 
   :: Input file
@@ -195,15 +196,15 @@
      5          -150.957123614074     0.2761E-03     0.2799E-04
      6          -150.957124723509     0.3249E-04     0.1109E-05
      7          -150.957124734962     0.5185E-05     0.1145E-07
-     8          -150.957124735349     0.1119E-05     0.3872E-09
+     8          -150.957124735349     0.1119E-05     0.3874E-09
      9          -150.957124735375     0.1335E-06     0.2581E-10
-    10          -150.957124735376     0.2042E-07     0.6537E-12
-    11          -150.957124735376     0.2676E-08     0.8527E-13
-    12          -150.957124735375     0.9364E-09     0.5684E-13
-    13          -150.957124735376     0.3023E-09     0.1421E-12
-    14          -150.957124735376     0.7502E-10     0.1137E-12
-    15          -150.957124735376     0.1241E-10     0.2842E-13
-    16          -150.957124735376     0.3365E-11     0.0000E+00
+    10          -150.957124735376     0.2042E-07     0.5684E-12
+    11          -150.957124735375     0.2676E-08     0.1137E-12
+    12          -150.957124735375     0.9364E-09     0.0000E+00
+    13          -150.957124735376     0.3023E-09     0.1137E-12
+    14          -150.957124735375     0.7502E-10     0.1137E-12
+    15          -150.957124735375     0.1241E-10     0.1705E-12
+    16          -150.957124735375     0.3360E-11     0.1990E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -212,14 +213,14 @@
      HOMO-LUMO gap:                  0.621714344362
      Nuclear repulsion energy:      33.053483663804
      Electronic energy:           -184.010608399180
-     Total energy:                -150.957124735376
+     Total energy:                -150.957124735375
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.37889
-     Total cpu time (sec):               0.70332
+     Total wall time (sec):              0.18200
+     Total cpu time (sec):               0.21983
 
-     The smallest diagonal after decomposition is:  -0.1871E-15
+     The smallest diagonal after decomposition is:  -0.1227E-15
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -309,7 +310,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.6695E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.9892E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3974E-15
 
   - Settings for integral handling:
 
@@ -318,8 +319,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.09497
-     Total cpu time (sec):               0.19097
+     Total wall time (sec):              0.22400
+     Total cpu time (sec):               0.08934
 
 
   Determining CC cluster amplitudes
@@ -354,16 +355,16 @@
     2          -151.092051329237     0.5833E-02     0.7000E-03
     3          -151.092257452696     0.6419E-03     0.2061E-03
     4          -151.092267571793     0.1946E-03     0.1012E-04
-    5          -151.092266489793     0.2722E-04     0.1082E-05
+    5          -151.092266489792     0.2722E-04     0.1082E-05
     6          -151.092266535892     0.3084E-05     0.4610E-07
     7          -151.092266524127     0.4410E-06     0.1177E-07
     8          -151.092266527115     0.7231E-07     0.2988E-08
     9          -151.092266526167     0.1187E-07     0.9473E-09
-   10          -151.092266526304     0.3604E-08     0.1361E-09
+   10          -151.092266526303     0.3604E-08     0.1361E-09
    11          -151.092266526308     0.6756E-09     0.4206E-11
    12          -151.092266526301     0.1374E-09     0.6906E-11
    13          -151.092266526301     0.1957E-10     0.1990E-12
-   14          -151.092266526301     0.3359E-11     0.1990E-12
+   14          -151.092266526301     0.3358E-11     0.1990E-12
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -391,17 +392,17 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.02478
-     Total cpu time (sec):               0.04878
+     Total wall time (sec):              0.12700
+     Total cpu time (sec):               0.04339
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 1.445536 MB
+  Peak memory usage during the execution of eT: 1.444060 MB
 
-  Total wall time in eT (sec):              0.61714
-  Total cpu time in eT (sec):               1.11930
+  Total wall time in eT (sec):              0.61400
+  Total cpu time in eT (sec):               0.43001
 
-  Calculation ended: 2022-02-25 10:50:46 UTC +01:00
+  Calculation ended: 2022-04-07 12:34:39 UTC -07:00
 
   - Implementation references:
 
