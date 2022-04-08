@@ -1,5 +1,9 @@
 # eT v1.8.0
 
+# eT v1.7.1
+### Bugfixes
+- Fixed OpenMP bug where thread-integer was not private. Happened only with -O0 flag. eT-program/eT!1066
+
 # eT v1.7.0
 ### Bugfixes
 - QED keyword photons removed. eT-program/eT!1051
