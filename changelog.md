@@ -1,4 +1,6 @@
 # eT v1.8.0
+### Structure
+- Removed unused routines in stream\_file.F90. eT-program/eT!1069
 
 # eT v1.7.1
 ### Bugfixes
