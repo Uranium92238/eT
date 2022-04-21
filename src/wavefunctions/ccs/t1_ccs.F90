@@ -90,7 +90,7 @@ contains
 !
 !     Construct Z_pq = sum_sr X_ps Z_sr Y_qr
 !
-      call sandwich(Z_pq, X, Y, wf%n_mo, .false.)
+      call sandwich(Z_pq, X, Y, wf%n_mo, transpose_left=.false.)
 !
       call mem%dealloc(X, wf%n_mo, wf%n_mo)
       call mem%dealloc(Y, wf%n_mo, wf%n_mo)
@@ -161,7 +161,7 @@ contains
 !
 !     Construct Z_pq = sum_sr X_sp Z_sr Y_rq
 !
-      call sandwich(Z_pq, X, Y, wf%n_mo, .true.)
+      call sandwich(Z_pq, X, Y, wf%n_mo, transpose_left=.true.)
 !
       call mem%dealloc(X, wf%n_mo, wf%n_mo)
       call mem%dealloc(Y, wf%n_mo, wf%n_mo)

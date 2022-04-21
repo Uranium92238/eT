@@ -2,6 +2,7 @@
 ### Structure
 - Changed routines in parameters.F90 to increase covarage. eT-program/eT!1068
 - Removed unused routines in stream\_file.F90. eT-program/eT!1069
+- Removed unused routines in array\_utilities.F90. eT-program/eT!1071
 
 # eT v1.7.1
 ### Bugfixes
@@ -24,7 +25,7 @@
 - Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040, eT-program/eT!1044
 - Using the eigen_davidson_solver for the CC excited state equations instead of the cc_es_davidson_solver. The cc_es_davidson_solver is deleted. eT-program/eT!1038, eT-program/eT!1050
 - Projection tools now ask CC wave functions to project out unwanted components. The projection vectors have been deleted. eT-program/eT!1048
-- eT stops with error if there are no electrons. eT-program/eT!1061 
+- eT stops with error if there are no electrons. eT-program/eT!1061
 
 # eT v1.6.4
 ### CI

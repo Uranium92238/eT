@@ -939,7 +939,7 @@ contains
 !
       call dcopy(wf%ao%n**2, F, 1, G_ao, 1)
 !
-      call sandwich(G_ao, Po, Pv, wf%ao%n)
+      call sandwich(G_ao, Po, Pv, wf%ao%n, transpose_left=.true.)
 !
 !     tmp = Fvo = Pv^T F Po
 !
@@ -947,7 +947,7 @@ contains
 !
       call dcopy(wf%ao%n**2, F, 1, tmp, 1)
 !
-      call sandwich(tmp, Pv, Po, wf%ao%n)
+      call sandwich(tmp, Pv, Po, wf%ao%n, transpose_left=.true.)
 !
 !     G_ao = G_ao - tmp = Fov - Fvo
 !
