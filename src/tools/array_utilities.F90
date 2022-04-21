@@ -38,18 +38,13 @@ module array_utilities
 !
    interface symmetric_sandwich_right_transposition
       procedure :: symmetric_sandwich_right_transposition_real, &
-                   symmetric_sandwich_right_transposition_complex, &
                    symmetric_sandwich_right_transposition_complex_between_real, &
                    symmetric_sandwich_right_transposition_replace
    end interface symmetric_sandwich_right_transposition
 !
    interface scale_diagonal
       procedure :: scale_real_diagonal_by_real, &
-                   scale_complex_diagonal_by_real, &
-                   scale_complex_diagonal_by_complex, &
                    scale_real_4_diagonal_by_real, &
-                   scale_complex_4_diagonal_by_real, &
-                   scale_complex_4_diagonal_by_complex, &
                    scale_real_4_diagonal_by_real_1324, &
                    scale_complex_4_diagonal_by_real_1324, &
                    scale_complex_4_diagonal_by_complex_1324, &
@@ -57,19 +52,6 @@ module array_utilities
                    scale_complex_packed_4_diagonal_by_real, &
                    scale_complex_packed_4_diagonal_by_complex
    end interface scale_diagonal
-!
-   interface entrywise_product
-      procedure :: entrywise_product_in_place, &
-                   entrywise_product_in_place_2dim, &
-                   entrywise_product_in_place_3dim, &
-                   entrywise_product_in_place_4dim, &
-                   entrywise_product_
-   end interface entrywise_product
-!
-   interface get_trace
-      procedure :: get_trace_r, &
-                   get_trace_c
-   end interface get_trace
 !
    interface dsfrk_
       procedure :: dsfrk_r, &
@@ -660,7 +642,7 @@ contains
    end subroutine get_abs_max_w_index
 !
 !
-   subroutine sandwich_real(X, A, B, n, left)
+   subroutine sandwich_real(X, A, B, n, transpose_left)
 !!
 !!    Sandwich real
 !!    Written by Eirik F. Kjønstad, 2018
@@ -683,99 +665,67 @@ contains
 !
       real(dp), dimension(n, n) :: X
 !
-      logical, optional, intent(in) :: left
+      logical, intent(in) :: transpose_left
 !
       real(dp), dimension(:, :), allocatable :: tmp
 !
       call mem%alloc(tmp, n, n)
 !
-      if (present(left)) then
+      if (transpose_left) then ! Transpose the left factor, X <- A^T X B
 !
-         if (left) then ! Transpose the left factor, X <- A^T X B
+         call dgemm('N', 'N', &
+                     n,       &
+                     n,       &
+                     n,       &
+                     one,     &
+                     X,       &
+                     n,       &
+                     B,       &
+                     n,       &
+                     zero,    &
+                     tmp,     & ! tmp = X B
+                     n)
 !
-            call dgemm('N', 'N', &
-                        n,       &
-                        n,       &
-                        n,       &
-                        one,     &
-                        X,       &
-                        n,       &
-                        B,       &
-                        n,       &
-                        zero,    &
-                        tmp,     & ! tmp = X B
-                        n)
+         call dgemm('T', 'N', &
+                     n,       &
+                     n,       &
+                     n,       &
+                     one,     &
+                     A,       &
+                     n,       &
+                     tmp,     &
+                     n,       &
+                     zero,    &
+                     X,       & ! X = A^T tmp = A^T X B
+                     n)
 !
-            call dgemm('T', 'N', &
-                        n,       &
-                        n,       &
-                        n,       &
-                        one,     &
-                        A,       &
-                        n,       &
-                        tmp,     &
-                        n,       &
-                        zero,    &
-                        X,       & ! X = A^T tmp = A^T X B
-                        n)
+      else ! Transpose the right factor, X <- A X B^T
 !
-         else ! Transpose the right factor, X <- A X B^T
+         call dgemm('N', 'T', &
+                     n,       &
+                     n,       &
+                     n,       &
+                     one,     &
+                     X,       &
+                     n,       &
+                     B,       &
+                     n,       &
+                     zero,    &
+                     tmp,     & ! tmp = X B^T
+                     n)
 !
-            call dgemm('N', 'T', &
-                        n,       &
-                        n,       &
-                        n,       &
-                        one,     &
-                        X,       &
-                        n,       &
-                        B,       &
-                        n,       &
-                        zero,    &
-                        tmp,     & ! tmp = X B^T
-                        n)
-!
-            call dgemm('N', 'N', &
-                        n,       &
-                        n,       &
-                        n,       &
-                        one,     &
-                        A,       &
-                        n,       &
-                        tmp,     &
-                        n,       &
-                        zero,    &
-                        X,       & ! X = A tmp = A X B^T
-                        n)
-!
-         endif
-!
-      else ! Transpose left factor (standard)
-!
-            call dgemm('N', 'N', &
-                        n,       &
-                        n,       &
-                        n,       &
-                        one,     &
-                        X,       &
-                        n,       &
-                        B,       &
-                        n,       &
-                        zero,    &
-                        tmp,     & ! tmp = X B
-                        n)
-!
-            call dgemm('T', 'N', &
-                        n,       &
-                        n,       &
-                        n,       &
-                        one,     &
-                        A,       &
-                        n,       &
-                        tmp,     &
-                        n,       &
-                        zero,    &
-                        X,       & ! X = A^T tmp = A^T X B
-                        n)
+         call dgemm('N', 'N', &
+                     n,       &
+                     n,       &
+                     n,       &
+                     one,     &
+                     A,       &
+                     n,       &
+                     tmp,     &
+                     n,       &
+                     zero,    &
+                     X,       & ! X = A tmp = A X B^T
+                     n)
 !
       endif
 !
@@ -784,7 +734,7 @@ contains
    end subroutine sandwich_real
 !
 !
-   subroutine sandwich_complex(X, A, B, n, left)
+   subroutine sandwich_complex(X, A, B, n, transpose_left)
 !!
 !!    Sandwich complex
 !!    Written by Andreas Skeidsvoll, Jan 2020
@@ -809,99 +759,67 @@ contains
 !
       complex(dp), dimension(n, n) :: X
 !
-      logical, optional, intent(in) :: left
+      logical, optional, intent(in) :: transpose_left
 !
       complex(dp), dimension(:, :), allocatable :: tmp
 !
       call mem%alloc(tmp, n, n)
 !
-      if (present(left)) then
+      if (transpose_left) then ! Transpose the left factor, X <- A^T X B
 !
-         if (left) then ! Transpose the left factor, X <- A^T X B
+         call zgemm('N', 'N',      &
+                     n,            &
+                     n,            &
+                     n,            &
+                     one_complex,  &
+                     X,            &
+                     n,            &
+                     B,            &
+                     n,            &
+                     zero_complex, &
+                     tmp,          & ! tmp = X B
+                     n)
 !
-            call zgemm('N', 'N',      &
-                        n,            &
-                        n,            &
-                        n,            &
-                        one_complex,  &
-                        X,            &
-                        n,            &
-                        B,            &
-                        n,            &
-                        zero_complex, &
-                        tmp,          & ! tmp = X B
-                        n)
+         call zgemm('T', 'N',      &
+                     n,            &
+                     n,            &
+                     n,            &
+                     one_complex,  &
+                     A,            &
+                     n,            &
+                     tmp,          &
+                     n,            &
+                     zero_complex, &
+                     X,            & ! X = A^T tmp = A^T X B
+                     n)
 !
-            call zgemm('T', 'N',      &
-                        n,            &
-                        n,            &
-                        n,            &
-                        one_complex,  &
-                        A,            &
-                        n,            &
-                        tmp,          &
-                        n,            &
-                        zero_complex, &
-                        X,            & ! X = A^T tmp = A^T X B
-                        n)
+      else ! Transpose the right factor, X <- A X B^T
 !
-         else ! Transpose the right factor, X <- A X B^T
+         call zgemm('N', 'T',      &
+                     n,            &
+                     n,            &
+                     n,            &
+                     one_complex,  &
+                     X,            &
+                     n,            &
+                     B,            &
+                     n,            &
+                     zero_complex, &
+                     tmp,          & ! tmp = X B^T
+                     n)
 !
-            call zgemm('N', 'T',      &
-                        n,            &
-                        n,            &
-                        n,            &
-                        one_complex,  &
-                        X,            &
-                        n,            &
-                        B,            &
-                        n,            &
-                        zero_complex, &
-                        tmp,          & ! tmp = X B^T
-                        n)
-!
-            call zgemm('N', 'N',      &
-                        n,            &
-                        n,            &
-                        n,            &
-                        one_complex,  &
-                        A,            &
-                        n,            &
-                        tmp,          &
-                        n,            &
-                        zero_complex, &
-                        X,            & ! X = A tmp = A X B^T
-                        n)
-!
-            endif
-!
-         else ! Transpose left factor (standard)
-!
-            call zgemm('N', 'N',      &
-                        n,            &
-                        n,            &
-                        n,            &
-                        one_complex,  &
-                        X,            &
-                        n,            &
-                        B,            &
-                        n,            &
-                        zero_complex, &
-                        tmp,          & ! tmp = X B
-                        n)
-!
-            call zgemm('T', 'N',      &
-                        n,            &
-                        n,            &
-                        n,            &
-                        one_complex,  &
-                        A,            &
-                        n,            &
-                        tmp,          &
-                        n,            &
-                        zero_complex, &
-                        X,            & ! X = A^T tmp = A^T X B
-                        n)
+         call zgemm('N', 'N',      &
+                     n,            &
+                     n,            &
+                     n,            &
+                     one_complex,  &
+                     A,            &
+                     n,            &
+                     tmp,          &
+                     n,            &
+                     zero_complex, &
+                     X,            & ! X = A tmp = A X B^T
+                     n)
 !
          endif
 !
@@ -1070,59 +988,6 @@ contains
       call mem%dealloc(tmp, n, m)
 !
    end subroutine symmetric_sandwich_right_transposition_complex_between_real
-!
-!
-   subroutine symmetric_sandwich_right_transposition_complex(Xr, X, A, m, n)
-!!
-!!    Symmetric sandwich right transposition
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Constructs the similarity transformation
-!!    wrt the matrix A^T
-!!
-!!       Xr = A X A^T
-!!
-      implicit none
-!
-      integer, intent(in) :: m, n
-!
-      complex(dp), dimension(m, n), intent(in)  :: A
-      complex(dp), dimension(n, n), intent(in)  :: X
-      complex(dp), dimension(m, m), intent(out) :: Xr
-!
-      complex(dp), dimension(:, :), allocatable :: tmp
-!
-      call mem%alloc(tmp, n, m)
-!
-      call zgemm('N', 'T',      &
-                  n,            &
-                  m,            &
-                  n,            &
-                  one_complex,  &
-                  X,            &
-                  n,            &
-                  A,            &
-                  m,            &
-                  zero_complex, &
-                  tmp,          & ! tmp = X A^T
-                  n)
-!
-      call zgemm('N', 'N',      &
-                  m,            &
-                  m,            &
-                  n,            &
-                  one_complex,  &
-                  A,            &
-                  m,            &
-                  tmp,          &
-                  n,            &
-                  zero_complex, &
-                  Xr,           & ! X = A tmp = A X A^T
-                  m)
-!
-      call mem%dealloc(tmp, n, m)
-!
-   end subroutine symmetric_sandwich_right_transposition_complex
 !
 !
    subroutine symmetric_sandwich_right_transposition_replace(X, A, m)
@@ -1494,68 +1359,6 @@ contains
    end subroutine get_n_highest
 !
 !
-   recursive subroutine quicksort_recursive(vec, first, last)
-!!
-!!    Recursive implementation of quicksort (descending order)
-!!
-!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
-!!    licensed under GPLv3.
-!!
-!!    Modified by Sarai D. Folkestad, 6. Aug. 2018
-!!
-!!    - Type real*8 changed to real(dp)
-!!    - Variable x renamed to pivot
-!!    - Variable t renamed to temp
-!!
-!     quicksort.f -*-f90-*-
-!     Author: t-nissie
-!     License: GPLv3
-!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
-!
-      implicit none
-!
-      real(dp), dimension(:), intent(inout) :: vec
-      integer, intent(in) :: first, last
-!
-      real(dp) :: pivot, temp
-      integer :: i, j
-
-      pivot = vec((first+last)/2)
-!
-      i = first
-      j = last
-!
-      do
-!
-         do while (vec(i) > pivot)
-!
-            i = i + 1
-!
-         end do
-!
-         do while (pivot > vec(j))
-!
-            j = j - 1
-!
-         end do
-!
-         if (i >= j) exit
-!
-         temp = vec(i)
-         vec(i) = vec(j)
-         vec(j) = temp
-!
-         i = i + 1
-         j = j - 1
-!
-      end do
-!
-      if (first < i - 1) call quicksort_recursive(vec, first, i-1)
-      if (j + 1 < last)  call quicksort_recursive(vec, j+1, last)
-!
-   end subroutine quicksort_recursive
-!
-!
    recursive subroutine quicksort_with_index_recursive(vec, index_list, first, last)
 !!
 !!    Recursive implementation of quicksort with index list (descending order)
@@ -1630,20 +1433,6 @@ contains
    end subroutine quicksort_with_index_recursive
 !
 !
-   subroutine quicksort_descending(vec, dim_)
-!!
-!!    Wrapper for recursive quicksort routine
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-      real(dp), dimension(dim_), intent(inout) :: vec
-!
-      call quicksort_recursive(vec, 1, dim_)
-!
-   end subroutine quicksort_descending
-!
-!
    subroutine quicksort_with_index_descending(vec, index_list, dim_)
 !!
 !!    Wrapper for recursive quicksort with index list
@@ -1682,72 +1471,6 @@ contains
       call dscal(dim_, -one, vec, 1)
 !
    end subroutine quicksort_with_index_ascending
-!
-!
-   recursive subroutine quicksort_recursive_int(vec, first, last)
-!!
-!!    Recursive implementation of quicksort (descending order)
-!!
-!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
-!!    licensed under GPLv3.
-!!
-!!    Modified by Sarai D. Folkestad, 6. Aug. 2018
-!!
-!!    - Variable x renamed to pivot
-!!    - Variable t renamed to temp
-!!    - Added index_list
-!!
-!!    Modified by Andreas Skeidsvoll, 26. Feb. 2019
-!!
-!!    - Type real*8 changed to integer
-!!
-!     quicksort.f -*-f90-*-
-!     Author: t-nissie
-!     License: GPLv3
-!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
-!
-      implicit none
-!
-      integer, dimension(:), intent(inout) :: vec
-      integer, intent(in) :: first, last
-!
-      integer :: pivot, temp
-      integer :: i, j
-
-      pivot = vec((first+last)/2)
-!
-      i = first
-      j = last
-!
-      do
-!
-         do while (vec(i) > pivot)
-!
-            i = i + 1
-!
-         end do
-!
-         do while (pivot > vec(j))
-!
-            j = j - 1
-!
-         end do
-!
-         if (i >= j) exit
-!
-         temp = vec(i)
-         vec(i) = vec(j)
-         vec(j) = temp
-!
-         i = i + 1
-         j = j - 1
-!
-      end do
-!
-      if (first < i - 1) call quicksort_recursive_int(vec, first, i-1)
-      if (j + 1 < last)  call quicksort_recursive_int(vec, j+1, last)
-!
-   end subroutine quicksort_recursive_int
 !
 !
    recursive subroutine quicksort_with_index_recursive_int(vec, index_list, first, last)
@@ -1825,20 +1548,6 @@ contains
       if (j + 1 < last)  call quicksort_with_index_recursive_int(vec, index_list, j+1, last)
 !
    end subroutine quicksort_with_index_recursive_int
-!
-!
-   subroutine quicksort_descending_int(vec, dim_)
-!!
-!!    Wrapper for recursive quicksort routine
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-      integer, dimension(dim_), intent(inout) :: vec
-!
-      call quicksort_recursive_int(vec, 1, dim_)
-!
-   end subroutine quicksort_descending_int
 !
 !
    subroutine quicksort_with_index_descending_int(vec, index_list, dim_)
@@ -2146,162 +1855,6 @@ contains
    end subroutine check_for_parallel_vectors
 !
 !
-   subroutine entrywise_product_in_place(dim_, X, Y)
-!!
-!!    entrywise product in place
-!!    Written by Alexander C. Paul, Sep 2019
-!!
-!!    Also called Hadamard or Schur product
-!!
-!!    Scales each element of a vector
-!!    by the corresponding element of another vector
-!!             X(p) = X(p) * Y(p)
-!!
-!!    NB: Vector X contains product on exit
-!!
-!!    Used eg. for applying a projector
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(dim_), intent(inout)  :: X
-      real(dp), dimension(dim_), intent(in)     :: Y
-!
-      integer :: p
-!
-!$omp parallel do private(p)
-      do p = 1, dim_
-!
-         X(p) = X(p)*Y(p)
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine entrywise_product_in_place
-!
-!
-   subroutine entrywise_product_in_place_2dim(dim_, X, Y)
-!!
-!!    entrywise product in place of 2 dimensional vectors
-!!    Written by Alexander C. Paul, Sep 2019
-!!
-!!    Also called Hadamard or Schur product
-!!
-!!    Scales each element of a 2 dimensional vector
-!!    by the corresponding element of another vector
-!!             X(p) = X(p) * Y(p)
-!!
-!!    NB: Vector X contains product on exit
-!!
-!!    dim_ : full dimension of the vector, dim_1*dim_2
-!!
-!!    Used eg. for applying a projector
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(:,:), intent(inout)  :: X
-      real(dp), dimension(:,:), intent(in)     :: Y
-!
-      call entrywise_product_in_place(dim_, X, Y)
-!
-   end subroutine entrywise_product_in_place_2dim
-!
-!
-   subroutine entrywise_product_in_place_3dim(dim_, X, Y)
-!!
-!!    entrywise product in place 3-dimensional vectors
-!!    Written by Alexander C. Paul, Sep 2019
-!!
-!!    Also called Hadamard or Schur product
-!!
-!!    Scales each element of a 3 dimensional vector
-!!    by the corresponding element of another vector
-!!             X(p) = X(p) * Y(p)
-!!
-!!    NB: Vector X contains product on exit
-!!
-!!    dim_ : full dimension of the vector, dim_1*dim_2*dim_3
-!!
-!!    Used eg. for applying a projector
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(:,:,:), intent(inout)  :: X
-      real(dp), dimension(:,:,:), intent(in)     :: Y
-!
-      call entrywise_product_in_place(dim_, X, Y)
-!
-   end subroutine entrywise_product_in_place_3dim
-!
-!
-   subroutine entrywise_product_in_place_4dim(dim_, X, Y)
-!!
-!!    entrywise product in place 4-dimensional vectors
-!!    Written by Alexander C. Paul, Sep 2019
-!!
-!!    Also called Hadamard or Schur product
-!!
-!!    Scales each element of a 4 dimensional vector
-!!    by the corresponding element of another vector
-!!             X(p) = X(p) * Y(p)
-!!
-!!    NB: Vector X contains product on exit
-!!
-!!    dim_ : full dimension of the vector, dim_1*dim_2*dim_3*dim_4
-!!
-!!    Used eg. for applying a projector
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(:,:,:,:), intent(inout)  :: X
-      real(dp), dimension(:,:,:,:), intent(in)     :: Y
-!
-      call entrywise_product_in_place(dim_, X, Y)
-!
-   end subroutine entrywise_product_in_place_4dim
-!
-!
-   subroutine entrywise_product_(dim_, X, Y, Z)
-!!
-!!    entrywise product
-!!    Written by Alexander C. Paul, Sep 2019
-!!
-!!    Also called Hadamard or Schur product
-!!
-!!    Scales each element of a vector
-!!    by the corresponding element of another vector
-!!             Z(p) = X(p) * Y(p)
-!!
-!!    Result will be returned as the Z-vector
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-!
-      real(dp), dimension(dim_), intent(in)  :: X
-      real(dp), dimension(dim_), intent(in)  :: Y
-      real(dp), dimension(dim_), intent(out) :: Z
-!
-      integer :: p
-!
-!$omp parallel do private(p)
-      do p = 1, dim_
-!
-         Z(p) = X(p)*Y(p)
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine entrywise_product_
-!
-!
    subroutine scale_real_diagonal_by_real(alpha, X, dim_)
 !!
 !!    Scale diagonal of real array by real
@@ -2326,52 +1879,6 @@ contains
    end subroutine scale_real_diagonal_by_real
 !
 !
-   subroutine scale_complex_diagonal_by_real(alpha, X, dim_)
-!!
-!!    Scale diagonal of complex array by real
-!!    Written by Anders Hutcheson, Oct 2019
-!!
-!!    X is of dimension dim_^2 and we scale every
-!!    dim_+1 element(diagonal) by alpha,
-!!    because we only scale the diagonal elements
-!!    the first argument is dim_
-!!
-      implicit none
-!
-      real(dp), intent(in) :: alpha
-!
-      integer, intent(in) :: dim_
-!
-      complex(dp), dimension(dim_, dim_), intent(inout) :: X
-!
-      call zdscal(dim_, alpha, X, dim_+1)
-!
-   end subroutine scale_complex_diagonal_by_real
-!
-!
-   subroutine scale_complex_diagonal_by_complex(alpha, X, dim_)
-!!
-!!    Scale diagonal of complex array by complex
-!!    Written by Anders Hutcheson, Oct 2019
-!!
-!!    X is of dimension dim_^2 and we scale every
-!!    dim_+1 element(diagonal) by alpha,
-!!    because we only scale the diagonal elements
-!!    the first argument is dim_
-!!
-      implicit none
-!
-      complex(dp), intent(in) :: alpha
-!
-      integer, intent(in) :: dim_
-!
-      complex(dp), dimension(dim_, dim_), intent(inout) :: X
-!
-      call zscal(dim_, alpha, X, dim_+1)
-!
-   end subroutine scale_complex_diagonal_by_complex
-!
-!
    subroutine scale_real_4_diagonal_by_real(alpha, X, dim_)
 !!
 !!    Scale diagonal of 4 dimensional real array by real
@@ -2392,50 +1899,6 @@ contains
       call scale_real_diagonal_by_real(alpha, X, dim_)
 !
    end subroutine scale_real_4_diagonal_by_real
-!
-!
-   subroutine scale_complex_4_diagonal_by_real(alpha, X, dim_)
-!!
-!!    Scale diagonal of 4 dimensional complex array by real
-!!    Written by Anders Hutcheson, Oct 2019
-!!
-!!    The matrix has to have the following dimensions,
-!!    X(dim_1,dim_2,dim_1,dim_2) and
-!!    dim_ is then given by dim_1*dim_2
-!!
-      implicit none
-!
-      real(dp), intent(in) :: alpha
-!
-      complex(dp), dimension(:,:,:,:), intent(inout) :: X
-!
-      integer, intent(in) :: dim_
-!
-      call scale_complex_diagonal_by_real(alpha, X, dim_)
-!
-   end subroutine scale_complex_4_diagonal_by_real
-!
-!
-   subroutine scale_complex_4_diagonal_by_complex(alpha, X, dim_)
-!!
-!!    Scale diagonal of 4 dimensional complex array by complex
-!!    Written by Anders Hutcheson, Oct 2019
-!!
-!!    The matrix has to have the following dimensions,
-!!    X(dim_1,dim_2,dim_1,dim_2) and
-!!    dim_ is then given by dim_1*dim_2
-!!
-      implicit none
-!
-      complex(dp), intent(in) :: alpha
-!
-      complex(dp), dimension(:,:,:,:), intent(inout) :: X
-!
-      integer, intent(in) :: dim_
-!
-      call scale_complex_diagonal_by_complex(alpha, X, dim_)
-!
-   end subroutine scale_complex_4_diagonal_by_complex
 !
 !
    subroutine scale_real_4_diagonal_by_real_1324(alpha, X, dim_p, dim_q)
@@ -2933,9 +2396,9 @@ contains
    end subroutine gram_schmidt_biorthonormalization
 !
 !
-   function get_trace_r(x, n) result(trace)
+   function get_trace(x, n) result(trace)
 !!
-!!    Compute trace real
+!!    Compute trace
 !!    Written by Alexander C. Paul, Apr 2020
 !!
 !!    Computes trace of a quadratic (n x n) array x.
@@ -2959,36 +2422,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end function get_trace_r
-!
-!
-   function get_trace_c(x, n) result(trace)
-!!
-!!    Compute trace complex
-!!    Written by Alexander C. Paul, Apr 2020
-!!
-!!    Computes trace of a quadratic (n x n) array x.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      complex(dp), dimension(n,n), intent(in) :: x
-!
-      complex(dp) :: trace
-      integer :: p
-!
-      trace = zero
-!
-!$omp parallel do private(p) schedule(static) reduction(+:trace)
-      do p = 1, n
-!
-         trace = trace + x(p,p)
-!
-      enddo
-!$omp end parallel do
-!
-   end function get_trace_c
+   end function get_trace
 !
 !
    subroutine diagonalize_symmetric(A, dim_, diagonal)
@@ -3105,7 +2539,7 @@ contains
    end subroutine generalized_diagonalization_symmetric
 !
 !
-   subroutine copy_integer(X, Y, n, alpha, beta)
+   subroutine copy_integer(X, Y, n, alpha)
 !!
 !!    Copy integer
 !!    Written by Alexander C. Paul, Feb 2021
@@ -3123,17 +2557,13 @@ contains
       integer, dimension(n), intent(out) :: Y
       integer, dimension(n), intent(in) :: X
 !
-      integer, optional, intent(in) :: alpha, beta
-      integer :: alpha_, beta_
+      integer, optional, intent(in) :: alpha
+      integer :: alpha_
 !
       integer :: i
 !
       alpha_ = 1
-      beta_  = 0
       if (present(alpha)) alpha_ = alpha
-      if (present(beta))  beta_  = beta
-!
-      if (beta_ .eq. 0) then
 !
 !$omp parallel do private(i)
          do i = 1, n
@@ -3142,18 +2572,6 @@ contains
 !
          enddo
 !$omp end parallel do
-!
-      else
-!
-!$omp parallel do private(i)
-         do i = 1, n
-!
-            Y(i) = beta_*Y(i) + alpha_*X(i)
-!
-         enddo
-!$omp end parallel do
-!
-      end if
 !
    end subroutine copy_integer
 !
