@@ -148,7 +148,14 @@ contains
       enddo
 !$omp end parallel do
 !
-      sm_sp = ddot(n_alpha_plus_1_strings*n_beta_minus_1_strings*n_threads, &
+      do thread_n = 2, n_threads
+!
+         call daxpy(n_alpha_plus_1_strings*n_beta_minus_1_strings, one, &
+                     sp_ci_coefficients(:,:,thread_n), 1, sp_ci_coefficients(:,:,1), 1)
+!
+      enddo 
+!
+      sm_sp = ddot(n_alpha_plus_1_strings*n_beta_minus_1_strings, &
                    sp_ci_coefficients, 1, sp_ci_coefficients, 1)
 !
       call mem%dealloc(sp_ci_coefficients, n_alpha_plus_1_strings, &

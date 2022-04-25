@@ -608,9 +608,10 @@ contains
 !
          call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
 !
-         call output%printf('n', 'Energy (Hartree): (f19.12)   Spin Multiplicity:   (f5.1)', &
-                            reals=[wf%energies(state),           &
-                            multiplicities(state)], fs='(/t6,a)')
+         call output%printf('n', 'Energy (Hartree):  (f19.12)', &
+                            reals=[wf%energies(state)], fs='(/t6,a)')
+         call output%printf('n', 'Spin Multiplicity: (f19.12)', &
+                            reals=[multiplicities(state)], fs='(t6,a)')
 !
          call wf%print_dominant_coefficients_amplitudes(wf%ci_coefficients(:,:,state))
 !
