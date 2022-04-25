@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.7.1 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Configuration date: 2022-04-22 13:26:25 UTC -07:00
+  Git branch:         hotfix-fci-omp-2
+  Git hash:           f6688f56674453383aa1834a969a34d29f185ac7
   Fortran compiler:   GNU 11.2.0
   C compiler:         GNU 11.2.0
   C++ compiler:       GNU 11.2.0
@@ -28,11 +28,11 @@
   64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
-  Forced batching:    OFF
-  Runtime checks:     OFF
+  Forced batching:    ON
+  Runtime checks:     ON
   ------------------------------------------------------------
 
-  Calculation started: 2022-04-07 12:35:58 UTC -07:00
+  Calculation started: 2022-04-22 13:31:36 UTC -07:00
 
 
   :: Input file
@@ -174,18 +174,18 @@
      2            -0.826047064194     0.3887E-02     0.1230E-02
      3            -0.826139150071     0.2040E-04     0.9209E-04
      4            -0.826139153875     0.1842E-06     0.3804E-08
-     5            -0.826139153875     0.5932E-07     0.2855E-12
-     6            -0.826139153875     0.1831E-06     0.2801E-12
-     7            -0.826139153875     0.1043E-06     0.2092E-12
-     8            -0.826139153821     0.2417E-05     0.5447E-10
-     9            -0.826139153858     0.1370E-05     0.3704E-10
-    10            -0.826139153875     0.4320E-11     0.1753E-10
+     5            -0.826139153875     0.2359E-07     0.3113E-12
+     6            -0.826139153875     0.4503E-07     0.1255E-13
+     7            -0.826139153875     0.9160E-07     0.5929E-13
+     8            -0.826139153875     0.9958E-07     0.1443E-13
+     9            -0.826139153875     0.4797E-07     0.7039E-13
+    10            -0.826139153875     0.6588E-12     0.2154E-13
   ---------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
   - Summary of ROHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          1.136757200372
+     HOMO-LUMO gap (alpha):          1.136757199472
      Nuclear repulsion energy:       0.587974678800
      Electronic energy:             -1.414113832675
      Total energy:                  -0.826139153875
@@ -199,8 +199,8 @@
 
   - Timings for the ROHF ground state calculation
 
-     Total wall time (sec):              0.02800
-     Total cpu time (sec):               0.01994
+     Total wall time (sec):              0.03400
+     Total cpu time (sec):               0.02262
 
 
   :: FCI wavefunction
@@ -261,13 +261,13 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.3606E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2043E-15
+     Maximal difference between approximate and actual diagonal:              0.4441E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1609E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.00586
+     Total wall time (sec):              0.02000
+     Total cpu time (sec):               0.01840
 
 
   :: Full CI engine
@@ -330,7 +330,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -0.826805367547    0.000000000000     0.8169E-15   0.1962E-10
+     1  -0.826805367547    0.000000000000     0.7372E-15   0.1962E-10
   -------------------------------------------------------------------------
   Convergence criterion met in 4 iterations!
 
@@ -338,16 +338,17 @@
 
      Electronic state nr. 1
 
-     Energy (Hartree):     -0.826805367547   Spin Multiplicity:     3.0
+     Energy (Hartree):     -0.826805367547
+     Spin Multiplicity:     3.000000000000
 
      Largest CI amplitudes:
      ------------------------
      00aa      0.999843488026
      aa00     -0.017688208781
-     a00a     -0.000305681038
-     0aa0     -0.000182430265
-     a0a0      0.000000000000
+     a00a     -0.000305681030
+     0aa0     -0.000182430258
      0a0a     -0.000000000000
+     a0a0     -0.000000000000
      ------------------------
 
   - Electronic energies:
@@ -362,8 +363,8 @@
 
   - Timings for the FCI fci calculation
 
-     Total wall time (sec):              0.00900
-     Total cpu time (sec):               0.00590
+     Total wall time (sec):              0.01100
+     Total cpu time (sec):               0.00652
 
   ------------------------------------------------------------
 
@@ -371,10 +372,10 @@
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.05500
-  Total cpu time in eT (sec):               0.04023
+  Total wall time in eT (sec):              0.07900
+  Total cpu time in eT (sec):               0.05884
 
-  Calculation ended: 2022-04-07 12:35:58 UTC -07:00
+  Calculation ended: 2022-04-22 13:31:36 UTC -07:00
 
   - Implementation references:
 
