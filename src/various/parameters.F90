@@ -35,7 +35,7 @@ module parameters
 !
    integer, parameter :: major_version = 1
    integer, parameter :: minor_version = 7
-   integer, parameter :: patch_version = 1
+   integer, parameter :: patch_version = 2
 !
    character(len=27), parameter :: version_name = "Hydra"
 !
