@@ -4,6 +4,10 @@
 - Removed unused routines in stream\_file.F90. eT-program/eT!1069
 - Removed unused routines in array\_utilities.F90. eT-program/eT!1071
 
+# eT v1.7.2
+### Bugfixes
+- Fixed bug in spin-multiplicities, where sum of squares was incorrectly assumed equal to square of sum. Happened only with -O0 flag. eT-program/eT!1072
+
 # eT v1.7.1
 ### Bugfixes
 - Fixed OpenMP bug where thread-integer was not private. Happened only with -O0 flag. eT-program/eT!1066

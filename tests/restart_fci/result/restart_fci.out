@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.7.1 Hydra
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
+  Configuration date: 2022-04-22 13:26:25 UTC -07:00
+  Git branch:         hotfix-fci-omp-2
+  Git hash:           f6688f56674453383aa1834a969a34d29f185ac7
   Fortran compiler:   GNU 11.2.0
   C compiler:         GNU 11.2.0
   C++ compiler:       GNU 11.2.0
@@ -28,11 +28,11 @@
   64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
-  Forced batching:    OFF
-  Runtime checks:     OFF
+  Forced batching:    ON
+  Runtime checks:     ON
   ------------------------------------------------------------
 
-  Calculation started: 2022-04-07 12:35:59 UTC -07:00
+  Calculation started: 2022-04-22 13:31:36 UTC -07:00
 
 
   :: Input file
@@ -164,7 +164,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.959292303910     0.1300E-12     0.7496E+02
+     1           -74.959292303909     0.1281E-12     0.7496E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -173,12 +173,12 @@
      HOMO-LUMO gap:                  0.990754169402
      Nuclear repulsion energy:       9.253567250513
      Electronic energy:            -84.212859554423
-     Total energy:                 -74.959292303910
+     Total energy:                 -74.959292303909
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.00200
-     Total cpu time (sec):               0.00227
+     Total wall time (sec):              0.00100
+     Total cpu time (sec):               0.00171
 
 
   :: FCI wavefunction
@@ -240,13 +240,13 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2754E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.7651E-16
+     Maximal difference between approximate and actual diagonal:              0.3169E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1943E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.00941
+     Total wall time (sec):              0.05300
+     Total cpu time (sec):               0.05434
 
 
   :: Full CI engine
@@ -294,9 +294,9 @@
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
      1 -75.007116016036    0.000000000000     0.4315E-10   0.7501E+02
-     2 -74.610617220395    0.000000000000     0.5600E-10   0.7461E+02
-     3 -74.550949193651    0.000000000000     0.3482E-10   0.7455E+02
-     4 -74.515608319901    0.000000000000     0.2531E-10   0.7452E+02
+     2 -74.610617220395    0.000000000000     0.5598E-10   0.7461E+02
+     3 -74.550949193651    0.000000000000     0.3479E-10   0.7455E+02
+     4 -74.515608319901    0.000000000000     0.2530E-10   0.7452E+02
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -304,7 +304,8 @@
 
      Electronic state nr. 1
 
-     Energy (Hartree):    -75.007116016036   Spin Multiplicity:     1.0
+     Energy (Hartree):    -75.007116016036
+     Spin Multiplicity:     1.000000000000
 
      Largest CI amplitudes:
      ---------------------------
@@ -322,7 +323,8 @@
 
      Electronic state nr. 2
 
-     Energy (Hartree):    -74.610617220395   Spin Multiplicity:     3.0
+     Energy (Hartree):    -74.610617220395
+     Spin Multiplicity:     3.000000000000
 
      Largest CI amplitudes:
      ---------------------------
@@ -340,25 +342,27 @@
 
      Electronic state nr. 3
 
-     Energy (Hartree):    -74.550949193651   Spin Multiplicity:     1.0
+     Energy (Hartree):    -74.550949193651
+     Spin Multiplicity:     1.000000000000
 
      Largest CI amplitudes:
      ---------------------------
-     0ba2222     -0.686258832627
-     0ab2222     -0.686258832627
-     aba2b22     -0.092094025766
-     bab2a22     -0.092094025766
-     baa2b22     -0.075050466284
-     abb2a22     -0.075050466282
-     02a22b2      0.062669057601
-     02b22a2      0.062669057599
-     02ba222     -0.054724518781
-     02ab222     -0.054724518778
+     0ab2222      0.686258832627
+     0ba2222      0.686258832627
+     aba2b22      0.092094025766
+     bab2a22      0.092094025766
+     baa2b22      0.075050466284
+     abb2a22      0.075050466282
+     02a22b2     -0.062669057601
+     02b22a2     -0.062669057599
+     02ba222      0.054724518781
+     02ab222      0.054724518778
      ---------------------------
 
      Electronic state nr. 4
 
-     Energy (Hartree):    -74.515608319901   Spin Multiplicity:     3.0
+     Energy (Hartree):    -74.515608319901
+     Spin Multiplicity:     3.000000000000
 
      Largest CI amplitudes:
      ---------------------------
@@ -382,7 +386,7 @@
      ---------------------------------------------------------------
         1                -75.007116016036    -2041.047588159273
         2                -74.610617220395    -2030.258306374619
-        3                -74.550949193651    -2028.634656665840
+        3                -74.550949193651    -2028.634656665837
         4                -74.515608319901    -2027.672982507943
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
@@ -390,16 +394,16 @@
   - Timings for the FCI fci calculation
 
      Total wall time (sec):              0.01400
-     Total cpu time (sec):               0.00725
+     Total cpu time (sec):               0.00916
 
   ------------------------------------------------------------
 
   Peak memory usage during the execution of eT: 428.360 KB
 
-  Total wall time in eT (sec):              0.03800
-  Total cpu time in eT (sec):               0.02754
+  Total wall time in eT (sec):              0.08100
+  Total cpu time in eT (sec):               0.07459
 
-  Calculation ended: 2022-04-07 12:35:59 UTC -07:00
+  Calculation ended: 2022-04-22 13:31:36 UTC -07:00
 
   - Implementation references:
 
