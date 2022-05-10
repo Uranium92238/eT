@@ -37,7 +37,7 @@ module parameters
    integer, parameter :: minor_version = 8
    integer, parameter :: patch_version = 0
 !
-   character(len=27), parameter :: version_name = "I (development)"
+   character(len=27), parameter :: version_name = "Ibiza (development)"
 !
 !  Integers
 !
