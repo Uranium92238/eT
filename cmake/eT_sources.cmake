@@ -20,6 +20,13 @@
 set(eT_fortran_sources
    src/eT_program.F90
 #
+   src/program/eT_class.F90
+   src/program/cc_wavefunction_factory_class.F90
+   src/program/cc_engine_factory_class.F90
+   src/program/reference_wavefunction_factory_class.F90
+   src/program/reference_engine_factory_class.F90
+   src/program/fci_wavefunction_factory_class.F90
+#
    src/observer_pattern/observer_class.F90
    src/observer_pattern/observable_class.F90
    src/observer_pattern/observer_node_class.F90

@@ -56,6 +56,9 @@ module input_file_class
       procedure :: open_                                                => open_input_file
       procedure :: close_                                               => close_input_file
 !
+      procedure :: initialize &
+                => initialize_input_file 
+!
       procedure :: check_for_errors                                     => check_for_errors_input_file
 !
       procedure :: get_n_elements_for_keyword
@@ -736,6 +739,22 @@ contains
       this%unit_ = -1
 !
    end subroutine close_input_file
+!
+!
+   subroutine initialize_input_file(this)
+!!
+!!    Initialize
+!!    Written by Eirik F. Kjønstad, May 2022
+!!
+      implicit none 
+!
+      class(input_file), intent(inout) :: this 
+!
+      call this%open_()
+      call this%read_keywords_and_geometry()
+      call this%close_()
+!
+   end subroutine initialize_input_file
 !
 !
    subroutine check_for_errors_input_file(this)
@@ -3196,7 +3215,6 @@ contains
       deallocate(split_string)
 !
    end subroutine get_state_guesses
-!
 !
 !
 end module input_file_class

@@ -3,6 +3,7 @@
 - Changed routines in parameters.F90 to increase covarage. eT-program/eT!1068
 - Removed unused routines in stream\_file.F90. eT-program/eT!1069
 - Removed unused routines in array\_utilities.F90. eT-program/eT!1071
+- Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074
 
 # eT v1.7.2
 ### Bugfixes
