@@ -26,7 +26,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 
-if sys.version < "3.6":
+if sys.version_info < (3, 6):
     print("requires python version >= 3.6")
     sys.exit(1)
 

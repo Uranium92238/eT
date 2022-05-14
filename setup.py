@@ -9,6 +9,11 @@
 # Sander Roet <sander.roet at ntnu.no>, Sep 2020
 # Added pFUnit options and installation,
 # Eirik F. Kjønstad <eirik.kjonstad at ntnu.no>, May 2021
+import sys
+
+if sys.version_info < (3, 6):
+    print("requires python version >= 3.6")
+    sys.exit(1)
 
 from pathlib import Path
 
@@ -16,8 +21,6 @@ root_dir = Path(__file__).resolve().parent
 dev_tool_dir = root_dir / "dev_tools"
 default_path = root_dir / "build"
 default_pfunit_path = root_dir / "submodules" / "pFUnit" / "build" / "installed"
-
-import sys
 
 sys.path.append(str(dev_tool_dir))
 
@@ -34,11 +37,6 @@ class SmartFormatter(HelpFormatter):
             return text[2:].splitlines() + [""]
         # this is the RawTextHelpFormatter._split_lines
         return HelpFormatter._split_lines(self, text, width) + [""]
-
-
-if sys.version < "3.6":
-    print("requires python version >= 3.6")
-    sys.exit(1)
 
 
 def input_parser():
