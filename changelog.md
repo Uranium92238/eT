@@ -1,3 +1,7 @@
+# eT v1.7.3
+### Bugfixes
+- Fixed bug where python version 3.10 was wrongly recognized to be older than 3.6. eT-program/eT!1079
+
 # eT v1.7.2
 ### Bugfixes
 - Fixed bug in spin-multiplicities, where sum of squares was incorrectly assumed equal to square of sum. Happened only with -O0 flag. eT-program/eT!1072
