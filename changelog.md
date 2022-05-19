@@ -1,3 +1,7 @@
+# eT v1.7.4
+### Bugfixes
+- Fixes problem with the use of bath orbitals when cc-in-hf (frozen hf) is used. Adding test with valence ionization and frozen hf. eT-program/eT!1084
+
 # eT v1.7.3
 ### Bugfixes
 - Fixed bug where python version 3.10 was wrongly recognized to be older than 3.6. eT-program/eT!1079
