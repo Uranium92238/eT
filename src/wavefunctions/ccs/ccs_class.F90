@@ -706,8 +706,6 @@ contains
 !     Handle changes in the number of MOs as a result of
 !     special methods
 !
-      if (wf%bath_orbital) call wf%make_bath_orbital()
-!
       wf%exists_frozen_fock_terms = template_wf%exists_frozen_fock_terms
 !
       if (wf%exists_frozen_fock_terms) then
@@ -724,6 +722,8 @@ contains
          wf%frozen_quadrupole = template_wf%frozen_quadrupole
 !
       endif
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
 !
    end subroutine set_variables_from_template_wf_ccs
 !
@@ -1317,8 +1317,10 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy, copy
       real(dp), dimension(:), allocatable :: orbital_energies_copy
+!
+      integer :: p, q, x
 !
       call mem%alloc(orbital_coefficients_copy, wf%ao%n, wf%n_mo)
 !
@@ -1329,7 +1331,15 @@ contains
       call mem%alloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_coefficients, wf%ao%n*(wf%n_mo + wf%n_bath_orbitals))
 !
-      wf%orbital_coefficients(1:wf%ao%n, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
+!$omp parallel do private(p, x)
+      do p = 1, wf%n_mo
+         do x = 1, wf%ao%n
+!
+            wf%orbital_coefficients(x, p) = orbital_coefficients_copy(x,p)
+!
+         enddo
+      enddo
+!$omp end parallel do
 !
       call mem%dealloc(orbital_coefficients_copy, wf%ao%n, wf%n_mo)
 !
@@ -1341,9 +1351,45 @@ contains
       call mem%alloc(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
 !
+!
+!$omp parallel do private(p)
+      do p = 1, wf%n_mo
+!
+         wf%orbital_energies(p) = orbital_energies_copy(p)
+!
+      enddo
+!$omp end parallel do
+!
       wf%orbital_energies(1:wf%n_mo) = orbital_energies_copy(:)
 !
       call mem%dealloc(orbital_energies_copy, wf%n_mo)
+!
+      if (wf%exists_frozen_fock_terms) then
+!
+         call mem%alloc(copy, wf%n_mo, wf%n_mo)
+!
+         call dcopy(wf%n_mo**2, wf%mo_fock_frozen, 1, copy, 1)
+!
+         call wf%destruct_mo_fock_frozen()
+         call mem%alloc(wf%mo_fock_frozen, &
+                        wf%n_mo + wf%n_bath_orbitals, &
+                        wf%n_mo + wf%n_bath_orbitals)
+!
+         call zero_array(wf%mo_fock_frozen, (wf%n_mo+wf%n_bath_orbitals)**2)
+!
+!$omp parallel do private(p, q)
+         do p = 1, wf%n_mo
+            do q = 1, wf%n_mo
+!
+               wf%mo_fock_frozen(p,q) = copy(p,q)
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(copy, wf%n_mo, wf%n_mo)
+!
+      endif
 !
       wf%n_mo = wf%n_mo + wf%n_bath_orbitals
       wf%n_v = wf%n_v + wf%n_bath_orbitals
