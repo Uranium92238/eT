@@ -134,8 +134,6 @@ contains
       real(dp), dimension(:), allocatable :: residual_norm
       real(dp), dimension(:), allocatable :: c, residual, omega
       complex(dp), dimension(:), allocatable :: new_omega
-      real(dp) :: dummy = zero
-!
 !
       call mem%alloc(omega, this%n_solutions)
       call mem%alloc(new_omega, this%n_solutions)
@@ -180,7 +178,7 @@ contains
          do trial = this%davidson%first_new_trial(), this%davidson%last_new_trial()
 !
             call this%davidson%get_trial(c, trial)
-            call this%transformer%transform(c, residual, dummy)
+            call this%transformer%transform(c, residual)
 !
             call this%projector%project(residual)
             call this%davidson%set_transform(residual, trial)

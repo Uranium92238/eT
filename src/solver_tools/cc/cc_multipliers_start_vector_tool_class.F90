@@ -26,12 +26,12 @@ module cc_multipliers_start_vector_tool_class
 !!
 !
    use kinds
-   use start_vector_tool_class,             only: start_vector_tool
+   use linear_equation_start_vector_tool_class, only: linear_equation_start_vector_tool
    use ccs_class, only: ccs
 !
    implicit none
 !
-   type, extends(start_vector_tool) :: cc_multipliers_start_vector_tool
+   type, extends(linear_equation_start_vector_tool) :: cc_multipliers_start_vector_tool
 !
    logical, private :: restart
    class(ccs), pointer, private :: wf
@@ -71,7 +71,7 @@ contains
    end function new_cc_multipliers_start_vector_tool
 !
 !
-   subroutine get_cc_multipliers_start_vector_tool(this, start_vector, I, energy)
+   subroutine get_cc_multipliers_start_vector_tool(this, start_vector, I)
 !!
 !!    Get
 !!    Written by Regina Matveeva, Sept 2021
@@ -83,10 +83,8 @@ contains
       class(cc_multipliers_start_vector_tool), intent(in) :: this
       real(dp), dimension(this%n_parameters), intent(out) :: start_vector
       integer, intent(in) :: I
-         real(dp), intent(out) :: energy
 !
       call do_nothing(I)
-      call do_nothing(energy)
 !
       call this%wf%get_initial_cc_multipliers(start_vector, this%restart)
 !

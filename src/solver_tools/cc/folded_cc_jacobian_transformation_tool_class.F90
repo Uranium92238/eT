@@ -17,25 +17,24 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module cc_jacobian_transformation_tool_class
+module folded_cc_jacobian_transformation_tool_class
 !
 !!
-!!    Coupled Cluster Jacobian transformation class
+!!    Folded CC Jacobian transformation class
 !!    Written by Regina Matveeva, Sept 2021
 !!
-!!    Based on abstract_jacobian_transformer_class by Eirik F. Kjønstad, 2021
 !
    use global_out, only: output
-   use kinds
+   use parameters
 !
    use ccs_class,                   only: ccs
-   use transformation_tool_class,   only: transformation_tool
+   use frequency_dependent_transformation_class,   only: frequency_dependent_transformation
 !
    implicit none
 !
-   type, extends(transformation_tool) :: cc_jacobian_transformation_tool
+   type, extends(frequency_dependent_transformation) :: folded_cc_jacobian_transformation_tool
 !
-      character(len=:), allocatable :: side ! 'right' or 'left'
+      character(len=:), allocatable, private :: side ! 'right' or 'left'
       class(ccs), pointer, private  :: wf
 !
    contains
@@ -43,19 +42,21 @@ module cc_jacobian_transformation_tool_class
       procedure, public :: initialize  => initialize_cc_jacobian
       procedure, public :: transform   => transform_cc_jacobian
 !
-   end type  cc_jacobian_transformation_tool
+   end type  folded_cc_jacobian_transformation_tool
 !
-   interface  cc_jacobian_transformation_tool
+   interface  folded_cc_jacobian_transformation_tool
 !
-      procedure :: new_cc_jacobian_transformation_tool
+      procedure :: new_folded_cc_jacobian_transformation_tool
 !
-   end interface  cc_jacobian_transformation_tool
+   end interface  folded_cc_jacobian_transformation_tool
 !
-   contains
+contains
 !
-   function new_cc_jacobian_transformation_tool(wf, side, n_parameters) result(this)
+   function new_folded_cc_jacobian_transformation_tool(wf, side, &
+                                                       n_parameters, &
+                                                       frequency) result(this)
 !!
-!!    New Coupled Cluster Jacobian transformation
+!!    New perturbative CC Jacobian transformation
 !!    Written by Regina Matveeva, Sept 2021
 !!
       implicit none
@@ -63,43 +64,42 @@ module cc_jacobian_transformation_tool_class
       class(ccs), intent(in), target :: wf
       character(len=*), intent(in)   :: side
       integer, intent(in) :: n_parameters
-      type(cc_jacobian_transformation_tool) :: this
+      real(dp), intent(in) :: frequency
+
+      type(folded_cc_jacobian_transformation_tool) :: this
 !
       this%wf => wf
       this%n_parameters = n_parameters
 !
       this%side = side
+      call this%set_frequency(frequency)
 !
-   end function new_cc_jacobian_transformation_tool
+   end function new_folded_cc_jacobian_transformation_tool
 !
 !
    subroutine transform_cc_jacobian(this, trial, transform)
 !!
-!!    Transform Coupled Cluster Jacobian
+!!    Transform CC Jacobian
 !!    Written by Regina Matveeva, Sept 2021
 !!
       implicit none
 !
-      class(cc_jacobian_transformation_tool), intent(in)   :: this
+      class(folded_cc_jacobian_transformation_tool), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
 !
-      if (this%side == 'left') then
-         call this%wf%jacobian_transpose_transformation(trial, transform)
-      elseif (this%side == 'right') then
-         call this%wf%jacobian_transformation(trial, transform)
-      endif
+      call this%wf%construct_Jacobian_transform(this%side, trial, transform, this%get_frequency())
 !
    end subroutine transform_cc_jacobian
 !
 !
    subroutine initialize_cc_jacobian(this)
 !!
-!!    Prepare for Coupled Cluster Jacobian
+!!    initialize CC Jacobian
 !!    Written by Regina Matveeva, Sept 2021
 !!
       implicit none
 !
-      class(cc_jacobian_transformation_tool), intent(in) :: this
+      class(folded_cc_jacobian_transformation_tool), intent(in) :: this
 !
       call output%printf('v', '- Prepare for multiplier equation')
 !
@@ -108,4 +108,4 @@ module cc_jacobian_transformation_tool_class
 end subroutine initialize_cc_jacobian
 !
 !
-end module cc_jacobian_transformation_tool_class
+end module folded_cc_jacobian_transformation_tool_class

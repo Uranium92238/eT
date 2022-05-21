@@ -66,7 +66,7 @@ contains
    end function new_fci_transformation_tool
 !
 !
-   subroutine transform_fci(this, trial, transform, frequency)
+   subroutine transform_fci(this, trial, transform)
 !!
 !!    Transform
 !!    Written by Enrico Ronca, 2022
@@ -77,9 +77,6 @@ contains
 !
       class(fci_transformation_tool), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
-      real(dp), intent(in) :: frequency
-!
-      call do_nothing(frequency)
       call this%wf%hamiltonian_transformation_no_spin_symmetry(trial, transform)
 !
    end subroutine transform_fci

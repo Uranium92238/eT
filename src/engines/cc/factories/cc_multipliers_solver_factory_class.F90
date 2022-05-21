@@ -150,14 +150,17 @@ contains
 !!
 !!    for the determination of Coupled Cluster multipliers
 !!
+
+      use transformation_tool_class,   only: transformation_tool
       use cc_jacobian_transformation_tool_class,            only: cc_jacobian_transformation_tool
       use cc_multipliers_linear_equation_storage_tool_class,only: cc_multipliers_linear_equation_storage_tool
       use linear_davidson_tool_class,                       only: linear_davidson_tool
-      use general_linear_davidson_solver_class,             only: general_linear_davidson_solver
+      use linear_davidson_solver_class,                     only: linear_davidson_solver
       use cc_multipliers_rhs_tool_class,                    only: cc_multipliers_rhs_tool
       use cc_multipliers_start_vector_tool_class,           only: cc_multipliers_start_vector_tool
       use cc_jacobian_preconditioner_getter_class,          only: cc_jacobian_preconditioner_getter
       use linear_davidson_single_solution_print_tool_class, only: linear_davidson_single_solution_print_tool
+      use folded_cc_jacobian_transformation_tool_class, only: folded_cc_jacobian_transformation_tool
 !
       implicit none
 !
@@ -166,7 +169,7 @@ contains
       class(abstract_solver), allocatable,  intent(out)   :: solver
 !
       class(linear_davidson_tool),                       allocatable :: davidson
-      class(cc_jacobian_transformation_tool),            allocatable :: transformer
+      class(transformation_tool),                        allocatable :: transformer
       class(cc_multipliers_linear_equation_storage_tool),allocatable :: storer
       class(cc_multipliers_rhs_tool),                    allocatable :: rhs_getter
       class(cc_multipliers_start_vector_tool),           allocatable :: start_vector
@@ -191,24 +194,38 @@ contains
                                       records_in_memory = this%records_in_memory)
 !
       start_vector   = cc_multipliers_start_vector_tool(wf, restart=this%restart)
-      transformer    = cc_jacobian_transformation_tool(wf, side='left', n_parameters=wf%n_gs_amplitudes)
+!
+      if (wf%name_ == 'lowmem cc2' .or. wf%name_ == 'cc3' ) then
+!
+         transformer = folded_cc_jacobian_transformation_tool(wf,          &
+                                                                    side='left', &
+                                                                    n_parameters=wf%n_gs_amplitudes, &
+                                                                    frequency=zero)
+!
+      else
+!
+         transformer = cc_jacobian_transformation_tool(wf,          &
+                                                       side='left', &
+                                                       n_parameters=wf%n_gs_amplitudes)
+      endif
+!
       storer         = cc_multipliers_linear_equation_storage_tool(wf)
       preconditioner = cc_jacobian_preconditioner_getter(wf, wf%n_gs_amplitudes)
       rhs_getter     = cc_multipliers_rhs_tool(wf)
 !
       frequencies = zero
-      solver = general_linear_davidson_solver(transformer        = transformer,             &
-                                              davidson           = davidson,                &
-                                              storer             = storer,                  &
-                                              start_vector       = start_vector,            &
-                                              preconditioner     = preconditioner,          &
-                                              rhs_getter         = rhs_getter,              &
-                                              printer            = printer,                 &
-                                              n_rhs              = 1,                       &
-                                              n_solutions        = 1,                       &
-                                              max_iterations     = this%max_iterations,     &
-                                              residual_threshold = this%residual_threshold, &
-                                              frequencies        = frequencies)
+      solver = linear_davidson_solver(transformer        = transformer,             &
+                                      davidson           = davidson,                &
+                                      storer             = storer,                  &
+                                      start_vector       = start_vector,            &
+                                      preconditioner     = preconditioner,          &
+                                      rhs_getter         = rhs_getter,              &
+                                      printer            = printer,                 &
+                                      n_rhs              = 1,                       &
+                                      n_solutions        = 1,                       &
+                                      max_iterations     = this%max_iterations,     &
+                                      residual_threshold = this%residual_threshold, &
+                                      frequencies        = frequencies)
 !
    end subroutine create_davidson
 !
