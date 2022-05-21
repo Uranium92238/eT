@@ -46,7 +46,7 @@ module transformation_tool_class
 !
    abstract interface
 !
-      subroutine transform_transformation_tool(this, trial, transform, frequency)
+      subroutine transform_transformation_tool(this, trial, transform)
 !
          use parameters
 !
@@ -56,7 +56,6 @@ module transformation_tool_class
 !
          class(transformation_tool), intent(in) :: this
          real(dp), dimension(this%n_parameters) :: trial, transform
-         real(dp), intent(in) :: frequency
 !
       end subroutine
 !

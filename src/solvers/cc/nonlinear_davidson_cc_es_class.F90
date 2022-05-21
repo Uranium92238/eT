@@ -38,7 +38,7 @@ module nonlinear_davidson_cc_es_class
 !! excitation energies omega. Here, A is the coupled cluster
 !! Jacobian matrix:
 !!
-!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
+!!       A_mu,nu = < mu |[H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
 !!
 !! Since A depends on the excitation energy of the state in the CCn
 !! models (if equations are folded), this solver consists of a set of
@@ -56,7 +56,7 @@ module nonlinear_davidson_cc_es_class
 !! * More precisely, using preconditioned residuals based on the
 !!   orbital differences approximation of A,
 !!
-!!    A_mu,nu = < mu | [F, tau_nu] | HF > = epsilon_mu delta_mu,nu
+!!    A_mu,nu = < mu |[F, tau_nu] | HF > = epsilon_mu delta_mu,nu
 !!
 !!   Here,
 !!
@@ -759,7 +759,7 @@ contains
 !
                corresponding_state = trial_to_state(trial - this%davidson%first_new_trial() + 1)
 !
-               call this%wf%construct_Jacobian_transform(this%transformation,                &
+               call this%wf%construct_Jacobian_transform(this%transformation,             &
                                                     c,                                    &
                                                     residual,                             &
                                                     this%energies(corresponding_state))

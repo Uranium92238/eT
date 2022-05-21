@@ -66,7 +66,7 @@ contains
    end function new_tamm_dancoff_transformation_tool
 !
 !
-   subroutine transform_tamm_dancoff(this, trial, transform, frequency)
+   subroutine transform_tamm_dancoff(this, trial, transform)
 !!
 !!    Transform
 !!    Written by Sarai D. Folkestad, May 2021
@@ -80,9 +80,7 @@ contains
 !
       class(tamm_dancoff_transformation_tool), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
-      real(dp), intent(in) :: frequency
 !
-      call do_nothing(frequency)
       call this%wf%tamm_dancoff_transformation(trial, transform)
 !
    end subroutine transform_tamm_dancoff

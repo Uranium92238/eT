@@ -137,6 +137,7 @@ set(eT_fortran_sources
    src/solver_tools/bfgs_tool_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/es_start_vectors/es_start_vector_tool_class.F90
+   src/solver_tools/linear_equation_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_manual_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_valence_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_cvs_start_vector_tool_class.F90
@@ -163,6 +164,7 @@ set(eT_fortran_sources
    src/solver_tools/cc/cc_multipliers_start_vector_tool_class.F90
    src/solver_tools/cc/cc_multipliers_linear_equation_storage_tool_class.F90
    src/solver_tools/cc/cc_jacobian_transformation_tool_class.F90
+   src/solver_tools/cc/folded_cc_jacobian_transformation_tool_class.F90
 #
    src/solver_tools/amplitude_updaters/amplitude_updater_class.F90
    src/solver_tools/amplitude_updaters/quasi_newton_updater_class.F90
@@ -196,6 +198,7 @@ set(eT_fortran_sources
    src/solver_tools/preconditioner_getter_class.F90
    src/solver_tools/rhs_linear_equation_tool_class.F90
    src/solver_tools/transformation_tool_class.F90
+   src/solver_tools/frequency_dependent_transformation_class.F90
    src/solver_tools/eigen_storage_tool_class.F90
    src/solver_tools/linear_equation_storage_tool_class.F90
 #
@@ -230,7 +233,7 @@ set(eT_fortran_sources
    src/solvers/bfgs_solver_class.F90
 #
    src/solvers/eigen_davidson_solver_class.F90
-   src/solvers/general_linear_davidson_solver_class.F90
+   src/solvers/linear_davidson_solver_class.F90
 #
    src/tools/index_invert.F90
    src/tools/reordering.F90

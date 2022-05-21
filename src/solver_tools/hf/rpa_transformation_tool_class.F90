@@ -66,7 +66,7 @@ contains
    end function new_rpa_transformation_tool
 !
 !
-   subroutine transform_rpa(this, trial, transform, frequency)
+   subroutine transform_rpa(this, trial, transform)
 !!
 !!    Transform
 !!    Written by Sarai D. Folkestad, May 2021
@@ -80,9 +80,6 @@ contains
 !
       class(rpa_transformation_tool), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
-      real(dp), intent(in) :: frequency
-!
-      call do_nothing(frequency)
       call this%wf%rpa_transformation(trial, transform)
 !
    end subroutine transform_rpa
