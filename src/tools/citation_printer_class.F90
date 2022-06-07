@@ -37,7 +37,6 @@ module citation_printer_class
 !
    use eT_references_class, only: eT_references
    use output_file_class,   only: output_file
-   use global_in,           only: input
 !
    implicit none
 !
@@ -75,14 +74,18 @@ module citation_printer_class
 contains
 !
 !
-   function new_citation_printer() result(this)
+   function new_citation_printer(input) result(this)
 !!
 !!    New citation printer
 !!    Written by Eirik F. Kjønstad, 2021
 !!
+      use input_file_class, only: input_file
+!
       implicit none
 !
       type(citation_printer) :: this
+!
+      class(input_file), intent(in) :: input 
 !
       this%references = eT_references()
 !
