@@ -30,12 +30,13 @@ module eT_class
 !
    type :: eT
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable, private :: timer 
 !
    contains
 !
       procedure, public :: run
 !
+      procedure, private :: initializations_for_input_output_and_timing
       procedure, private, nopass :: create_memory_manager
 !
       procedure, private, nopass :: get_and_print_n_threads
@@ -52,7 +53,8 @@ module eT_class
       procedure, private, nopass :: run_cc_calculation
       procedure, private, nopass :: run_fci_calculation
 !
-      procedure, private :: print_program_info_to_output_and_timing
+      procedure, private :: print_top_info_to_output_and_timing
+      procedure, private :: print_bottom_info_to_output
       procedure, private :: print_total_cpu_and_wall_time
 !
    end type eT
@@ -105,54 +107,57 @@ contains
       call this%timer%turn_on()
 !
       output = output_file('eT.out')
-      call output%open_()
-!
       timing = timings_file('eT.timing.out')
+!
+      call output%open_()
       call timing%open_()
 !
-      call this%print_program_info_to_output_and_timing()
-!
-      call timing%print_banner()
-!
       input = input_file('eT.inp')
-      call input%initialize()
 !
-      eT_citations = citation_printer()
+      call this%initializations_for_input_output_and_timing()
 !
-      call this%print_timestamp(print_label = 'start')
+      call this%print_top_info_to_output_and_timing()
 !
-      call this%get_and_print_n_threads()
+      call input%check_for_errors()
 !
-      call this%set_global_print_levels_in_output_and_timing()
-!
-      call this%create_memory_manager()
+      eT_citations = citation_printer(input)
+      mem = this%create_memory_manager(input)
 !
       call this%run_calculations()
 !
-      call output%print_separator('m', 60, '-', fs='(/t3,a)')
-!
       call mem%check_for_leak()
-      call mem%print_max_used()
 !
-      call output%check_for_warnings()
+      call input%cleanup()
 !
       call this%timer%turn_off()
 !
-      call this%print_total_cpu_and_wall_time()
+      call output%check_for_warnings()
 !
-      call this%print_timestamp(print_label = 'end')
+      call this%print_bottom_info_to_output()
 !
-      call eT_citations%print_(output)
-!
-      call input%cleanup_geometry()
-      call input%cleanup_keywords()
-!
-      call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
-!
-      call output%close_()
       call timing%close_()
 !
+      call output%printf('m', 'eT terminated successfully!', fs='(/t3,a)')
+      call output%close_()
+!
    end subroutine run
+!
+!
+   subroutine initializations_for_input_output_and_timing(this)
+!!
+!!    Initializations for input, output, and timing
+!!    Written by Eirik F. Kjønstad, May 2022
+!!
+      use global_in, only: input
+!
+      implicit none 
+!
+      class(eT), intent(in) :: this
+!
+      call input%read_and_process_input()
+      call this%set_global_print_levels_in_output_and_timing()
+!
+   end subroutine initializations_for_input_output_and_timing
 !
 !
    subroutine print_total_cpu_and_wall_time(this)
@@ -226,19 +231,23 @@ contains
    end subroutine get_and_print_n_threads
 !
 !
-   subroutine create_memory_manager()
+   function create_memory_manager(input) result(mem_manager)
 !!
 !!    Create memory manager
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
-      use global_in, only: input
-      use memory_manager_class, only: mem, memory_manager
       use parameters
+      use memory_manager_class, only: memory_manager
+      use input_file_class, only: input_file
 !
       implicit none 
 !
+      class(input_file), intent(in) :: input 
+!
       character(len=200) :: mem_unit
       integer(i64)       :: mem_total
+!
+      type(memory_manager) :: mem_manager
 !
       mem_total = 8
       mem_unit  = 'gb'
@@ -246,10 +255,10 @@ contains
       call input%get_keyword('available', 'memory', mem_total)
       call input%get_keyword('unit',      'memory', mem_unit)
 !
-      mem = memory_manager(total = mem_total, &
-                           units = mem_unit)
+      mem_manager = memory_manager(total = mem_total, &
+                                   units = mem_unit)
 !
-   end subroutine create_memory_manager
+   end function create_memory_manager
 !
 !
    subroutine run_calculations(this)
@@ -474,13 +483,14 @@ contains
    end subroutine set_global_print_levels_in_output_and_timing
 !
 !
-   subroutine print_program_info_to_output_and_timing(this)
+   subroutine print_top_info_to_output_and_timing(this)
 !!
-!!    Print program info to output and timing
+!!    Print to info to output and timing
 !!    Written by Eirik F. Kjønstad, 2019
 !!
       use parameters
       use global_out, only: output, timing
+      use global_in, only: input
 !
       implicit none
 !
@@ -530,7 +540,39 @@ contains
       call this%print_compilation_info(output)
       call this%print_compilation_info(timing)
 !
-   end subroutine print_program_info_to_output_and_timing
+      call timing%print_banner()
+!
+      call input%print_input_except_geometry()
+!
+      call this%print_timestamp(print_label = 'start')
+!
+      call this%get_and_print_n_threads()
+!
+   end subroutine print_top_info_to_output_and_timing
+!
+!
+   subroutine print_bottom_info_to_output(this)
+!!
+!!    Print bottom info to output
+!!    Written by Eirik F. Kjønstad, May 2022
+!!
+      use memory_manager_class, only: mem
+      use citation_printer_class, only: eT_citations
+      use global_out, only: output
+!
+      implicit none 
+!
+      class(eT), intent(in) :: this 
+!
+      call mem%print_max_used()
+!
+      call this%print_total_cpu_and_wall_time()
+!
+      call this%print_timestamp(print_label = 'end')
+!
+      call eT_citations%print_(output)
+!
+   end subroutine print_bottom_info_to_output
 !
 !
    subroutine get_date_and_time(string)
