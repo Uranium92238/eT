@@ -115,7 +115,7 @@ module davidson_tool_class
       procedure :: set_lindep_threshold                        &
                 => set_lindep_threshold_davidson_tool
 !
-      procedure :: reset_reduced_space                         &
+      procedure, private :: reset_reduced_space                &
                 => reset_reduced_space_davidson_tool
 !
    end type davidson_tool
@@ -210,6 +210,7 @@ contains
       real(dp), dimension(davidson%n_parameters), intent(in) :: c
 !
       call davidson%trials%copy_record_in(c, n)
+      davidson%n_new_trials = davidson%n_new_trials + 1
 !
    end subroutine set_trial_davidson_tool
 !
@@ -345,8 +346,7 @@ contains
 !
 !     Add it to the trial space
 !
-      davidson%n_new_trials = davidson%n_new_trials + 1
-      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials)
+      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials + 1)
 !
       call mem%dealloc(trial, davidson%n_parameters)
 !
@@ -631,7 +631,7 @@ contains
       req_1_j = davidson%transforms%required_to_load_record()
       req_2   = 0
 !
-      if (davidson%dim_red .eq. davidson%n_solutions) then
+      if (davidson%dim_red .eq. davidson%n_new_trials) then
 !
 !        First iteration or reset of space: calculate all elements
 !
@@ -981,7 +981,9 @@ contains
 !
       class(davidson_tool), intent(inout) :: davidson
 !
-      if (davidson%red_dim_exceeds_max()) call davidson%set_trials_to_solutions()
+      if (davidson%red_dim_exceeds_max()) then
+            call davidson%set_trials_to_solutions()
+      endif
       call davidson%update_reduced_dim()
       call davidson%orthonormalize_trial_vecs()
 !
@@ -1058,7 +1060,7 @@ contains
       class(davidson_tool), intent(inout) :: davidson
 !
       davidson%dim_red      = 0
-      davidson%n_new_trials = davidson%n_solutions
+      davidson%n_new_trials = 0
 !
    end subroutine reset_reduced_space_davidson_tool
 !

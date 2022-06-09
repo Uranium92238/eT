@@ -256,7 +256,7 @@ contains
 !     Set some initial values
 !
       davidson%dim_red      = 0
-      davidson%n_new_trials = davidson%n_solutions
+      davidson%n_new_trials = 0
 !
       call davidson%print_settings()
 !
@@ -344,7 +344,7 @@ contains
                                           shift=davidson%omega_re(i),   &
                                           prefactor=one)
 !
-         call davidson%trials%copy_record_in(c, i)
+         call davidson%set_trial(c, i)
 !
       enddo
 !
