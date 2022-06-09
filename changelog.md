@@ -5,6 +5,8 @@
 - Removed unused routines in array\_utilities.F90. eT-program/eT!1071
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074 and eT-program/eT!1080
 - Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
+- Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074
+- Davidson tool now counts the number of new trials. eT-program/eT!1089
 
 # eT v1.7.4
 ### Bugfixes

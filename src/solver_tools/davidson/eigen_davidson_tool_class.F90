@@ -199,7 +199,7 @@ contains
       davidson%do_precondition   = .false. ! Switches to true if 'set_preconditioner' is called
 !
       davidson%dim_red      = 0
-      davidson%n_new_trials = n_solutions
+      davidson%n_new_trials = 0
 !
       call davidson%print_settings()
 !
