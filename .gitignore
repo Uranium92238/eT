@@ -11,3 +11,4 @@ external/PCMSolver/
 external/libxc/
 **/generated_*
 **/*interface.F90
+*mod

@@ -20,7 +20,7 @@ assert version_info.major == 2
 
 # construct filter(s)
 g = [
-    get_filter(from_string='Comp.        Nuclear              0              1              2',
+    get_filter(from_string="Comp.            Nuclear",
                num_lines=7,
                abs_tolerance=1.0e-6),
 ]

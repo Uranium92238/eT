@@ -24,7 +24,7 @@ module reference_engine_class
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !
-   use kinds
+   use parameters
 !
    use abstract_engine_class, only: abstract_engine
 !
@@ -61,8 +61,6 @@ module reference_engine_class
                     => read_mean_value_settings_reference_engine
 !
       procedure :: calculate_mean_values               => calculate_mean_values_reference_engine
-      procedure, nopass :: calculate_quadrupole_moment => calculate_quadrupole_moment_reference_engine
-      procedure, nopass :: calculate_dipole_moment     => calculate_dipole_moment_reference_engine
 !
       procedure :: set_printables                      => set_printables_reference_engine
 !
@@ -460,16 +458,6 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(3) :: mu_electronic
-      real(dp), dimension(3) :: mu_nuclear
-      real(dp), dimension(3) :: mu_total
-!
-      real(dp), dimension(6) :: q_electronic
-      real(dp), dimension(6) :: q_nuclear
-      real(dp), dimension(6) :: q_total
-!
-      character(len=4), dimension(:), allocatable :: components
-!
       type(timings), allocatable :: timer
 !
       timer = timings('Time to calculte dipole and/or quadrupole', pl='normal')
@@ -477,161 +465,13 @@ contains
 !
       call engine%tasks%print_('expectation value')
 !
-      if(engine%dipole) then
+      if(engine%dipole) call wf%calculate_and_print_dipole()
 !
-         call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
-!
-         allocate(components(3))
-!
-         components = (/'x   ',&
-                        'y   ',&
-                        'z   '/)
-!
-         call engine%print_operator('dipole moment', mu_electronic, mu_nuclear, mu_total, &
-                                    components, 3)
-!
-         deallocate(components)
-!
-      endif
-!
-      if (engine%quadrupole) then
-!
-         call engine%calculate_quadrupole_moment(wf, q_electronic, q_nuclear, q_total)
-!
-         allocate(components(6))
-!
-         components = (/ 'xx  ',   &
-                         'xy  ',   &
-                         'xz  ',   &
-                         'yy  ',   &
-                         'yz  ',   &
-                         'zz  '    /)
-!
-         call engine%print_operator('quadrupole moment (with trace)', q_electronic, q_nuclear, q_total, &
-                                    components, 6)
-!
-         call engine%remove_trace(q_electronic)
-         call engine%remove_trace(q_nuclear)
-!
-         q_total = q_electronic + q_nuclear
-!
-         call output%printf('m', 'The traceless quadrupole is calculated as:', fs='(/t6,a)')
-         call output%printf('m', 'Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]',fs='(/t9,a)')
-         call output%printf('m', 'where q_ij is the non-traceless matrix',fs='(/t6,a)')
-!
-         call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
-                                    components, 6)
-!
-         deallocate(components)
-!
-      endif
+      if (engine%quadrupole) call wf%calculate_and_print_quadrupole()
 !
       call timer%turn_off()
 !
    end subroutine calculate_mean_values_reference_engine
-!
-!
-   subroutine calculate_dipole_moment_reference_engine(wf, electronic, nuclear, total)
-!!
-!!    Calculate dipole moment
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-!!    Modified by Linda Goletto, Anders Hutcheson
-!!    and Tommaso Giovannini, Oct 2019
-!!
-!!    Calculates tr(D mu) in the AO basis; if the wf is mlhf,
-!!    it only calculates tr(D Q) for the active space
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(3), intent(out) :: electronic
-      real(dp), dimension(3), intent(out) :: nuclear
-      real(dp), dimension(3), intent(out) :: total
-!
-      integer :: k
-!
-      real(dp), dimension(:,:,:), allocatable :: mu_pqk
-!
-      if(wf%name_.eq.'mlhf') &
-         call output%warning_msg('dipole moments are size-extensive and&
-                                 & are not well defined in MLHF.')
-!
-!     Get the integrals mu_pqk for components k = 1, 2, 3
-!
-      call mem%alloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
-      call wf%ao%get_oei('dipole', mu_pqk)
-!
-!     Get electronic expectation value contribution
-!
-      do k = 1, 3
-!
-         electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%ao_density)
-!
-      enddo
-!
-      call mem%dealloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
-!
-!     Get nuclear expectation value contribution, then sum the two
-!
-      nuclear = wf%get_nuclear_dipole()
-!
-      total = electronic + nuclear
-!
-   end subroutine calculate_dipole_moment_reference_engine
-!
-!
-   subroutine calculate_quadrupole_moment_reference_engine(wf, electronic, nuclear, total)
-!!
-!!    Calculate quadrupole moment
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-!!    Modified by Linda Goletto, Anders Hutcheson
-!!    and Tommaso Giovannini, Oct 2019
-!!
-!!    Calculates tr(D Q) in the AO basis; if the wf is mlhf,
-!!    it only calculates tr(D Q) for the active space
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(6), intent(out) :: electronic
-      real(dp), dimension(6), intent(out) :: nuclear
-      real(dp), dimension(6), intent(out) :: total
-!
-      integer :: k
-!
-      real(dp), dimension(:,:,:), allocatable :: q_pqk
-!
-!     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
-!
-      call mem%alloc(q_pqk, wf%ao%n, wf%ao%n, 6)
-!
-      call wf%ao%get_oei('quadrupole', q_pqk)
-!
-!     Get electronic expectation value contribution
-!
-      do k = 1, 6
-!
-         electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%ao_density)
-!
-      enddo
-!
-      call mem%dealloc(q_pqk, wf%ao%n, wf%ao%n, 6)
-!
-!     Get nuclear expectation value contribution, then sum the two
-!
-      if(wf%name_.eq.'mlhf') &
-         call output%warning_msg('quadrupole moments are size-extensive&
-                                 &and are not well defined in MLHF.')
-!
-      nuclear = wf%get_nuclear_quadrupole()
-!
-      total = electronic + nuclear
-!
-   end subroutine calculate_quadrupole_moment_reference_engine
 !
 !
    subroutine do_ground_state_reference_engine(engine, wf)
@@ -659,7 +499,7 @@ contains
       call wf%prepare_for_scf(engine%restart, engine%skip_scf)
 !
       factory = scf_solver_factory()
-      call factory%create(wf, scf, engine%restart, engine%skip_scf)
+      call factory%create(wf, scf, engine%skip_scf)
 !
       call scf%run(wf)
 !

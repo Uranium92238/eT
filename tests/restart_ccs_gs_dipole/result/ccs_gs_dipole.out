@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza (development)
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-05-24 10:20:43 UTC +02:00
+  Git branch:         print-table-routine
+  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:45 UTC -07:00
 
 
   :: Input file
@@ -79,6 +77,8 @@
         dipole
      end cc mean value
 
+
+  Calculation start:2022-05-24 10:41:50 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -177,8 +177,8 @@
      4           -74.942080036553     0.5610E-04     0.2504E-04
      5           -74.942080053363     0.1780E-04     0.1681E-07
      6           -74.942080057695     0.2053E-06     0.4333E-08
-     7           -74.942080057696     0.9667E-09     0.3979E-12
-     8           -74.942080057696     0.7838E-12     0.2842E-13
+     7           -74.942080057696     0.9667E-09     0.4547E-12
+     8           -74.942080057696     0.7857E-12     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -191,12 +191,12 @@
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              0.02200
-     Total cpu time (sec):               0.01878
+     Total wall time (sec):              0.01662
+     Total cpu time (sec):               0.02918
 
 
   :: CCS wavefunction
-  ======================
+  ===================
 
      Bath orbital(s):         False
 
@@ -260,8 +260,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2342E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.1216E-15
+     Maximal difference between approximate and actual diagonal:              0.6855E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.6855E-15
 
   - Settings for integral handling:
 
@@ -270,8 +270,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.00655
+     Total wall time (sec):              0.00393
+     Total cpu time (sec):               0.00393
 
 
   Determining CC cluster amplitudes
@@ -329,8 +329,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00100
-     Total cpu time (sec):               0.00121
+     Total wall time (sec):              0.00107
+     Total cpu time (sec):               0.00572
 
 
   Determining CC multipliers
@@ -361,14 +361,14 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.2408E-11
+    1          0.2407E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00000
-     Total cpu time (sec):               0.00056
+     Total wall time (sec):              0.00042
+     Total cpu time (sec):               0.00042
 
   - CC multipliers solver summary:
 
@@ -392,22 +392,27 @@
   Determining CC mean values
   ==========================
 
-  - Operator: dipole [Debye]
+     Dipole moment in [Debye]:
+     =========================
 
-     x:          0.0000000
-     y:          1.5339994
-     z:          0.0000000
+     Conversion factor from Debye a.u.: 0.393430270
 
-     |mu|:       1.5339994
+     Comp.         Electronic           Nuclear             Total
+     ------------------------------------------------------------
+     x           0.0000000000      0.0000000000      0.0000000000
+     y          -1.3314004055      2.8653998030      1.5339993975
+     z          -0.0000000000      0.0000000000     -0.0000000000
+     ------------------------------------------------------------
+     Norm of the total dipole moment: 1.5339994
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 59.492 KB
+  Peak memory usage during the execution of eT: 61.856 KB
 
-  Total wall time in eT (sec):              0.04300
-  Total cpu time in eT (sec):               0.03668
+  Total wall time in eT (sec):              0.03250
+  Total cpu time in eT (sec):               0.05481
 
-  Calculation ended: 2022-04-07 12:34:45 UTC -07:00
+  Calculation end:2022-05-24 10:41:50 UTC +02:00
 
   - Implementation references:
 

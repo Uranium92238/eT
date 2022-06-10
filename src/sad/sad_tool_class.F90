@@ -230,7 +230,7 @@ contains
                                   ao_density_guess=this%ao_density_guess)
 !
       factory = scf_solver_factory(acceleration_type='none', max_iterations=this%max_iterations)
-      call factory%create(sad_wf, sad_solver, restart=.false., skip=.false.)
+      call factory%create(sad_wf, sad_solver, skip=.false.)
 !
       call sad_solver%run(sad_wf)
 !
