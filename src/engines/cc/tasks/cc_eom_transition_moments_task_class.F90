@@ -47,7 +47,7 @@ module cc_eom_transition_moments_task_class
                         => cleanup_cc_eom_transition_moments_task
 !
       procedure, private :: print_permanent_moments_summary
-      procedure, private :: print_operator_per_state
+      procedure, private :: print_operator_for_initial_states
       procedure, private :: set_initial_states
       procedure, private :: read_settings
 !
@@ -145,7 +145,7 @@ contains
       end if
 !
       if (this%permanent_moments) then
-         call this%print_permanent_moments_summary(wf, dipole_matrix, 3)
+         call this%print_permanent_moments_summary(wf, 'dipole', dipole_matrix, 3)
       end if
 !
       call mem%dealloc(dipole_matrix, wf%n_singlet_states+1, wf%n_singlet_states+1, 3)
@@ -250,155 +250,35 @@ contains
    end subroutine set_initial_states
 !
 !
-   subroutine print_operator_per_state(this, electronic, nuclear, &
-                                       components, n_components)
+   subroutine print_permanent_moments_summary(this, wf, operator_type, &
+                                              electronic, n_components)
 !!
-!!    Print operator per excited states
-!!    Written by Alexander C. Paul, June 2020
+!!    Print permanent moments summary
+!!    Written by Alexander C. Paul, May 2020
 !!
-!!    Prints operator/property for every initial state
-!!    and the corresponding nuclear contribution.
-!!
-!!    Information about the operator, conversion factors between units, ...
-!!    shall be printed in the routine calling this routine.
-!!
-      use array_utilities, only: get_l2_norm
       use global_out, only: output
-      use range_class, only: range_
 !
       implicit none
 !
       class(cc_eom_transition_moments_task), intent(in) :: this
 !
-      integer, intent(in) :: n_components
-!
-      real(dp), dimension(this%n_initial_states, n_components), intent(in) :: electronic
-      real(dp), dimension(n_components), intent(in) :: nuclear
-!
-      character(len=4), dimension(n_components), intent(in) :: components
-!
-      real(dp), dimension(:,:), allocatable :: operator_
-      real(dp), dimension(:), allocatable :: norms
-!
-      integer :: n_printed, n_to_print, ll, n_columns
-      integer :: p, c, table, n_tables
-!
-      character(len=15), dimension(:), allocatable :: labels
-      character(len=100) :: line
-!
-      type(range_), allocatable :: subset
-!
-      n_columns = this%n_initial_states + 1
-!
-      call mem%alloc(operator_, n_components, n_columns)
-      call mem%alloc(norms, n_columns)
-!
-!     Prepare arrays to print: Nuclear, state 0, state 1, ...
-!
-      do c = 1, n_components
-         operator_(c, 1) = nuclear(c)
-      end do
-!
-      do p = 2, n_columns
-         do c = 1, n_components
-!
-            operator_(c,p) = electronic(p-1,c) + nuclear(c)
-!
-         end do
-      end do
-!
-      do p = 1, n_columns
-         norms(p) = get_l2_norm(operator_(:,p), n_components)
-      end do
-!
-      allocate(labels(n_columns))
-!
-      labels(1) = '        Nuclear'
-      do c = 1, this%n_initial_states
-         write(labels(c+1), '(i15)') this%initial_states(c)
-      end do
-!
-!     Print permanent moments in tables for 4 states at a time
-      n_tables = (n_columns - 1)/4 + 1
-!
-      n_printed = 0
-!
-      do table = 1, n_tables
-!
-         n_to_print = min(n_columns-n_printed, 4)
-         ll = 7 + 15*n_to_print
-!
-         subset = range_(n_printed + 1, n_to_print)
-!
-!        Print header of the table (Comp.  Label1  Label2 ...)
-!
-         write(line,'(a,i0,a)') ' Comp.', subset%length, '(a15)'
-         call output%printf('m', trim(line), fs='(//t6,a)', ll=80, &
-                            chars=[labels(subset%first:subset%get_last())])
-!
-         call output%print_separator('m', ll,'-', fs='(t6,a)')
-!
-!        Print table/components of the operator for every state in the subset
-!
-         do c = 1, n_components
-!
-            write(line,'(a5,1x,i0,a)') components(c), subset%length, '(f15.6)'
-            call output%printf('m', trim(line), fs='(t6,a)', &
-                               reals=[operator_(c, subset%first:subset%get_last())])
-!
-         end do
-!
-         call output%print_separator('m', ll,'-', fs='(t6,a)')
-!
-!        Print Norm of the operator for every state in the subset
-         write(line,'(a,i0,a)') 'Norm  ', subset%length, '(f15.6)'
-         call output%printf('m', trim(line), fs='(t6,a)', &
-                           reals=[norms(subset%first:subset%get_last())])
-!
-         call output%print_separator('m', ll,'-', fs='(t6,a)')
-!
-         n_printed = n_printed + n_to_print
-!
-      end do
-!
-      call mem%dealloc(operator_, n_components, n_columns)
-      call mem%dealloc(norms, n_columns)
-      deallocate(labels)
-!
-   end subroutine print_operator_per_state
-!
-!
-   subroutine print_permanent_moments_summary(this, wf, operator_, n_components)
-!!
-!!    Print permanent moments summary
-!!    Written by Alexander C. Paul, May 2020
-!!
-      use array_utilities, only: get_l2_norm
-      use global_out, only: output
-!
-      implicit none
-!
-      class(cc_eom_transition_moments_task) :: this
-!
       class(ccs), intent(in) :: wf
 !
+      character(len=*), intent(in) :: operator_type
       integer, intent(in) :: n_components
 !
       real(dp), dimension(wf%n_singlet_states+1, wf%n_singlet_states+1, n_components), &
-                                                                           intent(in) :: operator_
+                                                                           intent(in) :: electronic
 !
-      real(dp), dimension(:),   allocatable :: nuclear
-      real(dp), dimension(:,:), allocatable :: electronic
+      real(dp), dimension(:), allocatable :: nuclear
 !
-      character(len=4), dimension(n_components) :: components
-      integer :: state_i, i, c
+      character(len=5), dimension(n_components) :: components
 !
       call output%printf('m', '- Summary of EOM permanent moments calculation:', fs='(/t3,a)')
 !
       call mem%alloc(nuclear, n_components)
-      call mem%alloc(electronic, this%n_initial_states, n_components)
 !
-      if (this%dipole_length) then
+      if (operator_type == 'dipole') then
 !
          call output%printf('m', 'Total permanent dipole moments in [a.u.]:', fs='(/t6,a)')
          call output%print_separator('m', 41, '=', fs='(t6,a)')
@@ -408,9 +288,49 @@ contains
 !
          nuclear = wf%get_nuclear_dipole()
 !
-         components = [ 'X', 'Y', 'Z']
+         components = ['X', 'Y', 'Z']
 !
       end if
+!
+      call this%print_operator_for_initial_states(wf, nuclear, electronic, &
+                                                  components, n_components)
+!
+      call mem%dealloc(nuclear, n_components)
+!
+   end subroutine print_permanent_moments_summary
+!
+!
+   subroutine print_operator_for_initial_states(this, wf, nuclear, electronic, &
+                                                components, n_components)
+!!
+!!    Print operator for initial states
+!!    Written by Alexander C. Paul, May 2022
+!!
+      implicit none
+!
+      class(cc_eom_transition_moments_task), intent(in) :: this
+!
+      class(ccs), intent(in) :: wf
+!
+      integer, intent(in) :: n_components
+!
+      real(dp), dimension(wf%n_singlet_states+1, wf%n_singlet_states+1, n_components), &
+                                                                           intent(in) :: electronic
+!
+      real(dp), dimension(n_components), intent(in) :: nuclear
+!
+      character(len=5), dimension(n_components), intent(in) :: components
+!
+      character(len=18), dimension(this%n_initial_states + 1) :: column_labels
+!
+      real(dp), dimension(:,:), allocatable :: data_
+!
+      integer :: state_i, i, c
+!
+      call mem%alloc(data_, n_components, this%n_initial_states+1)
+!
+      column_labels(1) = "Nuclear"
+      data_(:,1) = nuclear
 !
 !     Select only the states that shall be printed
 !
@@ -418,19 +338,22 @@ contains
 !
          state_i = this%initial_states(i)
 !
-         do c = 1, 3
-            electronic(i, c) = operator_(state_i+1, state_i+1, c)
+         write(column_labels(i + 1), '(a,1x,i0)')  "State", state_i
+!
+         do c = 1, n_components
+!
+            data_(c, i+1) = nuclear(c) + electronic(state_i+1, state_i+1, c)
+!
          end do
 !
       end do
 !
-      call this%print_operator_per_state(electronic, nuclear,  &
-                                           components, n_components)
+      call output%print_table("Comp.", components, column_labels, data_, &
+                              n_components, this%n_initial_states+1)
 !
-      call mem%dealloc(nuclear, n_components)
-      call mem%dealloc(electronic, this%n_initial_states, n_components)
+      call mem%dealloc(data_, n_components, this%n_initial_states+1)
 !
-   end subroutine print_permanent_moments_summary
+   end subroutine print_operator_for_initial_states
 !
 !
    subroutine read_settings(this)

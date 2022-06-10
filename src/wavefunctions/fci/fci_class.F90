@@ -141,6 +141,12 @@ module fci_class
       procedure, private :: get_determinant_string
       procedure, private :: sm_sp_expectation_value
 !
+      procedure :: get_electronic_dipole &
+                => get_electronic_dipole_fci
+!
+      procedure :: get_electronic_quadrupole &
+                => get_electronic_quadrupole_fci
+!
    end type fci
 !
    interface
@@ -663,6 +669,48 @@ contains
                                  &alpha or beta orbitals.')
 !
    end subroutine consistency_checks
+!
+!
+   function get_electronic_dipole_fci(wf) result(mu_electronic)
+!!
+!!    Get electronic dipole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(fci), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+!
+      call output%error_msg('Get electronic dipole moment not implemented for (a0)', &
+                            chars=[trim(wf%name_)])
+      call do_nothing(wf)
+      mu_electronic = zero
+!
+   end function get_electronic_dipole_fci
+!
+!
+   function get_electronic_quadrupole_fci(wf) result(q_electronic)
+!!
+!!    Get electronic quadrupole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(fci), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q_electronic
+!
+      call output%error_msg('Get electronic quadrupole moment not implemented for (a0)', &
+                            chars=[trim(wf%name_)])
+      call do_nothing(wf)
+      q_electronic = zero
+!
+   end function get_electronic_quadrupole_fci
 !
 !
 end module fci_class

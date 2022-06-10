@@ -59,9 +59,7 @@ module scf_solver_class
 !
    type :: scf_solver
 !
-!     Starting guess
-      logical, private            :: restart
-      logical, private            :: skip
+      logical, private :: skip
 !
 !     Iterative loop
       integer,  private :: max_iterations
@@ -118,8 +116,7 @@ module scf_solver_class
 !
 contains
 !
-   function new_scf_solver(restart,             &
-                           acceleration_type,   &
+   function new_scf_solver(acceleration_type,   &
                            max_iterations,      &
                            skip,                &
                            dim_,                &
@@ -133,7 +130,6 @@ contains
       implicit none
 !
       type(scf_solver)             :: solver
-      logical,                   intent(in) :: restart
       character(len=*),          intent(in) :: acceleration_type
       logical,                   intent(in) :: skip
       type(convergence_tool),    intent(in) :: convergence_checker
@@ -143,7 +139,6 @@ contains
 !
 !     Set defaults
 !
-      solver%restart             = restart
       solver%max_iterations      = max_iterations
       solver%acceleration_type   = acceleration_type
       solver%skip                = skip
@@ -162,8 +157,7 @@ contains
    end function new_scf_solver
 !
 !
-   function new_scf_solver_from_parameters(restart,               &
-                                           max_iterations,        &
+   function new_scf_solver_from_parameters(max_iterations,        &
                                            gradient_threshold,    &
                                            acceleration_type,     &
                                            skip,                  &
@@ -176,7 +170,6 @@ contains
 !
       type(scf_solver) :: solver
 !
-      logical,            intent(in)           :: restart
       integer,            intent(in)           :: max_iterations
       real(dp),           intent(in)           :: gradient_threshold
       character(len=*),   intent(in)           :: acceleration_type
@@ -185,7 +178,6 @@ contains
       integer, intent(in) :: gradient_dimension
 !
       solver%max_iterations      = max_iterations
-      solver%restart             = restart
       solver%acceleration_type   = acceleration_type
       solver%skip                = skip
       solver%gradient_dimension  = gradient_dimension

@@ -196,6 +196,8 @@ module hf_class
 !     Properties
 !
       procedure :: calculate_expectation_value                 => calculate_expectation_value_hf
+      procedure :: get_electronic_dipole                       => get_electronic_dipole_hf
+      procedure :: get_electronic_quadrupole                   => get_electronic_quadrupole_hf
 !
 !     Frozen core
 !
@@ -2071,6 +2073,62 @@ contains
          cumulative = .true.
 !
    end function can_do_cumulative_fock_hf
+!
+!
+   function get_electronic_dipole_hf(wf) result(mu_electronic)
+!!
+!!    Get electronic dipole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_pqk
+      integer :: k
+!
+      call mem%alloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
+      call wf%ao%get_oei('dipole', mu_pqk)
+!
+      do k = 1, 3
+!
+         mu_electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%ao_density)
+!
+      enddo
+!
+      call mem%dealloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
+!
+   end function get_electronic_dipole_hf
+!
+!
+   function get_electronic_quadrupole_hf(wf) result(q_electronic)
+!!
+!!    Get electronic quadrupole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q_electronic
+!
+      real(dp), dimension(:,:,:), allocatable :: q_pqk
+      integer :: k
+!
+      call mem%alloc(q_pqk, wf%ao%n, wf%ao%n, 6)
+      call wf%ao%get_oei('quadrupole', q_pqk)
+!
+      do k = 1, 6
+!
+         q_electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%ao_density)
+!
+      enddo
+!
+      call mem%dealloc(q_pqk, wf%ao%n, wf%ao%n, 6)
+!
+   end function get_electronic_quadrupole_hf
 !
 !
    subroutine finalize_gs_hf(wf)

@@ -1098,15 +1098,18 @@ contains
 !
       logical, intent(in) :: write_mo_info
 !
-      call output%printf('m', '- Summary of '// &
-                         &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
-                         &energetics (a.u.):', fs='(/t3,a)')
+      character(len=:), allocatable :: name_
+!
+      name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
+!
+      call output%printf('m', '- Summary of (a0) energetics (a.u.):', &
+                          chars=[name_], fs='(/t3,a)')
       call wf%print_energy()
 !
       if (write_mo_info) call wf%save_orbital_info()
 !
-      call output%printf('m', '- '// &
-                         &trim(convert_to_uppercase(wf%name_))// ' wavefunction spin expectation values:', fs='(/t3,a)')
+      call output%printf('m', '- (a0) spin expectation values:', &
+                          chars=[name_], fs='(/t3,a)')
 !
       call wf%print_spin()
 !

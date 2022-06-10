@@ -13,7 +13,7 @@ from runtest import version_info, cli, run
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_gs_filter, get_quadrupole_filter
+from filters import get_gs_filter, get_mean_value_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -23,17 +23,17 @@ threshold = 1.0e-10
 
 f = get_gs_filter(threshold)
 
-g = get_quadrupole_filter(threshold)
+g = get_mean_value_filter(threshold, 6)
 f.extend(g)
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_quadrupole_fc.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_quadrupole_fc.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

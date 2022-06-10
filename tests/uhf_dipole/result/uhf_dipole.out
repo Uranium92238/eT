@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza (development)
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-05-24 10:20:43 UTC +02:00
+  Git branch:         print-table-routine
+  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:39 UTC -07:00
 
 
   :: Input file
@@ -68,6 +66,8 @@
         dipole
      end hf mean value
 
+
+  Calculation start:2022-05-24 10:41:50 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -178,20 +178,20 @@
     11           -78.656324400673     0.4014E-05     0.8642E-08
     12           -78.656324403810     0.6173E-06     0.3137E-08
     13           -78.656324403929     0.4504E-06     0.1192E-09
-    14           -78.656324403966     0.3797E-06     0.3674E-10
-    15           -78.656324403999     0.2984E-06     0.3286E-10
-    16           -78.656324404021     0.1161E-06     0.2268E-10
-    17           -78.656324404025     0.5464E-07     0.3482E-11
-    18           -78.656324404025     0.4187E-07     0.1990E-12
-    19           -78.656324404025     0.2086E-07     0.7105E-13
-    20           -78.656324404025     0.3529E-08     0.5684E-13
+    14           -78.656324403966     0.3797E-06     0.3669E-10
+    15           -78.656324403999     0.2984E-06     0.3283E-10
+    16           -78.656324404021     0.1161E-06     0.2271E-10
+    17           -78.656324404025     0.5464E-07     0.3524E-11
+    18           -78.656324404025     0.4187E-07     0.1847E-12
+    19           -78.656324404025     0.2086E-07     0.8527E-13
+    20           -78.656324404025     0.3529E-08     0.2842E-13
     21           -78.656324404025     0.9043E-09     0.2842E-13
-    22           -78.656324404025     0.3486E-09     0.5684E-13
-    23           -78.656324404025     0.1300E-09     0.7105E-13
-    24           -78.656324404025     0.9426E-10     0.7105E-13
-    25           -78.656324404025     0.5441E-10     0.5684E-13
+    22           -78.656324404025     0.3486E-09     0.1421E-13
+    23           -78.656324404025     0.1300E-09     0.0000E+00
+    24           -78.656324404025     0.9426E-10     0.2842E-13
+    25           -78.656324404025     0.5442E-10     0.2842E-13
     26           -78.656324404025     0.2286E-10     0.2842E-13
-    27           -78.656324404025     0.5591E-11     0.5684E-13
+    27           -78.656324404025     0.5592E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 27 iterations!
 
@@ -213,35 +213,32 @@
 
   3) Calculate dipole and/or quadrupole moments
 
-  - Operator: dipole moment [a.u.]
+     Dipole moment in [Debye]:
+     =========================
 
-     x:          0.0089001
-     y:         -0.0535825
-     z:          0.0209490
+     Conversion factor from Debye a.u.: 0.393430270
 
-     |mu|:       0.0582165
-
-  - Operator: dipole moment [Debye]
-
-     x:          0.0226219
-     y:         -0.1361932
-     z:          0.0532469
-
-     |mu|:       0.1479715
+     Comp.         Electronic           Nuclear             Total
+     ------------------------------------------------------------
+     x          -0.9380190351      0.9606409424      0.0226219073
+     y          -2.8094647858      2.6732716145     -0.1361931713
+     z        -312.4432516303    312.4964985659      0.0532469356
+     ------------------------------------------------------------
+     Norm of the total dipole moment: 0.1479715
 
   - Timings for the UHF ground state calculation
 
-     Total wall time (sec):              1.21900
-     Total cpu time (sec):               1.12055
+     Total wall time (sec):              1.24547
+     Total cpu time (sec):               2.48147
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 302.076 KB
+  Peak memory usage during the execution of eT: 303.872 KB
 
-  Total wall time in eT (sec):              1.23000
-  Total cpu time in eT (sec):               1.13111
+  Total wall time in eT (sec):              1.28143
+  Total cpu time in eT (sec):               2.51743
 
-  Calculation ended: 2022-04-07 12:34:41 UTC -07:00
+  Calculation end:2022-05-24 10:41:51 UTC +02:00
 
   - Implementation references:
 

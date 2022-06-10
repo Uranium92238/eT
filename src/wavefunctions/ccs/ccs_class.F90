@@ -376,14 +376,10 @@ module ccs_class
       procedure :: density_mu_mu_oo                              => density_mu_mu_oo_ccs
       procedure :: density_mu_ref                                => density_mu_ref_ccs
 !
-      procedure, public :: calculate_and_print_dipole &
-                        => calculate_and_print_dipole_ccs
-!
-      procedure, public :: calculate_and_print_quadrupole &
-                        => calculate_and_print_quadrupole_ccs
-!
-      procedure, private :: get_electronic_dipole
-      procedure, private :: get_electronic_quadrupole
+      procedure :: get_electronic_dipole &
+                => get_electronic_dipole_ccs
+      procedure :: get_electronic_quadrupole &
+                => get_electronic_quadrupole_ccs
 !
       procedure :: construct_etaX                                => construct_etaX_ccs
       procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
@@ -612,19 +608,15 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=200) :: name_
+      character(len=:), allocatable :: name_
 !
       name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
 !
       call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
-      call output%print_separator('m', len_trim(name_) + 6, '=')
-!
-!     Print settings
+      call output%print_separator('m', len(name_) + 3, '=')
 !
       call output%printf('m', 'Bath orbital(s):         (l0)', &
             logs=[wf%bath_orbital], fs='(/t6, a)')
-!
-!     Print orbital space info for cc
 !
       call output%printf('m', ' - Number of orbitals:', &
                          fs='(/t3,a)')
@@ -649,13 +641,10 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-!     Print orbital space info for cc
-!
       call output%printf('m', ' - Number of ground state amplitudes:', fs='(/t3,a)')
 !
       call output%printf('m', 'Single excitation amplitudes:  (i0)', &
             ints=[wf%n_t1], fs='(/t6,a)')
-
 !
    end subroutine print_amplitude_info_ccs
 !

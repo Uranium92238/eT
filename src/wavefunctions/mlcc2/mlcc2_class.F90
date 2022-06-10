@@ -194,8 +194,14 @@ module mlcc2_class
 !     Ground state routines
 !
       procedure :: construct_fock                                    => construct_fock_mlcc2
-      procedure :: calculate_energy                                  => calculate_energy_mlcc2
       procedure :: construct_omega                                   => construct_omega_mlcc2
+!
+      procedure :: calculate_energy &
+                => calculate_energy_mlcc2
+      procedure :: get_electronic_dipole &
+                => get_electronic_dipole_mlcc2
+      procedure :: get_electronic_quadrupole &
+                => get_electronic_quadrupole_mlcc2
 !
       procedure :: omega_cc2_a1                                      => omega_cc2_a1_mlcc2
       procedure :: omega_cc2_b1                                      => omega_cc2_b1_mlcc2
@@ -1382,5 +1388,48 @@ contains
       call mem%dealloc(canonical_orbitals, wf%ao%n, wf%n_mo)
 !
    end subroutine mo_preparations_from_restart_mlcc2
+!
+!
+   function get_electronic_dipole_mlcc2(wf) result(mu_electronic)
+!!
+!!    Get electronic dipole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+!
+      call output%error_msg('Get electronic dipole moment not implemented for (a0)', &
+                            chars=[trim(wf%name_)])
+      call do_nothing(wf)
+      mu_electronic = zero
+!
+   end function get_electronic_dipole_mlcc2
+!
+!
+   function get_electronic_quadrupole_mlcc2(wf) result(q_electronic)
+!!
+!!    Get electronic quadrupole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      use warning_suppressor, only: do_nothing
+!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q_electronic
+!
+      call output%error_msg('Get electronic quadrupole moment not implemented for (a0)', &
+                            chars=[trim(wf%name_)])
+      call do_nothing(wf)
+      q_electronic = zero
+!
+   end function get_electronic_quadrupole_mlcc2
+!
 !
 end module mlcc2_class

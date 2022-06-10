@@ -149,7 +149,9 @@ module mlccsd_class
       procedure :: get_orbital_differences      => get_orbital_differences_mlccsd
       procedure :: construct_cc2_amplitudes     => construct_cc2_amplitudes_mlccsd
 !
-      procedure :: calculate_energy             => calculate_energy_mlccsd
+      procedure :: calculate_energy &
+                => calculate_energy_mlccsd
+!
       procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_mlccsd
       procedure :: set_t2_to_cc2_guess          => set_t2_to_cc2_guess_mlccsd
 !

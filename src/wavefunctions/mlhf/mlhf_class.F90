@@ -142,14 +142,25 @@ module mlhf_class
       procedure :: set_C_and_e &
                 => set_C_and_e_mlhf
 !
-      procedure :: initialize_imo_to_mo                      => initialize_imo_to_mo_mlhf
-      procedure :: destruct_imo_to_mo                        => destruct_imo_to_mo_mlhf
+      procedure :: initialize_imo_to_mo &
+                => initialize_imo_to_mo_mlhf
+      procedure :: destruct_imo_to_mo &
+                => destruct_imo_to_mo_mlhf
 !
-      procedure :: initialize_imo_fock                      => initialize_imo_fock_mlhf
-      procedure :: destruct_imo_fock                        => destruct_imo_fock_mlhf
+      procedure :: initialize_imo_fock &
+                => initialize_imo_fock_mlhf
+      procedure :: destruct_imo_fock &
+                => destruct_imo_fock_mlhf
 !
-      procedure :: get_nuclear_dipole                       => get_nuclear_dipole_mlhf
-      procedure :: get_nuclear_quadrupole                   => get_nuclear_quadrupole_mlhf
+      procedure :: get_nuclear_dipole &
+                => get_nuclear_dipole_mlhf
+      procedure :: get_nuclear_quadrupole &
+                => get_nuclear_quadrupole_mlhf
+!
+      procedure :: get_electronic_dipole &
+                => get_electronic_dipole_mlhf
+      procedure :: get_electronic_quadrupole &
+                => get_electronic_quadrupole_mlhf
 !
    end type mlhf
 !
@@ -1424,7 +1435,7 @@ contains
       factory = scf_solver_factory(acceleration_type = 'diis', max_iterations = 20, &
                                    energy_threshold = wf%full_space_hf_threshold)
 !
-      call factory%create(full_space_wf, full_space_solver, restart=.false., skip=.false.)
+      call factory%create(full_space_wf, full_space_solver, skip=.false.)
 !
       call full_space_solver%run(full_space_wf)
 !
@@ -2040,6 +2051,44 @@ contains
       q  = pc%get_quadrupole()
 !
    end function get_nuclear_quadrupole_mlhf
+!
+!
+   function get_electronic_dipole_mlhf(wf) result(mu_electronic)
+!!
+!!    Get electronic dipole
+!!    Written by Alexander C. Paul, May 2022
+!!
+      implicit none
+!
+      class(mlhf), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+!
+      call output%warning_msg('dipole moments are size-extensive and &
+                              &are not well defined in MLHF.')
+!
+      mu_electronic = wf%hf%get_electronic_dipole()
+!
+   end function get_electronic_dipole_mlhf
+!
+!
+   function get_electronic_quadrupole_mlhf(wf) result(q_electronic)
+!!
+!!    Get electronic quadrupole
+!!    Written by Alexander C. Paul, May 2022
+!!
+      implicit none
+!
+      class(mlhf), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q_electronic
+!
+      call output%warning_msg('quadrupole moments are size-extensive and &
+                              &are not well defined in MLHF.')
+!
+      q_electronic = wf%hf%get_electronic_quadrupole()
+!
+   end function get_electronic_quadrupole_mlhf
 !
 !
 end module mlhf_class

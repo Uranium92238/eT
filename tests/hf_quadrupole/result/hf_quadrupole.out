@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza (development)
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-05-24 10:20:43 UTC +02:00
+  Git branch:         print-table-routine
+  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:37 UTC -07:00
 
 
   :: Input file
@@ -67,6 +65,8 @@
         quadrupole
      end hf mean value
 
+
+  Calculation start:2022-05-24 10:42:01 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -163,22 +163,22 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.452442672057     0.7565E-01     0.1775E+03
-     2          -177.479038695767     0.1129E-01     0.2660E-01
+     2          -177.479038695768     0.1129E-01     0.2660E-01
      3          -177.480033265333     0.4145E-02     0.9946E-03
      4          -177.480160935731     0.1388E-02     0.1277E-03
      5          -177.480174929178     0.4311E-03     0.1399E-04
      6          -177.480176282849     0.8270E-04     0.1354E-05
      7          -177.480176366015     0.2291E-04     0.8317E-07
      8          -177.480176376348     0.4810E-05     0.1033E-07
-     9          -177.480176377178     0.1046E-05     0.8306E-09
-    10          -177.480176377209     0.2394E-06     0.3092E-10
-    11          -177.480176377210     0.5253E-07     0.7958E-12
-    12          -177.480176377210     0.9777E-08     0.3126E-12
-    13          -177.480176377210     0.2792E-08     0.8527E-13
-    14          -177.480176377210     0.1441E-08     0.2842E-13
+     9          -177.480176377178     0.1046E-05     0.8307E-09
+    10          -177.480176377209     0.2394E-06     0.3089E-10
+    11          -177.480176377210     0.5253E-07     0.8527E-12
+    12          -177.480176377210     0.9777E-08     0.2274E-12
+    13          -177.480176377210     0.2792E-08     0.2842E-13
+    14          -177.480176377210     0.1441E-08     0.0000E+00
     15          -177.480176377210     0.6293E-09     0.8527E-13
-    16          -177.480176377210     0.1436E-09     0.1421E-12
-    17          -177.480176377210     0.4658E-10     0.1421E-12
+    16          -177.480176377210     0.1436E-09     0.0000E+00
+    17          -177.480176377210     0.4657E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -192,61 +192,50 @@
 
   3) Calculate dipole and/or quadrupole moments
 
-  - Operator: quadrupole moment (with trace) [a.u.]
+     Quadrupole moment in [Debye*Ang]:
+     =================================
 
-     xx:        -7.7118795
-     xy:         1.0873842
-     xz:         5.4351946
-     yy:        -8.2004259
-     yz:         4.1821652
-     zz:        -8.6146873
+     Conversion factor from Debye*Ang to a.u.: 0.743475459
 
-  - Operator: quadrupole moment (with trace) [Debye*Ang]
-
-     xx:       -10.3727425
-     xy:         1.4625690
-     xz:         7.3105232
-     yy:       -11.0298542
-     yz:         5.6251556
-     zz:       -11.5870500
+     Comp.         Electronic           Nuclear             Total
+     ------------------------------------------------------------
+     xx        -46.4620810557     36.0893385637    -10.3727424920
+     xy         21.4951683529    -20.0325993339      1.4625690190
+     xz        173.8491583052   -166.5386350581      7.3105232471
+     yy        -28.6252117785     17.5953575716    -11.0298542069
+     yz       -124.2554210647    129.8805766957      5.6251556310
+     zz      -2713.3897005186   2701.8026505277    -11.5870499910
+     ------------------------------------------------------------
 
      The traceless quadrupole is calculated as:
+        Q_ij = 1/2 [3*q_ij - tr(q)*delta_ij]
+     where q_ij are the non-traceless matrix elements.
 
-        Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]
+     Traceless quadrupole in [Debye*Ang]
 
-     where q_ij is the non-traceless matrix
-
-  - Operator: traceless quadrupole moment [a.u.]
-
-     xx:         0.6956771
-     xy:         1.6310763
-     xz:         8.1527919
-     yy:        -0.0371425
-     yz:         6.2732477
-     zz:        -0.6585346
-
-  - Operator: traceless quadrupole moment [Debye*Ang]
-
-     xx:         0.9357096
-     xy:         2.1938535
-     xz:        10.9657849
-     yy:        -0.0499580
-     yz:         8.4377334
-     zz:        -0.8857516
+     Comp.         Electronic           Nuclear             Total
+     ------------------------------------------------------------
+     xx       1324.5453750929  -1323.6096654860      0.9357096069
+     xy         32.2427525293    -30.0488990008      2.1938535285
+     xz        260.7737374577   -249.8079525871     10.9657848707
+     yy       1351.3006790086  -1351.3506369741     -0.0499579654
+     yz       -186.3831315970    194.8208650435      8.4377334465
+     zz      -2675.8460541016   2674.9603024600     -0.8857516415
+     ------------------------------------------------------------
 
   - Timings for the RHF ground state calculation
 
-     Total wall time (sec):              1.15400
-     Total cpu time (sec):               1.01299
+     Total wall time (sec):              0.53579
+     Total cpu time (sec):               1.05414
 
   ------------------------------------------------------------
 
-  Peak memory usage during the execution of eT: 307.628 KB
+  Peak memory usage during the execution of eT: 310.120 KB
 
-  Total wall time in eT (sec):              1.16600
-  Total cpu time in eT (sec):               1.02436
+  Total wall time in eT (sec):              0.54625
+  Total cpu time in eT (sec):               1.06613
 
-  Calculation ended: 2022-04-07 12:34:38 UTC -07:00
+  Calculation end:2022-05-24 10:42:02 UTC +02:00
 
   - Implementation references:
 
