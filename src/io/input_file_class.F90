@@ -177,38 +177,39 @@ contains
 !
       character(len=*), intent(in) :: name_
 !
+      type(section) :: active_atoms
       type(section) :: calculations
-      type(section) :: system
-      type(section) :: memory
+      type(section) :: cc
       type(section) :: cc_mean_value
       type(section) :: cc_response
-      type(section) :: hf_mean_value
       type(section) :: cc_td
+      type(section) :: electric_field
+      type(section) :: fci_mean_value
+      type(section) :: frozen_orbitals
+      type(section) :: global_print
+      type(section) :: hf_mean_value
+      type(section) :: integrals
+      type(section) :: memory
       type(section) :: method
-      type(section) :: solver_cholesky
-      type(section) :: solver_scf
-      type(section) :: solver_scf_geoopt
-      type(section) :: solver_cc_gs
+      type(section) :: mlcc
+      type(section) :: mlhf
+      type(section) :: mm
+      type(section) :: pcm
+      type(section) :: qed
       type(section) :: solver_cc_es
+      type(section) :: solver_cc_gs
       type(section) :: solver_cc_multipliers
-      type(section) :: solver_cc_response
       type(section) :: solver_cc_propagation
+      type(section) :: solver_cc_response
+      type(section) :: solver_cholesky
+      type(section) :: solver_fci
       type(section) :: solver_fft_dipole_moment
       type(section) :: solver_fft_electric_field
-      type(section) :: solver_fci
-      type(section) :: electric_field
-      type(section) :: active_atoms
-      type(section) :: cc
-      type(section) :: mlcc
-      type(section) :: mm
-      type(section) :: mlhf
-      type(section) :: visualization
-      type(section) :: pcm
-      type(section) :: global_print
-      type(section) :: frozen_orbitals
-      type(section) :: integrals
-      type(section) :: qed
+      type(section) :: solver_scf
+      type(section) :: solver_scf_geoopt
+      type(section) :: system
       type(section) :: tdhf
+      type(section) :: visualization
 !
 !     Set input file name, access and format
 !
@@ -334,11 +335,11 @@ contains
                                 'separation']
 !
 !
-      hf_mean_value%name_    = 'hf mean value'
-      hf_mean_value%required = .false.
-      hf_mean_value%keywords = [character(len=30) :: &
-                               'dipole',             &
-                               'quadrupole']
+      fci_mean_value%name_    = 'fci mean value'
+      fci_mean_value%required = .false.
+      fci_mean_value%keywords = [character(len=30) :: &
+                                'dipole',             &
+                                'quadrupole']
 !
 !
       frozen_orbitals%name_    = 'frozen orbitals'
@@ -346,6 +347,13 @@ contains
       frozen_orbitals%keywords = [character(len=30) :: &
                                  'hf', &
                                  'core']
+!
+!
+      hf_mean_value%name_    = 'hf mean value'
+      hf_mean_value%required = .false.
+      hf_mean_value%keywords = [character(len=30) :: &
+                               'dipole',             &
+                               'quadrupole']
 !
 !
       integrals%name_    = 'integrals'
@@ -356,18 +364,6 @@ contains
                            'mo eri in memory',   &
                            'ri',                 &
                            't1 eri in memory']
-!
-      solver_fci%name_    = 'solver fci'
-      solver_fci%required = .false.
-      solver_fci%keywords = [character(len=30) ::     &
-                             'energy threshold ',     &
-                             'max iterations',        &
-                             'max reduced dimension', &
-                             'residual threshold',    &
-                             'restart',               &
-                             'start guess',           &
-                             'states',                &
-                             'storage']
 !
       memory%name_    = 'memory'
       memory%required = .false.
@@ -426,6 +422,15 @@ contains
                      'solver type']
 !
 !
+      global_print%name_    = 'print'
+      global_print%required = .false.
+      global_print%keywords = [character(len=30) ::  &
+                              'output print level ', &
+                              'timing print level ', &
+                              'full references',     &
+                              'z-matrix']
+!
+!
       qed%name_    = 'qed'
       qed%required = .false.
       qed%keywords = [character(len=30) :: &
@@ -441,15 +446,6 @@ contains
                      'wavevector']
 !
 !
-      global_print%name_    = 'print'
-      global_print%required = .false.
-      global_print%keywords = [character(len=30) ::  &
-                              'output print level ', &
-                              'timing print level ', &
-                              'full references',     &
-                              'z-matrix']
-!
-!
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
       solver_cholesky%keywords = [character(len=30) :: &
@@ -459,6 +455,19 @@ contains
                                  'qualified',          &
                                  'one center',         &
                                  'mo screening']
+!
+!
+      solver_fci%name_    = 'solver fci'
+      solver_fci%required = .false.
+      solver_fci%keywords = [character(len=30) ::     &
+                             'energy threshold ',     &
+                             'max iterations',        &
+                             'max reduced dimension', &
+                             'residual threshold',    &
+                             'restart',               &
+                             'start guess',           &
+                             'states',                &
+                             'storage']
 !
 !
       solver_scf%name_    = 'solver scf'
@@ -649,6 +658,7 @@ contains
                        cc_response,               &
                        cc_td,                     &
                        electric_field,            &
+                       fci_mean_value,            &
                        frozen_orbitals,           &
                        global_print,              &
                        hf_mean_value,             &
@@ -666,9 +676,9 @@ contains
                        solver_cc_propagation,     &
                        solver_cc_response,        &
                        solver_cholesky,           &
+                       solver_fci,                &
                        solver_fft_dipole_moment,  &
                        solver_fft_electric_field, &
-                       solver_fci,                &
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &

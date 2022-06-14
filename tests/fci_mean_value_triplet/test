@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+# provides os.path.join
+import os
+
+# provides exit
+import sys
+
+# we make sure we can import runtest and runtest_config
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# we import essential functions from the runtest library
+from runtest import version_info, get_filter, cli, run
+
+# this tells runtest how to run your code
+from runtest_config import configure
+
+# functions to get the filters
+from filters import get_fci_filter, get_mean_value_filter
+
+# we stop the script if the major version is not compatible
+assert version_info.major == 2
+
+threshold = 1.0e-9
+n_states = 1
+f = get_fci_filter(threshold, n_states)
+g = get_mean_value_filter(threshold, 6, norm=True)
+
+f.extend(g)
+
+# invoke the command line interface parser which returns options
+options = cli()
+
+ierr = 0
+inp = 'fci_mean_value_triplet.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
+
+sys.exit(ierr)
