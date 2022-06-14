@@ -44,15 +44,16 @@ contains
 !!    Create
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
-      use reference_engine_class, only: reference_engine
-      use hf_geoopt_engine_class, only: hf_geoopt_engine
-      use tdhf_engine_class,      only: tdhf_engine
+      use hf_engine_class,        only: hf_engine
+      use hf_gs_engine_class,     only: hf_gs_engine
+      use hf_geoopt_engine_class, only: hf_geoopt_engine    
+      use hf_es_engine_class,     only: hf_es_engine
 !
       use global_in,              only: input
 !
       implicit none 
 !
-      class(reference_engine), allocatable, intent(out) :: engine  
+      class(hf_engine), allocatable, intent(out) :: engine
 !
       if (input%is_keyword_present('ground state geoopt', 'do')) then
 !
@@ -60,11 +61,11 @@ contains
 !
       elseif (input%is_keyword_present('time dependent hf', 'do')) then
 !
-         engine = tdhf_engine()
+         engine = hf_es_engine()
 !
       else
 !
-         engine = reference_engine()
+         engine = hf_gs_engine()
 !
       endif
 !

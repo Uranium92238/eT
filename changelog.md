@@ -7,6 +7,7 @@
 - Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
 - Davidson tool now counts the number of new trials. eT-program/eT!1089
 - Restructured printing of mean values. eT-program/eT!1086
+- Restructured reference/HF engines to use task structure. eT-program/eT!1088
 
 # eT v1.7.4
 ### Bugfixes

@@ -106,7 +106,6 @@ contains
                           gradient_dimension  = wf%packed_gradient_dimension, &
                           convergence_checker = this%convergence_checker)
 !
-!
    end subroutine create_scf_solver_factory
 !
 !
@@ -129,6 +128,7 @@ contains
       this%convergence_checker = convergence_tool(1.0d-7, 1.0d-7, energy_convergence=.false.)
 !
       if (input%is_keyword_present('energy threshold', 'solver scf')) then
+!
          call input%get_keyword('energy threshold',  &
                                 'solver scf',        &
                                 energy_threshold)
@@ -144,18 +144,22 @@ contains
 !
       algorithm = 'scf-diis'
       call input%get_keyword('algorithm', 'solver scf', algorithm)
-!  
+!   
       if (trim(algorithm) .ne. 'scf-diis'    .and. &
           trim(algorithm) .ne. 'scf'         .and. &
           trim(algorithm) .ne. 'mo-scf-diis') then
-!  
+!   
          call output%error_msg('did not recognize SCF algorithm')
-!  
+!   
       endif
-!  
+!
       this%acceleration_type = 'none'
       if (trim(algorithm) == 'scf-diis' .or. &
-         trim(algorithm) == 'mo-scf-diis') this%acceleration_type = 'diis'
+          trim(algorithm) == 'mo-scf-diis') then
+!
+         this%acceleration_type = 'diis'
+!
+      end if
 !
    end subroutine read_settings
 !

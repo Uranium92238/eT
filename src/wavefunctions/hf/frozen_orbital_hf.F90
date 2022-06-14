@@ -70,63 +70,7 @@ contains
 !
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
-      if (wf%plot_active_density) call wf%visualize_active_density
-!
    end subroutine prepare_mos_hf
-!
-!
-   module subroutine visualize_active_density_hf(wf)
-!!
-!!    Visualize active density
-!!    Written by Ida-Marie Høyvik, Oct 2019
-!!
-      use visualization_class, only: visualization
-!
-      implicit none
-!
-      class(hf), intent(inout) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: D
-!
-      character(len=:), allocatable :: label
-!
-      type(visualization), allocatable :: plotter
-      type(timings) :: timer
-!
-      label = "Plotting active " // trim(wf%name_) // " density"
-      timer = timings(label)
-      call timer%turn_on
-!
-      deallocate(label)
-!
-      plotter = visualization(wf%ao)
-      call plotter%initialize(wf%ao)
-!
-      call mem%alloc(D, wf%ao%n, wf%ao%n)
-!
-      call dgemm('N', 'T',                   &
-                  wf%ao%n,                   &
-                  wf%ao%n,                   &
-                  wf%n_o,                    &
-                  one,                       &
-                  wf%orbital_coefficients,   &
-                  wf%ao%n,                   &
-                  wf%orbital_coefficients,   &
-                  wf%ao%n,                   &
-                  zero,                      &
-                  D,                         &
-                  wf%ao%n)
-!
-      label = "active_" // trim(wf%name_) // '_density'
-!
-      call plotter%plot_density(wf%ao, D, label)
-!
-      call mem%dealloc(D, wf%ao%n, wf%ao%n)
-      call plotter%cleanup()
-!
-      call timer%turn_off
-!
-   end subroutine visualize_active_density_hf
 !
 !
    module subroutine remove_core_orbitals_hf(wf)

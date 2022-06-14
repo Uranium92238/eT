@@ -73,7 +73,8 @@ module bfgs_tool_class
       procedure, public :: set_initial_hessian_diagonal &
                         => set_initial_hessian_diagonal_bfgs_tool
 !
-      final :: destructor_bfgs_tool
+      procedure, public :: cleanup &
+                        => cleanup_bfgs_tool
 !
    end type bfgs_tool
 !
@@ -173,19 +174,19 @@ contains
    end subroutine set_hessian_bfgs_tool
 !
 !
-   subroutine destructor_bfgs_tool(bfgs)
+   subroutine cleanup_bfgs_tool(bfgs)
 !!
-!!    Destructor
+!!    Cleanup
 !!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none
 !
-      type(bfgs_tool) :: bfgs
+      class(bfgs_tool) :: bfgs
 !
       if (allocated(bfgs%hessian)) call mem%dealloc(bfgs%hessian, bfgs%n_parameters, bfgs%n_parameters)
       if (allocated(bfgs%previous_gradient)) call mem%dealloc(bfgs%previous_gradient, bfgs%n_parameters)
 !
-   end subroutine destructor_bfgs_tool
+   end subroutine cleanup_bfgs_tool
 !
 !
    subroutine get_step_bfgs_tool(bfgs, g, d)

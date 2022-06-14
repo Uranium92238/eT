@@ -17,48 +17,41 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module hf_geoopt_engine_class
+module hf_engine_class
 !
 !!
-!! HF geometry optimization engine class
+!! Hartree-Fock engine class
 !! Written by Sarai D. Folkestad, Eirik F. Kjønstad, and Alexander C. Paul, 2018-2022
 !!
 !
-   use hf_engine_class, only: hf_engine
-   use hf_class,        only: hf
-!
-   use hf_geoopt_task_class, only: hf_geoopt_task
+   use hf_class, only: hf
 !
    implicit none
 !
-   type, extends(hf_engine) :: hf_geoopt_engine
-!
-      type(hf_geoopt_task), allocatable, private :: geometry_optimization
+   type, abstract :: hf_engine
 !
    contains
 !
-      procedure, public :: ignite => ignite_hf_geoopt_engine
+      procedure(ignite), deferred, public :: ignite
 !
-   end type hf_geoopt_engine
-!
-contains
+   end type hf_engine
 !
 !
-   subroutine ignite_hf_geoopt_engine(this, wf)
-!!
-!!    Ignite
-!!    Written by Alexander C. Paul, May 2022
-!!
-      implicit none
+   abstract interface
 !
-      class(hf_geoopt_engine), intent(inout) :: this
-      class(hf), intent(inout) :: wf
+      subroutine ignite(this, wf)
 !
-      this%geometry_optimization = hf_geoopt_task()
-      call this%geometry_optimization%execute(wf)
+         import :: hf, hf_engine
 !
-   end subroutine ignite_hf_geoopt_engine
+         implicit none
+!
+         class(hf_engine), intent(inout) :: this
+!
+         class(hf), intent(inout) :: wf
+!
+      end subroutine ignite
+!
+   end interface
 !
 !
-   end module hf_geoopt_engine_class
-   
+end module hf_engine_class

@@ -34,12 +34,23 @@ set(eT_fortran_sources
 #
    src/sad/sad_tool_class.F90
 #
+   src/engines/abstract_engine_class.F90
    src/engines/fci_engine_class.F90
 #
-   src/engines/hf/abstract_engine_class.F90
-   src/engines/hf/reference_engine_class.F90
+   src/engines/hf/hf_engine_class.F90
+   src/engines/hf/hf_gs_engine_class.F90
    src/engines/hf/hf_geoopt_engine_class.F90
-   src/engines/hf/tdhf_engine_class.F90
+   src/engines/hf/hf_es_engine_class.F90
+#
+   src/engines/hf/tasks/hf_task_class.F90
+   src/engines/hf/tasks/sad_generation_task_class.F90
+   src/engines/hf/tasks/scf_task_class.F90
+   src/engines/hf/tasks/hf_mean_value_task_class.F90
+   src/engines/hf/tasks/hf_visualization_task_class.F90
+   src/engines/hf/tasks/hf_geoopt_task_class.F90
+   src/engines/hf/tasks/tdhf_task_class.F90
+#
+   src/engines/hf/factories/hf_geoopt_solver_factory_class.F90
 #
    src/engines/cc/cc_engine_class.F90
    src/engines/cc/cc_gs_engine_class.F90
@@ -49,12 +60,12 @@ set(eT_fortran_sources
    src/engines/cc/cc_polarizability_engine_class.F90
    src/engines/cc/lr_transition_moment_engine_class.F90
    src/engines/cc/eom_transition_moment_engine_class.F90
-#
+   #
+   src/engines/cc/tasks/cc_task_class.F90
    src/engines/cc/tasks/eri_approximator_task_class.F90
    src/engines/cc/tasks/cholesky_decomposition_task_class.F90
    src/engines/cc/tasks/ri_task_class.F90
    src/engines/cc/tasks/cc_polarizability_task_class.F90
-   src/engines/cc/tasks/cc_task_class.F90
    src/engines/cc/tasks/cc_multipliers_task_class.F90
    src/engines/cc/tasks/cc_amplitudes_task_class.F90
    src/engines/cc/tasks/cc_es_amplitudes_task_class.F90
