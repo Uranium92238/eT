@@ -27,11 +27,11 @@ g = get_file_filter(threshold)
 options = cli()
 
 ierr = 0
-for inp in ["hf_visualization.inp"]:
-    # the run function runs the code and filters the outputs
-    ierr += run(options, configure,
-                input_files=inp,
-                filters={"out": f,
-                         "AO_density.cube": g})
+inp = "plot_hf_density.inp"
+# the run function runs the code and filters the outputs
+ierr += run(options, configure,
+            input_files=inp,
+            filters={"out": f,
+                     "AO_density.cube": g})
 
 sys.exit(ierr)

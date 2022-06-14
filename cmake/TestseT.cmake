@@ -75,7 +75,8 @@ add_eT_runtest(hf_hydroxyl_charge_sad                       "eT;short;hf;sad;cha
 add_eT_runtest(hf_oxonium_charge_sad                        "eT;short;hf;sad;charged")
 add_eT_runtest(restart_hf                                   "eT;short;hf;restart")
 #
-add_eT_runtest(hf_visualization                             "eT;short;hf;visualization")
+add_eT_runtest(plot_hf_density                              "eT;short;hf;visualization")
+add_eT_runtest(plot_active_hf_density_full_hf               "eT;short;hf;visualization")
 add_eT_runtest(plot_h2o_cartesian_mos                       "eT;short;hf;visualization,cartesian")
 add_eT_runtest(plot_He_orbitals                             "eT;short;hf;visualization;5z")
 add_eT_runtest(plot_benzene_mos                             "eT;short;hf;visualization")

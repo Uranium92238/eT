@@ -193,7 +193,7 @@ contains
    end subroutine update_fock_and_energy_qed_hf
 !
 !
-   subroutine print_summary_qed_hf(wf, write_mo_info)
+   subroutine print_summary_qed_hf(wf)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -204,9 +204,7 @@ contains
 !
       class(qed_hf), intent(inout) :: wf
 !
-      logical, intent(in) :: write_mo_info
-!
-      call wf%hf%print_summary(write_mo_info)
+      call wf%hf%print_summary()
       call wf%qed%print_summary()
 !
    end subroutine print_summary_qed_hf

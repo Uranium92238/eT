@@ -101,7 +101,7 @@ module uhf_class
 !     MO orbital related routines
 !
       procedure :: initialize_orbitals                   => initialize_orbitals_uhf
-      procedure :: save_orbital_info                     => save_orbital_info_uhf
+      procedure :: write_orbital_info                    => write_orbital_info_uhf
       procedure :: save_orbitals                         => save_orbitals_uhf
       procedure :: read_orbitals                         => read_orbitals_uhf
       procedure :: print_spin                            => print_spin_uhf
@@ -851,9 +851,9 @@ contains
    end subroutine set_n_mo_uhf
 !
 !
-   subroutine save_orbital_info_uhf(wf)
+   subroutine write_orbital_info_uhf(wf)
 !!
-!!    Make orbital info file
+!!    Write orbital info
 !!    Written by Alexander C. Paul Nov 2020
 !!
       implicit none
@@ -875,7 +875,7 @@ contains
 !
       call wf%mo_information_file%close_()
 !
-   end subroutine save_orbital_info_uhf
+   end subroutine write_orbital_info_uhf
 !
 !
    subroutine cleanup_uhf(wf)
@@ -1085,7 +1085,7 @@ contains
    end function get_exact_s2_uhf
 !
 !
-   subroutine print_summary_uhf(wf, write_mo_info)
+   subroutine print_summary_uhf(wf)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1096,8 +1096,6 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      logical, intent(in) :: write_mo_info
-!
       character(len=:), allocatable :: name_
 !
       name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
@@ -1105,8 +1103,6 @@ contains
       call output%printf('m', '- Summary of (a0) energetics (a.u.):', &
                           chars=[name_], fs='(/t3,a)')
       call wf%print_energy()
-!
-      if (write_mo_info) call wf%save_orbital_info()
 !
       call output%printf('m', '- (a0) spin expectation values:', &
                           chars=[name_], fs='(/t3,a)')

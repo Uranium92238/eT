@@ -324,10 +324,9 @@ contains
 !!    Run reference calculation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
-      use hf_class,                             only: hf
+      use hf_class, only: hf
+      use hf_engine_class, only: hf_engine
       use reference_wavefunction_factory_class, only: reference_wavefunction_factory
-!
-      use reference_engine_class,         only: reference_engine
       use reference_engine_factory_class, only: reference_engine_factory
 !
       implicit none
@@ -335,8 +334,8 @@ contains
       class(hf), allocatable, intent(inout)              :: ref_wf
       class(reference_wavefunction_factory), allocatable :: ref_wf_factory 
 !
-      class(reference_engine), allocatable   :: ref_engine
-      type(reference_engine_factory)         :: ref_engine_factory 
+      class(hf_engine), allocatable  :: ref_engine
+      type(reference_engine_factory) :: ref_engine_factory 
 !
       ref_wf_factory = reference_wavefunction_factory()
 !

@@ -81,8 +81,6 @@ module hf_class
 !
       logical :: cumulative_fock
 !
-      logical :: plot_active_density
-!
       integer :: packed_gradient_dimension
       type(output_file) :: mo_information_file
 !
@@ -159,7 +157,7 @@ module hf_class
 !
       procedure :: initialize_orbitals                         => initialize_orbitals_hf
       procedure :: print_orbitals_and_energies                 => print_orbitals_and_energies_hf
-      procedure :: save_orbital_info                           => save_orbital_info_hf
+      procedure :: write_orbital_info                           => write_orbital_info_hf
       procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
 !
 !     Class variable initialize and destruct routines
@@ -222,10 +220,6 @@ module hf_class
       procedure :: get_n_active_hf_atoms                       => get_n_active_hf_atoms_hf
 !
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
-!
-      procedure :: visualize_active_density &
-                => visualize_active_density_hf
-!
 !
       procedure :: prepare_for_scf => prepare_for_scf_hf
       procedure :: get_energy => get_energy_hf
@@ -413,7 +407,7 @@ contains
    end subroutine read_hf_settings_hf
 !
 !
-   subroutine print_summary_hf(wf, write_mo_info)
+   subroutine print_summary_hf(wf)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -424,22 +418,18 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
-      logical, intent(in) :: write_mo_info
-!
       call output%printf('m', '- Summary of '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
                          &energetics (a.u.):', fs='(/t3,a)')
 !
       call wf%print_energy()
 !
-      if (write_mo_info) call wf%save_orbital_info()
-!
    end subroutine print_summary_hf
 !
 !
-   subroutine save_orbital_info_hf(wf)
+   subroutine write_orbital_info_hf(wf)
 !!
-!!    Save orbital info
+!!    Write orbital info
 !!    Written by Alexander C. Paul, Nov 2020
 !!
       implicit none
@@ -455,7 +445,7 @@ contains
 !
       call wf%mo_information_file%close_()
 !
-   end subroutine save_orbital_info_hf
+   end subroutine write_orbital_info_hf
 !
 !
    subroutine print_orbitals_and_energies_hf(wf, mo_energies, mo_coefficients, prefix)
@@ -1373,12 +1363,12 @@ contains
 !
       class(hf) :: wf
 !
-      character(len=200) :: name_
+      character(len=:), allocatable :: name_
 !
       name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
 !
       call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
-      call output%print_separator('minimal', len_trim(name_) + 6, '=')
+      call output%print_separator('m', len(name_) + 3, '=')
 !
    end subroutine print_banner_hf
 !
@@ -1467,8 +1457,6 @@ contains
 !!
 !!    - Frozen hf orbitals
 !!
-!!    - plot active density
-!!
 !!    This routine is used at HF level to prepare mos and
 !!    frozen fock contributions.
 !!
@@ -1481,12 +1469,6 @@ contains
 !
       wf%frozen_core = input%is_keyword_present('core', 'frozen orbitals')
       wf%frozen_hf_mos = input%is_keyword_present('hf', 'frozen orbitals')
-!
-      wf%plot_active_density = input%is_keyword_present('plot hf active density', &
-                                                        'visualization')
-!
-      if (wf%plot_active_density .and. .not.  (wf%frozen_core .or. wf%frozen_hf_mos)) &
-         call output%warning_msg('no active density for CC to plot in HF, no plots produced.')
 !
    end subroutine read_frozen_orbitals_settings_hf
 !
@@ -1997,7 +1979,7 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(in) :: wf
 !
       logical :: restart_is_possible
 !

@@ -521,7 +521,7 @@ contains
       integer :: bond, angle, dihedral
 !
       call output%printf('m', 'Molecular geometry (in redundant internal coordinates):', fs='(/t6,a)')
-      call output%print_separator('n', 60,'-', fs='(t6,a)')
+      call output%print_separator('n', 55,'-', fs='(t6,a)')
 !
       do bond = 1, this%n_bonds 
 !
@@ -547,7 +547,7 @@ contains
 !
       enddo
 !
-      call output%print_separator('n', 60,'-', fs='(t6,a)')
+      call output%print_separator('n', 55,'-', fs='(t6,a)')
 !
    end subroutine print_geometry
 !

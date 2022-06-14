@@ -1722,8 +1722,6 @@ contains
 !
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
-      if (wf%plot_active_density) call wf%visualize_active_density()
-
    end subroutine prepare_mos_mlhf
 !
 !

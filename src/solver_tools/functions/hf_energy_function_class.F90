@@ -119,7 +119,7 @@ contains
       call this%wf%set_geometry(x, 'bohr')
 !
       call this%wf%ao%print_centers('angstrom')
-      call this%wf%ao%print_centers('bohr')
+      !call this%wf%ao%print_centers('bohr')
 !
       call this%update_wavefunction()
 !
@@ -163,17 +163,17 @@ contains
 !!    Update wavefunction 
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      use reference_engine_class, only: reference_engine
+      use hf_gs_engine_class, only: hf_gs_engine
 !
       implicit none 
 !
       class(hf_energy_function) :: this 
 !
-      type(reference_engine), allocatable :: hf_engine 
+      type(hf_gs_engine), allocatable :: hf_engine 
 !
       call this%wf%set_n_mo() 
 !
-      hf_engine = reference_engine()
+      hf_engine = hf_gs_engine()
       call hf_engine%ignite(this%wf)
 !
    end subroutine update_wavefunction
