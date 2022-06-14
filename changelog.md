@@ -1,4 +1,7 @@
 # eT v1.8.0
+### Features
+- Added calculation of FCI densities and dipole and quadrupole tests. eT-program/eT!1087
+
 ### Structure
 - Changed routines in parameters.F90 to increase covarage. eT-program/eT!1068
 - Removed unused routines in stream\_file.F90. eT-program/eT!1069
@@ -7,6 +10,7 @@
 - Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
 - Davidson tool now counts the number of new trials. eT-program/eT!1089
 - Restructured printing of mean values. eT-program/eT!1086
+- Restructured FCI engine to use tasks. eT-program/eT!1087
 - Restructured reference/HF engines to use task structure. eT-program/eT!1088
 
 # eT v1.7.4

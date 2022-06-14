@@ -232,7 +232,7 @@ def get_mean_value_filter(tolerance, n_components, norm=False):
     f = [
         get_filter(
             from_string="Comp.         Electronic           Nuclear             Total",
-            num_lines=n_components + 3,
+            num_lines=n_components + 2,
             abs_tolerance=tolerance,
         ),
     ]

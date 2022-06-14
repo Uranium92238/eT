@@ -60,6 +60,8 @@ module fci_class
 !
       real(dp), dimension(:,:,:), allocatable :: ci_coefficients
 !
+      real(dp), dimension(:,:), allocatable :: density
+!
    contains
 !
       procedure, public :: save_fci_state &
@@ -116,6 +118,11 @@ module fci_class
       procedure, private :: initialize_ci_coefficients
       procedure, private :: destruct_ci_coefficients
 !
+      procedure :: initialize_gs_density &
+                => initialize_gs_density_fci
+      procedure :: destruct_gs_density &
+                => destruct_gs_density_fci
+!
       procedure, private :: general_fci_preparations
       procedure, private :: set_variables_from_template_wf
       procedure, private :: read_settings
@@ -141,11 +148,21 @@ module fci_class
       procedure, private :: get_determinant_string
       procedure, private :: sm_sp_expectation_value
 !
+!     Properties
+!
+      procedure :: construct_gs_density &
+                => construct_gs_density_fci
+!
+      procedure, private :: construct_density
+      procedure, private :: add_alpha_density
+      procedure, private :: add_beta_density
+!
       procedure :: get_electronic_dipole &
                 => get_electronic_dipole_fci
-!
       procedure :: get_electronic_quadrupole &
                 => get_electronic_quadrupole_fci
+      procedure :: calculate_expectation_value &
+                => calculate_expectation_value_fci
 !
    end type fci
 !
@@ -158,6 +175,7 @@ module fci_class
       include "contract_fci_interface.F90"
       include "spin_operators_fci_interface.F90"
       include "file_handling_fci_interface.F90"
+      include "properties_fci_interface.F90"
 !
    end interface
 !
@@ -266,8 +284,8 @@ contains
 !
       wf%hf_energy = template_wf%hf_energy
 !
-      wf%n_alpha_strings  = binomial(wf%n_mo, wf%n_alpha)
-      wf%n_beta_strings   = binomial(wf%n_mo, wf%n_beta)
+      wf%n_alpha_strings = binomial(wf%n_mo, wf%n_alpha)
+      wf%n_beta_strings  = binomial(wf%n_mo, wf%n_beta)
 !
       wf%n_determinants = wf%n_alpha_strings * wf%n_beta_strings
 !
@@ -279,6 +297,11 @@ contains
       call dcopy(wf%n_mo, template_wf%orbital_energies, 1, wf%orbital_energies, 1)
 !
       call dcopy(wf%ao%n*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
+!
+      if (template_wf%exists_frozen_fock_terms) then
+         call output%error_msg("Frozen core and frozen HF have not been implemented for (a0) yet.", &
+                               chars=[wf%name_])
+      end if
 !
    end subroutine set_variables_from_template_wf
 !
@@ -337,6 +360,7 @@ contains
       call wf%destruct_hamiltonian_integrals()
       call wf%destruct_ci_coefficients()
       call wf%destruct_energies()
+      call wf%destruct_gs_density()
 !
       deallocate(wf%ao)
 !
@@ -669,48 +693,6 @@ contains
                                  &alpha or beta orbitals.')
 !
    end subroutine consistency_checks
-!
-!
-   function get_electronic_dipole_fci(wf) result(mu_electronic)
-!!
-!!    Get electronic dipole
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-      use warning_suppressor, only: do_nothing
-!
-      implicit none
-!
-      class(fci), intent(in) :: wf
-!
-      real(dp), dimension(3) :: mu_electronic
-!
-      call output%error_msg('Get electronic dipole moment not implemented for (a0)', &
-                            chars=[trim(wf%name_)])
-      call do_nothing(wf)
-      mu_electronic = zero
-!
-   end function get_electronic_dipole_fci
-!
-!
-   function get_electronic_quadrupole_fci(wf) result(q_electronic)
-!!
-!!    Get electronic quadrupole
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-      use warning_suppressor, only: do_nothing
-!
-      implicit none
-!
-      class(fci), intent(in) :: wf
-!
-      real(dp), dimension(6) :: q_electronic
-!
-      call output%error_msg('Get electronic quadrupole moment not implemented for (a0)', &
-                            chars=[trim(wf%name_)])
-      call do_nothing(wf)
-      q_electronic = zero
-!
-   end function get_electronic_quadrupole_fci
 !
 !
 end module fci_class

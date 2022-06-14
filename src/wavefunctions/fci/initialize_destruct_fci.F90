@@ -179,4 +179,32 @@ contains
    end subroutine destruct_energies
 !
 !
+   module subroutine initialize_gs_density_fci(wf)
+!!
+!!    Initialize gs density
+!!    Written by Alexander C. Paul, May 2022
+!!
+      implicit none
+!
+      class(fci), intent(inout) :: wf
+!
+      call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_gs_density_fci
+!
+!
+   module subroutine destruct_gs_density_fci(wf)
+!!
+!!    Destruct gs density
+!!    Written by Alexander C. Paul, May 2022
+!!
+      implicit none
+!
+      class(fci), intent(inout) :: wf
+!
+      if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_gs_density_fci
+!
+!
 end submodule initialize_destruct

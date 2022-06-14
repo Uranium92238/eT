@@ -19,8 +19,8 @@ from filters import get_eom_filter
 assert version_info.major == 2
 
 # construct filter(s)
-n_states = 4
-threshold = 1.0e-9
+n_states = 2
+threshold = 1.0e-10
 f = get_eom_filter(n_states, threshold)
 
 # invoke the command line interface parser which returns options

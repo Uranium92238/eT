@@ -37,7 +37,7 @@ end solver cc multipliers
 
 solver cc es
    residual threshold: 1.0d-11
-   singlet states: 4
+   singlet states: 2
 end solver cc es
 
 solver cc response

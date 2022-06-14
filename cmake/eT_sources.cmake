@@ -34,8 +34,12 @@ set(eT_fortran_sources
 #
    src/sad/sad_tool_class.F90
 #
-   src/engines/abstract_engine_class.F90
-   src/engines/fci_engine_class.F90
+   src/engines/fci/abstract_fci_engine_class.F90
+   src/engines/fci/fci_engine_class.F90
+#
+   src/engines/fci/tasks/fci_task_class.F90
+   src/engines/fci/tasks/fci_eigenproblem_task_class.F90
+   src/engines/fci/tasks/fci_mean_value_task_class.F90
 #
    src/engines/hf/hf_engine_class.F90
    src/engines/hf/hf_gs_engine_class.F90
@@ -441,6 +445,7 @@ set(eT_fortran_sources
    src/wavefunctions/mlccsd/file_handling_mlccsd.F90
    src/wavefunctions/mlccsd/set_get_mlccsd.F90
    src/wavefunctions/mlccsd/jacobian_mlccsd.F90
+   src/wavefunctions/mlccsd/fock_mlccsd.F90
 #
    src/wavefunctions/fci/fci_class.F90
    src/wavefunctions/fci/initialize_destruct_fci.F90
@@ -450,5 +455,5 @@ set(eT_fortran_sources
    src/wavefunctions/fci/contract_fci.F90
    src/wavefunctions/fci/spin_operators_fci.F90
    src/wavefunctions/fci/file_handling_fci.F90
-   src/wavefunctions/mlccsd/fock_mlccsd.F90
+   src/wavefunctions/fci/properties_fci.F90
 )
