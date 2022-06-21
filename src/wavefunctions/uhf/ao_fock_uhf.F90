@@ -188,9 +188,14 @@ contains
 !!    unrestricted Hartree-Fock energy.
 !!
 !
-      use omp_lib
-      use array_utilities, only: get_abs_max, zero_array
-      use reordering, only: symmetric_sum
+!
+      use abstract_G_adder_class,      only: abstract_G_adder
+      use abstract_G_screener_class,   only: abstract_G_screener
+      use ao_G_builder_class,          only: ao_G_builder
+!
+      use abstract_G_tool_factory_class, only: abstract_G_tool_factory
+      use J_tool_factory_class,          only: J_tool_factory
+      use K_tool_factory_class,          only: K_tool_factory
 !
       implicit none
 !
@@ -199,18 +204,18 @@ contains
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: D_alpha, D_beta
 !
+      class(ao_G_builder),              allocatable :: G_builder
+      class(abstract_G_screener),      allocatable :: screener
+      class(abstract_G_adder),         allocatable :: adder
+      class(abstract_G_tool_factory),  allocatable :: factory
+!
       logical, intent(in), optional :: cumulative
 !
       real(dp), dimension(wf%ao%n, wf%ao%n), intent(in) :: h_wx
 !
-      integer :: thread = 0, n_threads = 1
       logical :: local_cumulative
 !
-      real(dp), dimension(:,:), allocatable :: F, shp_density_schwarz, X_alpha, X_beta
-!
-      real(dp) :: coulomb_thr, exchange_thr, precision_thr    ! Actual thresholds
-!
-      real(dp) :: max_D_schwarz, max_eri_schwarz
+      real(dp), dimension(:,:), allocatable :: X_alpha, X_beta, J
 !
       type(timings), allocatable :: timer
 !
@@ -222,100 +227,52 @@ contains
 !     and determine whether the construction should be
 !     cumulative or not
 !
-      coulomb_thr   = wf%coulomb_threshold
-      exchange_thr  = wf%exchange_threshold
-      precision_thr = wf%ao%get_libint_epsilon()
-!
       local_cumulative = .false.
-      if (present(cumulative)) then
+      if (present(cumulative)) local_cumulative = cumulative
 !
-         if (cumulative) then
+      call mem%alloc(J, wf%ao%n, wf%ao%n)
 !
-            local_cumulative = .true.
+      factory = J_tool_factory(wf%coulomb_threshold)
+      call factory%create(screener, adder)
 !
-         else
+      G_builder = ao_G_builder(screener, adder)
+      call G_builder%construct(wf%ao, wf%eri_getter, D, J)
 !
-            local_cumulative = .false.
+      call mem%alloc(X_alpha, wf%ao%n, wf%ao%n)
 !
-         endif
+      deallocate(screener)
+      deallocate(adder)
 !
-      endif
+      factory = K_tool_factory(wf%exchange_threshold)
+      call factory%create(screener, adder)
+      deallocate(factory)
 !
-!     Compute number of significant ERI shell pairs (the Fock construction
-!     only loops over these shell pairs) and the maximum element
+      G_builder = ao_G_builder(screener, adder)
+      call G_builder%construct(wf%ao, wf%eri_getter, D_alpha, X_alpha)
+      deallocate(G_builder)
 !
-      max_eri_schwarz = get_abs_max(wf%ao%cs_eri_max, wf%ao%n_sh*(wf%ao%n_sh + 1)/2)
+      call mem%alloc(X_beta, wf%ao%n, wf%ao%n)
 !
-!     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors
-!     and parallellizing over available threads (each gets its own copy of the Fock matrix)
-!
-      call mem%alloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
-      call wf%construct_shp_density_schwarz(shp_density_schwarz, D)
-      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
-!
-!$    n_threads = omp_get_max_threads()
-!
-      call mem%alloc(F, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
-      call zero_array(F , wf%ao%n**2*n_threads)
-!
-      call wf%construct_coulomb_ao_G(F, D, n_threads, max_D_schwarz, max_eri_schwarz,            &
-                                                shp_density_schwarz,                             &
-                                                wf%ao%n_sig_eri_shp, coulomb_thr, precision_thr, &
-                                                wf%ao%shells)
-!
-!     Construct the exchange two electron part of the Fock matrix, using the screening vectors
-!     and parallellizing over available threads (each gets its own copy of the Fock matrix)
-!
-      call wf%construct_shp_density_schwarz(shp_density_schwarz, D_alpha)
-      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
-!
-      call mem%alloc(X_alpha, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
-!
-      call zero_array(X_alpha , wf%ao%n**2*n_threads)
-      call wf%construct_exchange_ao_G(X_alpha, D_alpha, n_threads, max_D_schwarz,    &
-                                      max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
-                                      exchange_thr, precision_thr, wf%ao%shells)
-!
-      call wf%construct_shp_density_schwarz(shp_density_schwarz, D_beta)
-      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
-!
-      call mem%alloc(X_beta, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
-!
-      call zero_array(X_beta, wf%ao%n**2*n_threads)
-      call wf%construct_exchange_ao_G(X_beta, D_beta, n_threads, max_D_schwarz,    &
-                                      max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
-                                      exchange_thr, precision_thr, wf%ao%shells)
-!
-      call mem%dealloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
+      G_builder = ao_G_builder(screener, adder)
+      call G_builder%construct(wf%ao, wf%eri_getter, D_beta, X_beta)
+      deallocate(G_builder)
 !
 !     Add the accumulated Fock matrix F into the correct Fock matrix
 !     (i.e., either the alpha or beta Fock matrix )
 !
       if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_a, 1)
-      do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, half, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
-         call daxpy(wf%ao%n**2, one, X_alpha(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
-!
-      enddo
-!
-      call symmetric_sum(wf%ao_fock_a, wf%ao%n)
-      call dscal(wf%ao%n**2, half, wf%ao_fock_a, 1)
+      call daxpy(wf%ao%n**2, half, J, 1, wf%ao_fock_a, 1)
+      call daxpy(wf%ao%n**2, one, X_alpha, 1, wf%ao_fock_a, 1)
 !
       if (.not. local_cumulative) call dcopy(wf%ao%n**2, h_wx, 1, wf%ao_fock_b, 1)
-      do thread = 1, n_threads
 !
-         call daxpy(wf%ao%n**2, half, F(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
-         call daxpy(wf%ao%n**2, one, X_beta(1, (thread-1)*wf%ao%n + 1), 1, wf%ao_fock_b, 1)
+      call daxpy(wf%ao%n**2, half, J, 1, wf%ao_fock_b, 1)
+      call daxpy(wf%ao%n**2, one, X_beta, 1, wf%ao_fock_b, 1)
 !
-      enddo
-!
-      call symmetric_sum(wf%ao_fock_b, wf%ao%n)
-      call dscal(wf%ao%n**2, half, wf%ao_fock_b, 1)
-!
-      call mem%dealloc(F, wf%ao%n, wf%ao%n*n_threads)
-      call mem%dealloc(X_alpha, wf%ao%n, wf%ao%n*n_threads)
-      call mem%dealloc(X_beta, wf%ao%n, wf%ao%n*n_threads)
+      call mem%dealloc(J, wf%ao%n, wf%ao%n)
+      call mem%dealloc(X_alpha, wf%ao%n, wf%ao%n)
+      call mem%dealloc(X_beta, wf%ao%n, wf%ao%n)
       call timer%turn_off()
 !
    end subroutine construct_ao_spin_fock_uhf

@@ -9,9 +9,15 @@
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074 and eT-program/eT!1080
 - Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
 - Davidson tool now counts the number of new trials. eT-program/eT!1089
+- Introduced tools to build the G-matrix (two-electron contribution to Fock) or Coulomb and exchange matrices separately. eT-program/eT!870
 - Restructured printing of mean values. eT-program/eT!1086
 - Restructured FCI engine to use tasks. eT-program/eT!1087
 - Restructured reference/HF engines to use task structure. eT-program/eT!1088
+
+### Optimization
+- Removed N^3 scaling from Fock construction visible for very large systems. eT-program/eT!870
+- Linear exchange algorithm added (similar to LinK). eT-program/eT!870
+- Non-scaling iterative Fock matrix construction and linear scaling non-iterative Fock matrix construction for MLHF. eT-program/eT!870
 
 # eT v1.7.4
 ### Bugfixes

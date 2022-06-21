@@ -73,8 +73,13 @@ module ao_tool_class
 !
       real(dp), dimension(:,:), allocatable, public :: cs_eri_max         ! Contains (AB|AB)^1/2
       integer, dimension(:,:), allocatable, public  :: cs_eri_max_indices ! Sorting indices
+      real(dp), dimension(:), allocatable, public :: cs_eri_max_sh
+      real(dp), public :: g_max
 !
-      integer, private :: n_centers
+      integer, dimension(:,:), allocatable, public :: sig_s2_for_s1
+      integer, dimension(:), allocatable, public :: n_sig_s2_for_s1
+!
+      integer :: n_centers
       type(atomic_center), dimension(:), allocatable, private :: centers ! AO basis centers
 !
       integer, private  :: n_orthonormal_ao ! Orthonormal AOs (OAOs)
@@ -240,6 +245,15 @@ module ao_tool_class
       procedure, public :: get_centers &
                         => get_centers_ao_tool
 !
+      procedure, public :: construct_shp_X &
+                        => construct_shp_X_ao_tool
+!
+      procedure, public :: construct_sh_X_from_shp_X &
+                        => construct_sh_X_from_shp_X_ao_tool
+!
+      procedure, public :: construct_sh_X_max_index_1 &
+                        => construct_sh_X_max_index_1_ao_tool
+!
       procedure, private :: construct_cs_eri_max_screenings ! Cauchy-Schwarz (CS),
                                                             ! electron repulsion integrals (ERIs)
 !
@@ -394,7 +408,10 @@ contains
 !
       call mem%alloc(ao%cs_eri_max,         ao%n_sh*(ao%n_sh + 1)/2, 2)
       call mem%alloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
-!
+      call mem%alloc(ao%cs_eri_max_sh, ao%n_sh)
+      call mem%alloc(ao%sig_s2_for_s1, ao%n_sh, ao%n_sh)
+      call mem%alloc(ao%n_sig_s2_for_s1, ao%n_sh)
+
       call ao%construct_stored_oei('overlap')
 !
       call ao%determine_linearly_independent_aos()
@@ -455,6 +472,10 @@ contains
 !
       call mem%alloc(ao%cs_eri_max,         ao%n_sh*(ao%n_sh + 1)/2, 2)
       call mem%alloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
+      call mem%alloc(ao%cs_eri_max_sh, ao%n_sh)
+      call mem%alloc(ao%sig_s2_for_s1, ao%n_sh, ao%n_sh)
+      call mem%alloc(ao%n_sig_s2_for_s1, ao%n_sh)
+
 !
       call ao%copy_geometry_dependent_variables(template)
 !
@@ -2285,13 +2306,14 @@ contains
 !!       abs ( g_wxyz ) <= g_wxwx^1/2 * g_yzyz^1/2 <= g_wxwx^1/2 * (max g)
 !!
       use timings_class, only: timings
-      use array_utilities, only: quicksort_with_index_descending, get_abs_max
+      use array_utilities, only: quicksort_with_index_descending, get_abs_max, quicksort_ascending_int, zero_array
 !
       implicit none
 !
       class(ao_tool), intent(inout) :: ao
 !
       integer :: A, B, AB
+      integer :: s1, s2, s1s2, s1s2_packed
 !
       real(dp) :: maximum
 !
@@ -2356,6 +2378,48 @@ contains
          else
 !
             ao%n_sig_eri_shp = ao%n_sig_eri_shp + 1
+!
+         endif
+!
+      enddo
+!
+      call zero_array(ao%cs_eri_max_sh, ao%n_sh)
+!
+      do s1s2 = 1, ao%n_sig_eri_shp
+!
+         s1s2_packed = ao%cs_eri_max_indices(s1s2, 3)
+         s1 = ao%cs_eri_max_indices(s1s2_packed, 1)
+!
+         if (ao%cs_eri_max(s1s2, 1) > ao%cs_eri_max_sh(s1)) &
+            ao%cs_eri_max_sh(s1) = ao%cs_eri_max(s1s2, 1)
+!
+      enddo
+!
+      ao%g_max = get_abs_max(ao%cs_eri_max_sh, ao%n_sh)
+!
+      ao%sig_s2_for_s1 = 0
+      ao%n_sig_s2_for_s1 = 0
+!
+      do s1s2 = 1, ao%n_sig_eri_shp
+!
+         s1s2_packed = ao%cs_eri_max_indices(s1s2, 3)
+!
+         s1 = ao%cs_eri_max_indices(s1s2_packed, 1)
+         s2 = ao%cs_eri_max_indices(s1s2_packed, 2)
+!
+         ao%n_sig_s2_for_s1(s1) = ao%n_sig_s2_for_s1(s1) + 1
+         ao%sig_s2_for_S1(ao%n_sig_s2_for_s1(s1), s1) = s2
+!
+      enddo
+!
+!     Sort the columns of the sig_s4_indices matrix in ascending order
+!
+      do s1 = 1, ao%n_sh
+!
+         if (ao%n_sig_s2_for_s1(s1) .gt. 0) then
+!
+            call quicksort_ascending_int(ao%sig_s2_for_s1(1:ao%n_sig_s2_for_s1(s1), s1), &
+                                         ao%n_sig_s2_for_s1(s1))
 !
          endif
 !
@@ -2765,6 +2829,15 @@ contains
       if (allocated(ao%cs_eri_max_indices)) &
          call mem%dealloc(ao%cs_eri_max_indices, ao%n_sh*(ao%n_sh + 1)/2, 3)
 !
+      if (allocated(ao%cs_eri_max_sh)) &
+         call mem%dealloc(ao%cs_eri_max_sh, ao%n_sh)
+!
+      if (allocated(ao%sig_s2_for_s1)) &
+         call mem%dealloc(ao%sig_s2_for_s1, ao%n_sh, ao%n_sh)
+!
+      if (allocated(ao%n_sig_s2_for_s1)) &
+         call mem%dealloc(ao%n_sig_s2_for_s1, ao%n_sh)
+!
    end subroutine destructor
 !
 !
@@ -3139,6 +3212,147 @@ contains
    end subroutine get_centers_ao_tool
 !
 !
+   subroutine construct_shp_X_ao_tool(ao, X, shp_X_max)
+!!
+!!    Construct shell-pair X max
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+!!    Computes a vector that contains the largest value (in absolute terms)
+!!    of X_wx for each shell pair (A,B), where w and x is in A and B,
+!!    respectively.
+!!
+!
+      use omp_lib
+      use array_utilities, only: get_abs_max
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      real(dp), dimension(ao%n_sh, ao%n_sh) :: shp_X_max
+!
+      real(dp), dimension(ao%n, ao%n), intent(in) :: X
+!
+      real(dp), dimension(:,:), allocatable, target :: shp_X
+      real(dp), dimension(:,:), contiguous, pointer :: shp_X_p => null()
+!
+      type(range_) :: s1_range, s2_range
+!
+      integer :: s1, s2
+      integer :: n_threads = 1, thread = 0
+!
+      real(dp) :: maximum
+!
+!$    n_threads = omp_get_max_threads()
+!
+      call mem%alloc(shp_X, ao%max_sh_size**2, n_threads)
+!
+!$omp parallel do private(s1, s2, s1_range, s2_range, shp_X_p, maximum, thread) schedule(dynamic)
+      do s1 = 1, ao%n_sh
+         do s2 = 1, s1
+!
+!$          thread = omp_get_thread_num()
+!
+            s1_range = ao%shells(s1)
+            s2_range = ao%shells(s2)
+!
+            shp_X_p(1:s1_range%length,1:s2_range%length) &
+                  => shp_X(1:s1_range%length*s2_range%length,thread+1)
+!
+            shp_X_p = X(s1_range%first : s1_range%get_last(), &
+                        s2_range%first : s2_range%get_last())
+!
+            maximum = get_abs_max(shp_X_p, (s1_range%length)*(s2_range%length))
+!
+            nullify(shp_X_p)
+!
+            shp_X_max(s1, s2) = maximum
+            shp_X_max(s2, s1) = maximum
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(shp_X, ao%max_sh_size**2, n_threads)
+!
+   end subroutine construct_shp_X_ao_tool
+!
+!
+   subroutine construct_sh_X_from_shp_X_ao_tool(ao, shp_X_max, sh_X_max)
+!!
+!!    Construct shell X max from shell pair max
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    For the N_sh x N_sh matrix shp_X_max,
+!!    this routine returns the max of the second dimension
+!!    for each index in the first dimension:
+!!
+!!    sh_X_max(p) = max_q shp_X_max(p, q)
+!!
+      use omp_lib
+      use array_utilities, only: get_abs_max, zero_array
+!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      real(dp), dimension(ao%n_sh, ao%n_sh) :: shp_X_max
+      real(dp), dimension(ao%n_sh), intent(out) :: sh_X_max
+!
+      integer :: s1, s2
+!
+      call zero_array(sh_X_max, ao%n_sh)
+!
+      do s1 = 1, ao%n_sh
+         do s2 = 1, ao%n_sh
+!
+            if (shp_X_max(s1,s2) .gt. sh_X_max(s1)) sh_X_max(s1) = shp_X_max(s1,s2)
+!
+         enddo
+      enddo
+!
+   end subroutine construct_sh_X_from_shp_X_ao_tool
+!
+!
+   subroutine construct_sh_X_max_index_1_ao_tool(ao, n, X, sh_X_max)
+!!
+!!    Construct shell X max index 1
+!!    Written by Sarai D. Folkestad, 2021
+!!
+!!    For the N_AO x N matrix X, this routine
+!!    returns the maximum within each shell in sh_X_max
+!!
+      implicit none
+!
+      class(ao_tool), intent(in) :: ao
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(ao%n, n) :: X
+      real(dp), dimension(ao%n_sh), intent(out) :: sh_X_max
+!
+      integer :: s1, w, q
+!
+      do s1 = 1, ao%n_sh
+!
+         sh_X_max(s1) = zero
+!
+         do q = 1, n
+            do w = ao%shells(s1)%first, ao%shells(s1)%get_last()
+!
+               if (abs(X(w, q)) > sh_X_max(s1)) then
+!
+                  sh_X_max(s1) = abs(X(w, q))
+!
+               endif
+!
+            enddo
+         enddo
+      enddo
+!
+   end subroutine construct_sh_X_max_index_1_ao_tool
+
+
    subroutine get_eri_2c_ao_tool(ao, g, J, K, precision_, skip)
 !!
 !!    Get ERI 2 center
@@ -3162,7 +3376,6 @@ contains
       implicit none
 !
       class(ao_tool), intent(in) :: ao
-!
       type(shell), intent(in) :: J, K
 !
       real(dp), dimension(J%length * K%length), intent(out) :: g

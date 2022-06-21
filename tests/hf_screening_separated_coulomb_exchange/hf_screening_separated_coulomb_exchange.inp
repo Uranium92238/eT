@@ -1,0 +1,46 @@
+system
+   name: H2O string
+   charge: 0
+   multiplicity: 1
+end system
+
+do
+   ground state
+end do
+
+memory
+   available: 8
+end memory
+
+solver scf
+   algorithm: scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+   coulomb exchange terms: separated 
+end solver scf
+
+method
+   hf
+end method
+
+geometry
+basis: sto-3g
+O        1.41500       -2.02200       -0.79800
+H        2.29800       -1.66800       -0.90100
+H        0.83900       -1.26100       -0.87300
+O        5.91500       -2.02200       -0.79800
+H        6.79800       -1.66800       -0.90100
+H        5.33900       -1.26100       -0.87300
+O        10.41500       -2.02200       -0.79800
+H        9.53200       -2.37600       -0.69500
+H        10.99100       -2.78300       -0.72300
+O        14.91500       -2.02200       -0.79800
+H        14.03200       -2.37600       -0.69500
+H        15.49100       -2.78300       -0.72300
+O        19.41500       -2.02200       -0.79800
+H        20.29800       -1.66800       -0.90100
+H        18.83900       -1.26100       -0.87300
+O        23.91500       -2.02200       -0.79800
+H        23.03200       -2.37600       -0.69500
+H        24.49100       -2.78300       -0.72300
+end geometry

@@ -36,6 +36,8 @@ module uhf_class
    use stream_file_class, only: stream_file
    use output_file_class, only: output_file
 !
+   use ao_eri_getter_class,  only: ao_eri_getter
+!
    use timings_class, only: timings
 !
    implicit none
@@ -190,6 +192,7 @@ contains
 !
       wf%name_ = 'uhf'
       wf%cumulative_fock = .false.
+      wf%coulomb_exchange_separated = .false.
       wf%fractional_uniform_valence = .false.
 !
       call wf%read_settings()
@@ -216,6 +219,7 @@ contains
 !
       wf%cumulative_fock_threshold  = 1.0d0
       wf%cumulative_fock            = .false.
+      wf%coulomb_exchange_separated = .false.
 !
       wf%fractional_uniform_valence = fractional_uniform_valence
 !
@@ -265,6 +269,8 @@ contains
       wf%frozen_hf_mos = .false.
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
+      wf%eri_getter = ao_eri_getter(wf%ao)
 !
    end subroutine prepare_uhf
 !

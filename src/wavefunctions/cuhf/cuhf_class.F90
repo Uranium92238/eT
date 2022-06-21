@@ -103,7 +103,7 @@ contains
          call daxpy(wf%ao%n**2, -one, wf%previous_ao_density(1,1,1), 1, D_diff, 1)
          call daxpy(wf%ao%n**2, -one, wf%previous_ao_density(1,1,2), 1, D_diff, 1)
 !
-         call wf%construct_ao_G(D_diff, G)
+         call wf%get_G(D_diff, G)
          call daxpy(wf%ao%n**2, half, G, 1, wf%ao_F_cs, 1)
 !
          call mem%dealloc(D_diff, wf%ao%n, wf%ao%n)
@@ -111,7 +111,7 @@ contains
 !
       else
 !
-         call wf%construct_ao_G(wf%ao_density, wf%ao_F_cs)
+         call wf%get_G(wf%ao_density, wf%ao_F_cs)
          call dscal(wf%ao%n**2, half, wf%ao_F_cs, 1)
          call daxpy(wf%ao%n**2, one, wf%ao%h, 1, wf%ao_F_cs, 1)
 !
@@ -139,61 +139,53 @@ contains
       use array_utilities, only: copy_and_scale, get_abs_max, zero_array
       use reordering, only: symmetric_sum
 !
+      use abstract_G_adder_class,      only: abstract_G_adder
+      use abstract_G_screener_class,   only: abstract_G_screener
+      use ao_G_builder_class,          only: ao_G_builder
+!
+      use abstract_G_tool_factory_class, only: abstract_G_tool_factory
+      use J_tool_factory_class,          only: J_tool_factory
+      use K_tool_factory_class,          only: K_tool_factory
+!
+      use timings_class, only: timings
+!
       implicit none
 !
       class(cuhf) :: wf
-!
       real(dp), dimension(:,:), allocatable :: D_spin_diff
 !
-      integer :: thread = 0, n_threads = 1
+      class(ao_G_builder),             allocatable :: G_builder
+      class(abstract_G_screener),      allocatable :: screener
+      class(abstract_G_adder),         allocatable :: adder
+      class(abstract_G_tool_factory),  allocatable :: factory
 !
-      real(dp), dimension(:,:), allocatable :: F, shp_density_schwarz
+      type(timings), allocatable :: timer
 !
-      real(dp) :: exchange_thr, precision_thr
-!
-      real(dp) :: max_D_schwarz, max_eri_schwarz
-!
-      exchange_thr  = wf%exchange_threshold
-      precision_thr = wf%ao%get_libint_epsilon()
+      timer = timings('AO Fock construction', 'normal')
+      call timer%turn_on()
 !
       call mem%alloc(D_spin_diff, wf%ao%n, wf%ao%n)
 !
       call dcopy(wf%ao%n**2, wf%ao_density_a, 1, D_spin_diff, 1)
       call daxpy(wf%ao%n**2, -one, wf%ao_density_b, 1, D_spin_diff, 1)
 !
+      factory = K_tool_factory(wf%exchange_threshold)
+      call factory%create(screener, adder)
+      deallocate(factory)
+!
       call zero_array(wf%ao_fock_b, wf%ao%n**2)
       call zero_array(wf%ao_fock_a, wf%ao%n**2)
 !
-!$    n_threads = omp_get_max_threads()
+      G_builder = ao_G_builder(screener, adder)
+      call G_builder%construct(wf%ao, wf%eri_getter, D_spin_diff, wf%ao_fock_a)
+      deallocate(G_builder)
 !
-      call mem%alloc(F, wf%ao%n, wf%ao%n*n_threads) ! [F(thread 1) F(thread 2) ...]
-      call zero_array(F, (wf%ao%n**2)*n_threads)
-!
-      max_eri_schwarz = get_abs_max(wf%ao%cs_eri_max, wf%ao%n_sh*(wf%ao%n_sh + 1)/2)
-!
-      call mem%alloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
-      call wf%construct_shp_density_schwarz(shp_density_schwarz, D_spin_diff)
-      max_D_schwarz = get_abs_max(shp_density_schwarz, wf%ao%n_sh**2)
-!
-      call wf%construct_exchange_ao_G(F, D_spin_diff, n_threads, max_D_schwarz,                  &
-                                      max_eri_schwarz, shp_density_schwarz, wf%ao%n_sig_eri_shp, &
-                                      exchange_thr, precision_thr, wf%ao%shells) ! -1/2 D_wx g_yxwz
-!
-      call mem%dealloc(shp_density_schwarz, wf%ao%n_sh, wf%ao%n_sh)
-      call mem%dealloc(D_spin_diff, wf%ao%n, wf%ao%n)
-!
-      do thread = 1, n_threads
-!
-         call daxpy(wf%ao%n**2, half, F(1, (thread - 1)*wf%ao%n + 1), 1, wf%ao_fock_a, 1)
-!
-      enddo
-!
-      call mem%dealloc(F, wf%ao%n, wf%ao%n*n_threads)
-!
-      call symmetric_sum(wf%ao_fock_a, wf%ao%n)
       call dscal(wf%ao%n**2, half, wf%ao_fock_a, 1)
 !
       call copy_and_scale(-one, wf%ao_fock_a, wf%ao_fock_b, wf%ao%n**2)
+!
+      call timer%turn_off()
+      call mem%dealloc(D_spin_diff, wf%ao%n, wf%ao%n)
 !
    end subroutine construct_spin_fock_contribution_cuhf
 !

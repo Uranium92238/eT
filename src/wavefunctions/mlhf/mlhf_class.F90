@@ -61,7 +61,9 @@ module mlhf_class
    use global_out,           only: output
    use global_in,            only: input
 !
-   use stream_file_class, only : stream_file
+   use stream_file_class,    only: stream_file
+   use timings_class,        only: timings
+   use ao_eri_getter_class,  only: ao_eri_getter
 !
    implicit none
 !
@@ -83,6 +85,8 @@ module mlhf_class
       logical :: minimal_basis_diagonalization
       logical :: full_space_optimization
       logical :: print_initial_hf
+      logical :: C_screening
+      logical :: inactive_coulomb_exchange_separated
 !
       real(dp), dimension(:,:), allocatable :: imo_to_mo ! Unitary transformation between initial MO basis (IMO)
                                                            ! and current MO basis
@@ -125,6 +129,8 @@ module mlhf_class
 !
       procedure :: update_fock_and_energy                   => update_fock_and_energy_mlhf
 !
+      procedure :: get_G_MO_screened => get_G_MO_screened_mlhf
+!
       procedure :: prepare_for_cc                           => prepare_for_cc_mlhf
       procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
       procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
@@ -132,6 +138,8 @@ module mlhf_class
       procedure :: prepare_mos                              => prepare_mos_mlhf
 !
       procedure :: get_full_idempotent_density              => get_full_idempotent_density_mlhf
+!
+      procedure :: set_coulomb_exchange_separation          => set_coulomb_exchange_separation_mlhf
 !
       procedure :: get_F &
                 => get_F_mlhf
@@ -141,6 +149,12 @@ module mlhf_class
 !
       procedure :: set_C_and_e &
                 => set_C_and_e_mlhf
+!
+!
+      procedure :: update_G_non_cumulative &
+                => update_G_non_cumulative_mlhf
+      procedure :: update_G_cumulative &
+                => update_G_cumulative_mlhf
 !
       procedure :: initialize_imo_to_mo &
                 => initialize_imo_to_mo_mlhf
@@ -164,6 +178,12 @@ module mlhf_class
 !
    end type mlhf
 !
+!
+   interface
+!
+      include "ao_fock_mlhf_interface.F90"
+!
+   end interface
 !
    interface mlhf
 !
@@ -192,8 +212,9 @@ contains
       wf%cholesky_virtuals             = .false.
       wf%print_initial_hf              = .false.
       wf%cumulative_fock               = .false.
-!
-      wf%cumulative_fock_threshold = 1.0d0
+      wf%C_screening                   = .true.
+      wf%cumulative_fock_threshold     = 1.0d0
+      wf%coulomb_exchange_separated    = .false.
 !
       call wf%read_settings()
 !
@@ -247,6 +268,8 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
 !
+      wf%eri_getter = ao_eri_getter(wf%ao)
+!
    end subroutine prepare_mlhf
 !
 !
@@ -270,8 +293,12 @@ contains
 !!    - constructs the active density.
 !!
 !
-      use array_utilities, only : identity_array
-      use timings_class,     only : timings
+      use timings_class,                  only: timings
+      use array_utilities,                only : identity_array
+      use ao_G_builder_class,             only: ao_G_builder
+      use abstract_G_adder_class,         only: abstract_G_adder
+      use abstract_G_screener_class,      only: abstract_G_screener
+      use G_tool_factory_class,           only: G_tool_factory
 !
       implicit none
 !
@@ -281,6 +308,11 @@ contains
       real(dp), dimension(:,:), allocatable :: h
 !
       type(timings) :: timer
+!
+      type(ao_G_builder),         allocatable :: G_builder
+      class(abstract_G_screener), allocatable :: screener
+      class(abstract_G_adder),    allocatable :: adder
+      class(G_tool_factory),      allocatable :: factory
 !
 !     Construct AO Fock from SAD density
 !
@@ -292,7 +324,11 @@ contains
 !     Construct the two electron part of the Fock matrix (G),
 !     and add the contribution to the Fock matrix
 !
-      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+      factory = G_tool_factory(wf%coulomb_threshold, wf%exchange_threshold)
+      call factory%create(screener, adder)
+!
+      G_builder = ao_G_builder(screener, adder)
+      call G_builder%construct(wf%ao, wf%eri_getter, wf%ao_density, wf%ao_fock)
       call dscal(wf%ao%n**2, half, wf%ao_fock, 1)
 !
 !     Add the one-electron part
@@ -390,7 +426,6 @@ contains
       class(mlhf), intent(inout) :: wf
       logical, intent(in) :: cumulative
 !
-      real(dp), dimension(:,:), allocatable :: G
       real(dp), dimension(:,:), allocatable :: h
 !
       type(timings) :: timer
@@ -404,37 +439,11 @@ contains
       if (cumulative) then
 !
          call output%printf('v', 'Fock matrix construction using density differences')
-!
-!        Construct the two electron part of the Fock matrix (G),
-!        and add the contribution to the Fock matrix
-!
-         call daxpy(wf%ao%n**2, -one, wf%previous_ao_density, 1, wf%ao_density, 1)
-!
-         call mem%alloc(G, wf%ao%n, wf%ao%n)
-!
-         call wf%construct_ao_G(wf%ao_density,                    &
-                                G,                                &
-                                C_screening=.true. )
-!
-         call daxpy(wf%ao%n**2, half, G, 1, wf%ao_fock, 1)
-!
-         call mem%dealloc(G, wf%ao%n, wf%ao%n)
-!
-         call daxpy(wf%ao%n**2, one, wf%previous_ao_density, 1, wf%ao_density, 1)
+         call wf%update_G_cumulative()
 !
       else
 !
-!        AO fock construction and energy calculation
-!
-!        Construct the two electron part of the Fock matrix (G),
-!        and add the contribution to the Fock matrix
-!
-         call wf%construct_ao_G(wf%ao_density,                    &
-                                wf%ao_fock,                       &
-                                C_screening=.true.)
-         call dscal(wf%ao%n**2, half, wf%ao_fock, 1)
-!
-!        Add the one-electron part
+         call wf%update_G_non_cumulative()
 !
          call daxpy(wf%ao%n**2, one, h, 1, wf%ao_fock, 1)
 !
@@ -462,6 +471,18 @@ contains
 !
       call daxpy(wf%n_mo**2, half, wf%G_De_mo, 1, wf%mo_fock, 1)
       call daxpy(wf%n_mo**2, half, wf%G_De_imo, 1, wf%imo_fock, 1)
+!
+      call output%printf('v', 'Active energy:  (f22.12)',          &
+                         reals=[wf%energy-wf%get_nuclear_repulsion()], fs='(t6,a)')
+!
+      call output%printf('v', 'Active-inactive energy:  (f22.12)', &
+                         reals=[wf%get_active_energy_G_De_term()], fs='(t6,a)')
+!
+      call output%printf('v', 'Inactive energy:  (f22.12)',        &
+                         reals=[wf%inactive_energy], fs='(t6,a)')
+!
+      call output%printf('v', 'Nuclear repulsion:  (f22.12)',      &
+                         reals=[wf%get_nuclear_repulsion()], fs='(t6,a)')
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !
@@ -855,6 +876,9 @@ contains
       if (input%is_keyword_present('print initial hf', 'multilevel hf')) &
             wf%print_initial_hf = .true.
 !
+      if (input%is_keyword_present('no mo screening', 'multilevel hf')) &
+            wf%C_screening = .false.
+!
 !     Sanity checks
 !
       if (input%is_keyword_present('initial hf threshold', 'multilevel hf') &
@@ -1173,9 +1197,7 @@ contains
       G_De_construction_timer = timings('G(De) construction', pl='normal')
       call G_De_construction_timer%turn_on()
 !
-!     Scale by two to get non-idempotent inactive density De
-!
-      call wf%construct_ao_G(wf%ao_density, wf%G_De_ao, C_screening=.true.)
+      call wf%get_G(wf%ao_density, wf%G_De_ao)
 !
       call wf%mo_transform(wf%G_De_ao, wf%G_De_imo)
       call dcopy(wf%n_mo**2, wf%G_De_imo, 1, wf%G_De_mo, 1)
@@ -1676,6 +1698,16 @@ contains
 !
       endif
 !
+      if (wf%C_screening) then
+!
+         call output%printf('m', 'MO screening enabled', fs='(/t6,a)')
+!
+      else
+!
+         call output%printf('m', 'MO screening turned off', fs='(/t6,a)')
+!
+      endif
+!
    end subroutine print_banner_mlhf
 !
 !
@@ -1773,6 +1805,101 @@ contains
       call wf%prepare_frozen_fock_terms()
 !
    end subroutine prepare_for_cc_mlhf
+!
+!
+   subroutine set_coulomb_exchange_separation_mlhf(wf)
+!!
+!!    Set Coulomb and exchange separation
+!!    Written by Linda Goletto, Aug 2020
+!!
+!!    If the 'coulomb exchange terms' keyword is defined in the input,
+!!    sets the first element of the wf%coulomb_exchange_separation list
+!!    to 'requested' and the second element to the input request;
+!!    if the 'coulomb exchange terms' keyword is not defined in the input,
+!!    sets the first element of the wf%coulomb_exchange_separation list
+!!    to 'default' and the second element to either 'separated' or
+!!    'collective', according to the number of active AOs being larger or
+!!    smaller/equal to a limit.
+!!
+      implicit none
+!
+      class(mlhf), intent(inout) :: wf
+!
+      integer :: n_ao_limit = 4000
+      integer :: n_active_aos
+      character(len=200) :: coulomb_exchange_separation
+!
+      call wf%ao%get_aos_in_subset('hf', last=n_active_aos)
+!
+      if (input%is_keyword_present('coulomb exchange terms', 'solver scf')) then
+!
+         call input%get_keyword('coulomb exchange terms', &
+                                           'solver scf',  &
+                                            coulomb_exchange_separation)
+!
+         wf%coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
+!
+      else
+!
+         if (n_active_aos .le. n_ao_limit) then
+!
+            wf%coulomb_exchange_separated = .false.
+!
+         else
+!
+            wf%coulomb_exchange_separated = .true.
+!
+         endif
+!
+      endif
+!
+      if (wf%coulomb_exchange_separated) then
+!
+         call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
+                                                   & matrix separately', fs='(/t3,a)')
+!
+      else
+!
+         call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
+                                                 & matrix collectively', fs='(/t3,a)')
+!
+      endif
+!
+      if (input%is_keyword_present('inactive coulomb exchange', 'multilevel hf')) then
+!
+         call input%get_keyword('inactive coulomb exchange', &
+                                           'multilevel hf',  &
+                                            coulomb_exchange_separation)
+!
+         wf%inactive_coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
+!
+      else
+!
+         if (wf%ao%n .le. n_ao_limit) then
+!
+            wf%inactive_coulomb_exchange_separated = .false.
+!
+         else
+!
+            wf%inactive_coulomb_exchange_separated = .true.
+!
+         endif
+!
+      endif
+!
+      if (wf%inactive_coulomb_exchange_separated) then
+!
+         call output%printf('v', 'Will perform Coulomb and exchange terms in the inactive Fock&
+                                                   & matrix separately', fs='(t3,a)')
+!
+      else
+!
+         call output%printf('v', 'Will perform Coulomb and exchange terms in the inactive Fock&
+                                                 & matrix collectively', fs='(t3,a)')
+!
+      endif
+!
+   end subroutine set_coulomb_exchange_separation_mlhf
 !
 !
    subroutine get_F_mlhf(wf, F_packed)

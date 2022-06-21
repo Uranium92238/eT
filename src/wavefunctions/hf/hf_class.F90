@@ -39,11 +39,15 @@ module hf_class
    use timings_class, only: timings
    use range_class, only: range_
 !
+   use ao_eri_getter_class, only: ao_eri_getter
+!
    implicit none
 !
 !  Hartree-Fock hf
 !
    type, extends(wavefunction) :: hf
+!
+      class(ao_eri_getter), allocatable :: eri_getter
 !
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:,:), allocatable :: previous_ao_density
@@ -53,6 +57,7 @@ module hf_class
 !
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
+      real(dp) :: integral_cutoff    = 1.0D-12   ! Default: sqrt(epsilon)
       real(dp) :: gradient_threshold = 1.0D-7    ! Gradient threshold for SCF equations
 !
       real(dp) :: cumulative_fock_threshold = 1.0d0
@@ -83,6 +88,8 @@ module hf_class
 !
       integer :: packed_gradient_dimension
       type(output_file) :: mo_information_file
+!
+      logical :: coulomb_exchange_separated
 !
    contains
 !
@@ -119,13 +126,8 @@ module hf_class
       procedure :: read_frozen_orbitals_settings &
                 => read_frozen_orbitals_settings_hf
 !
-      procedure :: construct_ao_G                              => construct_ao_G_hf
-      procedure :: construct_ao_G_thread_terms                 => construct_ao_G_thread_terms_hf
-      procedure :: construct_ao_G_thread_terms_mo_screened     => construct_ao_G_thread_terms_mo_screened_hf
+      procedure :: get_G => get_G_hf
       procedure :: construct_ao_G_1der                         => construct_ao_G_1der_hf
-!
-      procedure :: construct_coulomb_ao_G                      => construct_coulomb_ao_G_hf
-      procedure :: construct_exchange_ao_G                     => construct_exchange_ao_G_hf
 !
       procedure :: set_ao_fock                                 => set_ao_fock_hf
       procedure :: get_ao_fock                                 => get_ao_fock_hf
@@ -151,7 +153,6 @@ module hf_class
       procedure :: set_initial_ao_density_guess                => set_initial_ao_density_guess_hf
       procedure :: set_ao_density_to_core_guess                => set_ao_density_to_core_guess_hf
       procedure :: get_n_electrons_in_density                  => get_n_electrons_in_density_hf
-      procedure :: construct_shp_density_schwarz               => construct_shp_density_schwarz_hf
 !
 !     MO orbital related routines
 !
@@ -184,12 +185,13 @@ module hf_class
       procedure :: get_ao_h                                    => get_ao_h_hf
       procedure :: get_ao_g                                    => get_ao_g_hf
 !
-      procedure :: set_screening_and_precision_thresholds      => set_screening_and_precision_thresholds_hf
-      procedure :: set_gradient_threshold                      => set_gradient_threshold_hf
-      procedure :: print_screening_settings                    => print_screening_settings_hf
+      procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
+      procedure :: set_coulomb_exchange_separation          => set_coulomb_exchange_separation_hf
+      procedure :: print_screening_settings                 => print_screening_settings_hf
+      procedure :: set_gradient_threshold                   => set_gradient_threshold_hf
 !
-      procedure :: prepare_for_roothan_hall                    => prepare_for_roothan_hall_hf
-      procedure :: prepare                                     => prepare_hf
+      procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_hf
+      procedure :: prepare                                  => prepare_hf
 !
 !     Properties
 !
@@ -306,9 +308,12 @@ contains
 !
       wf%cumulative_fock_threshold  = 1.0d0
       wf%cumulative_fock            = .false.
+      wf%coulomb_exchange_separated = .false.
 !
       call wf%read_settings()
       call wf%print_banner()
+!
+      call wf%set_coulomb_exchange_separation()
 !
    end function new_hf
 !
@@ -1314,6 +1319,8 @@ contains
       wf%packed_gradient_dimension = wf%n_mo*(wf%n_mo - 1)/2
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
+      wf%eri_getter = ao_eri_getter(wf%ao)
 !
    end subroutine prepare_hf
 !
