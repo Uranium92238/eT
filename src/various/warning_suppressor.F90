@@ -57,7 +57,7 @@ module warning_suppressor
 !
 contains
 !
-   subroutine do_nothing_rank_0(x)
+   pure subroutine do_nothing_rank_0(x)
 !!
 !!    Do nothing rank 0
 !!    Written by Eirik F. Kjønstad, 2020
@@ -70,7 +70,7 @@ contains
 !
    end subroutine do_nothing_rank_0
 !
-   subroutine do_nothing_rank_1_real(x)
+   pure subroutine do_nothing_rank_1_real(x)
 !!
 !!    Do nothing rank 1
 !!    Written by Eirik F. Kjønstad, 2020
@@ -83,7 +83,7 @@ contains
 !
    end subroutine do_nothing_rank_1_real
 !
-   subroutine do_nothing_rank_1_integer(x)
+   pure subroutine do_nothing_rank_1_integer(x)
 !!
 !!    Do nothing rank 1
 !!    Written by Eirik F. Kjønstad, 2020
@@ -96,7 +96,7 @@ contains
 !
    end subroutine do_nothing_rank_1_integer
 !
-   subroutine do_nothing_rank_1_complex(x)
+   pure subroutine do_nothing_rank_1_complex(x)
 !!
 !!    Do nothing rank 1
 !!    Written by Eirik F. Kjønstad, 2020
@@ -109,7 +109,7 @@ contains
 !
    end subroutine do_nothing_rank_1_complex
 !
-   subroutine do_nothing_rank_2_real(x)
+   pure subroutine do_nothing_rank_2_real(x)
 !!
 !!    Do nothing rank 2
 !!    Written by Eirik F. Kjønstad, 2020
@@ -122,7 +122,7 @@ contains
 !
    end subroutine do_nothing_rank_2_real
 !
-   subroutine do_nothing_rank_2_integer(x)
+   pure subroutine do_nothing_rank_2_integer(x)
 !!
 !!    Do nothing rank 2
 !!    Written by Eirik F. Kjønstad, 2020
@@ -135,7 +135,7 @@ contains
 !
    end subroutine do_nothing_rank_2_integer
 !
-   subroutine do_nothing_rank_2_complex(x)
+   pure subroutine do_nothing_rank_2_complex(x)
 !!
 !!    Do nothing rank 2
 !!    Written by Eirik F. Kjønstad, 2020
@@ -148,7 +148,7 @@ contains
 !
    end subroutine do_nothing_rank_2_complex
 !
-   subroutine do_nothing_rank_3_real(x)
+   pure subroutine do_nothing_rank_3_real(x)
 !!
 !!    Do nothing rank 3
 !!    Written by Eirik F. Kjønstad, 2020
@@ -161,7 +161,7 @@ contains
 !
    end subroutine do_nothing_rank_3_real
 !
-   subroutine do_nothing_rank_3_integer(x)
+   pure subroutine do_nothing_rank_3_integer(x)
 !!
 !!    Do nothing rank 3
 !!    Written by Eirik F. Kjønstad, 2020
@@ -174,7 +174,7 @@ contains
 !
    end subroutine do_nothing_rank_3_integer
 !
-   subroutine do_nothing_rank_3_complex(x)
+   pure subroutine do_nothing_rank_3_complex(x)
 !!
 !!    Do nothing rank 3
 !!    Written by Eirik F. Kjønstad, 2020
@@ -187,7 +187,7 @@ contains
 !
    end subroutine do_nothing_rank_3_complex
 !
-   subroutine do_nothing_rank_4_real(x)
+   pure subroutine do_nothing_rank_4_real(x)
 !!
 !!    Do nothing rank 4
 !!    Written by Eirik F. Kjønstad, 2020
@@ -200,7 +200,7 @@ contains
 !
    end subroutine do_nothing_rank_4_real
 !
-   subroutine do_nothing_rank_4_integer(x)
+   pure subroutine do_nothing_rank_4_integer(x)
 !!
 !!    Do nothing rank 4
 !!    Written by Eirik F. Kjønstad, 2020
@@ -213,7 +213,7 @@ contains
 !
    end subroutine do_nothing_rank_4_integer
 !
-   subroutine do_nothing_rank_4_complex(x)
+   pure subroutine do_nothing_rank_4_complex(x)
 !!
 !!    Do nothing rank 4
 !!    Written by Eirik F. Kjønstad, 2020

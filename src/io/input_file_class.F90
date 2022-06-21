@@ -404,13 +404,15 @@ contains
 !
       mlhf%name_    = 'multilevel hf'
       mlhf%required = .false.
-      mlhf%keywords = [character(len=30) ::           &
+      mlhf%keywords = [character(len=30) ::         &
                       'initial hf optimization',    &
                       'initial hf threshold',       &
                       'print initial hf',           &
                       'cholesky threshold',         &
                       'project on minimal basis',   &
-                      'cholesky virtuals']
+                      'cholesky virtuals',          &
+                      'no mo screening',            &
+                      'inactive coulomb exchange']
 !
 !
       pcm%name_    = 'pcm'
@@ -475,6 +477,7 @@ contains
       solver_scf%keywords = [character(len=30) ::           &
                             'algorithm',                    &
                             'ao density guess',             &
+                            'coulomb exchange terms',       &
                             'coulomb threshold',            &
                             'crop',                         &
                             'cumulative fock threshold',    &

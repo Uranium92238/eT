@@ -1359,6 +1359,134 @@ contains
    end subroutine get_n_highest
 !
 !
+!
+   recursive subroutine quicksort_recursive_int(vec, first, last)
+!!
+!!    Recursive implementation of quicksort (descending order)
+!!
+!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
+!!    licensed under GPLv3.
+!!
+!!    Modified by Sarai D. Folkestad, 6. Aug. 2018
+!!
+!!    - Variable x renamed to pivot
+!!    - Variable t renamed to temp
+!!    - Added index_list
+!!
+!!    Modified by Andreas Skeidsvoll, 26. Feb. 2019
+!!
+!!    - Type real*8 changed to integer
+!!
+!     quicksort.f -*-f90-*-
+!     Author: t-nissie
+!     License: GPLv3
+!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!
+      implicit none
+!
+      integer, dimension(:), intent(inout) :: vec
+      integer, intent(in) :: first, last
+!
+      integer :: pivot, temp
+      integer :: i, j
+
+      pivot = vec((first+last)/2)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i)
+         vec(i) = vec(j)
+         vec(j) = temp
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_recursive_int(vec, first, i-1)
+      if (j + 1 < last)  call quicksort_recursive_int(vec, j+1, last)
+!
+   end subroutine quicksort_recursive_int
+!
+   recursive subroutine quicksort_recursive(vec, first, last)
+!!
+!!    Recursive implementation of quicksort (descending order)
+!!
+!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
+!!    licensed under GPLv3.
+!!
+!!    Modified by Sarai D. Folkestad, 6. Aug. 2018
+!!
+!!    - Type real*8 changed to real(dp)
+!!    - Variable x renamed to pivot
+!!    - Variable t renamed to temp
+!!
+!     quicksort.f -*-f90-*-
+!     Author: t-nissie
+!     License: GPLv3
+!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!
+      implicit none
+!
+      real(dp), dimension(:), intent(inout) :: vec
+      integer, intent(in) :: first, last
+!
+      real(dp) :: pivot, temp
+      integer :: i, j
+
+      pivot = vec((first+last)/2)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i)
+         vec(i) = vec(j)
+         vec(j) = temp
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_recursive(vec, first, i-1)
+      if (j + 1 < last)  call quicksort_recursive(vec, j+1, last)
+!
+   end subroutine quicksort_recursive
+!
+!
    recursive subroutine quicksort_with_index_recursive(vec, index_list, first, last)
 !!
 !!    Recursive implementation of quicksort with index list (descending order)
@@ -1548,6 +1676,38 @@ contains
       if (j + 1 < last)  call quicksort_with_index_recursive_int(vec, index_list, j+1, last)
 !
    end subroutine quicksort_with_index_recursive_int
+!
+!
+   subroutine quicksort_descending_int(vec, dim_)
+!!
+!!    Wrapper for recursive quicksort routine
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+      integer, dimension(dim_), intent(inout) :: vec
+!
+      call quicksort_recursive_int(vec, 1, dim_)
+!
+   end subroutine quicksort_descending_int
+!
+!
+   subroutine quicksort_ascending_int(vec, dim_)
+!!
+!!    Wrapper for recursive quicksort routine
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+      integer, dimension(dim_), intent(inout) :: vec
+!
+      vec = -1*vec
+!
+      call quicksort_recursive_int(vec, 1, dim_)
+!
+      vec = -1*vec
+!
+   end subroutine quicksort_ascending_int
 !
 !
    subroutine quicksort_with_index_descending_int(vec, index_list, dim_)

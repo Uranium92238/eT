@@ -110,6 +110,7 @@ module memory_manager_class
       procedure :: alloc_i_2_memory_manager
       procedure :: alloc_i_3_memory_manager
       procedure :: alloc_l_1_memory_manager
+      procedure :: alloc_l_2_memory_manager
       generic   :: alloc             => alloc_r_1_memory_manager,       &
                                         alloc_r_2_memory_manager,       &
                                         alloc_r_3_memory_manager,       &
@@ -122,7 +123,8 @@ module memory_manager_class
                                         alloc_i_1_memory_manager,       &
                                         alloc_i_2_memory_manager,       &
                                         alloc_i_3_memory_manager,       &
-                                        alloc_l_1_memory_manager
+                                        alloc_l_1_memory_manager,       &
+                                        alloc_l_2_memory_manager
 !
       procedure :: dealloc_r_1_memory_manager
       procedure :: dealloc_r_2_memory_manager
@@ -137,6 +139,8 @@ module memory_manager_class
       procedure :: dealloc_i_2_memory_manager
       procedure :: dealloc_i_3_memory_manager
       procedure :: dealloc_l_1_memory_manager
+      procedure :: dealloc_l_2_memory_manager
+
       generic   :: dealloc           => dealloc_r_1_memory_manager,     &
                                         dealloc_r_2_memory_manager,     &
                                         dealloc_r_3_memory_manager,     &
@@ -149,7 +153,8 @@ module memory_manager_class
                                         dealloc_i_1_memory_manager,     &
                                         dealloc_i_2_memory_manager,     &
                                         dealloc_i_3_memory_manager,     &
-                                        dealloc_l_1_memory_manager
+                                        dealloc_l_1_memory_manager,     &
+                                        dealloc_l_2_memory_manager
 !
 !     Routines for determining the number of batches
 !
@@ -1449,6 +1454,87 @@ contains
       mem%available = mem%available + log_size*size_array
 !
    end subroutine dealloc_l_1_memory_manager
+!
+!
+   subroutine alloc_l_2_memory_manager(mem, array, M, N)
+!!
+!!    Alloc log (memory manager)
+!!    Written by Rolf H. Myhre, September 2019
+!!
+!!    Allocates a two dimensional logical array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      logical, dimension(:,:), allocatable :: array
+!
+      integer, intent(in) :: M, N ! Dimension of array
+!
+      integer(i64) :: size_array ! Total size of array (M)
+      integer :: error = 0
+      integer :: log_size
+!
+      character(len=100) :: error_msg
+!
+      size_array = M * N
+!
+!     Allocate array and check whether allocation was successful
+!
+      allocate(array(M,N), stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_allocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!     Figure out how big a logical is.
+!
+      log_size = storage_size(array(1,1))/8
+      call mem%update_memory_after_alloc(size_array, log_size)
+!
+   end subroutine alloc_l_2_memory_manager
+!
+!
+   subroutine dealloc_l_2_memory_manager(mem, array, M, N)
+!!
+!!    Dealloc log (memory manager)
+!!    Written by Rolf H. Myhre, September 2019
+!!
+!!    Deallocates a one dimensional logical array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      logical, dimension(:,:), allocatable :: array
+!
+      integer, intent(in) :: M, N ! Dimension of array
+!
+      integer(i64) :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+      integer :: log_size
+!
+      character(len=100) :: error_msg
+!
+      size_array = M*N
+!
+!     Deallocate array and check whether deallocation was successful
+!
+      deallocate(array, stat = error, errmsg = error_msg)
+!
+      if (error .ne. 0) then
+         call mem%print_deallocation_error(size_array, error_msg)
+      endif
+!
+!     Update the available memory
+!
+      log_size = storage_size(array(1,1))/8
+      mem%available = mem%available + log_size*size_array
+!
+   end subroutine dealloc_l_2_memory_manager
 !
 !
    subroutine print_allocation_error_memory_manager(size_array, error_msg)

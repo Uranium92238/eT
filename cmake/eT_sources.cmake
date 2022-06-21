@@ -96,6 +96,8 @@ set(eT_fortran_sources
    src/engines/cc/factories/cc_propagator_factory_class.F90
    src/engines/cc/factories/cc_response_engine_factory_class.F90
 #
+   src/eri_tool/ao_eri_getter_class.F90
+   src/eri_tool/qed_ao_eri_getter_class.F90
    src/eri_tool/eri_tool_class.F90
    src/eri_tool/eri_adapter_class.F90
    src/eri_tool/eri_cholesky_disk_class.F90
@@ -247,6 +249,28 @@ set(eT_fortran_sources
    src/solvers/cc/asymmetric_lanczos_cc_es_class.F90
    src/solvers/bfgs_solver_class.F90
 #
+   src/tools/G_matrix_construction/screeners/abstract_G_screener_class.F90
+   src/tools/G_matrix_construction/screeners/G_screener_class.F90
+   src/tools/G_matrix_construction/screeners/K_screener_class.F90
+   src/tools/G_matrix_construction/screeners/J_screener_class.F90
+   src/tools/G_matrix_construction/screeners/G_MO_screener_class.F90
+   src/tools/G_matrix_construction/screeners/J_MO_screener_class.F90
+   src/tools/G_matrix_construction/screeners/K_MO_screener_class.F90
+#
+   src/tools/G_matrix_construction/adders/abstract_G_adder_class.F90
+   src/tools/G_matrix_construction/adders/G_adder_class.F90
+   src/tools/G_matrix_construction/adders/K_adder_class.F90
+   src/tools/G_matrix_construction/adders/J_adder_class.F90
+#
+   src/tools/G_matrix_construction/ao_G_builder_class.F90
+#
+   src/tools/G_matrix_construction/factories/abstract_G_tool_factory.F90
+   src/tools/G_matrix_construction/factories/G_tool_factory.F90
+   src/tools/G_matrix_construction/factories/J_tool_factory.F90
+   src/tools/G_matrix_construction/factories/K_tool_factory.F90
+   src/tools/G_matrix_construction/factories/G_tool_MO_screening_factory.F90
+   src/tools/G_matrix_construction/factories/J_tool_MO_screening_factory.F90
+   src/tools/G_matrix_construction/factories/K_tool_MO_screening_factory.F90
    src/solvers/eigen_davidson_solver_class.F90
    src/solvers/linear_davidson_solver_class.F90
 #
@@ -332,6 +356,7 @@ set(eT_fortran_sources
    src/wavefunctions/uhf/ao_fock_uhf.F90
 #
    src/wavefunctions/mlhf/mlhf_class.F90
+   src/wavefunctions/mlhf/ao_fock_mlhf.F90
 #
    src/wavefunctions/qed_hf/qed_hf_class.F90
 #
