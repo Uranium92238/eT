@@ -27,7 +27,7 @@ module tdhf_solver_factory_class
 
    use kinds
    use global_out,                      only: output
-   use transformation_tool_class,       only: transformation_tool
+   use transformation_class,            only: transformation
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use hf_class,                        only: hf
    use eigen_davidson_tool_class,       only: eigen_davidson_tool
@@ -88,12 +88,12 @@ contains
 !
       class(eigen_davidson_tool),       allocatable :: davidson
       class(convergence_tool),          allocatable :: convergence_checker
-      class(transformation_tool),       allocatable :: transformer
+      class(transformation),            allocatable :: transformer
       class(eigen_storage_tool),        allocatable :: storer
       class(start_vector_tool),         allocatable :: start_vector
       class(preconditioner_getter),     allocatable :: preconditioner
       class(eigen_davidson_print_tool), allocatable :: printer
-      class(null_projection_tool), allocatable :: projector
+      class(null_projection_tool),      allocatable :: projector
 !
       real(dp) :: lindep_threshold
 !
@@ -148,18 +148,18 @@ contains
 !!    Create RPA
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-      use rpa_transformation_tool_class,   only: rpa_transformation_tool
+      use rpa_transformation_class,        only: rpa_transformation
       use rpa_eigen_storage_tool_class,    only: rpa_eigen_storage_tool
       use rpa_preconditioner_getter_class, only: rpa_preconditioner_getter
 !
       implicit none
 !
-      class(transformation_tool),        allocatable, intent(inout)  :: transformer
+      class(transformation),             allocatable, intent(inout)  :: transformer
       class(eigen_storage_tool),         allocatable, intent(inout)  :: storer
       class(hf),                                      intent(in)     :: wf
       class(preconditioner_getter),      allocatable, intent(inout)  :: preconditioner
 !
-      transformer    = rpa_transformation_tool(wf)
+      transformer    = rpa_transformation(wf)
       storer         = rpa_eigen_storage_tool(wf)
       preconditioner = rpa_preconditioner_getter(wf)
 !
@@ -171,18 +171,18 @@ contains
 !!    Create Tamm-Dancoff
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-      use tamm_dancoff_transformation_tool_class,     only: tamm_dancoff_transformation_tool
+      use tamm_dancoff_transformation_class,     only: tamm_dancoff_transformation
       use tamm_dancoff_eigen_storage_tool_class,      only: tamm_dancoff_eigen_storage_tool
       use tamm_dancoff_preconditioner_getter_class,   only: tamm_dancoff_preconditioner_getter
 !
       implicit none
 !
-      class(transformation_tool),        allocatable, intent(inout)  :: transformer
+      class(transformation),        allocatable, intent(inout)  :: transformer
       class(eigen_storage_tool),         allocatable, intent(inout)  :: storer
       class(hf),                                      intent(in)     :: wf
       class(preconditioner_getter),      allocatable, intent(inout)  :: preconditioner
 !
-      transformer    = tamm_dancoff_transformation_tool(wf)
+      transformer    = tamm_dancoff_transformation(wf)
       storer         = tamm_dancoff_eigen_storage_tool(wf)
       preconditioner = tamm_dancoff_preconditioner_getter(wf)
 !
@@ -216,27 +216,27 @@ contains
       this%restart              = .false.
 !
 !
-      call input%get_keyword('states', 'solver tdhf', this%n_states)
+      call input%get_keyword('singlet states', 'solver tdhf es', this%n_states)
       if (this%n_states == 0) call output%error_msg('can not solve for 0 TDHF eigenstates')
 !
-      call input%get_keyword('max reduced dimension', 'solver tdhf', this%max_dim_red)
-      call input%get_keyword('max iterations', 'solver tdhf', this%max_iterations)
+      call input%get_keyword('max reduced dimension', 'solver tdhf es', this%max_dim_red)
+      call input%get_keyword('max iterations', 'solver tdhf es', this%max_iterations)
 
-      call input%get_keyword('residual threshold', 'solver tdhf', this%residual_threshold)
+      call input%get_keyword('residual threshold', 'solver tdhf es', this%residual_threshold)
 
-      if (input%is_keyword_present('energy threshold', 'solver tdhf')) then
+      if (input%is_keyword_present('energy threshold', 'solver tdhf es')) then
 !
-         call input%get_keyword('energy threshold', 'solver tdhf', this%energy_threshold)
+         call input%get_keyword('energy threshold', 'solver tdhf es', this%energy_threshold)
          this%energy_convergence = .true.
 !
       endif
 !
-      call input%get_keyword('storage', 'solver tdhf', storage)
+      call input%get_keyword('storage', 'solver tdhf es', storage)
       if (trim(storage) == 'disk') this%records_in_memory = .false.
 !
-      this%tamm_dancoff = input%is_keyword_present('tamm-dancoff', 'solver tdhf')
+      this%tamm_dancoff = input%is_keyword_present('tamm-dancoff', 'solver tdhf es')
 !
-      this%restart = input%is_keyword_present('restart', 'solver tdhf') &
+      this%restart = input%is_keyword_present('restart', 'solver tdhf es') &
                     .or. input%is_keyword_present('restart', 'do')
 !
    end subroutine read_settings

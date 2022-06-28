@@ -30,7 +30,7 @@ module eigen_davidson_solver_class
 !
    use abstract_solver_class,           only: abstract_solver
    use convergence_tool_class,          only: convergence_tool
-   use transformation_tool_class,       only: transformation_tool
+   use transformation_class,       only: transformation
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use start_vector_tool_class,         only: start_vector_tool
    use preconditioner_getter_class,     only: preconditioner_getter
@@ -47,7 +47,7 @@ module eigen_davidson_solver_class
       class(eigen_davidson_tool), allocatable, private  :: davidson
 !
       class(convergence_tool),          allocatable, private :: convergence_checker
-      class(transformation_tool),       allocatable, private :: transformer
+      class(transformation),       allocatable, private :: transformer
       class(eigen_storage_tool),        allocatable, private :: storer
       class(start_vector_tool),         allocatable, private :: start_vector
       class(preconditioner_getter),     allocatable, private :: preconditioner
@@ -90,7 +90,7 @@ contains
 !
       type(eigen_davidson_solver) :: this
 !
-      class(transformation_tool),       intent(in) :: transformer
+      class(transformation),       intent(in) :: transformer
       type(eigen_davidson_tool),        intent(in) :: davidson
       type(convergence_tool),           intent(in) :: convergence_checker
       class(eigen_storage_tool),        intent(in) :: storer

@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module tdhf_task_class
+module tdhf_es_task_class
 !
 !!
-!! TDHF task class
+!! TDHF es task class
 !! Written by Alexander C. Paul, Sarai D. Folkestad, May 2022
 !!
 !
@@ -29,41 +29,41 @@ module tdhf_task_class
 !
    implicit none
 !
-   type, extends(hf_task) :: tdhf_task
+   type, extends(hf_task) :: tdhf_es_task
 !
    contains
 !
       procedure, public :: execute &
-                        => execute_tdhf_task
+                        => execute_tdhf_es_task
 !
-   end type tdhf_task
+   end type tdhf_es_task
 !
 !
-   interface tdhf_task
+   interface tdhf_es_task
 !
-      procedure :: new_tdhf_task
+      procedure :: new_tdhf_es_task
 !
-   end interface tdhf_task
+   end interface tdhf_es_task
 !
 !
 contains
 !
 !
-   function new_tdhf_task() result(this)
+   function new_tdhf_es_task() result(this)
 !!
 !!    New
 !!    Written by Alexander C. Paul, May 2022
 !!
       implicit none
 !
-      type(tdhf_task) :: this
+      type(tdhf_es_task) :: this
 !
       this%name_ = 'Determining TDHF excitation energies'
 !
-   end function new_tdhf_task
+   end function new_tdhf_es_task
 !
 !
-   subroutine execute_tdhf_task(this, wf)
+   subroutine execute_tdhf_es_task(this, wf)
 !!
 !!    Execute
 !!    Written by Sarai D. Folkestad, May 2021
@@ -73,7 +73,7 @@ contains
 !
       implicit none
 !
-      class(tdhf_task), intent(inout) :: this
+      class(tdhf_es_task), intent(inout) :: this
       class(hf), target, intent(inout) :: wf
 !
       class(eigen_davidson_solver), allocatable :: solver
@@ -91,8 +91,7 @@ contains
 !
       call this%end_timer()
 !
-   end subroutine execute_tdhf_task
+   end subroutine execute_tdhf_es_task
 !
 !
-end module tdhf_task_class
-   
+end module tdhf_es_task_class

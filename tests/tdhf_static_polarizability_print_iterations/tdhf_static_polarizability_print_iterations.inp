@@ -4,7 +4,7 @@ system
 end system
 
 do
-   tdhf excited state
+   tdhf response
 end do
 
 memory
@@ -13,24 +13,22 @@ end memory
 
 solver scf
    algorithm:          scf-diis
-   energy threshold:   1.0d-10
-   gradient threshold: 1.0d-10
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
 end solver scf
 
 method
    hf
 end method
 
-solver tdhf es
-  restart
-  singlet states: 2
-  residual threshold: 1.0d-10
-end solver tdhf es
+solver tdhf response
+   print iterations
+   residual threshold: 1.0d-10
+end solver tdhf response
 
 geometry
 basis: cc-pVDZ
  H          0.86681        0.60144        5.00000
  H         -0.86681        0.60144        5.00000
  O          0.00000       -0.07579        5.00000
- He         0.00000        0.00000        7.50000
 end geometry

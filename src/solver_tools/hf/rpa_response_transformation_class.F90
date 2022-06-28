@@ -17,76 +17,79 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module tamm_dancoff_transformation_tool_class
+module rpa_response_transformation_class
 !
 !!
-!!    Tamm-Dancoff transformation class
+!!    RPA response transformation class
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
    use kinds
 !
    use hf_class,                    only: hf
-   use transformation_tool_class,   only: transformation_tool
+   use transformation_class,   only: transformation
 !
    implicit none
 !
-   type, extends(transformation_tool) :: tamm_dancoff_transformation_tool
+   type, extends(transformation) :: rpa_response_transformation
 !
       class(hf), pointer, private :: wf
+      real(dp) :: omega
 !
    contains
 !
-      procedure, public :: transform => transform_tamm_dancoff
-      procedure, public :: initialize  => initialize_tamm_dancoff
+      procedure, public :: transform => transform_rpa
+      procedure, public :: initialize  => initialize_rpa
 !
-   end type  tamm_dancoff_transformation_tool
+   end type  rpa_response_transformation
 !
-   interface  tamm_dancoff_transformation_tool
+   interface  rpa_response_transformation
 !
-      procedure :: new_tamm_dancoff_transformation_tool
+      procedure :: new_rpa_response_transformation
 !
-   end interface  tamm_dancoff_transformation_tool
+   end interface  rpa_response_transformation
 !
 contains
 !
-   function new_tamm_dancoff_transformation_tool(wf) result(this)
+   function new_rpa_response_transformation(wf, omega) result(this)
 !!
-!!    New Tamm-Dancoff transformation
+!!    New RPA response transformation
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       implicit none
 !
       class(hf), intent(in), target :: wf
-      type(tamm_dancoff_transformation_tool) :: this
+      type(rpa_response_transformation) :: this
+      real(dp) :: omega
 !
       this%wf => wf
-      this%n_parameters = wf%n_o*wf%n_v
+      this%n_parameters = 2*wf%n_o*wf%n_v
+      this%omega = omega
 !
-   end function new_tamm_dancoff_transformation_tool
+   end function new_rpa_response_transformation
 !
 !
-   subroutine transform_tamm_dancoff(this, trial, transform)
+   subroutine transform_rpa(this, trial, transform)
 !!
 !!    Transform
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-!!    Modified by Regina Matveeva, Sept 2021
-!!    Added frequency (necessary due to a modification of the transformation_tool)
+!!    Modified by Regina Matveeva, Sep 2021
+!!    Added frequency (necessary due to a modification of the transformation)
 !!
       use warning_suppressor, only: do_nothing
 !
       implicit none
 !
-      class(tamm_dancoff_transformation_tool), intent(in)   :: this
+      class(rpa_response_transformation), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
 !
-      call this%wf%tamm_dancoff_transformation(trial, transform)
+      call this%wf%get_response_transformation(trial, transform, this%omega)
 !
-   end subroutine transform_tamm_dancoff
+   end subroutine transform_rpa
 !
 !
-   subroutine initialize_tamm_dancoff(this)
+   subroutine initialize_rpa(this)
 !!
 !!    Initialize
 !!    Written by Regina Matveeva, Sept 2021
@@ -95,11 +98,11 @@ contains
 !
       implicit none
 !
-      class(tamm_dancoff_transformation_tool), intent(in) :: this
+      class(rpa_response_transformation), intent(in)   :: this
 !
       call do_nothing(this)
 !
-   end subroutine initialize_tamm_dancoff
+   end subroutine initialize_rpa
 !
 !
-end module tamm_dancoff_transformation_tool_class
+end module rpa_response_transformation_class

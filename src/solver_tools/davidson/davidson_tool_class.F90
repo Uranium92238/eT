@@ -182,11 +182,11 @@ contains
 !
       class(davidson_tool) :: davidson
 !
-      call davidson%trials%finalize()
-      call davidson%transforms%finalize()
+      if (allocated(davidson%trials)) call davidson%trials%finalize()
+      if (allocated(davidson%transforms)) call davidson%transforms%finalize()
 !
-      call mem%dealloc(davidson%omega_re, davidson%max_dim_red)
-      call mem%dealloc(davidson%omega_im, davidson%max_dim_red)
+      if (allocated(davidson%omega_re)) call mem%dealloc(davidson%omega_re, davidson%max_dim_red)
+      if (allocated(davidson%omega_im)) call mem%dealloc(davidson%omega_im, davidson%max_dim_red)
 !
       call davidson%destruct_reduced_space_quantities()
       if (davidson%do_precondition) call davidson%preconditioner%destruct_precondition_vector()

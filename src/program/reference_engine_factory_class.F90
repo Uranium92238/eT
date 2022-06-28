@@ -44,10 +44,11 @@ contains
 !!    Create
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
-      use hf_engine_class,        only: hf_engine
-      use hf_gs_engine_class,     only: hf_gs_engine
-      use hf_geoopt_engine_class, only: hf_geoopt_engine    
-      use hf_es_engine_class,     only: hf_es_engine
+      use hf_engine_class,                  only: hf_engine
+      use hf_gs_engine_class,               only: hf_gs_engine
+      use hf_geoopt_engine_class,           only: hf_geoopt_engine
+      use tdhf_es_engine_class,             only: tdhf_es_engine
+      use tdhf_polarizability_engine_class, only: tdhf_polarizability_engine
 !
       use global_in,              only: input
 !
@@ -59,9 +60,13 @@ contains
 !
          engine = hf_geoopt_engine()
 !
-      elseif (input%is_keyword_present('time dependent hf', 'do')) then
+      elseif (input%is_keyword_present('tdhf excited state', 'do')) then
 !
-         engine = hf_es_engine()
+         engine = tdhf_es_engine()
+!
+      elseif (input%is_keyword_present('tdhf response', 'do')) then
+!
+         engine = tdhf_polarizability_engine()
 !
       else
 !

@@ -17,34 +17,34 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module hf_es_engine_class
+module tdhf_polarizability_engine_class
 !
 !!
-!! HF excited state engine class
+!! TDHF polarizability engine class
 !! Written by Sarai D. Folkestad, Alexander C. Paul, 2018-2022
 !!
 !
    use hf_engine_class, only: hf_engine
    use hf_class,        only: hf
 !
-   use tdhf_task_class, only: tdhf_task
+   use tdhf_polarizability_task_class, only: tdhf_polarizability_task
 !
    implicit none
 !
-   type, extends(hf_engine) :: hf_es_engine
+   type, extends(hf_engine) :: tdhf_polarizability_engine
 !
-      type(tdhf_task), allocatable, private :: tdhf
+      type(tdhf_polarizability_task), allocatable, private :: tdhf
 !
    contains
 !
-      procedure, public :: ignite => ignite_hf_es_engine
+      procedure, public :: ignite => ignite_tdhf_polarizability_engine
 !
-   end type hf_es_engine
+   end type tdhf_polarizability_engine
 !
 contains
 !
 !
-   subroutine ignite_hf_es_engine(this, wf)
+   subroutine ignite_tdhf_polarizability_engine(this, wf)
 !!
 !!    Ignite
 !!    Written by Alexander C. Paul, May 2022
@@ -53,7 +53,7 @@ contains
 !
       implicit none
 !
-      class(hf_es_engine), intent(inout) :: this
+      class(tdhf_polarizability_engine), intent(inout) :: this
       class(hf),           intent(inout) :: wf
 !
       type(hf_gs_engine), allocatable :: gs_engine
@@ -61,11 +61,10 @@ contains
       gs_engine = hf_gs_engine()
       call gs_engine%ignite(wf)
 !
-      this%tdhf = tdhf_task()
+      this%tdhf = tdhf_polarizability_task()
       call this%tdhf%execute(wf)
 !
-   end subroutine ignite_hf_es_engine
+   end subroutine ignite_tdhf_polarizability_engine
 !
 !
-   end module hf_es_engine_class
-   
+   end module tdhf_polarizability_engine_class

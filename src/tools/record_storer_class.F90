@@ -843,11 +843,11 @@ contains
 !
       if (storer%in_memory) then
 !
-         call storer%linked_arrays%finalize()
+         if (allocated(storer%linked_arrays)) call storer%linked_arrays%finalize()
 !
       else
 !
-         call storer%file_%delete_()
+         if (allocated(storer%file_)) call storer%file_%delete_()
 !
       endif
 !

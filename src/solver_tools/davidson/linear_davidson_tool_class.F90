@@ -244,12 +244,12 @@ contains
 !
 !     Set tool parameters
 !
-      davidson%name_ = trim(name_)
-      davidson%n_parameters = n_parameters
-      davidson%n_solutions = n_equations
-      davidson%max_dim_red = min(max_dim_red, n_parameters)
-      davidson%lindep_threshold = lindep_threshold
-      davidson%n_rhs = n_rhs
+      davidson%name_             = trim(name_)
+      davidson%n_parameters      = n_parameters
+      davidson%n_solutions       = n_equations
+      davidson%max_dim_red       = min(max_dim_red, n_parameters)
+      davidson%lindep_threshold  = lindep_threshold
+      davidson%n_rhs             = n_rhs
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
 !

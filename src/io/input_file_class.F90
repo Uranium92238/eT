@@ -208,7 +208,8 @@ contains
       type(section) :: solver_scf
       type(section) :: solver_scf_geoopt
       type(section) :: system
-      type(section) :: tdhf
+      type(section) :: solver_tdhf_es
+      type(section) :: solver_tdhf_response
       type(section) :: visualization
 !
 !     Set input file name, access and format
@@ -311,12 +312,13 @@ contains
                               'cholesky eri',         &
                               'ground state',         &
                               'ground state geoopt',  &
+                              'tdhf response',        &
+                              'tdhf excited state',   &
                               'excited state',        &
                               'response',             &
                               'mean value',           &
                               'time dependent state', &
-                              'restart',              &
-                              'time dependent hf']
+                              'restart']
 !
 !
       electric_field%name_    = 'electric field'
@@ -619,18 +621,26 @@ contains
                         'charge',               &
                         'multiplicity']
 !
+      solver_tdhf_es%name_    = 'solver tdhf es'
+      solver_tdhf_es%required = .false.
+      solver_tdhf_es%keywords = [character(len=30) :: &
+                                'energy threshold',     &
+                                'max iterations',       &
+                                'max reduced dimension',&
+                                'residual threshold',   &
+                                'restart',              &
+                                'storage',              &
+                                'singlet states',       &
+                                'tamm-dancoff']
 !
-      tdhf%name_    = 'solver tdhf'
-      tdhf%required = .false.
-      tdhf%keywords = [character(len=30) ::    &
-                       'energy threshold',     &
-                       'max iterations',       &
-                       'max reduced dimension',&
-                       'residual threshold',   &
-                       'restart',              &
-                       'storage',              &
-                       'states',               &
-                       'tamm-dancoff']
+      solver_tdhf_response%name_    = 'solver tdhf response'
+      solver_tdhf_response%required = .false.
+      solver_tdhf_response%keywords = [character(len=30) ::   &
+                                      'frequencies',          &
+                                      'max iterations',       &
+                                      'max reduced dimension',&
+                                      'print iterations',     &
+                                      'residual threshold']
 !
 !
       visualization%name_    = 'visualization'
@@ -685,7 +695,8 @@ contains
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &
-                       tdhf,                      &
+                       solver_tdhf_es,            &
+                       solver_tdhf_response,      &
                        visualization]
 !
       this%is_open = .false.

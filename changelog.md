@@ -8,6 +8,8 @@
 - Removed unused routines in array\_utilities.F90. eT-program/eT!1071
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074 and eT-program/eT!1080
 - Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
+- Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074
+- Transformation_tools renamed to transformation. eT-program/eT!1054
 - Davidson tool now counts the number of new trials. eT-program/eT!1089
 - Introduced tools to build the G-matrix (two-electron contribution to Fock) or Coulomb and exchange matrices separately. eT-program/eT!870
 - Restructured printing of mean values. eT-program/eT!1086
@@ -15,6 +17,9 @@
 - Restructured reference/HF engines to use task structure. eT-program/eT!1088
 - Added factories for cc start vector and cc projection tools. eT-program/eT!1091
 - Added storers that know how to store amplitudes. eT-program/eT!1092 eT-program/eT!1094
+
+### Features
+- Frequency-dependent (and static) polarizabilities for HF. eT-program/eT!1054
 
 ### Optimization
 - Removed N^3 scaling from Fock construction visible for very large systems. eT-program/eT!870
@@ -32,6 +37,7 @@
 # eT v1.7.2
 ### Bugfixes
 - Fixed bug in spin-multiplicities, where sum of squares was incorrectly assumed equal to square of sum. Happened only with -O0 flag. eT-program/eT!1072
+
 
 # eT v1.7.1
 ### Bugfixes

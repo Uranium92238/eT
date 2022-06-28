@@ -48,12 +48,12 @@ module linear_davidson_solver_class
    use memory_manager_class, only: mem
    use linear_davidson_tool_class, only: linear_davidson_tool
 !
-   use transformation_tool_class,         only: transformation_tool
-   use linear_equation_storage_tool_class,only: linear_equation_storage_tool
-   use linear_equation_start_vector_tool_class,  only: linear_equation_start_vector_tool ! OBS rename
-   use preconditioner_getter_class,       only: preconditioner_getter
-   use rhs_linear_equation_tool_class,    only: rhs_linear_equation_tool
-   use linear_davidson_print_tool_class,  only: linear_davidson_print_tool
+   use transformation_class,                    only: transformation
+   use linear_equation_storage_tool_class,      only: linear_equation_storage_tool
+   use linear_equation_start_vector_tool_class, only: linear_equation_start_vector_tool
+   use preconditioner_getter_class,             only: preconditioner_getter
+   use rhs_linear_equation_tool_class,          only: rhs_linear_equation_tool
+   use linear_davidson_print_tool_class,        only: linear_davidson_print_tool
 !
    use abstract_solver_class, only: abstract_solver
 !
@@ -69,8 +69,8 @@ module linear_davidson_solver_class
 !
       class(linear_davidson_tool), allocatable, private :: davidson
 !
-      class(transformation_tool),         allocatable          :: transformer
-      class(linear_equation_storage_tool),         allocatable, private :: storer
+      class(transformation),         allocatable          :: transformer
+      class(linear_equation_storage_tool),allocatable, private :: storer
       class(linear_equation_start_vector_tool),           allocatable, private :: start_vector
       class(preconditioner_getter),       allocatable, private :: preconditioner
       class(rhs_linear_equation_tool),    allocatable, private :: rhs_getter
@@ -78,10 +78,13 @@ module linear_davidson_solver_class
 !
    contains
 !
-      procedure, public :: run => run_linear_davidson_solver
+      procedure, public :: run             => run_linear_davidson_solver
       procedure, public :: get_n_solutions => get_n_solutions_linear_davidson_solver
+      procedure, public :: get_solution    => get_solution_linear_davidson
 !
       procedure, private :: test_convergence_and_add_trials
+!
+      procedure :: cleanup => cleanup_linear_davidson
 !
    end type linear_davidson_solver
 !
@@ -94,17 +97,17 @@ end interface linear_davidson_solver
 contains
 !
    function new_linear_davidson_solver(transformer,         &
-                                               davidson,            &
-                                               storer,              &
-                                               start_vector,        &
-                                               preconditioner,      &
-                                               rhs_getter,          &
-                                               printer,             &
-                                               n_rhs,               &
-                                               n_solutions,         &
-                                               max_iterations,      &
-                                               residual_threshold,  &
-                                               frequencies) result(this)
+                                       davidson,            &
+                                       storer,              &
+                                       start_vector,        &
+                                       preconditioner,      &
+                                       rhs_getter,          &
+                                       printer,             &
+                                       n_rhs,               &
+                                       n_solutions,         &
+                                       max_iterations,      &
+                                       residual_threshold,  &
+                                       frequencies) result(this)
 !!
 !!    New general linear Davidson
 !!    Written by Sarai D. Folkestad, May 2021
@@ -113,9 +116,9 @@ contains
 !
       type(linear_davidson_solver) :: this
 !
-      class(transformation_tool),        intent(in) :: transformer
-      type(linear_davidson_tool),        intent(in) :: davidson
-      class(linear_equation_storage_tool),        intent(in) :: storer
+      class(transformation),              intent(in) :: transformer
+      type(linear_davidson_tool),         intent(in) :: davidson
+      class(linear_equation_storage_tool),intent(in) :: storer
       class(linear_equation_start_vector_tool),          intent(in) :: start_vector
       class(preconditioner_getter),      intent(in) :: preconditioner
       class(rhs_linear_equation_tool),   intent(in) :: rhs_getter
@@ -168,14 +171,12 @@ contains
       call this%rhs_getter%get(rhs)
 !
       call mem%alloc(converged, this%n_rhs)
-      converged            = .false.
+      converged = .false.
 !
       do n = 1, this%n_rhs
 !
-         if (get_l2_norm(rhs(:, n), this%davidson%n_parameters*this%n_rhs) < this%residual_threshold) then
-!
+         if (get_l2_norm(rhs(:, n), this%davidson%n_parameters) < this%residual_threshold) then
             converged(n) = .true.
-!
          end if
 !
       end do
@@ -189,7 +190,7 @@ contains
 !
          call zero_array(solution, this%davidson%n_parameters)
 !
-         call this%storer%store(solution, 0)
+         call this%storer%store(solution, 1)
 !
          call mem%dealloc(solution, this%davidson%n_parameters)
          call mem%dealloc(converged, this%n_rhs)
@@ -291,7 +292,6 @@ contains
 !
       call mem%dealloc(converged, this%n_solutions)
 !
-      call this%davidson%cleanup()
       call mem%dealloc(rhs, this%davidson%n_parameters, this%n_rhs)
 !
    end subroutine run_linear_davidson_solver
@@ -362,5 +362,35 @@ contains
 !
    end function get_n_solutions_linear_davidson_solver
 !
+!
+   subroutine get_solution_linear_davidson(this, X, n)
+!!
+!!    Get solution
+!!    Written by Sarai D. Folkestad, Mar 2022
+!!
+      implicit none
+!
+      class(linear_davidson_solver), intent(inout) :: this
+!
+      real(dp), dimension(this%davidson%n_parameters), intent(out)  :: X
+      integer, intent(in) :: n
+!
+      call this%davidson%construct_solution(X,n)
+!
+   end subroutine get_solution_linear_davidson
+!
+!
+   subroutine cleanup_linear_davidson(this)
+!!
+!!    Cleanup
+!!    Written by Regina Matveeva and Sarai D. Folkestad, 2021
+!!
+      implicit none
+!
+      class(linear_davidson_solver), intent(inout) :: this
+!
+      if (allocated(this%davidson)) call this%davidson%cleanup()
+!
+   end subroutine cleanup_linear_davidson
 !
 end module linear_davidson_solver_class
