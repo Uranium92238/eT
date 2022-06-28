@@ -321,6 +321,8 @@ module ccs_class
 !
 !     Procedures related to the Jacobian transformation
 !
+      procedure :: prepare_for_excited_states
+!
       procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
 !
       procedure :: prepare_for_Jacobians                 &
@@ -435,8 +437,8 @@ module ccs_class
       procedure :: prepare_for_multiplier_equation               => prepare_for_multiplier_equation_ccs
       procedure :: prepare_for_multiplier_equation_complex       => prepare_for_multiplier_equation_ccs_complex
 !
-      procedure :: prepare_for_properties                           => prepare_for_properties_ccs
-      procedure :: prepare_for_properties_complex                   => prepare_for_properties_ccs_complex
+      procedure :: prepare_for_properties                        => prepare_for_properties_ccs
+      procedure :: prepare_for_properties_complex                => prepare_for_properties_ccs_complex
 !
       procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs
 !
@@ -918,6 +920,29 @@ contains
       endif
 !
    end subroutine construct_Jacobian_transform_ccs
+!
+!
+   subroutine prepare_for_excited_states(wf, n_states, es_type)
+!!
+!!    Prepare for excited states
+!!    Written by Alexander C. Paul, May 2022
+!!
+!!    Set number of excited states and read es settings
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      integer, intent(in) :: n_states
+      character(len=*), intent(in) :: es_type
+!
+      wf%n_singlet_states = n_states
+      if (es_type == "core") call wf%read_cvs_settings()
+      if (es_type == "remove core") call wf%read_rm_core_settings()
+!
+      call wf%initialize_excited_state_files()
+      call wf%initialize_excitation_energies()
+!
+   end subroutine prepare_for_excited_states
 !
 !
    subroutine prepare_for_Jacobians_ccs(wf, r_or_l)

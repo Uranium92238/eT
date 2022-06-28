@@ -1110,7 +1110,7 @@ contains
       use abstract_solver_class,          only: abstract_solver
       use eri_tool_class,                 only: eri_tool
       use eri_cholesky_disk_class,        only: eri_cholesky_disk
-      use davidson_cc_es_solver_factory_class, only: davidson_cc_es_solver_factory
+      use cc_es_amplitudes_solver_factory_class, only: cc_es_amplitudes_solver_factory
 !
       use global_in, only: input
 !
@@ -1129,7 +1129,7 @@ contains
       real(dp), dimension(n_cnto_states), intent(out), optional :: omega_ccs
 !
       character(len=200) :: storage
-      type(davidson_cc_es_solver_factory), allocatable :: davidson_factory
+      type(cc_es_amplitudes_solver_factory), allocatable :: solver_factory
 !
 !     Local variables
 !
@@ -1138,7 +1138,7 @@ contains
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
       class(amplitude_updater), allocatable :: t_updater
 !
-      class(abstract_solver), allocatable :: cc_es_solver_davidson
+      class(abstract_solver), allocatable :: cc_es_solver
 !
       type(timings) :: timer, timer_gs, timer_es
 !
@@ -1197,14 +1197,14 @@ contains
 !
       call ccs_wf%construct_fock('es')
 !
-      davidson_factory = davidson_cc_es_solver_factory(transformation, restart=.false.)
-      call davidson_factory%create(ccs_wf, cc_es_solver_davidson)
+      solver_factory = cc_es_amplitudes_solver_factory(ccs_wf%name_, transformation, restart=.false.)
+      call solver_factory%create(ccs_wf, cc_es_solver)
 !
       call ccs_wf%initialize_excited_state_files()
       call ccs_wf%initialize_excitation_energies()
 !
-      call cc_es_solver_davidson%run()
-      call cc_es_solver_davidson%cleanup()
+      call cc_es_solver%run()
+      call cc_es_solver%cleanup()
 !
       call timer_es%turn_off()
 !
