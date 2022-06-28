@@ -58,6 +58,9 @@ module cc2_class
       procedure :: construct_t2bar &
                 => construct_t2bar_cc2
 !
+      procedure :: get_es_amplitude_block_sizes &
+                => get_es_amplitude_block_sizes_cc2
+!
 !     Jacobian
 !
       procedure :: prepare_for_jacobian &
@@ -332,6 +335,21 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_u_aibj_cc2
+!
+!
+   subroutine get_es_amplitude_block_sizes_cc2(wf, amplitude_block_sizes)
+!!
+!!    Get amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1, wf%n_t2]
+!
+   end subroutine get_es_amplitude_block_sizes_cc2
 !
 !
 end module cc2_class

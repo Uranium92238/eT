@@ -1172,6 +1172,7 @@ contains
       timer_gs = timings('Ground state CCS calculation for NTOs/CNTOs')
       call timer_gs%turn_on()
 !
+      call ccs_wf%initialize_ground_state_files()
       t_updater = quasi_newton_updater(n_amplitudes     = ccs_wf%n_gs_amplitudes, &
                                        scale_amplitudes = .true., &
                                        scale_residual   = .true.)

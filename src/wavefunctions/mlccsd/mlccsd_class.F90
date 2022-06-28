@@ -55,6 +55,7 @@ module mlccsd_class
    use stream_file_class, only: stream_file
    use sequential_file_class, only: sequential_file
    use batching_index_class, only: batching_index
+   use amplitude_file_storer_class, only: amplitude_file_storer
 !
    implicit none
 !
@@ -240,16 +241,15 @@ module mlccsd_class
       procedure :: initialize_O_v                 => initialize_O_v_mlccsd
       procedure :: destruct_O_v                   => destruct_O_v_mlccsd
 !
-!     Read/save
+!     File handling
 !
-      procedure :: read_amplitudes                => read_amplitudes_mlccsd
-      procedure :: save_amplitudes                => save_amplitudes_mlccsd
-      procedure :: read_excitation_vector_file    => read_excitation_vector_file_mlccsd
-      procedure :: save_excitation_vector_on_file => save_excitation_vector_on_file_mlccsd
       procedure :: get_restart_vector             => get_restart_vector_mlccsd
 !
       procedure :: save_mlcc_orbitals             => save_mlcc_orbitals_mlccsd
       procedure :: read_mlcc_orbitals             => read_mlcc_orbitals_mlccsd
+!
+      procedure :: get_gs_amplitude_block_sizes &
+                => get_gs_amplitude_block_sizes_mlccsd
 !
 !     Cleanup
 !
@@ -1053,7 +1053,7 @@ contains
 !
       else
 !
-         if (wf%t_file%exists()) then
+         if (wf%t_storer%file_exists()) then
 !
             call output%printf('m', 'Requested restart. Reading in solution from file.', &
                           fs='(/t3,a)')
@@ -1456,6 +1456,22 @@ contains
                           wf%n_ccsd_o*wf%n_ccsd_v)
 !
    end subroutine scale_amplitudes_mlccsd
+!
+!
+   subroutine get_gs_amplitude_block_sizes_mlccsd(wf, amplitude_block_sizes)
+!!
+!!    Get gs amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(mlccsd), intent(in) :: wf
+!
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1, wf%n_t2]
+!
+   end subroutine get_gs_amplitude_block_sizes_mlccsd
 !
 !
 end module mlccsd_class

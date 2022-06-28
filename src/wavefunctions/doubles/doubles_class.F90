@@ -37,6 +37,7 @@ module doubles_class
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
+   use amplitude_file_storer_class, only: amplitude_file_storer
 !
    implicit none
 !
@@ -128,10 +129,6 @@ module doubles_class
 !
 !     File handling procedures
 !
-      procedure :: read_doubles_vector                   => read_doubles_vector_doubles
-      procedure :: save_doubles_vector                   => save_doubles_vector_doubles
-      procedure :: read_excitation_vector_file           => read_excitation_vector_file_doubles
-      procedure :: save_excitation_vector_on_file        => save_excitation_vector_on_file_doubles
       procedure :: get_restart_vector                    => get_restart_vector_doubles
 !
       procedure :: get_full_multipliers &
@@ -251,7 +248,7 @@ contains
       call wf%ccs%print_amplitude_info()
 !
       call output%printf('m', 'Double excitation amplitudes:  (i0)', &
-            ints=[wf%n_t2], fs='(t6,a)')
+                         ints=[wf%n_t2], fs='(t6,a)')
 !
    end subroutine print_amplitude_info_doubles
 !

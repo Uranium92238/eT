@@ -33,129 +33,7 @@ submodule (mlccsd_class) file_handling_mlccsd
 contains
 !
 !
-   module subroutine save_amplitudes_mlccsd(wf)
-!!
-!!    Read amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      call wf%t_file%open_('write', 'rewind')
-!
-      call wf%t_file%write_(wf%energy)
-      call wf%save_singles_vector(wf%t_file, wf%t1)
-      call wf%save_doubles_vector(wf%t_file, wf%t2, wf%n_t2)
-!
-      call wf%t_file%close_
-!
-   end subroutine save_amplitudes_mlccsd
-!
-!
-   module subroutine read_amplitudes_mlccsd(wf, read_n)
-!!
-!!    Read amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!    Adapted to return the number of read amplitdues if requested
-!!    by Alexander C. Paul, Oct 2020
-!!
-!!    read_n: returns the number of amplitudes read.
-!!            This is especially useful e.g. in CCSD to provide a start guess
-!!            for the doubles if only singles were found on file.
-!!
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      integer, intent(out), optional :: read_n
-!
-      integer :: n
-!
-      n = 0
-!
-      call wf%t_file%open_('read', 'rewind')
-!
-      call wf%read_singles_vector(wf%t_file, wf%t1, n)
-      call wf%read_doubles_vector(wf%t_file, wf%t2, wf%n_t2, n)
-!
-      call wf%t_file%close_
-!
-      if (present(read_n)) read_n = n
-!
-   end subroutine read_amplitudes_mlccsd
-!
-!
-   module subroutine read_excitation_vector_file_mlccsd(wf, file_, vector, energy, read_n)
-!!
-!!    Read excitation vector file
-!!    Written by Alexander C. Paul, Sep 2020
-!!
-!!    Reads excitation vector from file structured as follows:
-!!    excitation_energy, n_t1, X1
-!!
-!!    read_n: optionally returns the number of amplitudes read
-!!
-!
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      type(stream_file), intent(inout) :: file_
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
-!
-      real(dp), intent(out) :: energy
-!
-      integer, intent(inout), optional :: read_n
-      integer :: n
-!
-      n = 0
-!
-      call file_%open_('read', 'rewind')
-!
-      call file_%read_(energy)
-      call wf%read_singles_vector(file_, vector, n)
-      call wf%read_doubles_vector(file_, vector(wf%n_t1+1:), wf%n_x2, n)
-!
-      call file_%close_
-!
-      if (present(read_n)) read_n = n
-!
-   end subroutine read_excitation_vector_file_mlccsd
-!
-!
-   module subroutine save_excitation_vector_on_file_mlccsd(wf, file_, vector, energy)
-!!
-!!    Save excitation vector on file
-!!    Written by Alexander C. Paul, Sep 2020
-!!
-!!    Writes excitation vector o file structured as follows:
-!!    excitation_energy, n_t1, X1
-!!
-!
-      implicit none
-!
-      class(mlccsd), intent(inout) :: wf
-!
-      type(stream_file), intent(inout) :: file_
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: vector
-!
-      real(dp), intent(in) :: energy
-!
-      call file_%open_('write', 'rewind')
-!
-      call file_%write_(energy)
-      call wf%save_singles_vector(file_, vector)
-      call wf%save_doubles_vector(file_, vector(wf%n_t1+1:), wf%n_x2)
-!
-      call file_%close_
-!
-   end subroutine save_excitation_vector_on_file_mlccsd
-!
-!
-   module subroutine get_restart_vector_mlccsd(wf, file_, vector, energy, &
+   module subroutine get_restart_vector_mlccsd(wf, storer, vector, energy, &
                                               restart_from, restart_to)
 !!
 !!    Get restart vector
@@ -180,7 +58,7 @@ contains
 !
       class(mlccsd), intent(inout) :: wf
 !
-      type(stream_file), intent(inout) :: file_
+      type(amplitude_file_storer), intent(inout) :: storer
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: vector
 !
@@ -196,7 +74,7 @@ contains
       n_o = wf%n_cc2_o + wf%n_ccsd_o
       n_v = wf%n_cc2_v + wf%n_ccsd_v
 !
-      call wf%read_excitation_vector_file(file_, vector, energy, n_amplitudes_read)
+      call storer%read_(vector, energy, n_amplitudes_read)
 !
       if (n_amplitudes_read == wf%n_t1) then
 !
@@ -237,7 +115,7 @@ contains
          call output%error_msg('Did not recognize number of amplitudes in (a0) &
                                &expected (i0) or (i0) found (i0) amplitudes.', &
                                ints=[wf%n_es_amplitudes, wf%n_t1, n_amplitudes_read], &
-                               chars=[file_%get_name()])
+                               chars=[storer%get_filename()])
 !
       end if
 !
