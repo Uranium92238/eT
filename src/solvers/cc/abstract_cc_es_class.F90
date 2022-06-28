@@ -44,15 +44,11 @@ module abstract_cc_es_class
 !
    use ccs_class, only : ccs
 !
-   use es_start_vector_tool_class, only : es_start_vector_tool
+   use start_vector_tool_class, only : start_vector_tool
 !
    use precondition_tool_class, only: precondition_tool
 !
    use abstract_projection_tool_class, only: abstract_projection_tool
-   use null_projection_tool_class, only: null_projection_tool
-   use es_cvs_projection_tool_class, only: es_cvs_projection_tool
-   use es_ip_projection_tool_class, only: es_ip_projection_tool
-   use es_rm_core_projection_tool_class, only: es_rm_core_projection_tool
 !
    use convergence_tool_class, only: convergence_tool
 !
@@ -68,23 +64,18 @@ module abstract_cc_es_class
       character(len=500) :: description1
       character(len=500) :: description2
 !
-      integer :: max_iterations
-!
-      class(convergence_tool), allocatable :: convergence_checker
+      integer :: max_iterations, n_singlet_states
 !
       logical :: restart
 !
-      integer :: n_singlet_states
-!
       character(len=40) :: transformation
-      character(len=40) :: restart_transformation
-      character(len=40) :: es_type
 !
       real(dp), dimension(:), allocatable :: energies
 !
       type(timings) :: timer
 !
-      class(es_start_vector_tool), allocatable     :: start_vectors
+      class(convergence_tool), allocatable         :: convergence_checker
+      class(start_vector_tool), allocatable     :: start_vectors
       class(abstract_projection_tool), allocatable :: projector
       class(precondition_tool), allocatable        :: preconditioner
 !
@@ -93,8 +84,6 @@ module abstract_cc_es_class
    contains
 !
       procedure :: print_banner                     => print_banner_abstract_cc_es
-!
-      procedure :: read_es_settings                 => read_es_settings_abstract_cc_es
       procedure :: print_es_settings                => print_es_settings_abstract_cc_es
 !
       procedure :: cleanup                          => cleanup_abstract_cc_es
@@ -102,13 +91,8 @@ module abstract_cc_es_class
 !
       procedure :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
 !
-      procedure :: initialize_start_vector_tool     => initialize_start_vector_tool_abstract_cc_es
-      procedure :: initialize_projection_tool       => initialize_projection_tool_abstract_cc_es
-!
       procedure :: initialize_energies              => initialize_energies_abstract_cc_es
       procedure :: destruct_energies                => destruct_energies_abstract_cc_es
-!
-      procedure :: set_initial_guesses              => set_initial_guesses_abstract_cc_es
 !
    end type abstract_cc_es
 !
@@ -128,7 +112,7 @@ contains
       class(abstract_cc_es) :: this
 !
       if (.not. allocated(this%energies)) &
-            call mem%alloc(this%energies, this%n_singlet_states)
+         call mem%alloc(this%energies, this%n_singlet_states)
 !
    end subroutine initialize_energies_abstract_cc_es
 !
@@ -145,7 +129,7 @@ contains
       class(abstract_cc_es) :: this
 !
       if (allocated(this%energies)) &
-            call mem%dealloc(this%energies, this%n_singlet_states)
+         call mem%dealloc(this%energies, this%n_singlet_states)
 !
    end subroutine destruct_energies_abstract_cc_es
 !
@@ -168,60 +152,6 @@ contains
    end subroutine print_banner_abstract_cc_es
 !
 !
-   subroutine read_es_settings_abstract_cc_es(this, records_in_memory)
-!!
-!!    Read settings
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
-!!
-      use global_in, only: input
-!
-      implicit none
-!
-      class(abstract_cc_es) :: this
-!
-      logical, intent(inout) :: records_in_memory
-!
-      real(dp) :: eigenvalue_threshold, residual_threshold
-!
-      if (input%is_keyword_present('energy threshold', 'solver cc es')) then
-!
-         call input%get_keyword('energy threshold', 'solver cc es', eigenvalue_threshold)
-         call this%convergence_checker%set_energy_threshold(eigenvalue_threshold)
-!
-      endif
-!
-      if (input%is_keyword_present('residual threshold', 'solver cc es')) then
-!
-         call input%get_keyword('residual threshold', 'solver cc es', residual_threshold)
-         call this%convergence_checker%set_residual_threshold(residual_threshold)
-!
-      endif
-!
-      call input%get_keyword('max iterations', 'solver cc es', this%max_iterations)
-!
-      call input%get_required_keyword('singlet states', 'solver cc es', this%n_singlet_states)
-!
-      if (input%is_keyword_present('core excitation', 'solver cc es') .and. .not. &
-          input%is_keyword_present('ionization', 'solver cc es')) this%es_type = 'core'
-!
-      if (input%is_keyword_present('ionization', 'solver cc es') .and. .not. &
-          input%is_keyword_present('core excitation', 'solver cc es')) this%es_type = 'ionize'
-!
-      if (input%is_keyword_present('remove core', 'solver cc es')) this%es_type = 'remove core'
-!
-      if (input%is_keyword_present('ionization', 'solver cc es') .and. &
-          input%is_keyword_present('core excitation', 'solver cc es')) &
-            call output%error_msg('XPS not implemented yet.')
-!
-      if (input%is_keyword_present('remove core', 'solver cc es') .and. &
-          input%is_keyword_present('core excitation', 'solver cc es')) &
-            call output%error_msg('Both remove core and core excitations specified.')
-!
-      call input%place_records_in_memory('solver cc es', records_in_memory)
-!
-   end subroutine read_es_settings_abstract_cc_es
-!
-!
    subroutine print_es_settings_abstract_cc_es(this)
 !!
 !!    Print settings
@@ -233,9 +163,6 @@ contains
 !
       call output%printf('m', '- Settings for coupled cluster excited state &
                          &solver (' //trim(this%tag) // '):', fs='(/t3,a)')
-!
-      call output%printf('m', 'Calculation type:    (a0)', &
-                         chars=[trim(this%es_type)], fs='(/t6,a)')
       call output%printf('m', 'Excitation vectors:  (a0)', &
                          chars=[trim(this%transformation)], fs='(t6,a)')
 !
@@ -386,153 +313,9 @@ contains
 !
       class(abstract_cc_es), intent(in) :: this
 !
-      call this%wf%initialize_excited_state_files()
       call this%wf%prepare_for_Jacobians(this%transformation)
 !
-      if (this%transformation == 'right') then
-!
-         call this%wf%initialize_right_excitation_energies()
-!
-      else if (this%transformation == 'left') then
-!
-         call this%wf%initialize_left_excitation_energies()
-!
-      else if (this%transformation == 'both') then
-!
-         call this%wf%initialize_right_excitation_energies()
-         call this%wf%initialize_left_excitation_energies()
-!
-      end if
-!
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
-!
-!
-   subroutine initialize_start_vector_tool_abstract_cc_es(this)
-!!
-!!    Initialize start vector tool
-!!    Written by Eirik F. Kjønstad, Sep 2019
-!!
-      use global_in, only: input
-!
-      use es_manual_start_vector_tool_class,    only: es_manual_start_vector_tool
-      use es_valence_start_vector_tool_class,   only: es_valence_start_vector_tool
-      use es_cvs_start_vector_tool_class,       only: es_cvs_start_vector_tool
-      use es_ip_start_vector_tool_class,        only: es_ip_start_vector_tool
-!
-      implicit none
-!
-      class(abstract_cc_es) :: this
-!
-      if (trim(this%es_type) == 'core') then
-!
-         call this%wf%read_cvs_settings()
-
-      elseif (trim(this%es_type) == 'remove core') then
-!
-         call this%wf%read_rm_core_settings()
-!
-      endif
-!
-      if (input%is_keyword_present('state guesses', 'solver cc es')) then
-!
-         this%start_vectors = es_manual_start_vector_tool(this%wf, &
-                                                          this%transformation, &
-                                                          this%restart)
-!
-      else
-!
-         if (trim(this%es_type) == 'valence') then
-!
-            this%start_vectors = es_valence_start_vector_tool(this%wf, &
-                                                              this%transformation, &
-                                                              this%restart)
-!
-         elseif (trim(this%es_type) == 'core') then
-!
-            this%start_vectors = es_cvs_start_vector_tool(this%wf, &
-                                                          this%transformation, &
-                                                          this%restart)
-!
-         elseif (trim(this%es_type) == 'ionize') then
-!
-            this%start_vectors = es_ip_start_vector_tool(this%wf, &
-                                                         this%transformation, &
-                                                         this%restart)
-!
-         elseif (trim(this%es_type) == 'remove core') then
-!
-            this%start_vectors = es_valence_start_vector_tool(this%wf, &
-                                                              this%transformation, &
-                                                              this%restart)
-!
-         else
-!
-            call output%error_msg('could not recognize excited state type in abstract_cc_es')
-!
-         endif
-!
-      endif
-!
-   end subroutine initialize_start_vector_tool_abstract_cc_es
-!
-!
-   subroutine initialize_projection_tool_abstract_cc_es(this)
-!!
-!!    Initialize projection tool
-!!    Written by Eirik F. Kjønstad, Sep 2019
-!!
-      implicit none
-!
-      class(abstract_cc_es) :: this
-!
-      if (trim(this%es_type) == 'valence') then
-!
-         this%projector = null_projection_tool(this%wf%n_es_amplitudes)
-!
-      elseif (trim(this%es_type) == 'core') then
-!
-         this%projector = es_cvs_projection_tool(this%wf)
-!
-      elseif (trim(this%es_type) == 'ionize') then
-!
-         this%projector = es_ip_projection_tool(this%wf)
-!
-      elseif (trim(this%es_type) == 'remove core') then
-!
-         this%projector = es_rm_core_projection_tool(this%wf)
-!
-      else
-!
-         call output%error_msg('could not recognize excited state type in abstract_cc_es')
-!
-      endif
-!
-   end subroutine initialize_projection_tool_abstract_cc_es
-!
-!
-   subroutine set_initial_guesses_abstract_cc_es(this, X, first, last)
-!!
-!!    Set initial guesses
-!!    Written by Alexander C. Paul, Oct 2020
-!!
-      implicit none
-!
-      class(abstract_cc_es) :: this
-!
-      integer, intent(in) :: first, last
-!
-      real(dp), dimension(this%wf%n_es_amplitudes,first:last), intent(out) :: X
-!
-      integer :: state
-!
-      do state = first, last
-!
-         call this%start_vectors%get(X(:,state), state, this%energies(state))
-         call this%projector%project(X(:,state))
-!
-      enddo
-!
-   end subroutine set_initial_guesses_abstract_cc_es
 !
 !
 end module abstract_cc_es_class

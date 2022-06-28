@@ -72,6 +72,10 @@ module diis_cc_es_class
    use precondition_tool_class, only: precondition_tool
    use convergence_tool_class, only: convergence_tool
 !
+   use start_vector_tool_class, only: start_vector_tool
+   use abstract_projection_tool_class, only : abstract_projection_tool
+   use convergence_tool_class, only: convergence_tool
+!
    implicit none
 !
    type, extends(abstract_cc_es) :: diis_cc_es
@@ -83,16 +87,15 @@ module diis_cc_es_class
 !
       type(diis_tool), dimension(:), allocatable :: diis
 !
+      character(len=:), allocatable :: es_type
+!
    contains
 !
-      procedure, non_overridable :: run            => run_diis_cc_es
+      procedure, non_overridable :: run => run_diis_cc_es
 !
-      procedure :: read_settings                   => read_settings_diis_cc_es
-      procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
-!
-      procedure :: print_settings                  => print_settings_diis_cc_es
-!
-      procedure :: do_davidson_preconvergence      => do_davidson_preconvergence_diis_cc_es
+      procedure, private :: read_settings
+      procedure, private :: print_settings
+      procedure, private :: do_davidson_preconvergence
 !
    end type diis_cc_es
 !
@@ -107,7 +110,9 @@ module diis_cc_es_class
 contains
 !
 !
-   function new_diis_cc_es(transformation, wf, restart) result(this)
+   function new_diis_cc_es(transformation, wf, start_vector, projector, &
+                           convergence_checker, n_states, max_iterations, &
+                           records_in_memory, es_type) result(this)
 !!
 !!    New DIIS CC ES
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -119,15 +124,18 @@ contains
       type(diis_cc_es) :: this
       class(ccs), intent(inout), target :: wf
 !
-      character(len=*), intent(in) :: transformation
+      character(len=*), intent(in) :: transformation, es_type
 !
-      logical, intent(in) :: restart
+      class(start_vector_tool), intent(in) :: start_vector
+      class(abstract_projection_tool), intent(in) :: projector
+      type(convergence_tool), intent(in) :: convergence_checker
 !
-      integer :: state
-
+      integer, intent(in) :: n_states, max_iterations
+      logical, intent(in) :: records_in_memory
+!
       character(len=3) :: string_state
-      logical :: records_in_memory, crop
-      integer :: diis_dimension
+      logical :: crop
+      integer :: diis_dimension, state
 !
       this%wf => wf 
 !
@@ -150,27 +158,22 @@ contains
 !
       call this%print_banner()
 !
-!     Set defaults
+      this%transformation   = trim(transformation)
+      this%es_type          = trim(es_type)
+      this%n_singlet_states = n_states
+      this%max_iterations   = max_iterations
 !
-      this%n_singlet_states          = 0
-      this%max_iterations            = 100
-      this%restart                   = restart
-      this%transformation            = trim(transformation)
-      this%es_type                   = 'valence'
-      this%davidson_preconvergence   = .false.
-      this%preconvergence_threshold  = 1.0d-2
+      this%start_vectors = start_vector
+      this%projector = projector
+      this%convergence_checker = convergence_checker
 !
-      crop               = .false.
-      diis_dimension     = 20
-      records_in_memory  = .false.
+      this%davidson_preconvergence  = .false.
+      this%preconvergence_threshold = 1.0d-2
 !
-!     Initialize convergence checker with default threshols
+      crop           = .false.
+      diis_dimension = 20
 !
-      this%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
-                                                    residual_threshold = 1.0d-3,   &
-                                                    energy_convergence = .false.)
-!
-      call this%read_settings(records_in_memory, crop, diis_dimension)
+      call this%read_settings(crop, diis_dimension)
 !
       call this%print_settings()
 !
@@ -187,12 +190,12 @@ contains
       do state = 1, this%n_singlet_states
 !
          write(string_state, '(i3.3)') state
-         this%diis(state) = diis_tool('diis_cc_es_' // string_state,      &
-                                        this%wf%n_es_amplitudes,                 &
-                                        this%wf%n_es_amplitudes,                 &
-                                        dimension_=diis_dimension,          &
-                                        crop=crop,                          &
-                                        records_in_memory=records_in_memory)
+         this%diis(state) = diis_tool('diis_cc_es_' // string_state,    &
+                                       this%wf%n_es_amplitudes,         &
+                                       this%wf%n_es_amplitudes,         &
+                                       dimension_=diis_dimension,       &
+                                       crop=crop,                       &
+                                       records_in_memory=records_in_memory)
 !
       enddo
 !
@@ -200,7 +203,7 @@ contains
    end function new_diis_cc_es
 !
 !
-   subroutine print_settings_diis_cc_es(this)
+   subroutine print_settings(this)
 !!
 !!    Print settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -221,27 +224,10 @@ contains
 !
       endif
 !
-   end subroutine print_settings_diis_cc_es
+   end subroutine print_settings
 !
 !
-   subroutine read_settings_diis_cc_es(this, records_in_memory, crop, diis_dimension)
-!!
-!!    Read settings
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
-!!
-      implicit none
-!
-      class(diis_cc_es)          :: this
-      logical, intent(inout)     :: records_in_memory, crop
-      integer, intent(inout)     :: diis_dimension
-!
-      call this%read_es_settings(records_in_memory)
-      call this%read_diis_settings(crop, diis_dimension)
-!
-   end subroutine read_settings_diis_cc_es
-!
-!
-   subroutine read_diis_settings_diis_cc_es(this, crop, diis_dimension)
+   subroutine read_settings(this, crop, diis_dimension)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -267,7 +253,7 @@ contains
                                         'solver cc es',              &
                                         this%preconvergence_threshold)
 !
-   end subroutine read_diis_settings_diis_cc_es
+   end subroutine read_settings
 !
 !
    subroutine run_diis_cc_es(this)
@@ -304,12 +290,7 @@ contains
 !
       call this%prepare_wf_for_excited_state()
 !
-      if (this%davidson_preconvergence) then
-!
-         call this%do_davidson_preconvergence()   ! Use Davidson to get first guesses
-         this%restart = .true.                      ! Restart from these guesses
-!
-      endif
+      if (this%davidson_preconvergence) call this%do_davidson_preconvergence()   ! Use Davidson to get first guesses
 !
 !     Initialize solver tools
 !
@@ -326,9 +307,6 @@ contains
       call this%preconditioner%initialize_and_set_precondition_vector(eps)
 !
       call mem%dealloc(eps, this%wf%n_es_amplitudes)
-!
-      call this%initialize_start_vector_tool()
-      call this%initialize_projection_tool()
 !
 !     Initialize energies, residual norms, and convergence arrays
 !
@@ -348,7 +326,9 @@ contains
 !
       call mem%alloc(X, this%wf%n_es_amplitudes, this%n_singlet_states)
 !
-      call this%set_initial_guesses(X, 1, this%wf%n_singlet_states)
+      do state = 1, this%n_singlet_states
+         call this%start_vectors%get(X(:,state), state, this%energies(state))
+      end do
 !
 !     Enter iterative loop
 !
@@ -522,7 +502,7 @@ contains
    end subroutine run_diis_cc_es
 !
 !
-   subroutine do_davidson_preconvergence_diis_cc_es(this)
+   subroutine do_davidson_preconvergence(this)
 !!
 !!    Do Davidson preconvergence
 !!    Written by Eirik F. Kjønstad, Jan 2020
@@ -532,63 +512,64 @@ contains
 !!
       use global_in, only: input
       use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
+      use cc_es_start_vector_factory_class, only: cc_es_start_vector_factory
 !
       implicit none
 !
-      class(diis_cc_es), intent(in) :: this
+      class(diis_cc_es), intent(inout) :: this
 !
       class(nonlinear_davidson_cc_es), allocatable :: davidson_solver
+!
+      type(convergence_tool) :: preconvergence_checker
+      type(cc_es_start_vector_factory) :: start_vector_factory
 !
       real(dp) :: relative_micro_residual_threshold
       integer  :: max_dim_red, max_micro_iterations
 !
-      logical :: records_in_memory
+      logical :: records_in_memory, energy_convergence
 !
       call output%printf('m', 'Running the non-linear Davidson solver to produce&
                               & first guesses for the DIIS solver. When finished,&
                               & the DIIS solver will restart from the preconverged&
                               & solutions.', ffs='(/t3,a)')
 !
-!     Set some defaults
-!
       max_micro_iterations              = 100
       max_dim_red                       = 100
       relative_micro_residual_threshold = 1.0d-1
 !
-!     Read non-default values, if provided by user
-!
       call input%get_keyword('max reduced dimension',  &
-                                        'solver cc es',&
-                                        max_dim_red)
+                             'solver cc es',&
+                             max_dim_red)
 !
       call input%get_keyword('max micro iterations',   &
-                                        'solver cc es',&
-                                        max_micro_iterations)
+                             'solver cc es',&
+                             max_micro_iterations)
 !
       call input%get_keyword('rel micro threshold',    &
-                                        'solver cc es',&
-                                        relative_micro_residual_threshold)
+                             'solver cc es',&
+                             relative_micro_residual_threshold)
+!
+      energy_convergence = input%is_keyword_present('energy threshold', 'solver cc es')
 !
       records_in_memory = .false.
       call input%place_records_in_memory('solver cc es', records_in_memory)
 !
-!     Allocate non-linear Davidson solver & run it
+      preconvergence_checker = convergence_tool(this%preconvergence_threshold, &
+                                                this%preconvergence_threshold, &
+                                                energy_convergence)
 !
-      davidson_solver = nonlinear_davidson_cc_es(this%transformation,             &
-                                                 this%wf,                         &
-                                                 this%restart,                    &
-                                                 this%preconvergence_threshold,   &
-                                                 this%preconvergence_threshold,   &
-                                                 this%max_iterations,             &
+      davidson_solver = nonlinear_davidson_cc_es(this%transformation,               &
+                                                 this%wf,                           &
+                                                 this%start_vectors,                &
+                                                 this%projector,                    &
+                                                 preconvergence_checker,            &
+                                                 this%n_singlet_states,             &
+                                                 this%max_iterations,               &
+                                                 records_in_memory,                 &
                                                  relative_micro_residual_threshold, &
                                                  max_micro_iterations,              &
                                                  max_dim_red,                       &
-                                                 this%es_type,                    &
-                                                 records_in_memory,                 &
-                                                 this%n_singlet_states,           &
-                                                 prepare_wf=.false.,                &
-                                                 energy_convergence=                &
-                                                 this%convergence_checker%energy_convergence)
+                                                 prepare_wf=.false.)
 !
       call davidson_solver%run()
       call davidson_solver%cleanup()
@@ -596,7 +577,15 @@ contains
       call output%printf('m', 'Finished preconvergence! The DIIS solver will now restart&
                               & from the preconverged solutions.', ffs='(/t3,a)')
 !
-   end subroutine do_davidson_preconvergence_diis_cc_es
+!     Overwrite start vector tool to restart
+!
+      deallocate(this%start_vectors)
+      start_vector_factory = cc_es_start_vector_factory(this%es_type, &
+                                                        this%transformation, &
+                                                        restart=.true.)
+      call start_vector_factory%create(this%wf, this%start_vectors)
+!
+   end subroutine do_davidson_preconvergence
 !
 !
 end module diis_cc_es_class

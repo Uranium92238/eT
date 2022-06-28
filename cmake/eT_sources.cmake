@@ -201,7 +201,9 @@ set(eT_fortran_sources
 #
    src/solver_tools/factories/tdhf_solver_factory_class.F90
    src/solver_tools/factories/scf_solver_factory_class.F90
-   src/solver_tools/factories/davidson_cc_es_solver_factory_class.F90
+   src/solver_tools/factories/fci_solver_factory_class.F90
+   src/solver_tools/factories/cc_es_start_vector_factory_class.F90
+   src/solver_tools/factories/cc_es_projector_factory_class.F90
 #
 #
    src/solver_tools/functions/function_class.F90
@@ -220,7 +222,6 @@ set(eT_fortran_sources
    src/solver_tools/eigen_storage_tool_class.F90
    src/solver_tools/linear_equation_storage_tool_class.F90
 #
-   src/solver_tools/factories/fci_solver_factory_class.F90
    src/solver_tools/fci/fci_start_vector_tool_class.F90
    src/solver_tools/fci/fci_transformation_tool_class.F90
    src/solver_tools/fci/fci_preconditioner_getter_class.F90

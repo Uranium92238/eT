@@ -13,6 +13,7 @@
 - Restructured printing of mean values. eT-program/eT!1086
 - Restructured FCI engine to use tasks. eT-program/eT!1087
 - Restructured reference/HF engines to use task structure. eT-program/eT!1088
+- Added factories for cc start vector and cc projection tools. eT-program/eT!1091
 - Added storers that know how to store amplitudes. eT-program/eT!1092
 
 ### Optimization

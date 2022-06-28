@@ -143,34 +143,35 @@ contains
    end subroutine print_settings
 !
 !
-   subroutine get_energy_threshold(this, energy_threshold)
+   pure function get_energy_threshold(this) result(energy_threshold)
 !!
 !!    Get energy thresholds
 !!    Written by Sarai D. Folkestad, 2020
 !!
       implicit none
 !
-      class(convergence_tool), intent(inout) :: this
-      real(dp),                intent(out)    :: energy_threshold
+      class(convergence_tool), intent(in) :: this
+      real(dp) :: energy_threshold
 !
       energy_threshold = this%energy_threshold
 !
-   end subroutine get_energy_threshold
+   end function get_energy_threshold
 !
 !
-   subroutine get_residual_threshold(this, residual_threshold)
+   pure function get_residual_threshold(this) result(residual_threshold)
 !!
 !!    Get residual thresholds
 !!    Written by Sarai D. Folkestad, 2020
 !!
       implicit none
 !
-      class(convergence_tool), intent(inout) :: this
-      real(dp),                intent(out)    :: residual_threshold
+      class(convergence_tool), intent(in) :: this
+!
+      real(dp) :: residual_threshold
 !
       residual_threshold = this%residual_threshold
 !
-   end subroutine get_residual_threshold
+   end function get_residual_threshold
 !
 !
    subroutine set_energy_threshold(this, energy_threshold)
