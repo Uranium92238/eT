@@ -92,6 +92,9 @@ add_eT_runtest(hf_pure_basis                                "eT;short;hf;spheric
 #
 add_eT_runtest(tdhf_tamm_dancoff_es                         "eT;short;tdhf;tamm-dancoff")
 add_eT_runtest(tdhf_rpa_es                                  "eT;short;tdhf;rpa")
+add_eT_runtest(tdhf_static_polarizability                   "eT;short;tdhf;rpa;polarizability")
+add_eT_runtest(tdhf_static_polarizability_print_iterations  "eT;short;tdhf;rpa;polarizability_print_iterations")
+add_eT_runtest(tdhf_frequency_dependent_polarizability      "eT;short;tdhf;rpa;polarizability")
 add_eT_runtest(tdhf_restart                                 "eT;short;tdhf;rpa;restart")
 add_eT_runtest(tdhf_global_restart                          "eT;short;tdhf;rpa;restart")
 #

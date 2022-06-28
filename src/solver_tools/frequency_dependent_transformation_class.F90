@@ -25,11 +25,11 @@ module frequency_dependent_transformation_class
 !!
 !
    use parameters
-   use transformation_tool_class,   only: transformation_tool
+   use transformation_class,   only: transformation
 !
    implicit none
 !
-   type, abstract, extends(transformation_tool) :: frequency_dependent_transformation
+   type, abstract, extends(transformation) :: frequency_dependent_transformation
 !
       real(dp), private :: frequency
 !

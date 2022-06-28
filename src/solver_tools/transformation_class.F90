@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module transformation_tool_class
+module transformation_class
 !
 !!
 !!    Abstract transformation tool class module
@@ -33,45 +33,45 @@ module transformation_tool_class
 !
    implicit none
 !
-   type, abstract :: transformation_tool
+   type, abstract :: transformation
 !
       integer :: n_parameters
 !
    contains
 !
-      procedure (transform_transformation_tool),  deferred :: transform
-      procedure (initialize_transformation_tool), deferred :: initialize
+      procedure (transform_transformation),  deferred :: transform
+      procedure (initialize_transformation), deferred :: initialize
 !
-   end type  transformation_tool
+   end type  transformation
 !
    abstract interface
 !
-      subroutine transform_transformation_tool(this, trial, transform)
+      subroutine transform_transformation(this, trial, transform)
 !
          use parameters
 !
-         import transformation_tool
+         import transformation
 !
          implicit none
 !
-         class(transformation_tool), intent(in) :: this
+         class(transformation), intent(in) :: this
          real(dp), dimension(this%n_parameters) :: trial, transform
 !
       end subroutine
 !
 !
-      subroutine initialize_transformation_tool(this)
+      subroutine initialize_transformation(this)
 !
          use parameters
 !
-         import transformation_tool
+         import transformation
 !
          implicit none
 !
-         class(transformation_tool), intent(in) :: this
+         class(transformation), intent(in) :: this
 !
       end subroutine
    end interface
 !
 !
-end module transformation_tool_class
+end module transformation_class

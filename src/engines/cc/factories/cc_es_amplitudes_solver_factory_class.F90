@@ -295,9 +295,9 @@ contains
 !
       use eigen_davidson_tool_class, only: eigen_davidson_tool
       use cc_eigen_storage_tool_class, only: cc_eigen_storage_tool
-      use cc_jacobian_transformation_tool_class, only: cc_jacobian_transformation_tool
       use cc_es_eigen_davidson_print_tool_class, only: cc_es_eigen_davidson_print_tool
       use cc_jacobian_preconditioner_getter_class, only: cc_jacobian_preconditioner_getter
+      use cc_jacobian_transformation_class, only: cc_jacobian_transformation
 !
       implicit none
 !
@@ -305,10 +305,10 @@ contains
       class(ccs),                             intent(inout) :: wf
       class(abstract_solver), allocatable,    intent(out)   :: solver
 !
-      class(eigen_davidson_tool), allocatable :: davidson
-      class(cc_eigen_storage_tool), allocatable :: storer
-      class(cc_jacobian_transformation_tool), allocatable :: transformer
-      class(cc_es_eigen_davidson_print_tool), allocatable :: printer
+      class(eigen_davidson_tool),               allocatable :: davidson
+      class(cc_eigen_storage_tool),             allocatable :: storer
+      class(cc_jacobian_transformation),        allocatable :: transformer
+      class(cc_es_eigen_davidson_print_tool),   allocatable :: printer
       class(cc_jacobian_preconditioner_getter), allocatable :: preconditioner
 !
       real(dp) :: lindep_threshold
@@ -327,7 +327,7 @@ contains
       preconditioner = cc_jacobian_preconditioner_getter(wf, wf%n_es_amplitudes)
       storer = cc_eigen_storage_tool(wf, trim(this%transformation))
 !
-      transformer = cc_jacobian_transformation_tool(wf, trim(this%transformation), wf%n_es_amplitudes)
+      transformer = cc_jacobian_transformation(wf, trim(this%transformation), wf%n_es_amplitudes)
 !
       printer = cc_es_eigen_davidson_print_tool(wf, trim(this%transformation))
       call printer%print_banner()

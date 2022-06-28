@@ -269,6 +269,14 @@ module hf_class
       procedure :: get_tdhf_start_vector                       => get_tdhf_start_vector_hf
       procedure :: tdhf_summary                                => tdhf_summary_hf
 !
+      procedure :: get_dipole_gradient
+      procedure :: get_S2_transformation
+      procedure :: get_E2_transformation
+      procedure :: get_response_transformation
+!
+      procedure :: print_polarizability => print_polarizability_hf
+      procedure :: get_rpa_response_preconditioner => get_rpa_response_preconditioner_hf
+!
       procedure :: finalize_gs => finalize_gs_hf
 !
    end type hf

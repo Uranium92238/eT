@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module fci_transformation_tool_class
+module fci_transformation_class
 !
 !!
 !! FCI transformation class
@@ -27,11 +27,11 @@ module fci_transformation_tool_class
    use kinds
 !
    use fci_class,                   only: fci
-   use transformation_tool_class,   only: transformation_tool
+   use transformation_class,   only: transformation
 !
    implicit none
 !
-   type, extends(transformation_tool) :: fci_transformation_tool
+   type, extends(transformation) :: fci_transformation
 !
       class(fci), pointer, private :: wf
 !
@@ -40,17 +40,17 @@ module fci_transformation_tool_class
       procedure, public :: transform => transform_fci
       procedure, public :: initialize  => initialize_fci
 !
-   end type  fci_transformation_tool
+   end type  fci_transformation
 !
-   interface  fci_transformation_tool
+   interface  fci_transformation
 !
-      procedure :: new_fci_transformation_tool
+      procedure :: new_fci_transformation
 !
-   end interface  fci_transformation_tool
+   end interface  fci_transformation
 !
 contains
 !
-   function new_fci_transformation_tool(wf) result(this)
+   function new_fci_transformation(wf) result(this)
 !!
 !!    New FCI transformation
 !!    Written by Enrico Ronca, 2022
@@ -58,12 +58,12 @@ contains
       implicit none
 !
       class(fci), intent(in), target :: wf
-      type(fci_transformation_tool) :: this
+      type(fci_transformation) :: this
 !
       this%wf => wf
       this%n_parameters = wf%n_determinants
 !
-   end function new_fci_transformation_tool
+   end function new_fci_transformation
 !
 !
    subroutine transform_fci(this, trial, transform)
@@ -75,7 +75,7 @@ contains
 !
       implicit none
 !
-      class(fci_transformation_tool), intent(in)   :: this
+      class(fci_transformation), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
       call this%wf%hamiltonian_transformation_no_spin_symmetry(trial, transform)
 !
@@ -91,11 +91,11 @@ contains
 !
       implicit none
 !
-      class(fci_transformation_tool), intent(in)   :: this
+      class(fci_transformation), intent(in)   :: this
 !
       call do_nothing(this)
 !
    end subroutine initialize_fci
 !
 !
-end module fci_transformation_tool_class
+end module fci_transformation_class

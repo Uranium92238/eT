@@ -151,8 +151,8 @@ contains
 !!    for the determination of Coupled Cluster multipliers
 !!
 
-      use transformation_tool_class,   only: transformation_tool
-      use cc_jacobian_transformation_tool_class,            only: cc_jacobian_transformation_tool
+      use transformation_class,                             only: transformation
+      use cc_jacobian_transformation_class,                 only: cc_jacobian_transformation
       use cc_multipliers_linear_equation_storage_tool_class,only: cc_multipliers_linear_equation_storage_tool
       use linear_davidson_tool_class,                       only: linear_davidson_tool
       use linear_davidson_solver_class,                     only: linear_davidson_solver
@@ -160,7 +160,7 @@ contains
       use cc_multipliers_start_vector_tool_class,           only: cc_multipliers_start_vector_tool
       use cc_jacobian_preconditioner_getter_class,          only: cc_jacobian_preconditioner_getter
       use linear_davidson_single_solution_print_tool_class, only: linear_davidson_single_solution_print_tool
-      use folded_cc_jacobian_transformation_tool_class, only: folded_cc_jacobian_transformation_tool
+      use folded_cc_jacobian_transformation_class, only: folded_cc_jacobian_transformation
 !
       implicit none
 !
@@ -169,7 +169,7 @@ contains
       class(abstract_solver), allocatable,  intent(out)   :: solver
 !
       class(linear_davidson_tool),                       allocatable :: davidson
-      class(transformation_tool),                        allocatable :: transformer
+      class(transformation),                             allocatable :: transformer
       class(cc_multipliers_linear_equation_storage_tool),allocatable :: storer
       class(cc_multipliers_rhs_tool),                    allocatable :: rhs_getter
       class(cc_multipliers_start_vector_tool),           allocatable :: start_vector
@@ -197,16 +197,16 @@ contains
 !
       if (wf%name_ == 'lowmem cc2' .or. wf%name_ == 'cc3' ) then
 !
-         transformer = folded_cc_jacobian_transformation_tool(wf,          &
-                                                                    side='left', &
-                                                                    n_parameters=wf%n_gs_amplitudes, &
-                                                                    frequency=zero)
+         transformer = folded_cc_jacobian_transformation(wf,          &
+                                                         side='left', &
+                                                         n_parameters=wf%n_gs_amplitudes,&
+                                                         frequency=zero)
 !
       else
 !
-         transformer = cc_jacobian_transformation_tool(wf,          &
-                                                       side='left', &
-                                                       n_parameters=wf%n_gs_amplitudes)
+         transformer = cc_jacobian_transformation(wf,          &
+                                                  side='left', &
+                                                  n_parameters=wf%n_gs_amplitudes)
       endif
 !
       storer         = cc_multipliers_linear_equation_storage_tool(wf)

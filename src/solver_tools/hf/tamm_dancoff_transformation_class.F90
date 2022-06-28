@@ -17,75 +17,76 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module rpa_transformation_tool_class
+module tamm_dancoff_transformation_class
 !
 !!
-!!    RPA transformation class
+!!    Tamm-Dancoff transformation class
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
    use kinds
 !
    use hf_class,                    only: hf
-   use transformation_tool_class,   only: transformation_tool
+   use transformation_class,   only: transformation
 !
    implicit none
 !
-   type, extends(transformation_tool) :: rpa_transformation_tool
+   type, extends(transformation) :: tamm_dancoff_transformation
 !
       class(hf), pointer, private :: wf
 !
    contains
 !
-      procedure, public :: transform => transform_rpa
-      procedure, public :: initialize  => initialize_rpa
+      procedure, public :: transform => transform_tamm_dancoff
+      procedure, public :: initialize  => initialize_tamm_dancoff
 !
-   end type  rpa_transformation_tool
+   end type  tamm_dancoff_transformation
 !
-   interface  rpa_transformation_tool
+   interface  tamm_dancoff_transformation
 !
-      procedure :: new_rpa_transformation_tool
+      procedure :: new_tamm_dancoff_transformation
 !
-   end interface  rpa_transformation_tool
+   end interface  tamm_dancoff_transformation
 !
 contains
 !
-   function new_rpa_transformation_tool(wf) result(this)
+   function new_tamm_dancoff_transformation(wf) result(this)
 !!
-!!    New RPA transformation
+!!    New Tamm-Dancoff transformation
 !!    Written by Sarai D. Folkestad, May 2021
 !!
       implicit none
 !
       class(hf), intent(in), target :: wf
-      type(rpa_transformation_tool) :: this
+      type(tamm_dancoff_transformation) :: this
 !
       this%wf => wf
       this%n_parameters = wf%n_o*wf%n_v
 !
-   end function new_rpa_transformation_tool
+   end function new_tamm_dancoff_transformation
 !
 !
-   subroutine transform_rpa(this, trial, transform)
+   subroutine transform_tamm_dancoff(this, trial, transform)
 !!
 !!    Transform
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-!!    Modified by Regina Matveeva, Sep 2021
-!!    Added frequency (necessary due to a modification of the transformation_tool)
+!!    Modified by Regina Matveeva, Sept 2021
+!!    Added frequency (necessary due to a modification of the transformation)
 !!
       use warning_suppressor, only: do_nothing
 !
       implicit none
 !
-      class(rpa_transformation_tool), intent(in)   :: this
+      class(tamm_dancoff_transformation), intent(in)   :: this
       real(dp), dimension(this%n_parameters) :: trial, transform
-      call this%wf%rpa_transformation(trial, transform)
 !
-   end subroutine transform_rpa
+      call this%wf%tamm_dancoff_transformation(trial, transform)
+!
+   end subroutine transform_tamm_dancoff
 !
 !
-   subroutine initialize_rpa(this)
+   subroutine initialize_tamm_dancoff(this)
 !!
 !!    Initialize
 !!    Written by Regina Matveeva, Sept 2021
@@ -94,11 +95,11 @@ contains
 !
       implicit none
 !
-      class(rpa_transformation_tool), intent(in)   :: this
+      class(tamm_dancoff_transformation), intent(in) :: this
 !
       call do_nothing(this)
 !
-   end subroutine initialize_rpa
+   end subroutine initialize_tamm_dancoff
 !
 !
-end module rpa_transformation_tool_class
+end module tamm_dancoff_transformation_class
