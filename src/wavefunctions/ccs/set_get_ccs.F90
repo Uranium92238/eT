@@ -130,4 +130,19 @@ contains
    end subroutine set_excitation_energies_ccs
 !
 !
+   module subroutine get_amplitude_block_sizes_ccs(wf, amplitude_block_sizes)
+!!
+!!    Get amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1]
+!
+   end subroutine get_amplitude_block_sizes_ccs
+!
+!
 end submodule set_get_ccs

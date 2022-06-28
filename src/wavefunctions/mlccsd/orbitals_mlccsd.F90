@@ -867,6 +867,7 @@ contains
       call cc2_wf%L_t1%set_equal_to(wf%L_mo)
 !
       call cc2_wf%mo_preparations()
+      call cc2_wf%initialize_ground_state_files()
 !
 !     1. Ground state
 !

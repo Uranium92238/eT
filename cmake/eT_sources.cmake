@@ -127,6 +127,7 @@ set(eT_fortran_sources
    src/io/timings_file_class.F90
    src/io/global_out.F90
    src/io/global_in.F90
+   src/io/amplitude_file_storer_class.F90
 #
    src/libint/libint_initialization.F90
 #
@@ -421,7 +422,6 @@ set(eT_fortran_sources
    src/wavefunctions/ccsd/ccsd_class.F90
    src/wavefunctions/ccsd/mean_value_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
-   src/wavefunctions/ccsd/file_handling_ccsd.F90
    src/wavefunctions/ccsd/initialize_destruct_ccsd.F90
    src/wavefunctions/ccsd/set_get_ccsd.F90
    src/wavefunctions/ccsd/jacobian_ccsd.F90

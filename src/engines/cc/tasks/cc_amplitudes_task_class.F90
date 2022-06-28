@@ -81,6 +81,8 @@ contains
       call this%print_header()
       call this%start_timer()
 !
+      call wf%initialize_ground_state_files()
+!
       call this%solver_factory%create(wf, this%solver)
       call this%solver%run()
       call this%solver%cleanup()

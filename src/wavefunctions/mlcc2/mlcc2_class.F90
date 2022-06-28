@@ -51,6 +51,7 @@ module mlcc2_class
    use stream_file_class, only: stream_file
    use sequential_file_class, only: sequential_file
    use direct_stream_file_class, only: direct_stream_file
+   use amplitude_file_storer_class, only: amplitude_file_storer
 !
    implicit none
 !
@@ -133,8 +134,11 @@ module mlcc2_class
       procedure :: determine_n_es_amplitudes                         => determine_n_es_amplitudes_mlcc2
       procedure :: determine_n_gs_amplitudes                         => determine_n_gs_amplitudes_mlcc2
 !
-      procedure :: cvs_projection                                 => cvs_projection_mlcc2
+      procedure :: cvs_projection                                    => cvs_projection_mlcc2
       procedure :: set_cvs_start_indices                             => set_cvs_start_indices_mlcc2
+!
+      procedure :: get_es_amplitude_block_sizes &
+                => get_es_amplitude_block_sizes_mlcc2
 !
 !     Read input
 !
@@ -146,25 +150,25 @@ module mlcc2_class
       procedure :: mo_preparations                                   => mo_preparations_mlcc2
 !
       procedure :: general_mlcc_mo_preparations &
-                  => general_mlcc_mo_preparations_mlcc2
+                => general_mlcc_mo_preparations_mlcc2
 !
       procedure :: mo_preparations_from_restart &
-                  => mo_preparations_from_restart_mlcc2
+                => mo_preparations_from_restart_mlcc2
 !
       procedure :: print_orbital_space                               => print_orbital_space_mlcc2
       procedure :: check_orbital_space                               => check_orbital_space_mlcc2
       procedure :: check_orthonormality_of_MOs                       => check_orthonormality_of_MOs_mlcc2
 !
       procedure :: read_cnto_transformation_matrices &
-                     => read_cnto_transformation_matrices_mlcc2
+                => read_cnto_transformation_matrices_mlcc2
       procedure :: write_cnto_transformation_matrices &
-                     => write_cnto_transformation_matrices_mlcc2
+                => write_cnto_transformation_matrices_mlcc2
 !
 !
       procedure :: read_nto_transformation_matrix &
-                     => read_nto_transformation_matrix_mlcc2
+                => read_nto_transformation_matrix_mlcc2
       procedure :: write_nto_transformation_matrix &
-                     => write_nto_transformation_matrix_mlcc2
+                => write_nto_transformation_matrix_mlcc2
 !
       procedure :: construct_ccs_cnto_transformation_matrices        => construct_ccs_cnto_transformation_matrices_mlcc2
 !
@@ -237,13 +241,14 @@ module mlcc2_class
       procedure :: construct_t2bar                                   => construct_t2bar_mlcc2
       procedure :: construct_u_aibj                                  => construct_u_aibj_mlcc2
 !
-!     Restart
+!     File handling
 !
-      procedure :: read_doubles_vector                               => read_doubles_vector_mlcc2
-      procedure :: save_doubles_vector                               => save_doubles_vector_mlcc2
-      procedure :: read_excitation_vector_file                       => read_excitation_vector_file_mlcc2
-      procedure :: save_excitation_vector_on_file                    => save_excitation_vector_on_file_mlcc2
-      procedure :: get_restart_vector                                => get_restart_vector_mlcc2
+      procedure :: save_mlcc_orbitals &
+                => save_mlcc_orbitals_mlcc2
+      procedure :: read_mlcc_orbitals &
+                => read_mlcc_orbitals_mlcc2
+      procedure :: get_restart_vector &
+                => get_restart_vector_mlcc2
 !
 !     Summary
 !
@@ -252,11 +257,6 @@ module mlcc2_class
 !     Initialize wavefunction
 !
       procedure :: initialize                                        => initialize_mlcc2
-!
-!     File handling
-!
-      procedure :: save_mlcc_orbitals                                => save_mlcc_orbitals_mlcc2
-      procedure :: read_mlcc_orbitals                                => read_mlcc_orbitals_mlcc2
 !
    end type mlcc2
 !
@@ -319,7 +319,7 @@ contains
 !
       call wf%read_mlcc_settings()
 !
-      wf%n_t1 = (wf%n_o)*(wf%n_v)
+      wf%n_t1 = wf%n_o*wf%n_v
       wf%n_gs_amplitudes = wf%n_t1
 !
       call wf%initialize_fock()
@@ -1430,6 +1430,21 @@ contains
       q_electronic = zero
 !
    end function get_electronic_quadrupole_mlcc2
+!
+!
+   subroutine get_es_amplitude_block_sizes_mlcc2(wf, amplitude_block_sizes)
+!!
+!!    Get es amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1, wf%n_x2]
+!
+   end subroutine get_es_amplitude_block_sizes_mlcc2
 !
 !
 end module mlcc2_class
