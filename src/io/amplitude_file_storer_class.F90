@@ -127,7 +127,7 @@ contains
          n = this%n_amplitudes_per_block(i)
 !
          call this%file_%write_(n)
-         call this%file_%write_(vector(elements_written+1:), n)
+         call this%file_%write_(vector(elements_written+1:), int(n))
 !
          elements_written = elements_written + n
 !
@@ -162,7 +162,7 @@ contains
 !
       do i = 1, this%n_blocks
 !
-         n = this%n_amplitudes_per_block(i)
+         n = int(this%n_amplitudes_per_block(i),kind=i64)
 !
          iostat = 0
          call this%file_%read_(n_from_file, status_=iostat)
@@ -172,10 +172,10 @@ contains
          if (n_from_file .ne. n) then
             call output%error_msg('Wrong number of singles amplitudes in (a0). &
                                   &Expected (i0), found (i0)', &
-                                 chars=[this%file_%get_name()], ints=[n, n_from_file])
+                                 chars=[this%file_%get_name()], ints=[int(n), int(n_from_file)])
          end if
 !
-         call this%file_%read_(vector(elements_read+1:), n)
+         call this%file_%read_(vector(elements_read+1:), int(n))
 !
          elements_read = elements_read + n
 !

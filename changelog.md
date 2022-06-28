@@ -14,7 +14,7 @@
 - Restructured FCI engine to use tasks. eT-program/eT!1087
 - Restructured reference/HF engines to use task structure. eT-program/eT!1088
 - Added factories for cc start vector and cc projection tools. eT-program/eT!1091
-- Added storers that know how to store amplitudes. eT-program/eT!1092
+- Added storers that know how to store amplitudes. eT-program/eT!1092 eT-program/eT!1094
 
 ### Optimization
 - Removed N^3 scaling from Fock construction visible for very large systems. eT-program/eT!870
