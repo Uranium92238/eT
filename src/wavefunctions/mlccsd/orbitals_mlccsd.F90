@@ -820,7 +820,7 @@ contains
       use abstract_solver_class, only: abstract_solver
       use cc2_class, only: cc2
       use global_in, only: input
-      use davidson_cc_es_solver_factory_class, only: davidson_cc_es_solver_factory
+      use cc_es_amplitudes_solver_factory_class, only: cc_es_amplitudes_solver_factory
 !
       implicit none
 !
@@ -840,8 +840,8 @@ contains
       type(diis_cc_gs), allocatable :: cc_gs_solver_diis
       type(quasi_newton_updater), allocatable :: t_updater
 !
-      class(abstract_solver), allocatable :: cc_es_solver_davidson
-      type(davidson_cc_es_solver_factory), allocatable :: davidson_factory
+      class(abstract_solver), allocatable :: cc_es_solver
+      type(cc_es_amplitudes_solver_factory), allocatable :: solver_factory
 !
       type(timings) :: timer_gs, timer_es
 !
@@ -867,6 +867,7 @@ contains
       call cc2_wf%L_t1%set_equal_to(wf%L_mo)
 !
       call cc2_wf%mo_preparations()
+      call cc2_wf%initialize_ground_state_files()
 !
 !     1. Ground state
 !
@@ -896,14 +897,14 @@ contains
 !
       call cc2_wf%construct_fock('es')
 !
-      davidson_factory = davidson_cc_es_solver_factory(transformation, restart=.false.)
-      call davidson_factory%create(cc2_wf, cc_es_solver_davidson)
+      solver_factory = cc_es_amplitudes_solver_factory(cc2_wf%name_, transformation, restart=.false.)
+      call solver_factory%create(cc2_wf, cc_es_solver)
 !
       call cc2_wf%initialize_excited_state_files()
       call cc2_wf%initialize_excitation_energies()
 !
-      call cc_es_solver_davidson%run()
-      call cc_es_solver_davidson%cleanup()
+      call cc_es_solver%run()
+      call cc_es_solver%cleanup()
 !
       call timer_es%turn_off()
 !

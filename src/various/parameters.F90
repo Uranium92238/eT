@@ -34,10 +34,10 @@ module parameters
 !  Version
 !
    integer, parameter :: major_version = 1
-   integer, parameter :: minor_version = 7
-   integer, parameter :: patch_version = 4
+   integer, parameter :: minor_version = 8
+   integer, parameter :: patch_version = 0
 !
-   character(len=27), parameter :: version_name = "Hydra"
+   character(len=27), parameter :: version_name = "Ibiza"
 !
 !  Integers
 !
@@ -131,6 +131,8 @@ contains
 !
       real(dp) :: conversion_factor
 !
+      conversion_factor = zero
+!
       if (trim(from) .eq. 'bohr' .and. trim(to) .eq. 'angstrom') then
 !
          conversion_factor = bohr_to_angstrom
@@ -142,13 +144,6 @@ contains
       else
 !
          conversion_factor = one
-!
-      endif
-!
-      if (trim(from) .ne. 'angstrom' .and. trim(from) .ne. 'bohr' .or. &
-          trim(to)   .ne. 'angstrom' .and. trim(to)   .ne. 'bohr') then
-!
-         conversion_factor = zero
 !
       endif
 !
@@ -170,6 +165,8 @@ contains
 !
       character(len=100) :: label
 !
+      label = 'unknown'
+!
       if (trim(units) == 'angstrom') then
 !
          label = 'angstrom'
@@ -177,10 +174,6 @@ contains
       elseif (trim(units) == 'bohr') then
 !
          label = 'a.u.'
-!
-      else
-!
-         label = 'unknown'
 !
       endif
 !

@@ -42,13 +42,9 @@ module input_file_class
       integer, private :: n_qm_atom_lines ! Number of QM atoms
       integer, private :: n_mm_atom_lines ! Number of MM atoms
 !
-!     Array of the input lines excluding geometry
-!
-      character(len=200), dimension(:), allocatable, private :: input_
-!
-!     Array of the QM and MM input geometries
-!
-      character(len=200), dimension(:), allocatable, private :: geometry
+!     Arrays storing lines in the input
+      character(len=200), dimension(:), allocatable, private :: keyword_lines
+      character(len=200), dimension(:), allocatable, private :: qm_geometry
       character(len=200), dimension(:), allocatable, private :: mm_geometry
 !
    contains
@@ -56,7 +52,13 @@ module input_file_class
       procedure :: open_                                                => open_input_file
       procedure :: close_                                               => close_input_file
 !
+      procedure :: read_and_process_input &
+                => read_and_process_input_input_file 
+!
       procedure :: check_for_errors                                     => check_for_errors_input_file
+!
+      procedure :: print_input_except_geometry & 
+                => print_input_except_geometry_input_file
 !
       procedure :: get_n_elements_for_keyword
       procedure :: get_n_atoms                                          => get_n_atoms_input_file
@@ -102,8 +104,11 @@ module input_file_class
 !
       procedure :: read_keywords_and_geometry => read_keywords_and_geometry_input_file
 !
-      procedure :: cleanup_geometry    => cleanup_geometry_input_file
-      procedure :: cleanup_keywords    => cleanup_keywords_input_file
+      procedure :: cleanup &
+                => cleanup_input_file 
+!
+      procedure, private :: cleanup_geometry
+      procedure, private :: cleanup_keywords
 !
       procedure :: is_section_present                       &
                 => is_section_present_input_file
@@ -172,38 +177,40 @@ contains
 !
       character(len=*), intent(in) :: name_
 !
+      type(section) :: active_atoms
       type(section) :: calculations
-      type(section) :: system
-      type(section) :: memory
+      type(section) :: cc
       type(section) :: cc_mean_value
       type(section) :: cc_response
-      type(section) :: hf_mean_value
       type(section) :: cc_td
+      type(section) :: electric_field
+      type(section) :: fci_mean_value
+      type(section) :: frozen_orbitals
+      type(section) :: global_print
+      type(section) :: hf_mean_value
+      type(section) :: integrals
+      type(section) :: memory
       type(section) :: method
-      type(section) :: solver_cholesky
-      type(section) :: solver_scf
-      type(section) :: solver_scf_geoopt
-      type(section) :: solver_cc_gs
+      type(section) :: mlcc
+      type(section) :: mlhf
+      type(section) :: mm
+      type(section) :: pcm
+      type(section) :: qed
       type(section) :: solver_cc_es
+      type(section) :: solver_cc_gs
       type(section) :: solver_cc_multipliers
-      type(section) :: solver_cc_response
       type(section) :: solver_cc_propagation
+      type(section) :: solver_cc_response
+      type(section) :: solver_cholesky
+      type(section) :: solver_fci
       type(section) :: solver_fft_dipole_moment
       type(section) :: solver_fft_electric_field
-      type(section) :: solver_fci
-      type(section) :: electric_field
-      type(section) :: active_atoms
-      type(section) :: cc
-      type(section) :: mlcc
-      type(section) :: mm
-      type(section) :: mlhf
+      type(section) :: solver_scf
+      type(section) :: solver_scf_geoopt
+      type(section) :: system
+      type(section) :: solver_tdhf_es
+      type(section) :: solver_tdhf_response
       type(section) :: visualization
-      type(section) :: pcm
-      type(section) :: global_print
-      type(section) :: frozen_orbitals
-      type(section) :: integrals
-      type(section) :: qed
-      type(section) :: tdhf
 !
 !     Set input file name, access and format
 !
@@ -305,12 +312,13 @@ contains
                               'cholesky eri',         &
                               'ground state',         &
                               'ground state geoopt',  &
+                              'tdhf response',        &
+                              'tdhf excited state',   &
                               'excited state',        &
                               'response',             &
                               'mean value',           &
                               'time dependent state', &
-                              'restart',              &
-                              'time dependent hf']
+                              'restart']
 !
 !
       electric_field%name_    = 'electric field'
@@ -329,11 +337,11 @@ contains
                                 'separation']
 !
 !
-      hf_mean_value%name_    = 'hf mean value'
-      hf_mean_value%required = .false.
-      hf_mean_value%keywords = [character(len=30) :: &
-                               'dipole',             &
-                               'quadrupole']
+      fci_mean_value%name_    = 'fci mean value'
+      fci_mean_value%required = .false.
+      fci_mean_value%keywords = [character(len=30) :: &
+                                'dipole',             &
+                                'quadrupole']
 !
 !
       frozen_orbitals%name_    = 'frozen orbitals'
@@ -341,6 +349,13 @@ contains
       frozen_orbitals%keywords = [character(len=30) :: &
                                  'hf', &
                                  'core']
+!
+!
+      hf_mean_value%name_    = 'hf mean value'
+      hf_mean_value%required = .false.
+      hf_mean_value%keywords = [character(len=30) :: &
+                               'dipole',             &
+                               'quadrupole']
 !
 !
       integrals%name_    = 'integrals'
@@ -351,18 +366,6 @@ contains
                            'mo eri in memory',   &
                            'ri',                 &
                            't1 eri in memory']
-!
-      solver_fci%name_    = 'solver fci'
-      solver_fci%required = .false.
-      solver_fci%keywords = [character(len=30) ::     &
-                             'energy threshold ',     &
-                             'max iterations',        &
-                             'max reduced dimension', &
-                             'residual threshold',    &
-                             'restart',               &
-                             'start guess',           &
-                             'states',                &
-                             'storage']
 !
       memory%name_    = 'memory'
       memory%required = .false.
@@ -403,13 +406,15 @@ contains
 !
       mlhf%name_    = 'multilevel hf'
       mlhf%required = .false.
-      mlhf%keywords = [character(len=30) ::           &
+      mlhf%keywords = [character(len=30) ::         &
                       'initial hf optimization',    &
                       'initial hf threshold',       &
                       'print initial hf',           &
                       'cholesky threshold',         &
                       'project on minimal basis',   &
-                      'cholesky virtuals']
+                      'cholesky virtuals',          &
+                      'no mo screening',            &
+                      'inactive coulomb exchange']
 !
 !
       pcm%name_    = 'pcm'
@@ -419,6 +424,15 @@ contains
                      'input',              &
                      'tesserae area',      &
                      'solver type']
+!
+!
+      global_print%name_    = 'print'
+      global_print%required = .false.
+      global_print%keywords = [character(len=30) ::  &
+                              'output print level ', &
+                              'timing print level ', &
+                              'full references',     &
+                              'z-matrix']
 !
 !
       qed%name_    = 'qed'
@@ -436,15 +450,6 @@ contains
                      'wavevector']
 !
 !
-      global_print%name_    = 'print'
-      global_print%required = .false.
-      global_print%keywords = [character(len=30) ::  &
-                              'output print level ', &
-                              'timing print level ', &
-                              'full references',     &
-                              'z-matrix']
-!
-!
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
       solver_cholesky%keywords = [character(len=30) :: &
@@ -456,11 +461,25 @@ contains
                                  'mo screening']
 !
 !
+      solver_fci%name_    = 'solver fci'
+      solver_fci%required = .false.
+      solver_fci%keywords = [character(len=30) ::     &
+                             'energy threshold ',     &
+                             'max iterations',        &
+                             'max reduced dimension', &
+                             'residual threshold',    &
+                             'restart',               &
+                             'start guess',           &
+                             'states',                &
+                             'storage']
+!
+!
       solver_scf%name_    = 'solver scf'
       solver_scf%required = .false.
       solver_scf%keywords = [character(len=30) ::           &
                             'algorithm',                    &
                             'ao density guess',             &
+                            'coulomb exchange terms',       &
                             'coulomb threshold',            &
                             'crop',                         &
                             'cumulative fock threshold',    &
@@ -602,18 +621,26 @@ contains
                         'charge',               &
                         'multiplicity']
 !
+      solver_tdhf_es%name_    = 'solver tdhf es'
+      solver_tdhf_es%required = .false.
+      solver_tdhf_es%keywords = [character(len=30) :: &
+                                'energy threshold',     &
+                                'max iterations',       &
+                                'max reduced dimension',&
+                                'residual threshold',   &
+                                'restart',              &
+                                'storage',              &
+                                'singlet states',       &
+                                'tamm-dancoff']
 !
-      tdhf%name_    = 'solver tdhf'
-      tdhf%required = .false.
-      tdhf%keywords = [character(len=30) ::    &
-                       'energy threshold',     &
-                       'max iterations',       &
-                       'max reduced dimension',&
-                       'residual threshold',   &
-                       'restart',              &
-                       'storage',              &
-                       'states',               &
-                       'tamm-dancoff']
+      solver_tdhf_response%name_    = 'solver tdhf response'
+      solver_tdhf_response%required = .false.
+      solver_tdhf_response%keywords = [character(len=30) ::   &
+                                      'frequencies',          &
+                                      'max iterations',       &
+                                      'max reduced dimension',&
+                                      'print iterations',     &
+                                      'residual threshold']
 !
 !
       visualization%name_    = 'visualization'
@@ -644,6 +671,7 @@ contains
                        cc_response,               &
                        cc_td,                     &
                        electric_field,            &
+                       fci_mean_value,            &
                        frozen_orbitals,           &
                        global_print,              &
                        hf_mean_value,             &
@@ -661,13 +689,14 @@ contains
                        solver_cc_propagation,     &
                        solver_cc_response,        &
                        solver_cholesky,           &
+                       solver_fci,                &
                        solver_fft_dipole_moment,  &
                        solver_fft_electric_field, &
-                       solver_fci,                &
                        solver_scf,                &
                        solver_scf_geoopt,         &
                        system,                    &
-                       tdhf,                      &
+                       solver_tdhf_es,            &
+                       solver_tdhf_response,      &
                        visualization]
 !
       this%is_open = .false.
@@ -738,6 +767,47 @@ contains
    end subroutine close_input_file
 !
 !
+   subroutine read_and_process_input_input_file(this)
+!!
+!!    Read and process input
+!!    Written by Eirik F. Kjønstad, May 2022
+!!
+      implicit none 
+!
+      class(input_file), intent(inout) :: this 
+!
+      call this%open_()
+      call this%read_keywords_and_geometry()
+      call this%close_()
+!
+   end subroutine read_and_process_input_input_file
+!
+!
+   subroutine print_input_except_geometry_input_file(this)
+!!
+!!    Print input except geometry
+!!    Written by Eirik F. Kjønstad, May 2022
+!! 
+      implicit none 
+!
+      class(input_file), intent(in) :: this 
+!
+      integer :: n
+!
+      call output%printf('m', ':: Input file', fs='(//t3,a)')
+      call output%print_separator('m', 16, '=', fs='(t3,a/)')
+!
+      call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
+!
+      do n = 1, this%n_keyword_lines
+!
+         call output%printf('m', this%keyword_lines(n), fs='(t6,a)', ll=120)
+!
+      enddo 
+!
+   end subroutine print_input_except_geometry_input_file
+!
+!
    subroutine check_for_errors_input_file(this)
 !!
 !!    Check for errors
@@ -805,12 +875,12 @@ contains
 !
       do i = 1, this%n_keyword_lines
 !
-         if (this%input_(i)(1 : 3) == 'end') then
+         if (this%keyword_lines(i)(1 : 3) == 'end') then
 !
 !           Located the end of a section -
 !           attempt to move to the beginning of that section => fails if inconsistent beginning and end
 !
-            section = trim(adjustl(this%input_(i)(4 : 200)))
+            section = trim(adjustl(this%keyword_lines(i)(4 : 200)))
 !
             call this%get_section_limits(section, start_, end_)
 !
@@ -889,9 +959,9 @@ contains
 !
          recognized = .false.
 !
-         if (.not. this%string_is_comment(this%input_(record))) then
+         if (.not. this%string_is_comment(this%keyword_lines(record))) then
 !
-            call this%extract_keyword_from_string(this%input_(record), keyword)
+            call this%extract_keyword_from_string(this%keyword_lines(record), keyword)
 !
             do k = 1, size(the_section%keywords)
 !
@@ -1463,17 +1533,17 @@ contains
 !
       do record = start_ + 1, end_ - 1
 !
-         if (this%string_is_comment(this%input_(record))) then
+         if (this%string_is_comment(this%keyword_lines(record))) then
 !
             cycle
 !
          else
 !
-            call this%extract_keyword_from_string(this%input_(record), local_keyword)
+            call this%extract_keyword_from_string(this%keyword_lines(record), local_keyword)
 !
             if (trim(local_keyword) == keyword) then
 !
-               call this%extract_keyword_value_from_string(this%input_(record), &
+               call this%extract_keyword_value_from_string(this%keyword_lines(record), &
                   keyword_value)
                return
 !
@@ -1651,13 +1721,13 @@ contains
 !
       do record = start_ + 1, end_ - 1
 !
-         if (this%string_is_comment(this%input_(record))) then
+         if (this%string_is_comment(this%keyword_lines(record))) then
 !
             cycle
 !
          else
 !
-            call this%extract_keyword_from_string(this%input_(record), local_keyword)
+            call this%extract_keyword_from_string(this%keyword_lines(record), local_keyword)
 !
             if (trim(local_keyword) == keyword) then
 !
@@ -1698,7 +1768,7 @@ contains
 !
       do i = 1, this%n_keyword_lines
 !
-         if (trim(this%input_(i)) == section) then
+         if (trim(this%keyword_lines(i)) == section) then
 !
             is_present = .true.
             return
@@ -1864,9 +1934,9 @@ contains
 !
       do record = 1, this%n_qm_atom_lines
 !
-         if (this%geometry(record)(1:6) .ne. 'basis:' &
-            .and. (this%geometry(record)(1:6) .ne. 'units:') &
-            .and. (this%geometry(record)(1:5) .ne. 'ghost')) &
+         if (this%qm_geometry(record)(1:6) .ne. 'basis:' &
+            .and. (this%qm_geometry(record)(1:6) .ne. 'units:') &
+            .and. (this%qm_geometry(record)(1:5) .ne. 'ghost')) &
             n_atoms = n_atoms + 1
 !
       enddo
@@ -2006,9 +2076,9 @@ contains
       units_angstrom = .true. ! Default units are Angstrom
       charge = 0 ! Default charge is zero
 !
-      if (this%geometry(1)(1:6) == 'units:') then
+      if (this%qm_geometry(1)(1:6) == 'units:') then
 !
-         string = (trim(adjustl(this%geometry(1)(7:200))))
+         string = (trim(adjustl(this%qm_geometry(1)(7:200))))
 !
          if (string(1:4) == 'bohr') then
 !
@@ -2026,7 +2096,7 @@ contains
 !
 !     Error if next line is not a basis set line
 !
-      if(this%geometry(start_)(1:6) /= 'basis:') &
+      if(this%qm_geometry(start_)(1:6) /= 'basis:') &
             call output%error_msg('did not find basis in geometry section.')
 !
 !     Loop through geometry
@@ -2035,7 +2105,7 @@ contains
 !
       do i = start_, this%n_qm_atom_lines
 !
-         string = trim(adjustl(this%geometry(i)))
+         string = trim(adjustl(this%qm_geometry(i)))
 !
          if (string(1:6) == 'units:') &
             call output%error_msg('Units must be specified as the first line in the geometry section.')
@@ -2403,26 +2473,13 @@ contains
    subroutine read_keywords_and_geometry_input_file(this)
 !!
 !!    Read keywords and geometry
-!!    Written by sarai D. Folkestad, Mar 2020
+!!    Written by Sarai D. Folkestad, Mar 2020
 !!
-!!       Includes the former routine
+!!    Includes parts by Eirik F. Kjønstad, Jan 2020
 !!
-!!       print_to_output_input_file, witten by Eirik F. Kjønstad, Jan 2020
-!!
-!!    1) Prints the input file - except for the geometry specification - to the output file.
-!!
-!!    2) Places input file in memory
-!!
-!!       Places the input file, excluding the geometry,
-!!       in to the array input_
-!!
-!!       Places the geometry, excluding the MM geometry,
-!!       in to the array geometry
-!!
-!!       Places the MM geometry, if present,
-!!       in to the array mm_geometry
-!!
-!!    3) Checks for illegal keywords and sections in the input
+!!    Reads input file, extracting information into 
+!!    this%keyword_lines (input file lines excluding the geometry)
+!!    and into this%qm_geometry and this%mm_geometry.
 !!
       implicit none
 !
@@ -2434,13 +2491,7 @@ contains
 !
       logical :: QM_atoms
 !
-      call output%printf('m', ':: Input file', fs='(//t3,a)')
-      call output%print_separator('m', 16, '=', fs='(t3,a/)')
-!
-      call output%printf('m', 'Note: geometry section is excluded from this print', fs='(t6,a/)')
-!
       rewind(this%unit_)
-!
       this%n_keyword_lines = 0
 !
       do
@@ -2453,11 +2504,10 @@ contains
 !
          elseif (io_error .ne. 0) then
 !
-            call output%error_msg("The 'geometry' section appears to be missing in the input file.")
+            error stop "The 'geometry' section appears to be missing in the input file."
 !
          endif
 !
-         call output%printf('m', line, fs='(t6,a)', ll=120)
          this%n_keyword_lines = this%n_keyword_lines + 1
 !
       enddo
@@ -2478,7 +2528,7 @@ contains
 !
          elseif (io_error .ne. 0) then
 !
-            call output%error_msg("The 'geometry' section appears to have no end in the input file.")
+            error stop "The 'geometry' section appears to have no end in the input file."
 !
          endif
 !
@@ -2503,7 +2553,7 @@ contains
 !
 !     Place keyword lines in memory
 !
-      allocate(this%input_(this%n_keyword_lines))
+      allocate(this%keyword_lines(this%n_keyword_lines))
 !
       rewind(this%unit_)
 !
@@ -2511,10 +2561,9 @@ contains
 !
          read(this%unit_, '(a)', iostat=io_error) line
 !
-         line = adjustl(line)
          call convert_to_lowercase(line)
 !
-         this%input_(i) = line
+         this%keyword_lines(i) = line
 !
       enddo
 !
@@ -2522,7 +2571,7 @@ contains
 !
       if (this%n_qm_atom_lines < 1) call output%error_msg('No QM atoms in geometry!')
 !
-      allocate(this%geometry(this%n_qm_atom_lines))
+      allocate(this%qm_geometry(this%n_qm_atom_lines))
 !
       read(this%unit_, '(a)', iostat=io_error) line ! Reads 'geometry' line
 !
@@ -2535,7 +2584,7 @@ contains
          line = adjustl(line)
          call convert_to_lowercase(line)
 !
-         this%geometry(i) = line
+         this%qm_geometry(i) = line
 !
       enddo
 !
@@ -2558,8 +2607,6 @@ contains
 !
          enddo
       endif
-!
-      call this%check_for_errors() ! Check for incorrect/missing keywords/sections
 !
    end subroutine read_keywords_and_geometry_input_file
 !
@@ -2589,14 +2636,14 @@ contains
 !
       do i = 1, this%n_keyword_lines
 !
-         if (trim(this%input_(i)) == 'end ' // section) then
+         if (trim(this%keyword_lines(i)) == 'end ' // section) then
 !
             n_ends = n_ends + 1
             end_ = i
 !
          endif
 
-         if (trim(this%input_(i)) == section) then
+         if (trim(this%keyword_lines(i)) == section) then
 !
             n_beginnings = n_beginnings + 1
             start_ = i
@@ -2626,7 +2673,22 @@ contains
    end subroutine get_section_limits
 !
 !
-   subroutine cleanup_geometry_input_file(this)
+   subroutine cleanup_input_file(this)
+!!
+!!    Cleanup
+!!    Written by Eirik F. Kjønstad, May 2022
+!!
+      implicit none 
+!
+      class(input_file), intent(inout) :: this 
+!
+      call this%cleanup_keywords()
+      call this%cleanup_geometry()
+! 
+   end subroutine cleanup_input_file
+!
+!
+   subroutine cleanup_geometry(this)
 !!
 !!    Cleanup geometry
 !!    Written by Sarai D. Folkestad, Mar 2020
@@ -2637,14 +2699,14 @@ contains
 !
       class(input_file), intent(inout) :: this
 !
-      deallocate(this%geometry)
+      deallocate(this%qm_geometry)
 !
       if (allocated(this%mm_geometry)) deallocate(this%mm_geometry)
 !
-   end subroutine cleanup_geometry_input_file
+   end subroutine cleanup_geometry
 !
 !
-   subroutine cleanup_keywords_input_file(this)
+   subroutine cleanup_keywords(this)
 !!
 !!    Cleanup keywords
 !!    Written by Sarai D. Folkestad, Mar 2020
@@ -2655,9 +2717,9 @@ contains
 !
       class(input_file), intent(inout) :: this
 !
-      deallocate(this%input_)
+      deallocate(this%keyword_lines)
 !
-   end subroutine cleanup_keywords_input_file
+   end subroutine cleanup_keywords
 !
 !
    pure function is_embedding_on_input_file(this) result(embedding)
@@ -3196,7 +3258,6 @@ contains
       deallocate(split_string)
 !
    end subroutine get_state_guesses
-!
 !
 !
 end module input_file_class

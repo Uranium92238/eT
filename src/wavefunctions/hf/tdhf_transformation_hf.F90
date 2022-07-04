@@ -417,7 +417,6 @@ contains
 !!
 !!    sigma = Ab
 !!
-!
       use array_utilities, only: zero_array
 !
       implicit none
@@ -543,6 +542,41 @@ contains
    end subroutine get_rpa_preconditioner_hf
 !
 !
+   module subroutine get_rpa_response_preconditioner_hf(wf, preconditioner, frequency)
+!!
+!!    Get RPA preconditioner
+!!    Written by Sarai D. Folkestad, May 2021
+!!
+!!    Preconditioner is square of the orbital energy differences
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(2*wf%n_v*wf%n_o), intent(out) :: preconditioner
+!
+      real(dp), intent(in) :: frequency
+!
+      integer :: I
+!
+      real(dp), dimension(:), allocatable :: eps
+!
+      call mem%alloc(eps, wf%n_v*wf%n_o)
+!
+      call wf%get_orbital_differences(eps, wf%n_v*wf%n_o)
+!
+      do I = 1, wf%n_v*wf%n_o
+!
+         preconditioner(I) = eps(I) - frequency
+         preconditioner(I + wf%n_v*wf%n_o) = eps(I) + frequency
+!
+      enddo
+      call mem%dealloc(eps, wf%n_v*wf%n_o)
+
+!
+   end subroutine get_rpa_response_preconditioner_hf
+!
+!
    module subroutine get_tdhf_start_vector_hf(wf, trial, c, restart)
 !!
 !!    Get TDHF start vectors
@@ -615,6 +649,205 @@ contains
       call wf%get_orbital_differences(preconditioner, wf%n_v*wf%n_o)
 !
    end subroutine get_tamm_dancoff_preconditioner_hf
+!
+!
+   module subroutine get_dipole_gradient(wf, g, k)
+!!
+!!    Get dipole gradient
+!!    Written by Sarai D. Folkestadm Mar 2022
+!!
+!!    NOTE: In order to keep the definitions of A and B as in the
+!!    eigenvalue equation, we define our orbital rotation operator
+!!    as
+!!
+!!       exp(iK), where
+!!       K = 1/sqrt(2) sum_n K_n E_n, for positive and negative n
+!!
+!!    This results in the prefactor sqrt(2).
+!!    The index n is a super-index denoting an excitation
+!!
+!!       E_n = E_ai
+!!       E_-n = E_ia = E_ai^dagger
+!!
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(out) :: g
+!
+      integer, intent(in) :: k
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_wxk
+      real(dp), dimension(:,:),   allocatable :: mu_pqk
+!
+      integer :: a, i, ai
+!
+      real(dp) :: prefactor
+!
+      call mem%alloc(mu_wxk, wf%ao%n, wf%ao%n, 3)
+      call wf%ao%get_oei('dipole', mu_wxk)
+!
+      call mem%alloc(mu_pqk, wf%n_mo, wf%n_mo)
+      call wf%mo_transform(mu_wxk(:,:,k), mu_pqk)
+!
+      prefactor = sqrt(two)
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai =  wf%n_v*(i - 1) + a
+!
+            g(ai) = prefactor*mu_pqk(wf%n_o + a, i)
+            g(ai + wf%n_v*wf%n_o) = -prefactor*mu_pqk(i, wf%n_o + a)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(mu_wxk, wf%ao%n, wf%ao%n, 3)
+      call mem%dealloc(mu_pqk, wf%n_mo, wf%n_mo)
+!
+   end subroutine get_dipole_gradient
+!
+!
+   module subroutine get_S2_transformation(wf, trial, transform)
+!!
+!!    Get S2 transformation
+!!    Written by Sarai D. Folkestad, Mar 2022
+!!
+!!    Computes the metric of the response equation
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(in) :: trial
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(out) :: transform
+!
+      integer :: a, i, ai
+!
+      transform = zero
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai =  wf%n_v*(i - 1) + a
+!
+            transform(ai) = trial(ai)
+            transform(ai + wf%n_v*wf%n_o) = - trial(ai + wf%n_v*wf%n_o)
+!
+         enddo
+      enddo
+!
+   end subroutine get_S2_transformation
+!
+!
+   module subroutine get_E2_transformation(wf, trial, transform)
+!!
+!!    Get E2 transformation
+!!    Written by Sarai D. Folkestad, Mar 2022
+!!
+!!    Computes the Hessian
+!!
+!!       E^[2] = (  A -B )
+!!               ( -B  A )
+!!
+!!    NOTE: the sign of B is related to
+!!    its definition and the antisymmetry of the
+!!    property (e.g. dipole) gradient.
+!!
+!!    Optionally the property gradient can be symmetric and
+!!    -B -> B, see e.q. McWheeny, Methods of molecular quantum mechanics
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(in) :: trial
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(out) :: transform
+!
+      transform = zero
+!
+      call wf%A_transformation(trial(1:wf%n_v*wf%n_o), transform(1:wf%n_v*wf%n_o))
+      call wf%B_transformation(-trial(wf%n_v*wf%n_o+1:), transform(1:wf%n_v*wf%n_o))
+!
+      call wf%B_transformation(-trial(1:wf%n_v*wf%n_o), transform(wf%n_v*wf%n_o+1:))
+      call wf%A_transformation(trial(wf%n_v*wf%n_o+1:), transform(wf%n_v*wf%n_o+1:))
+!
+   end subroutine get_E2_transformation
+!
+!
+   module subroutine print_polarizability_hf(wf, polarizability, frequency)
+!!
+!!    Print polarizability
+!!    Written by Regina Matveeva, Feb 2022
+!!
+      use string_utilities, only: convert_to_uppercase
+!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3,3), intent(in) :: polarizability
+      real(dp), intent(in) :: frequency
+!
+      character(len=4), dimension(3) :: operator_ = ['mu_x', 'mu_y', 'mu_z']
+!
+      integer :: k, l
+!
+      call output%printf('m', '(a0) polarizability for frequency (e11.4):', &
+         chars=[convert_to_uppercase(trim(wf%name_))], reals=[frequency], fs='(/t3,a)')
+!
+      call output%print_separator('m', 44, '-', fs='(t3,a)')
+!
+      do k = 1, 3
+         do l = 1,3
+!
+            call output%printf('m', '<< ' // operator_(k) // ', ' //  &
+                              operator_(l) // ' >>' // ': (f19.12)', &
+                              reals=[polarizability(k,l)], fs='(t6,a)')
+!
+         end do
+      end do
+!
+      call output%print_separator('m', 44, '-', fs='(t3,a)')
+
+!
+   end subroutine print_polarizability_hf
+!
+!
+   module subroutine get_response_transformation(wf, trial, transform, frequency)
+!!
+!!    Get response transformation
+!!    Written by Sarai D. Folkestad, Mar 2022
+!!
+!!    Computes
+!!
+!!       Y = (E^[2] - omega S^[2]) X
+!!
+!!    where X is the trial and Y is the transform
+!!
+      use array_utilities, only: get_l2_norm
+!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      real(dp), intent(in) :: frequency
+!
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(in) :: trial
+      real(dp), dimension(2*wf%n_o*wf%n_v), intent(out) :: transform
+      real(dp), dimension(:), allocatable :: S2_transform
+!
+      call mem%alloc(S2_transform, 2*wf%n_v*wf%n_o)
+!
+      call wf%get_E2_transformation(trial, transform)
+      call wf%get_S2_transformation(trial, S2_transform)
+!
+      call daxpy(2*wf%n_o*wf%n_v, -frequency, S2_transform, 1, transform, 1)
+!
+      call mem%dealloc(S2_transform, 2*wf%n_v*wf%n_o)
+!
+   end subroutine get_response_transformation
 !
 !
 end submodule tdhf_transformation

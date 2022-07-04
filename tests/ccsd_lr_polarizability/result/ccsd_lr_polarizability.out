@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:03 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-       name: HOF He
+       name: hof he
        charge: 0
        multiplicity: 1
      end system
@@ -89,12 +87,14 @@
      end solver cc response
 
 
+  Calculation start:2022-06-30 08:47:07 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -131,22 +131,12 @@
      Number of molecular orbitals:       24
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -187,12 +177,12 @@
      6           -76.025358669736     0.4222E-04     0.5406E-06
      7           -76.025358682157     0.2558E-05     0.1242E-07
      8           -76.025358682271     0.5413E-06     0.1142E-09
-     9           -76.025358682280     0.1152E-06     0.9038E-11
-    10           -76.025358682280     0.9988E-08     0.4121E-12
-    11           -76.025358682280     0.3027E-08     0.9948E-13
-    12           -76.025358682280     0.7372E-09     0.1421E-13
-    13           -76.025358682280     0.8067E-10     0.1421E-13
-    14           -76.025358682280     0.6096E-11     0.9948E-13
+     9           -76.025358682280     0.1152E-06     0.8953E-11
+    10           -76.025358682280     0.9988E-08     0.4405E-12
+    11           -76.025358682280     0.3027E-08     0.4263E-13
+    12           -76.025358682280     0.7372E-09     0.2842E-13
+    13           -76.025358682280     0.8067E-10     0.5684E-13
+    14           -76.025358682280     0.6095E-11     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -203,14 +193,9 @@
      Electronic energy:            -85.065282238824
      Total energy:                 -76.025358682280
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.30900
-     Total cpu time (sec):               0.33899
-
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -277,7 +262,7 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2102E-12
+     Maximal difference between approximate and actual diagonal:              0.2103E-12
      Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
@@ -287,8 +272,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.26200
-     Total cpu time (sec):               0.13904
+     Total wall time (sec):              0.14378
+     Total cpu time (sec):               0.28651
 
 
   Determining CC cluster amplitudes
@@ -377,8 +362,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.40000
-     Total cpu time (sec):               0.16900
+     Total wall time (sec):              0.13540
+     Total cpu time (sec):               0.27255
 
 
   Determining CC multipliers
@@ -628,8 +613,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.73900
-     Total cpu time (sec):                0.28889
+     Total wall time (sec):               0.18042
+     Total cpu time (sec):                0.36038
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -804,8 +789,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.65300
-     Total cpu time (sec):                0.29525
+     Total wall time (sec):               0.16350
+     Total cpu time (sec):                0.32336
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -980,8 +965,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.72300
-     Total cpu time (sec):                0.30146
+     Total wall time (sec):               0.13915
+     Total cpu time (sec):                0.26908
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1156,8 +1141,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.74800
-     Total cpu time (sec):                0.31650
+     Total wall time (sec):               0.15685
+     Total cpu time (sec):                0.31675
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1314,8 +1299,8 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.64500
-     Total cpu time (sec):                0.27625
+     Total wall time (sec):               0.16529
+     Total cpu time (sec):                0.33521
 
    - Davidson coupled cluster linear equations solver
   ------------------------------------------------------
@@ -1472,31 +1457,29 @@
 
   - Finished solving the CCSD linear equations
 
-     Total wall time (sec):               0.61000
-     Total cpu time (sec):                0.26460
+     Total wall time (sec):               0.15309
+     Total cpu time (sec):                0.30302
      The convention applied here defines the polarizabilities as the response 
      functions, without negative sign.
      << mu_x, mu_x >>(0.00E+00):     -6.374090836796
      << mu_y, mu_x >>(0.00E+00):      1.033539205822
      << mu_y, mu_y >>(0.00E+00):     -6.374090836793
      << mu_z, mu_x >>(0.00E+00):     -0.000000000000
-     << mu_z, mu_y >>(0.00E+00):      0.000000000000
+     << mu_z, mu_y >>(0.00E+00):     -0.000000000000
      << mu_z, mu_z >>(0.00E+00):     -3.160401018558
      << mu_x, mu_x >>(0.50E-01):     -6.416395764927
      << mu_y, mu_x >>(0.50E-01):      1.036318000870
      << mu_y, mu_y >>(0.50E-01):     -6.416395764924
      << mu_z, mu_x >>(0.50E-01):     -0.000000000000
-     << mu_z, mu_y >>(0.50E-01):      0.000000000000
+     << mu_z, mu_y >>(0.50E-01):     -0.000000000000
      << mu_z, mu_z >>(0.50E-01):     -3.188335793446
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 7.439200 MB
 
-  Peak memory usage during the execution of eT: 7.434144 MB
+  Total wall time in eT (sec):              1.83589
+  Total cpu time in eT (sec):               3.63953
 
-  Total wall time in eT (sec):              5.86000
-  Total cpu time in eT (sec):               2.67939
-
-  Calculation ended: 2022-04-07 12:35:09 UTC -07:00
+  Calculation end:2022-06-30 08:47:09 UTC +02:00
 
   - Implementation references:
 

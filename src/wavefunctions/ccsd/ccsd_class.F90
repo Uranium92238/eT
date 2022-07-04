@@ -91,6 +91,11 @@ module ccsd_class
       procedure :: get_full_multipliers &
                 => get_multipliers_ccsd
 !
+      procedure :: get_gs_amplitude_block_sizes &
+                => get_amplitude_block_sizes_ccsd
+      procedure :: get_es_amplitude_block_sizes &
+                => get_amplitude_block_sizes_ccsd
+!
 !     Procedures related to omega
 !
       procedure :: construct_omega                            => construct_omega_ccsd
@@ -237,12 +242,6 @@ module ccsd_class
 !
       procedure, private :: set_t2_to_cc2_guess
 !
-      procedure :: read_amplitudes                  => read_amplitudes_ccsd
-      procedure :: save_amplitudes                  => save_amplitudes_ccsd
-!
-      procedure :: save_multipliers                 => save_multipliers_ccsd
-      procedure :: read_multipliers                 => read_multipliers_ccsd
-!
       procedure :: print_dominant_amplitudes        => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes      => print_dominant_x_amplitudes_ccsd
 !
@@ -272,7 +271,7 @@ module ccsd_class
 !
 !     F transformation
 !
-      procedure :: F_x_mu_transformation & 
+      procedure :: F_x_mu_transformation &
                 => F_x_mu_transformation_ccsd
 !
       procedure :: F_ccsd_d1_2 => F_ccsd_d1_2_ccsd
@@ -296,7 +295,6 @@ module ccsd_class
 !
    interface
 !
-      include "file_handling_ccsd_interface.F90"
       include "initialize_destruct_ccsd_interface.F90"
       include "set_get_ccsd_interface.F90"
       include "omega_ccsd_interface.F90"
@@ -377,13 +375,12 @@ contains
          call zero_array(wf%t1, wf%n_t1)
 !
          call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
-         !call wf%eri_t1%update()
 !
          call wf%set_t2_to_cc2_guess()
 !
       else
 !
-         if (wf%t_file%exists()) then
+         if (wf%t_storer%file_exists()) then
 !
             call output%printf('m', 'Requested restart. Reading in solution from file.', &
                           fs='(/t3,a)')
@@ -393,13 +390,11 @@ contains
             if(n_amplitudes_read == wf%n_gs_amplitudes) then
 !
                call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
-               !call wf%eri_t1%update()
 !
             else if (n_amplitudes_read == wf%n_t1) then
 !
                call zero_array(wf%t1, wf%n_t1)
                call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
-               !call wf%eri_t1%update()
 !
                call wf%set_t2_to_cc2_guess()
 !
@@ -415,7 +410,6 @@ contains
 !
             call zero_array(wf%t1, wf%n_t1)
             call wf%construct_t1_cholesky(wf%t1, wf%L_mo, wf%L_t1)
-            !call wf%eri_t1%update()
 !
             call wf%set_t2_to_cc2_guess()
 !
@@ -450,7 +444,7 @@ contains
 !
       else
 !
-         if (wf%tbar_file%exists()) then
+         if (wf%tbar_storer%file_exists()) then
 !
             call output%printf('m', 'Requested restart. Reading multipliers from file.', &
                               fs='(/t3,a)')

@@ -23,7 +23,6 @@ module output_file_class
 !!    Output file class module
 !!    Written by Rolf H. Myhre, May 2019
 !!
-!!
 !
    use kinds
    use abstract_out_file_class
@@ -49,6 +48,7 @@ module output_file_class
       procedure, public :: print_matrix            => print_matrix_output_file
       procedure, public :: print_separator         => print_separator_output_file
       procedure, public :: print_vector            => print_vector_output_file
+      procedure, public :: print_table             => print_table_output_file
 !
       procedure, public :: newline                 => newline_output_file
 !
@@ -823,6 +823,74 @@ contains
       call the_file%printf(pl, '')
 !
    end subroutine newline_output_file
+!
+!
+   subroutine print_table_output_file(the_file, top_left_corner, row_labels, column_labels, &
+                                      data_, n_rows, n_columns)
+!!
+!!    Print table
+!!    Written by Alexander C. Paul, June 2020
+!!
+!!    Prints table of data with n_rows and n_columns
+!!
+      implicit none
+!
+      class(output_file), intent(inout) :: the_file
+!
+      integer, intent(in) :: n_rows, n_columns
+!
+      real(dp), dimension(n_rows, n_columns), intent(in) :: data_
+!
+      character(len=5), intent(in) :: top_left_corner
+      character(len=5), dimension(n_rows), intent(in) :: row_labels
+      character(len=18), dimension(n_columns), intent(in) :: column_labels
+!
+      integer :: n_tables, n_printed, n_to_print, ll
+      integer :: row, table, first, last
+!
+      character(len=100) :: line
+!
+!     Print in tables with 4 columns
+      n_tables = (n_columns - 1)/4 + 1
+!
+      n_printed = 0
+!
+      do table = 1, n_tables
+!
+         n_to_print = min(n_columns - n_printed, 4)
+!
+         first = n_printed + 1
+         last = first + n_to_print - 1
+!
+         ll = 6 + 18*n_to_print
+!
+!        Print header of the table (first_label  Label_1  Label_2 ...)
+!
+         write(line,'(a,1x,i0,a)') top_left_corner, n_to_print, '(a18)'
+!
+         call the_file%printf('m', trim(line), fs='(/t6,a)', ll=95, &
+                            chars=[column_labels(first : last)])
+!
+         call the_file%print_separator('m', ll,'-', fs='(t6,a)')
+!
+!        Print rows for the subsets
+!
+         do row = 1, n_rows
+!
+            write(line,'(a5,1x,i0,a)') row_labels(row), n_to_print, '(f18.10)'
+!
+            call the_file%printf('m', trim(line), fs='(t6,a)', ll=95, &
+                               reals=[data_(row, first : last)])
+!
+         end do
+!
+         call the_file%print_separator('m', ll,'-', fs='(t6,a)')
+!
+         n_printed = n_printed + n_to_print
+!
+      end do
+!
+   end subroutine print_table_output_file
 !
 !
 end module output_file_class

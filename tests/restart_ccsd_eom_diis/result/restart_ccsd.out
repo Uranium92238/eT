@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:29 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -94,12 +92,14 @@
      end solver cc multipliers
 
 
+  Calculation start:2022-06-30 08:48:23 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -138,18 +138,8 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -180,7 +170,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.5180E-11     0.7884E+02
+     1           -78.843851693631     0.5172E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -191,14 +181,9 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01438
-
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -276,8 +261,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25200
-     Total cpu time (sec):               0.20264
+     Total wall time (sec):              0.21762
+     Total cpu time (sec):               0.43737
 
 
   Determining CC cluster amplitudes
@@ -354,8 +339,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02500
-     Total cpu time (sec):               0.01742
+     Total wall time (sec):              0.02401
+     Total cpu time (sec):               0.04401
 
 
   Determining CC multipliers
@@ -408,14 +393,14 @@
    18          0.4829E-11
    19          0.2072E-11
    20          0.1116E-11
-   21          0.3721E-12
+   21          0.3722E-12
   ----------------------------
   Convergence criterion met in 21 iterations!
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.74000
-     Total cpu time (sec):               0.35155
+     Total wall time (sec):              0.27717
+     Total cpu time (sec):               0.55716
 
   - CC multipliers solver summary:
 
@@ -467,8 +452,6 @@
   Letters, 73(2), 393-398 (1980).
 
   - Settings for coupled cluster excited state solver (DIIS):
-
-     Calculation type:    valence
      Excitation vectors:  right
 
   - Convergence thresholds
@@ -639,7 +622,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194254854       0.3863E-06
+     1      0.247194254855       0.3863E-06
      2      0.356085032388       0.1575E-04
      3      0.312716692497       0.4595E-05
   -----------------------------------------------
@@ -880,11 +863,11 @@
      -----------------------------------
         1      5        0.957314847871
         2      4       -0.137091155508
-        4      5        0.090812850215
+        4      5        0.090812850216
         1      2       -0.071675967621
         3      4       -0.054796039253
         5      6       -0.040602500552
-       13      5       -0.029458132228
+       13      5       -0.029458132227
         7      4        0.025825254324
         4      2       -0.021074995285
        10      5        0.013972713306
@@ -920,8 +903,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              2.81600
-     Total cpu time (sec):               1.24173
+     Total wall time (sec):              0.87272
+     Total cpu time (sec):               1.73297
 
 
   Determining CC excited state amplitudes
@@ -939,8 +922,6 @@
   Letters, 73(2), 393-398 (1980).
 
   - Settings for coupled cluster excited state solver (DIIS):
-
-     Calculation type:    valence
      Excitation vectors:  left
 
   - Convergence thresholds
@@ -1186,7 +1167,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194255573       0.3876E-10
+     1      0.247194255573       0.3877E-10
      2      0.312716698820       0.2580E-08
      3      0.356085057613       0.3839E-08
   -----------------------------------------------
@@ -1329,7 +1310,7 @@
         6      5       2      6        0.082397334663
         7      4       2      6        0.081191332741
         1      2       2      6       -0.072465986378
-        4      5       2      6       -0.072390631929
+        4      5       2      6       -0.072390631930
         2      6       5      6       -0.065336366669
         3      5       1      6       -0.053276119554
         4      4       1      6       -0.048446470294
@@ -1379,15 +1360,15 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.247194255572        6.726498310300
-        2                  0.312716698779        8.509454805380
+        2                  0.312716698779        8.509454805379
         3                  0.356085057593        9.689567958108
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              2.59200
-     Total cpu time (sec):               1.37481
+     Total wall time (sec):              1.04119
+     Total cpu time (sec):               2.09106
 
 
   Biorthonormalization of excited CC states
@@ -1452,14 +1433,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.102561743915
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 14.844312 MB
 
-  Peak memory usage during the execution of eT: 14.836260 MB
+  Total wall time in eT (sec):              2.56325
+  Total cpu time in eT (sec):               5.02100
 
-  Total wall time in eT (sec):              6.49500
-  Total cpu time in eT (sec):               3.24114
-
-  Calculation ended: 2022-04-07 12:35:35 UTC -07:00
+  Calculation end:2022-06-30 08:48:25 UTC +02:00
 
   - Implementation references:
 

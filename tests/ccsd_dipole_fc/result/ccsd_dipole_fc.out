@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:55 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O
+        name: h2o
         charge: 0
      end system
 
@@ -67,7 +65,7 @@
         ccsd
      end method
 
-     ! Solver settings:
+     ! solver settings:
 
      solver scf
         algorithm: scf-diis
@@ -90,12 +88,14 @@
      end solver cholesky
 
 
+  Calculation start:2022-06-30 08:46:26 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -132,22 +132,12 @@
      Number of molecular orbitals:       13
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -189,12 +179,12 @@
      6           -75.952529042896     0.1214E-04     0.1364E-06
      7           -75.952529044535     0.3369E-05     0.1638E-08
      8           -75.952529044727     0.8367E-06     0.1927E-09
-     9           -75.952529044742     0.1360E-06     0.1434E-10
-    10           -75.952529044742     0.4602E-08     0.1137E-12
+     9           -75.952529044742     0.1360E-06     0.1430E-10
+    10           -75.952529044742     0.4602E-08     0.1279E-12
     11           -75.952529044742     0.6939E-09     0.4263E-13
-    12           -75.952529044742     0.1022E-09     0.1421E-13
+    12           -75.952529044742     0.1022E-09     0.0000E+00
     13           -75.952529044742     0.1158E-10     0.2842E-13
-    14           -75.952529044742     0.6206E-12     0.7105E-13
+    14           -75.952529044742     0.6200E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -205,18 +195,13 @@
      Electronic energy:            -83.954895495461
      Total energy:                 -75.952529044742
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.09200
-     Total cpu time (sec):               0.09663
-
   - Preparation for frozen core approximation
 
      There are 1 frozen core orbitals.
 
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -282,8 +267,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.4886E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.4886E-15
+     Maximal difference between approximate and actual diagonal:              0.4740E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.4229E-15
 
   - Settings for integral handling:
 
@@ -292,8 +277,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.08000
-     Total cpu time (sec):               0.03479
+     Total wall time (sec):              0.02809
+     Total cpu time (sec):               0.06241
 
 
   Determining CC cluster amplitudes
@@ -340,7 +325,7 @@
    14           -76.101053247325     0.5917E-09     0.2810E-09
    15           -76.101053247322     0.1517E-09     0.2998E-11
    16           -76.101053247312     0.3286E-10     0.9848E-11
-   17           -76.101053247312     0.8605E-11     0.5969E-12
+   17           -76.101053247312     0.8604E-11     0.5969E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -384,8 +369,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.22600
-     Total cpu time (sec):               0.07845
+     Total wall time (sec):              0.01907
+     Total cpu time (sec):               0.03473
 
 
   Determining CC multipliers
@@ -422,7 +407,7 @@
     13               0.7302E-09
     14               0.1496E-09
     15               0.2533E-10
-    16               0.4813E-11
+    16               0.4812E-11
   -------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -464,22 +449,25 @@
   Determining CC mean values
   ==========================
 
-  - Operator: dipole [Debye]
+     Dipole moment in [Debye]:
+     =========================
 
-     x:          0.0000000
-     y:          0.0000000
-     z:          2.4459754
+     Conversion factor from Debye a.u.: 0.393430270
 
-     |mu|:       2.4459754
+     Comp.         Electronic           Nuclear             Total
+     ------------------------------------------------------------
+     x          -0.0000000000      0.0000000000     -0.0000000000
+     y           0.0000000000      0.0000000000      0.0000000000
+     z          -0.4193130375      2.8652884285      2.4459753910
+     ------------------------------------------------------------
+     Norm of the total dipole moment: 2.4459754
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 557.352 KB
 
-  Peak memory usage during the execution of eT: 554.388 KB
+  Total wall time in eT (sec):              0.16521
+  Total cpu time in eT (sec):               0.30984
 
-  Total wall time in eT (sec):              0.72800
-  Total cpu time in eT (sec):               0.30634
-
-  Calculation ended: 2022-04-07 12:34:56 UTC -07:00
+  Calculation end:2022-06-30 08:46:26 UTC +02:00
 
   - Implementation references:
 

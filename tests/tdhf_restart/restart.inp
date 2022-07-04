@@ -4,7 +4,7 @@ system
 end system
 
 do
-   time dependent hf
+   tdhf excited state
 end do
 
 memory
@@ -21,11 +21,11 @@ method
    hf
 end method
 
-solver tdhf
+solver tdhf es
   restart
-  states: 2
+  singlet states: 2
   residual threshold: 1.0d-10
-end solver tdhf
+end solver tdhf es
 
 geometry
 basis: cc-pVDZ

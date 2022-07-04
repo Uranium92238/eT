@@ -222,37 +222,28 @@ def get_td_filter(tolerance):
     return f
 
 
-def get_dipole_filter(tolerance):
+def get_mean_value_filter(tolerance, n_components, norm=False):
     """
-    Returns filters for a calculation of dipoles.
-    """
-
-    from runtest import get_filter
-
-    f = [
-        get_filter(string=" x: ", abs_tolerance=tolerance),
-        get_filter(string=" y: ", abs_tolerance=tolerance),
-        get_filter(string=" z: ", abs_tolerance=tolerance),
-    ]
-
-    return f
-
-
-def get_quadrupole_filter(tolerance):
-    """
-    Returns filters for a calculation of quadrupoles.
+    Returns filters for a mean value calculation.
     """
 
     from runtest import get_filter
 
     f = [
-        get_filter(string=" xx: ", abs_tolerance=tolerance),
-        get_filter(string=" xy: ", abs_tolerance=tolerance),
-        get_filter(string=" xz: ", abs_tolerance=tolerance),
-        get_filter(string=" yy: ", abs_tolerance=tolerance),
-        get_filter(string=" yz: ", abs_tolerance=tolerance),
-        get_filter(string=" zz: ", abs_tolerance=tolerance),
+        get_filter(
+            from_string="Comp.         Electronic           Nuclear             Total",
+            num_lines=n_components + 2,
+            abs_tolerance=tolerance,
+        ),
     ]
+
+    if norm:
+        f.append(
+            get_filter(
+                string="Norm of the total",
+                abs_tolerance=tolerance,
+            )
+        )
 
     return f
 

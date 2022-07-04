@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.1 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-22 13:26:25 UTC -07:00
-  Git branch:         hotfix-fci-omp-2
-  Git hash:           f6688f56674453383aa1834a969a34d29f185ac7
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
-  Forced batching:    ON
-  Runtime checks:     ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-22 13:31:36 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2+
+        name: h2+
         charge: 1
         multiplicity: 2
      end system
@@ -75,6 +73,8 @@
      end solver fci
 
 
+  Calculation start:2022-06-30 08:49:33 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
@@ -83,7 +83,7 @@
 
 
   :: ROHF wavefunction
-  =======================
+  ====================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -120,22 +120,12 @@
      Number of molecular orbitals:            4
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a ROHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -172,14 +162,14 @@
   ---------------------------------------------------------------
      1            -0.570015475062     0.3662E-01     0.5700E+00
      2            -0.577721092395     0.9702E-02     0.7706E-02
-     3            -0.578298965841     0.1974E-15     0.5779E-03
-     4            -0.578298965841     0.3912E-15     0.9992E-15
+     3            -0.578298965841     0.1257E-15     0.5779E-03
+     4            -0.578298965841     0.2382E-15     0.4441E-15
   ---------------------------------------------------------------
   Convergence criterion met in 4 iterations!
 
   - Summary of ROHF wavefunction energetics (a.u.):
 
-     HOMO-LUMO gap (alpha):          0.924836074775
+     HOMO-LUMO gap (alpha):          0.922707422409
      Nuclear repulsion energy:       0.587974678800
      Electronic energy:             -1.166273644641
      Total energy:                  -0.578298965841
@@ -190,11 +180,6 @@
      Sz(Sz + 1):           0.75000000
      S^2:                  0.75000000
      Spin contamination:   0.00000000
-
-  - Timings for the ROHF ground state calculation
-
-     Total wall time (sec):              0.02100
-     Total cpu time (sec):               0.01391
 
 
   :: FCI wavefunction
@@ -255,24 +240,17 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.4441E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2351E-15
+     Maximal difference between approximate and actual diagonal:              0.3606E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1555E-16
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.01300
-     Total cpu time (sec):               0.01104
+     Total wall time (sec):              0.00176
+     Total cpu time (sec):               0.00176
 
 
-  :: Full CI engine
-  ====================
-
-  Calculates the FCI states and energies
-
-  This is a FCI fci calculation.
-  The following tasks will be performed:
-
-     1) Diagonalization of the Hamiltonian (davidson algorithm)
+  Determining FCI eigenstates
+  ===========================
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -300,7 +278,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -0.578298965841    0.000000000000     0.7491E-15   0.5783E+00
+     1  -0.578298965841    0.000000000000     0.9944E-15   0.5783E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -308,8 +286,8 @@
 
      Electronic state nr. 1
 
-     Energy (Hartree):     -0.578298965841
-     Spin Multiplicity:     2.000000000000
+     Energy (Hartree):      -0.578298965841
+     Spin Multiplicity:      2.000000000000
 
      Largest CI amplitudes:
      ------------------------
@@ -329,21 +307,14 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Timings for the FCI fci calculation
-
-     Total wall time (sec):              0.00300
-     Total cpu time (sec):               0.00256
-
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 21.056 KB
-
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.05100
-  Total cpu time in eT (sec):               0.03881
+  Peak memory usage during the execution of eT: 34.656 KB
 
-  Calculation ended: 2022-04-22 13:31:36 UTC -07:00
+  Total wall time in eT (sec):              0.04066
+  Total cpu time in eT (sec):               0.05734
+
+  Calculation end:2022-06-30 08:49:33 UTC +02:00
 
   - Implementation references:
 

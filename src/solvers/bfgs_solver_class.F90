@@ -112,7 +112,7 @@ contains
 !
       this%energy_function = energy_function 
 !
-      this%internals => internals 
+      this%internals => internals
 !
       this%n_cartesian = this%energy_function%n_parameters
       this%max_iterations = max_iterations
@@ -442,6 +442,7 @@ contains
       call mem%dealloc(this%energies, this%max_iterations)
       call mem%dealloc(this%energy_differences, this%max_iterations)
       call mem%dealloc(this%gradient_maxs, this%max_iterations)
+      call this%bfgs%cleanup()
 !
    end subroutine finalize_bfgs_solver
 !

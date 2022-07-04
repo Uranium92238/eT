@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:40 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: F
+        name: f
         charge: 0
         multiplicity: 2
      end system
@@ -65,12 +63,14 @@
      end do
 
 
+  Calculation start:2022-06-30 08:45:23 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: UHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -105,22 +105,12 @@
      Number of molecular orbitals:           14
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a UHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -154,18 +144,18 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -99.369431839295     0.3486E-01     0.9937E+02
-     2           -99.374748397856     0.7751E-02     0.5317E-02
-     3           -99.375172207481     0.3093E-02     0.4238E-03
-     4           -99.375232270176     0.8379E-03     0.6006E-04
-     5           -99.375239767664     0.1772E-03     0.7497E-05
-     6           -99.375240293420     0.2332E-04     0.5258E-06
+     1           -99.369431839295     0.3076E-01     0.9937E+02
+     2           -99.374748397856     0.7706E-02     0.5317E-02
+     3           -99.375172207481     0.3071E-02     0.4238E-03
+     4           -99.375232270176     0.8309E-03     0.6006E-04
+     5           -99.375239767664     0.1759E-03     0.7497E-05
+     6           -99.375240293420     0.3516E-04     0.5258E-06
      7           -99.375240303117     0.1456E-05     0.9697E-08
-     8           -99.375240303129     0.3574E-07     0.1238E-10
-     9           -99.375240303129     0.2199E-08     0.1421E-13
+     8           -99.375240303129     0.3574E-07     0.1235E-10
+     9           -99.375240303129     0.2199E-08     0.4263E-13
     10           -99.375240303129     0.3928E-09     0.4263E-13
     11           -99.375240303129     0.1792E-10     0.4263E-13
-    12           -99.375240303129     0.2349E-12     0.0000E+00
+    12           -99.375240303129     0.2364E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -184,19 +174,12 @@
      S^2:                  0.75200587
      Spin contamination:   0.00200587
 
-  - Timings for the UHF ground state calculation
+  Peak memory usage during the execution of eT: 72.104 KB
 
-     Total wall time (sec):              0.31300
-     Total cpu time (sec):               0.36115
+  Total wall time in eT (sec):              0.36554
+  Total cpu time in eT (sec):               0.69960
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 71.268 KB
-
-  Total wall time in eT (sec):              0.32700
-  Total cpu time in eT (sec):               0.37205
-
-  Calculation ended: 2022-04-07 12:34:40 UTC -07:00
+  Calculation end:2022-06-30 08:45:24 UTC +02:00
 
   - Implementation references:
 

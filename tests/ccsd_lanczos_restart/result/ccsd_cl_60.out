@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:09 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -85,12 +83,14 @@
      end solver cc es
 
 
+  Calculation start:2022-06-30 08:47:03 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -129,18 +129,8 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -171,7 +161,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2420E-12     0.7884E+02
+     1           -78.843851693631     0.2418E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -182,14 +172,9 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01441
-
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -267,8 +252,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.27400
-     Total cpu time (sec):               0.21059
+     Total wall time (sec):              0.26611
+     Total cpu time (sec):               0.53598
 
 
   Determining CC cluster amplitudes
@@ -301,7 +286,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.100383481556     0.5365E-12     0.7910E+02
+    1           -79.100383481556     0.5364E-12     0.7910E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -345,8 +330,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02500
-     Total cpu time (sec):               0.01845
+     Total wall time (sec):              0.01949
+     Total cpu time (sec):               0.03949
 
 
   Determining CC excited state amplitudes
@@ -383,14 +368,14 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.3466E-12
+    1          0.3467E-12
   ----------------------------
   Convergence criterion met in 1 iterations!
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.04300
-     Total cpu time (sec):               0.02282
+     Total wall time (sec):              0.01443
+     Total cpu time (sec):               0.03442
 
   - CC multipliers solver summary:
 
@@ -403,7 +388,7 @@
         7      4        0.014297181950
         4      5        0.011712306720
        15      5       -0.010007216962
-        6      2        0.009083547622
+        6      2        0.009083547621
        13      5        0.008770531160
         2      4        0.006954460285
         5      6        0.006820250284
@@ -453,16 +438,16 @@
 
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
-        1        0.309252456847       8.415187980909      0.000023058919
+        1        0.309252456847       8.415187980908      0.000023058919
         2        0.417906799305      11.371823236263      0.075612791008
-        3        0.467278345976      12.715291451152      0.445707698096
+        3        0.467278345976      12.715291451151      0.445707698096
         4        0.843158957588      22.943523871137      0.081541264999
         5        1.001607712388      27.255134102387      0.264256653015
-        6        1.346371696255      36.636639953191      0.338578339149
-        7        1.500136237847      40.820786250650      0.546847044948
-        8        1.755892783479      47.780276340970      0.241598096205
-        9        2.112960916160      57.496595134816      0.085628481467
-       10        2.676494074109      72.831113430835      0.143420860624
+        6        1.346371696255      36.636639953190      0.338578339149
+        7        1.500136237847      40.820786250648      0.546847044948
+        8        1.755892783479      47.780276340966      0.241598096205
+        9        2.112960916160      57.496595134811      0.085628481467
+       10        2.676494074109      72.831113430828      0.143420860623
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos60_X
 
@@ -475,14 +460,14 @@
      ----------------------------------------------------------------------
         1        0.247463042668       6.733812379712      0.000002378684
         2        0.356085313036       9.689574909065      0.102552602107
-        3        0.582543206845      15.851808074794      0.206886591787
-        4        0.898422308632      24.447316249170      0.018924100836
+        3        0.582543206845      15.851808074793      0.206886591787
+        4        0.898422308632      24.447316249169      0.018924100836
         5        0.987336326413      26.866789909589      0.189354840997
         6        1.339548392205      36.450968392749      0.176066844333
-        7        1.552689987526      42.250846619953      0.667074835008
-        8        1.774141596059      48.276851824501      0.581803699768
-        9        2.150394817025      58.515223461485      0.074054825954
-       10        2.746149842649      74.726543437071      0.275413119176
+        7        1.552689987526      42.250846619952      0.667074835008
+        8        1.774141596059      48.276851824500      0.581803699768
+        9        2.150394817025      58.515223461483      0.074054825954
+       10        2.746149842648      74.726543437068      0.275413119176
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos60_Y
 
@@ -493,32 +478,30 @@
 
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
-        1        0.247194285132       6.726499114666      0.013245455118
-        2        0.357389134765       9.725053705431      0.000009621565
-        3        0.751708396744      20.455027358266      0.044534783501
-        4        0.780586949655      21.240852809231      0.035975595625
-        5        0.998049377901      27.158306889096      0.003231205733
-        6        1.312389788514      35.711945143950      0.023910603169
-        7        1.648346696404      44.853798250646      0.620365565680
-        8        1.842864340856      50.146892961522      1.022822137056
-        9        2.163686967551      58.876921300481      0.495311919815
-       10        2.523098424635      68.657005199188      0.155863809280
+        1        0.247194285132       6.726499114665      0.013245455118
+        2        0.357389134764       9.725053705425      0.000009621565
+        3        0.751708396743      20.455027358245      0.044534783499
+        4        0.780586949653      21.240852809192      0.035975595628
+        5        0.998049377900      27.158306889065      0.003231205733
+        6        1.312389788513      35.711945143943      0.023910603169
+        7        1.648346696404      44.853798250634      0.620365565677
+        8        1.842864340855      50.146892961500      1.022822137057
+        9        2.163686967550      58.876921300440      0.495311919815
+       10        2.523098424632      68.657005199107      0.155863809281
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos60_Z
 
   - Finished solving the CCSD excited state equations.
 
-     Total wall time (sec):              5.95600
-     Total cpu time (sec):               3.50003
+     Total wall time (sec):              2.74040
+     Total cpu time (sec):               5.47874
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 14.699552 MB
 
-  Peak memory usage during the execution of eT: 14.691992 MB
+  Total wall time in eT (sec):              3.13353
+  Total cpu time in eT (sec):               6.23562
 
-  Total wall time in eT (sec):              6.34700
-  Total cpu time in eT (sec):               3.79655
-
-  Calculation ended: 2022-04-07 12:35:15 UTC -07:00
+  Calculation end:2022-06-30 08:47:06 UTC +02:00
 
   - Implementation references:
 

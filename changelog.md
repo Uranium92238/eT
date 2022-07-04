@@ -1,3 +1,31 @@
+# eT v1.8.0
+### Features
+- Added calculation of FCI densities and dipole and quadrupole tests. eT-program/eT!1087
+
+### Structure
+- Changed routines in parameters.F90 to increase covarage. eT-program/eT!1068
+- Removed unused routines in stream\_file.F90. eT-program/eT!1069
+- Removed unused routines in array\_utilities.F90. eT-program/eT!1071
+- Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074 and eT-program/eT!1080
+- Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
+- Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074
+- `Transformation_tools` renamed to transformation. eT-program/eT!1054
+- Davidson tool now counts the number of new trials. eT-program/eT!1089
+- Introduced tools to build the G-matrix (two-electron contribution to Fock) or Coulomb and exchange matrices separately. eT-program/eT!870
+- Restructured printing of mean values. eT-program/eT!1086
+- Restructured FCI engine to use tasks. eT-program/eT!1087
+- Restructured reference/HF engines to use task structure. eT-program/eT!1088
+- Added factories for cc start vector and cc projection tools. eT-program/eT!1091
+- Added storers that know how to store amplitudes. eT-program/eT!1092 eT-program/eT!1094
+
+### Features
+- Frequency-dependent (and static) polarizabilities for HF. eT-program/eT!1054
+
+### Optimization
+- Removed N^3 scaling from Fock construction visible for very large systems. eT-program/eT!870
+- Linear exchange algorithm added (similar to LinK). eT-program/eT!870
+- Non-scaling iterative Fock matrix construction and linear scaling non-iterative Fock matrix construction for MLHF. eT-program/eT!870
+
 # eT v1.7.4
 ### Bugfixes
 - Fixes problem with the use of bath orbitals when cc-in-hf (frozen hf) is used. Adding test with valence ionization and frozen hf. eT-program/eT!1084
@@ -9,6 +37,7 @@
 # eT v1.7.2
 ### Bugfixes
 - Fixed bug in spin-multiplicities, where sum of squares was incorrectly assumed equal to square of sum. Happened only with -O0 flag. eT-program/eT!1072
+
 
 # eT v1.7.1
 ### Bugfixes
@@ -31,7 +60,7 @@
 - Cleanup of engines, by introducing tasks that are called from the engine. eT-program/eT!968, eT-program/eT!1040, eT-program/eT!1044
 - Using the eigen_davidson_solver for the CC excited state equations instead of the cc_es_davidson_solver. The cc_es_davidson_solver is deleted. eT-program/eT!1038, eT-program/eT!1050
 - Projection tools now ask CC wave functions to project out unwanted components. The projection vectors have been deleted. eT-program/eT!1048
-- eT stops with error if there are no electrons. eT-program/eT!1061 
+- eT stops with error if there are no electrons. eT-program/eT!1061
 
 # eT v1.6.4
 ### CI

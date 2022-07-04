@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:41 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
         charge: 0
         multiplicity: 1
      end system
@@ -66,6 +64,8 @@
      end method
 
 
+  Calculation start:2022-06-30 08:45:27 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
@@ -74,7 +74,7 @@
 
 
   :: ROHF wavefunction
-  =======================
+  ====================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -115,22 +115,12 @@
      Number of molecular orbitals:           22
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a ROHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -164,21 +154,21 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -176.427944702642     0.2093E-01     0.1764E+03
-     2          -176.447985480619     0.7588E-02     0.2004E-01
+     1          -176.427944702642     0.2431E-01     0.1764E+03
+     2          -176.447985480619     0.5087E-02     0.2004E-01
      3          -176.449095710219     0.2785E-02     0.1110E-02
-     4          -176.449182641423     0.6914E-03     0.8693E-04
+     4          -176.449182641423     0.6916E-03     0.8693E-04
      5          -176.449192645236     0.1227E-03     0.1000E-04
      6          -176.449193031189     0.4894E-04     0.3860E-06
-     7          -176.449193080484     0.3922E-05     0.4929E-07
-     8          -176.449193081522     0.5597E-06     0.1038E-08
-     9          -176.449193081558     0.1263E-06     0.3647E-10
-    10          -176.449193081560     0.4086E-07     0.1506E-11
-    11          -176.449193081559     0.1168E-07     0.3411E-12
-    12          -176.449193081560     0.3237E-08     0.1705E-12
-    13          -176.449193081560     0.2340E-09     0.1421E-12
-    14          -176.449193081559     0.1181E-09     0.1990E-12
-    15          -176.449193081560     0.3252E-10     0.2274E-12
+     7          -176.449193080484     0.4074E-05     0.4929E-07
+     8          -176.449193081522     0.5832E-06     0.1038E-08
+     9          -176.449193081558     0.1107E-06     0.3641E-10
+    10          -176.449193081560     0.4086E-07     0.1336E-11
+    11          -176.449193081559     0.1308E-07     0.2842E-13
+    12          -176.449193081560     0.3627E-08     0.8527E-13
+    13          -176.449193081560     0.2626E-09     0.2274E-12
+    14          -176.449193081560     0.1181E-09     0.1421E-12
+    15          -176.449193081560     0.3209E-10     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -194,24 +184,17 @@
 
      Sz:                   0.00000000
      Sz(Sz + 1):           0.00000000
-     S^2:                 -0.00000000
-     Spin contamination:  -0.00000000
-
-  - Timings for the ROHF ground state calculation
-
-     Total wall time (sec):              0.16600
-     Total cpu time (sec):               0.12256
-
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 179.316 KB
+     S^2:                  0.00000000
+     Spin contamination:   0.00000000
 
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.17300
-  Total cpu time in eT (sec):               0.12788
+  Peak memory usage during the execution of eT: 182.664 KB
 
-  Calculation ended: 2022-04-07 12:34:41 UTC -07:00
+  Total wall time in eT (sec):              0.14059
+  Total cpu time in eT (sec):               0.22069
+
+  Calculation end:2022-06-30 08:45:27 UTC +02:00
 
   - Implementation references:
 

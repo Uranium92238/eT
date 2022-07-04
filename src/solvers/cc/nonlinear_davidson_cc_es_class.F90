@@ -38,7 +38,7 @@ module nonlinear_davidson_cc_es_class
 !! excitation energies omega. Here, A is the coupled cluster
 !! Jacobian matrix:
 !!
-!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
+!!       A_mu,nu = < mu |[H-bar, tau_nu] | HF >,    H-bar = e-T H eT.
 !!
 !! Since A depends on the excitation energy of the state in the CCn
 !! models (if equations are folded), this solver consists of a set of
@@ -56,7 +56,7 @@ module nonlinear_davidson_cc_es_class
 !! * More precisely, using preconditioned residuals based on the
 !!   orbital differences approximation of A,
 !!
-!!    A_mu,nu = < mu | [F, tau_nu] | HF > = epsilon_mu delta_mu,nu
+!!    A_mu,nu = < mu |[F, tau_nu] | HF > = epsilon_mu delta_mu,nu
 !!
 !!   Here,
 !!
@@ -75,6 +75,9 @@ module nonlinear_davidson_cc_es_class
    use memory_manager_class, only: mem
    use eigen_davidson_tool_class, only: eigen_davidson_tool
    use abstract_cc_es_class, only: abstract_cc_es!
+!
+   use start_vector_tool_class, only: start_vector_tool
+   use abstract_projection_tool_class, only : abstract_projection_tool
    use convergence_tool_class, only: convergence_tool
 !
    implicit none
@@ -99,20 +102,11 @@ module nonlinear_davidson_cc_es_class
 !
    contains
 !
-      procedure :: run                               &
-                => run_nonlinear_davidson_cc_es
+      procedure :: run => run_nonlinear_davidson_cc_es
 !
-      procedure :: read_settings                     &
-                => read_settings_nonlinear_davidson_cc_es
-!
-      procedure :: read_davidson_settings            &
-                => read_davidson_settings_nonlinear_davidson_cc_es
-!
-      procedure :: print_settings                    &
-                => print_settings_nonlinear_davidson_cc_es
-!
-      procedure :: do_micro_iterations               &
-                => do_micro_iterations_nonlinear_davidson_cc_es
+      procedure, private :: read_settings
+      procedure, private :: print_settings
+      procedure, private :: do_micro_iterations
 !
    end type nonlinear_davidson_cc_es
 !
@@ -128,13 +122,12 @@ module nonlinear_davidson_cc_es_class
 contains
 !
 !
-   function new_nonlinear_davidson_cc_es(transformation, wf, restart) result(this)
+   function new_nonlinear_davidson_cc_es(transformation, wf, start_vector, &
+                                         projector, convergence_checker, n_states, &
+                                         max_iterations, records_in_memory) result(this)
 !!
 !!    New non-linear Davidson CC ES
 !!    Written by Eirik F. Kjønstad, Nov 2019 and Jan 2020
-!!
-!!    Mostly identical to the constructor for the standard Davidson solver
-!!    (Sarai D. Folkestad and Eirik F. Kjønstad, 2018).
 !!
       use string_utilities, only: convert_to_uppercase
 !
@@ -145,8 +138,12 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      logical, intent(in) :: restart
-      logical :: records_in_memory
+      class(start_vector_tool), intent(in) :: start_vector
+      class(abstract_projection_tool), intent(in) :: projector
+      type(convergence_tool), intent(in) :: convergence_checker
+!
+      integer, intent(in) :: n_states, max_iterations
+      logical, intent(in) :: records_in_memory
 !
       this%wf => wf 
 !
@@ -166,27 +163,21 @@ contains
 !
       call this%print_banner()
 !
-!     Set defaults
+      this%transformation   = trim(transformation)
+      this%n_singlet_states = n_states
+      this%max_iterations   = max_iterations
 !
-      this%n_singlet_states                   = 0
+      this%projector = projector
+      this%start_vectors = start_vector
+      this%convergence_checker = convergence_checker
+!
       this%max_dim_red                        = 0
-      this%max_iterations                     = 100
       this%max_micro_iterations               = 100
       this%relative_micro_residual_threshold  = 1.0d-1
-      this%restart                            = restart
-      this%transformation                     = trim(transformation)
-      this%es_type                            = 'valence'
       this%prepare_wf                         = .true.
 !
-      records_in_memory                         = .false.
 !
-!     Initialize convergence checker with default threshols
-!
-      this%convergence_checker = convergence_tool(energy_threshold   = 1.0d-3,   &
-                                                    residual_threshold = 1.0d-3,   &
-                                                    energy_convergence = .false.)
-!
-      call this%read_settings(records_in_memory)
+      call this%read_settings()
 !
       call this%print_settings()
 !
@@ -195,33 +186,28 @@ contains
 !
       this%wf%n_singlet_states = this%n_singlet_states
 !
-!     Initialize Davidson tool
-!
-      this%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',    &
-                                     n_parameters = this%wf%n_es_amplitudes,         &
-                                     n_solutions = this%n_singlet_states,     &
-                                     lindep_threshold = 1.0d-11,                &
-                                     max_dim_red = this%max_dim_red,          &
-                                     records_in_memory = records_in_memory,     &
-                                     non_unit_metric = .true.)
+      this%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',        &
+                                          n_parameters = this%wf%n_es_amplitudes, &
+                                          n_solutions = this%n_singlet_states,    &
+                                          lindep_threshold = 1.0d-11,             &
+                                          max_dim_red = this%max_dim_red,         &
+                                          records_in_memory = records_in_memory,  &
+                                          non_unit_metric = .true.)
 !
    end function new_nonlinear_davidson_cc_es
 !
 !
-   function new_nonlinear_davidson_cc_es_preconvergence(transformation,                      &
-                                                        wf,                                  &
-                                                        restart,                             &
-                                                        energy_threshold,                    &
-                                                        residual_threshold,                  &
+   function new_nonlinear_davidson_cc_es_preconvergence(transformation, wf,                  &
+                                                        start_vector,                        &
+                                                        projector,                           &
+                                                        convergence_checker,                 &
+                                                        n_singlet_states,                    &
                                                         max_iterations,                      &
+                                                        records_in_memory,                   &
                                                         relative_micro_residual_threshold,   &
                                                         max_micro_iterations,                &
                                                         max_dim_red,                         &
-                                                        es_type,                             &
-                                                        records_in_memory,                   &
-                                                        n_singlet_states,                    &
-                                                        prepare_wf,                          &
-                                                        energy_convergence) result(this)
+                                                        prepare_wf) result(this)
 !!
 !!    New non-linear Davidson for DIIS preconvergence
 !!    Written by Eirik F. Kjønstad, Jan 2020
@@ -241,14 +227,16 @@ contains
 !
       class(ccs), target :: wf
 !
-      integer, intent(in) :: max_iterations, max_micro_iterations, max_dim_red, n_singlet_states
+      class(start_vector_tool), intent(in) :: start_vector
+      class(abstract_projection_tool), intent(in) :: projector
+      type(convergence_tool), intent(in) :: convergence_checker
 !
-      real(dp), intent(in) :: energy_threshold, residual_threshold
       real(dp), intent(in) :: relative_micro_residual_threshold
+      integer, intent(in) :: max_iterations, max_dim_red, n_singlet_states
+      integer, intent(in) :: max_micro_iterations
+      logical, intent(in) :: prepare_wf, records_in_memory
 !
-      character(len=*), intent(in) :: es_type, transformation
-!
-      logical, intent(in) :: restart, prepare_wf, energy_convergence, records_in_memory
+      character(len=*), intent(in) :: transformation
 !
       this%wf => wf 
 !
@@ -269,37 +257,33 @@ contains
 !
       call this%print_banner()
 !
-!     Set defaults
+      this%transformation   = trim(transformation)
+      this%n_singlet_states = n_singlet_states
+      this%max_iterations   = max_iterations
 !
-      this%n_singlet_states                   = n_singlet_states
-      this%max_iterations                     = max_iterations
+      this%start_vectors = start_vector
+      this%projector = projector
+      this%convergence_checker = convergence_checker
+!
       this%max_micro_iterations               = max_micro_iterations
       this%relative_micro_residual_threshold  = relative_micro_residual_threshold
-      this%restart                            = restart
       this%max_dim_red                        = max_dim_red
-      this%transformation                     = trim(transformation)
-      this%es_type                            = trim(es_type)
       this%prepare_wf                         = prepare_wf
-!
-      this%convergence_checker = convergence_tool(energy_threshold, residual_threshold, &
-                                                    energy_convergence)
 !
       call this%print_settings()
 !
-!     Initialize Davidson tool
-!
-      this%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',    &
-                                     n_parameters = this%wf%n_es_amplitudes,         &
-                                     n_solutions = this%n_singlet_states,     &
-                                     lindep_threshold = 1.0d-11,                &
-                                     max_dim_red = this%max_dim_red,          &
-                                     records_in_memory = records_in_memory,     &
-                                     non_unit_metric = .true.)
+      this%davidson = eigen_davidson_tool(name_ = 'nonlin_cc_es_davidson',        &
+                                          n_parameters = this%wf%n_es_amplitudes, &
+                                          n_solutions = this%n_singlet_states,    &
+                                          lindep_threshold = 1.0d-11,             &
+                                          max_dim_red = this%max_dim_red,         &
+                                          records_in_memory = records_in_memory,  &
+                                          non_unit_metric = .true.)
 !
    end function new_nonlinear_davidson_cc_es_preconvergence
 !
 !
-   subroutine print_settings_nonlinear_davidson_cc_es(this)
+   subroutine print_settings(this)
 !!
 !!    Print settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
@@ -316,7 +300,7 @@ contains
       call output%printf('m', 'Relative micro threshold:     (e11.2)', &
                          reals=[this%relative_micro_residual_threshold], fs='(t6,a/)')
 !
-   end subroutine print_settings_nonlinear_davidson_cc_es
+   end subroutine print_settings
 !
 !
    subroutine run_nonlinear_davidson_cc_es(this)
@@ -375,11 +359,6 @@ contains
       type(timings) :: macro_iteration_time
       character(len=40) :: timer_name
 !
-!     Initialize solver tools and prepare wavefunction
-!
-      call this%initialize_start_vector_tool()
-      call this%initialize_projection_tool()
-!
       if (this%prepare_wf) call this%prepare_wf_for_excited_state()
 !
 !     Initialize energies, residual norms, and convergence arrays
@@ -402,7 +381,9 @@ contains
       call mem%alloc(R, this%wf%n_es_amplitudes, this%n_singlet_states)
       call mem%alloc(X, this%wf%n_es_amplitudes, this%n_singlet_states)
 !
-      call this%set_initial_guesses(X, 1, this%wf%n_singlet_states)
+      do state = 1, this%n_singlet_states
+         call this%start_vectors%get(X(:,state), state, this%energies(state))
+      end do
 !
 !     Enter iterative loop
 !
@@ -513,7 +494,7 @@ contains
    end subroutine run_nonlinear_davidson_cc_es
 !
 !
-   subroutine do_micro_iterations_nonlinear_davidson_cc_es(this, X, R,   &
+   subroutine do_micro_iterations(this, X, R,   &
                                                            n_micro_iterations, &
                                                            n_transformations,  &
                                                            residual_norms)
@@ -759,7 +740,7 @@ contains
 !
                corresponding_state = trial_to_state(trial - this%davidson%first_new_trial() + 1)
 !
-               call this%wf%construct_Jacobian_transform(this%transformation,                &
+               call this%wf%construct_Jacobian_transform(this%transformation,             &
                                                     c,                                    &
                                                     residual,                             &
                                                     this%energies(corresponding_state))
@@ -810,28 +791,12 @@ contains
 !
       call mem%dealloc(converged, this%n_singlet_states)
 !
-   end subroutine do_micro_iterations_nonlinear_davidson_cc_es
+   end subroutine do_micro_iterations
 !
 !
-   subroutine read_settings_nonlinear_davidson_cc_es(this, records_in_memory)
+   subroutine read_settings(this)
 !!
 !!    Read settings
-!!    Written by Eirik F. Kjønstad, Jan 2020
-!!
-      implicit none
-!
-      class(nonlinear_davidson_cc_es) :: this
-      logical, intent(inout) :: records_in_memory
-!
-      call this%read_es_settings(records_in_memory)
-      call this%read_davidson_settings()
-!
-   end subroutine read_settings_nonlinear_davidson_cc_es
-!
-!
-   subroutine read_davidson_settings_nonlinear_davidson_cc_es(this)
-!!
-!!    Read Davidson settings
 !!    Written by Eirik F. Kjønstad, Jan 2020
 !!
       use global_in, only: input
@@ -854,7 +819,7 @@ contains
                              'solver cc es',        &
                              this%relative_micro_residual_threshold)
 !
-   end subroutine read_davidson_settings_nonlinear_davidson_cc_es
+   end subroutine read_settings
 !
 !
 end module nonlinear_davidson_cc_es_class

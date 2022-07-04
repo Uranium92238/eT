@@ -34,6 +34,7 @@ module ccs_class
    use memory_manager_class, only: mem
 !
    use stream_file_class, only: stream_file
+   use amplitude_file_storer_class, only: amplitude_file_storer
 !
    use range_class, only: range_
 !
@@ -76,9 +77,9 @@ module ccs_class
 !
       logical :: need_g_abcd
 !
-      type(stream_file) :: t_file, tbar_file
-!
-      type(stream_file), dimension(:), allocatable :: l_files, r_files
+      type(amplitude_file_storer) :: t_storer, tbar_storer
+      type(amplitude_file_storer), dimension(:), allocatable :: l_storers
+      type(amplitude_file_storer), dimension(:), allocatable :: r_storers
 !
       type(eri_adapter), allocatable :: eri_t1
       type(eri_adapter_c), allocatable :: eri_t1_c
@@ -200,32 +201,37 @@ module ccs_class
       procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs
       procedure :: destruct_core_MOs                             => destruct_core_MOs_ccs
 !
+!     Read settings
+!
+      procedure :: read_settings &
+                => read_settings_ccs
+      procedure :: read_cvs_settings
+      procedure :: read_rm_core_settings
+!
 !     File handling procedures
 !
-      procedure :: initialize_files                              => initialize_files_ccs
-      procedure :: initialize_ground_state_files                 => initialize_ground_state_files_ccs
-      procedure :: initialize_excited_state_files                => initialize_excited_state_files_ccs
-!
-      procedure :: read_settings                                 => read_settings_ccs
-      procedure :: read_cvs_settings                             => read_cvs_settings_ccs
-      procedure :: read_rm_core_settings                         => read_rm_core_settings_ccs
-!
-      procedure :: read_singles_vector                           => read_singles_vector_ccs
-      procedure :: save_singles_vector                           => save_singles_vector_ccs
-!
-      procedure :: save_amplitudes                               => save_amplitudes_ccs
-      procedure :: read_amplitudes                               => read_amplitudes_ccs
-      procedure :: save_multipliers                              => save_multipliers_ccs
-      procedure :: read_multipliers                              => read_multipliers_ccs
-      procedure :: save_excited_state                            => save_excited_state_ccs
-      procedure :: read_excited_state                            => read_excited_state_ccs
-      procedure :: read_excitation_vector_file                   => read_excitation_vector_file_ccs
-      procedure :: save_excitation_vector_on_file                => save_excitation_vector_on_file_ccs
-      procedure :: check_and_get_restart_vector                  => check_and_get_restart_vector_ccs
-      procedure :: get_restart_vector                            => get_restart_vector_ccs
-!
-      procedure :: save_tbar_intermediates                       => save_tbar_intermediates_ccs
-!
+      procedure :: initialize_ground_state_files &
+                => initialize_ground_state_files_ccs
+      procedure :: initialize_excited_state_files &
+                => initialize_excited_state_files_ccs
+      procedure :: save_amplitudes &
+                => save_amplitudes_ccs
+      procedure :: read_amplitudes &
+                => read_amplitudes_ccs
+      procedure :: save_multipliers &
+                => save_multipliers_ccs
+      procedure :: read_multipliers &
+                => read_multipliers_ccs
+      procedure :: save_excited_state &
+                => save_excited_state_ccs
+      procedure :: read_excited_state &
+                => read_excited_state_ccs
+      procedure :: check_and_get_restart_vector &
+                => check_and_get_restart_vector_ccs
+      procedure :: get_restart_vector &
+                => get_restart_vector_ccs
+      procedure :: save_tbar_intermediates &
+                => save_tbar_intermediates_ccs
       procedure :: get_density_for_plotting &
                 => get_density_for_plotting_ccs
 !
@@ -253,6 +259,11 @@ module ccs_class
                 => get_multipliers_ccs
 !
       procedure :: set_excitation_energies                       => set_excitation_energies_ccs
+!
+      procedure :: get_gs_amplitude_block_sizes &
+                => get_amplitude_block_sizes_ccs
+      procedure :: get_es_amplitude_block_sizes &
+                => get_amplitude_block_sizes_ccs
 !
 !     Procedures related to the Fock matrix
 !
@@ -309,6 +320,8 @@ module ccs_class
       procedure :: cc_multipliers_summary                        => cc_multipliers_summary_ccs
 !
 !     Procedures related to the Jacobian transformation
+!
+      procedure :: prepare_for_excited_states
 !
       procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
 !
@@ -376,14 +389,10 @@ module ccs_class
       procedure :: density_mu_mu_oo                              => density_mu_mu_oo_ccs
       procedure :: density_mu_ref                                => density_mu_ref_ccs
 !
-      procedure, public :: calculate_and_print_dipole &
-                        => calculate_and_print_dipole_ccs
-!
-      procedure, public :: calculate_and_print_quadrupole &
-                        => calculate_and_print_quadrupole_ccs
-!
-      procedure, private :: get_electronic_dipole
-      procedure, private :: get_electronic_quadrupole
+      procedure :: get_electronic_dipole &
+                => get_electronic_dipole_ccs
+      procedure :: get_electronic_quadrupole &
+                => get_electronic_quadrupole_ccs
 !
       procedure :: construct_etaX                                => construct_etaX_ccs
       procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
@@ -428,8 +437,8 @@ module ccs_class
       procedure :: prepare_for_multiplier_equation               => prepare_for_multiplier_equation_ccs
       procedure :: prepare_for_multiplier_equation_complex       => prepare_for_multiplier_equation_ccs_complex
 !
-      procedure :: prepare_for_properties                           => prepare_for_properties_ccs
-      procedure :: prepare_for_properties_complex                   => prepare_for_properties_ccs_complex
+      procedure :: prepare_for_properties                        => prepare_for_properties_ccs
+      procedure :: prepare_for_properties_complex                => prepare_for_properties_ccs_complex
 !
       procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs
 !
@@ -584,15 +593,11 @@ contains
 !!    General CC preparations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!
       implicit none
 !
       class(ccs) :: wf
 !
-      call wf%initialize_files()
-!
       wf%bath_orbital = .false.
-      wf%need_g_abcd  = .false.
       wf%cvs          = .false.
       wf%rm_core      = .false.
 !
@@ -612,19 +617,15 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=200) :: name_
+      character(len=:), allocatable :: name_
 !
       name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
 !
       call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
-      call output%print_separator('m', len_trim(name_) + 6, '=')
-!
-!     Print settings
+      call output%print_separator('m', len(name_) + 3, '=')
 !
       call output%printf('m', 'Bath orbital(s):         (l0)', &
             logs=[wf%bath_orbital], fs='(/t6, a)')
-!
-!     Print orbital space info for cc
 !
       call output%printf('m', ' - Number of orbitals:', &
                          fs='(/t3,a)')
@@ -649,13 +650,10 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-!     Print orbital space info for cc
-!
       call output%printf('m', ' - Number of ground state amplitudes:', fs='(/t3,a)')
 !
       call output%printf('m', 'Single excitation amplitudes:  (i0)', &
             ints=[wf%n_t1], fs='(/t6,a)')
-
 !
    end subroutine print_amplitude_info_ccs
 !
@@ -811,7 +809,7 @@ contains
 !
       else
 !
-         if (wf%t_file%exists()) then
+         if (wf%t_storer%file_exists()) then
 !
             call output%printf('m', 'Requested restart. Reading in solution from file.', &
                                fs='(/t3,a)')
@@ -849,7 +847,7 @@ contains
 !
       else
 !
-         if (wf%tbar_file%exists()) then
+         if (wf%tbar_storer%file_exists()) then
 !
             call output%printf('m', 'Requested restart. Reading multipliers from file.', &
                               fs='(/t3,a)')
@@ -922,6 +920,29 @@ contains
       endif
 !
    end subroutine construct_Jacobian_transform_ccs
+!
+!
+   subroutine prepare_for_excited_states(wf, n_states, es_type)
+!!
+!!    Prepare for excited states
+!!    Written by Alexander C. Paul, May 2022
+!!
+!!    Set number of excited states and read es settings
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      integer, intent(in) :: n_states
+      character(len=*), intent(in) :: es_type
+!
+      wf%n_singlet_states = n_states
+      if (es_type == "core") call wf%read_cvs_settings()
+      if (es_type == "remove core") call wf%read_rm_core_settings()
+!
+      call wf%initialize_excited_state_files()
+      call wf%initialize_excitation_energies()
+!
+   end subroutine prepare_for_excited_states
 !
 !
    subroutine prepare_for_Jacobians_ccs(wf, r_or_l)
@@ -2046,7 +2067,7 @@ contains
    end subroutine approximate_double_excitation_vectors_ccs
 !
 !
-   subroutine read_cvs_settings_ccs(wf)
+   subroutine read_cvs_settings(wf)
 !!
 !!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -2084,10 +2105,10 @@ contains
 !
       endif
 !
-   end subroutine read_cvs_settings_ccs
+   end subroutine read_cvs_settings
 !
 !
-   subroutine read_rm_core_settings_ccs(wf)
+   subroutine read_rm_core_settings(wf)
 !!
 !!    Read remove core settings
 !!    Written by Sarai D. Folkestad, 2021
@@ -2125,7 +2146,7 @@ contains
 !
       endif
 !
-   end subroutine read_rm_core_settings_ccs
+   end subroutine read_rm_core_settings
 !
 !
    subroutine integral_preparations_ccs(wf, n_J)
@@ -2261,11 +2282,13 @@ contains
 !!    descendants of standard CC-type (e.g., CCSD, CC2, CC3)
 !!    but will be so for MLCC methods.
 !!
+      use warning_suppressor, only: do_nothing
+!
       implicit none
 !
       class(ccs) :: wf
 !
-      call output%printf('v', 'No MO preparations for (a0)', chars=[wf%name_])
+      call do_nothing(wf)
 !
    end subroutine mo_preparations_ccs
 !

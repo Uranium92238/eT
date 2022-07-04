@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:44 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: Ne
+        name: ne
         charge: 0
      end system
 
@@ -87,12 +85,14 @@
      end solver cc es
 
 
+  Calculation start:2022-06-30 08:45:48 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -125,26 +125,16 @@
      Number of molecular orbitals:       27
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:              -128.496443872332
+     Energy of initial guess:              -128.496443872333
      Number of electrons in guess:           10.000000000000
 
   - Screening and integral thresholds:
@@ -174,7 +164,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -128.496443872333     0.5525E-10     0.1285E+03
+     1          -128.496443872332     0.5955E-10     0.1285E+03
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -182,17 +172,12 @@
 
      HOMO-LUMO gap:                  1.140324587556
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:           -128.496443872333
-     Total energy:                -128.496443872333
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.65100
-     Total cpu time (sec):               0.67436
+     Electronic energy:           -128.496443872332
+     Total energy:                -128.496443872332
 
 
   :: CCS wavefunction
-  ======================
+  ===================
 
      Bath orbital(s):         False
 
@@ -260,7 +245,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4407E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.4078E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.5724E-14
 
   - Settings for integral handling:
 
@@ -269,8 +254,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21100
-     Total cpu time (sec):               0.11669
+     Total wall time (sec):              0.13950
+     Total cpu time (sec):               0.27949
 
 
   Determining CC cluster amplitudes
@@ -301,14 +286,14 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -128.496443872333     0.1491E-09     0.1285E+03
-    2          -128.496443872333     0.2069E-10     0.0000E+00
+    1          -128.496443872332     0.1490E-09     0.1285E+03
+    2          -128.496443872332     0.2068E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 2 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -128.496443872333
+     Final ground state energy (a.u.):  -128.496443872332
 
      Correlation energy (a.u.):            0.000000000000
 
@@ -316,22 +301,22 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-       11      3       -0.000000000020
-       12      4        0.000000000017
-        2      3        0.000000000017
-        4      4        0.000000000016
-        3      5        0.000000000016
-       10      4        0.000000000015
-       12      5       -0.000000000015
-       10      5        0.000000000014
+       10      5       -0.000000000022
+        4      4        0.000000000018
+       11      3        0.000000000017
+       12      4        0.000000000016
+       11      4        0.000000000016
+       12      3       -0.000000000015
+        3      3       -0.000000000015
+        2      5        0.000000000013
+        2      3        0.000000000013
        13      2        0.000000000013
-       11      5        0.000000000012
      ------------------------------------
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.01000
-     Total cpu time (sec):               0.00428
+     Total wall time (sec):              0.00409
+     Total cpu time (sec):               0.01409
 
 
   Determining CC excited state amplitudes
@@ -350,8 +335,8 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   - Davidson solver settings
 
@@ -386,7 +371,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  32.648311839223    0.000000000000     0.2813E-13   0.6817E-05
+     1  32.648311839222    0.000000000000     0.1682E-13   0.6817E-05
   -------------------------------------------------------------------------
   Convergence criterion met in 3 iterations!
 
@@ -394,7 +379,7 @@
 
      Electronic state nr. 1
 
-     Energy (Hartree):                 32.648311839223
+     Energy (Hartree):                 32.648311839222
      Fraction singles (|R1|/|R|):       1.000000000000
 
      Largest single amplitudes:
@@ -404,12 +389,12 @@
         1      1        0.994433476432
        13      1       -0.105365006912
        19      1        0.000525613315
-        2      1       -0.000000000000
-        3      1        0.000000000000
-       11      1       -0.000000000000
-       12      1        0.000000000000
         4      1       -0.000000000000
-       10      1       -0.000000000000
+       10      1        0.000000000000
+        2      1        0.000000000000
+       11      1        0.000000000000
+        3      1        0.000000000000
+       12      1        0.000000000000
         7      1       -0.000000000000
      ------------------------------------
 
@@ -419,20 +404,18 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 32.648311839223      888.405816358420
+        1                 32.648311839222      888.405816358417
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 6.603220 MB
-
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.89400
-  Total cpu time in eT (sec):               0.81214
+  Peak memory usage during the execution of eT: 6.621488 MB
 
-  Calculation ended: 2022-04-07 12:34:45 UTC -07:00
+  Total wall time in eT (sec):              1.03295
+  Total cpu time in eT (sec):               2.04002
+
+  Calculation end:2022-06-30 08:45:49 UTC +02:00
 
   - Implementation references:
 

@@ -244,19 +244,19 @@ contains
 !
 !     Set tool parameters
 !
-      davidson%name_ = trim(name_)
-      davidson%n_parameters = n_parameters
-      davidson%n_solutions = n_equations
-      davidson%max_dim_red = min(max_dim_red, n_parameters)
-      davidson%lindep_threshold = lindep_threshold
-      davidson%n_rhs = n_rhs
+      davidson%name_             = trim(name_)
+      davidson%n_parameters      = n_parameters
+      davidson%n_solutions       = n_equations
+      davidson%max_dim_red       = min(max_dim_red, n_parameters)
+      davidson%lindep_threshold  = lindep_threshold
+      davidson%n_rhs             = n_rhs
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
 !
 !     Set some initial values
 !
       davidson%dim_red      = 0
-      davidson%n_new_trials = davidson%n_solutions
+      davidson%n_new_trials = 0
 !
       call davidson%print_settings()
 !
@@ -344,7 +344,7 @@ contains
                                           shift=davidson%omega_re(i),   &
                                           prefactor=one)
 !
-         call davidson%trials%copy_record_in(c, i)
+         call davidson%set_trial(c, i)
 !
       enddo
 !

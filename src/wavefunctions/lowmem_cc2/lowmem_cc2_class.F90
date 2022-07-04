@@ -75,7 +75,12 @@ module lowmem_cc2_class
       procedure :: omega_cc2_Jv2o &
                 => omega_cc2_Jv2o_lowmem_cc2
 !
-      procedure :: calculate_energy => calculate_energy_lowmem_cc2
+      procedure :: calculate_energy &
+                => calculate_energy_lowmem_cc2
+      procedure :: get_electronic_dipole &
+                => get_electronic_dipole_lowmem_cc2
+      procedure :: get_electronic_quadrupole &
+                => get_electronic_quadrupole_lowmem_cc2
 !
 !     Jacobian transformation
 !

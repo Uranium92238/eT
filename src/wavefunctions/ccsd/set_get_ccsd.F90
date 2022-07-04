@@ -99,4 +99,20 @@ contains
    end subroutine get_multipliers_ccsd
 !
 !
+   module subroutine get_amplitude_block_sizes_ccsd(wf, amplitude_block_sizes)
+!!
+!!    Get amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1, wf%n_t2]
+!
+   end subroutine get_amplitude_block_sizes_ccsd
+!
+!
 end submodule set_get_ccsd

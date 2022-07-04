@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:01 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HFO He
+        name: hfo he
         charge: 0
      end system
 
@@ -84,12 +82,14 @@
      end solver cc es
 
 
+  Calculation start:2022-06-30 08:46:57 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 16.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -128,22 +128,12 @@
      Number of molecular orbitals:       15
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -185,13 +175,13 @@
      6           -78.806189724492     0.1191E-04     0.1353E-06
      7           -78.806189726058     0.3312E-05     0.1566E-08
      8           -78.806189726243     0.8310E-06     0.1847E-09
-     9           -78.806189726257     0.1348E-06     0.1418E-10
-    10           -78.806189726257     0.5466E-08     0.8527E-13
-    11           -78.806189726257     0.3040E-08     0.2842E-13
-    12           -78.806189726257     0.9932E-09     0.1421E-13
-    13           -78.806189726257     0.1716E-09     0.5684E-13
-    14           -78.806189726257     0.1602E-10     0.4263E-13
-    15           -78.806189726257     0.2373E-11     0.2842E-13
+     9           -78.806189726257     0.1348E-06     0.1423E-10
+    10           -78.806189726257     0.5466E-08     0.1137E-12
+    11           -78.806189726257     0.3040E-08     0.1421E-13
+    12           -78.806189726257     0.9932E-09     0.2842E-13
+    13           -78.806189726257     0.1716E-09     0.4263E-13
+    14           -78.806189726257     0.1602E-10     0.1421E-13
+    15           -78.806189726257     0.2373E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -202,14 +192,9 @@
      Electronic energy:            -90.969863665079
      Total energy:                 -78.806189726257
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.12000
-     Total cpu time (sec):               0.11998
-
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -286,8 +271,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.08600
-     Total cpu time (sec):               0.04296
+     Total wall time (sec):              0.03339
+     Total cpu time (sec):               0.06334
 
 
   Determining CC cluster amplitudes
@@ -382,8 +367,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.32800
-     Total cpu time (sec):               0.09471
+     Total wall time (sec):              0.03494
+     Total cpu time (sec):               0.07495
 
 
   Determining CC excited state amplitudes
@@ -495,7 +480,7 @@
         4        1.316249893542      35.816983951968      0.363258854228
         5        1.568056734064      42.668997091882      0.150449979175
         6        2.055432537450      55.931168214612      0.142089530282
-        7        2.633078963878      71.649728107236      0.020492383458
+        7        2.633078963878      71.649728107235      0.020492383458
         8        3.167548081851      86.193373592152      0.007787326566
         9        3.913106192916     106.481043152677      0.001571740382
        10        4.384261507551     119.301832294592      0.000187690418
@@ -506,15 +491,15 @@
 
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
-        1        0.357563595121       9.729801013529      0.117412020225
+        1        0.357563595121       9.729801013530      0.117412020225
         2        0.615429576304      16.746691768929      0.355762070121
-        3        0.899148851531      24.467086488450      0.011122370175
+        3        0.899148851531      24.467086488448      0.011122370175
         4        1.273250512328      34.646911191117      0.317748341808
-        5        1.669928896455      45.441079827398      0.129711069510
+        5        1.669928896455      45.441079827397      0.129711069510
         6        2.041902453872      55.562995887503      0.112396712052
-        7        2.689534920447      73.185972934560      0.019374156295
-        8        3.268884189147      88.950869525559      0.007494121423
-        9        3.954783762508     107.615147587238      0.001518429794
+        7        2.689534920447      73.185972934559      0.019374156295
+        8        3.268884189147      88.950869525558      0.007494121423
+        9        3.954783762508     107.615147587237      0.001518429794
        10        4.596574935279     125.079174933726      0.000202078347
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos30_Y
@@ -524,31 +509,29 @@
      State.      energy [a.u]         energy [eV]         Osc. strength
      ----------------------------------------------------------------------
         1        0.249472929628       6.788504189641      0.004908591794
-        2        0.825045644436      22.450635514869      0.007632160222
-        3        1.005335921968      27.356583852435      0.105156155100
-        4        1.527446664981      41.563940825750      0.260339663370
-        5        1.733519932765      47.171480063825      0.358447812704
-        6        2.106163509999      57.311628291825      0.110359966521
-        7        2.773065817835      75.458964427965      0.021367360158
-        8        3.414871508029      92.923386813684      0.005845343866
-        9        4.112697017104     111.912186115716      0.001160146924
-       10        4.786412586024     130.244920529272      0.000090901925
+        2        0.825045644436      22.450635514875      0.007632160222
+        3        1.005335921968      27.356583852437      0.105156155100
+        4        1.527446664981      41.563940825766      0.260339663372
+        5        1.733519932766      47.171480063850      0.358447812703
+        6        2.106163510000      57.311628291850      0.110359966520
+        7        2.773065817836      75.458964427991      0.021367360158
+        8        3.414871508030      92.923386813717      0.005845343866
+        9        4.112697017105     111.912186115746      0.001160146924
+       10        4.786412586025     130.244920529301      0.000090901925
      ----------------------------------------------------------------------
      For full spectrum see file: eT.lanczos30_Z
 
   - Finished solving the CCSD excited state equations.
 
-     Total wall time (sec):              2.19000
-     Total cpu time (sec):               0.94893
+     Total wall time (sec):              0.38201
+     Total cpu time (sec):               0.77156
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 1.307824 MB
 
-  Peak memory usage during the execution of eT: 1.303608 MB
+  Total wall time in eT (sec):              0.63367
+  Total cpu time in eT (sec):               1.23207
 
-  Total wall time in eT (sec):              3.24400
-  Total cpu time in eT (sec):               1.33644
-
-  Calculation ended: 2022-04-07 12:35:04 UTC -07:00
+  Calculation end:2022-06-30 08:46:58 UTC +02:00
 
   - Implementation references:
 

@@ -48,7 +48,7 @@ module rohf_class
       procedure :: finalize_gs                        => finalize_gs_rohf
       procedure :: read_settings                      => read_settings_rohf
       procedure :: read_rohf_settings                 => read_rohf_settings_rohf
-      procedure :: save_orbital_info                  => save_orbital_info_rohf
+      procedure :: write_orbital_info                 => write_orbital_info_rohf
 !
    end type rohf
 !
@@ -278,18 +278,18 @@ contains
    end subroutine finalize_gs_rohf
 !
 !
-   subroutine save_orbital_info_rohf(wf)
+   subroutine write_orbital_info_rohf(wf)
 !!
-!!    Make orbital info file
+!!    Write orbital info
 !!    Written by Alexander C. Paul Nov 2020
 !!
       implicit none
 !
       class(rohf), intent(inout) :: wf
 !
-      call wf%hf%save_orbital_info()
+      call wf%hf%write_orbital_info()
 !
-   end subroutine save_orbital_info_rohf
+   end subroutine write_orbital_info_rohf
 !
 !
 end module rohf_class

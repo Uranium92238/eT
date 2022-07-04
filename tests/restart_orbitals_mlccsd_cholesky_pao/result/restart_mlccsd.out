@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:36:00 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -96,12 +94,14 @@
      end mlcc
 
 
+  Calculation start:2022-06-30 08:49:31 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -140,18 +140,8 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -193,14 +183,9 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01369
-
 
   :: MLCCSD wavefunction
-  =========================
+  ======================
 
      Bath orbital(s):         False
 
@@ -264,7 +249,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1241E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
@@ -273,8 +258,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.22300
-     Total cpu time (sec):               0.21824
+     Total wall time (sec):              0.21201
+     Total cpu time (sec):               0.43200
   Requested orbital restart, reading orbitals and orbital energies
 
   Warning: Number of orbitals in active and inactive spaces read from 
@@ -325,7 +310,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.054599132611     0.1127E-11     0.7905E+02
+    1           -79.054599132611     0.9630E-12     0.7905E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -353,8 +338,8 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.01200
-     Total cpu time (sec):               0.01191
+     Total wall time (sec):              0.00454
+     Total cpu time (sec):               0.00454
 
 
   Determining CC excited state amplitudes
@@ -373,8 +358,8 @@
      Number of requested solutions:           4
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
      Restarting right vector 1 from file r_001.
      Restarting right vector 2 from file r_002.
      Restarting right vector 3 from file r_003.
@@ -390,10 +375,10 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.263246328315    0.000000000000     0.4365E-12   0.2632E+00
-     2   0.356241306558    0.000000000000     0.1092E-12   0.3562E+00
-     3   0.371227026640    0.000000000000     0.3256E-12   0.3712E+00
-     4   0.454501009362    0.000000000000     0.1015E-10   0.4545E+00
+     1   0.263246328315    0.000000000000     0.4207E-12   0.2632E+00
+     2   0.356241306558    0.000000000000     0.1083E-12   0.3562E+00
+     3   0.371227026640    0.000000000000     0.3060E-12   0.3712E+00
+     4   0.454501009362    0.000000000000     0.8234E-12   0.4545E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -492,12 +477,12 @@
         a       i         R(a,i)
      -----------------------------------
         2      4        0.722142582254
-        1      3       -0.473304971491
+        1      3       -0.473304971489
        14      4        0.394906800869
         5      4        0.147874125686
        23      4        0.129048540912
-       16      3        0.110840479851
-       12      4        0.083638224317
+       16      3        0.110840479850
+       12      4        0.083638224318
        15      3        0.052486163934
        18      4       -0.037998865971
        10      3        0.034348823792
@@ -509,23 +494,21 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.263246328315        7.163297458122
-        2                  0.356241306558        9.693819709025
-        3                  0.371227026640       10.101601922947
+        1                  0.263246328315        7.163297458123
+        2                  0.356241306558        9.693819709026
+        3                  0.371227026640       10.101601922946
         4                  0.454501009362       12.367602412241
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 10.687008 MB
-
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.41900
-  Total cpu time in eT (sec):               0.31310
+  Peak memory usage during the execution of eT: 10.699752 MB
 
-  Calculation ended: 2022-04-07 12:36:00 UTC -07:00
+  Total wall time in eT (sec):              0.31108
+  Total cpu time in eT (sec):               0.59614
+
+  Calculation end:2022-06-30 08:49:31 UTC +02:00
 
   - Implementation references:
 

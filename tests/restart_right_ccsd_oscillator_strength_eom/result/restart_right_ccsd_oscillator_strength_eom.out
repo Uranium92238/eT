@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:31 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -85,12 +83,14 @@
      end solver cc es
 
 
+  Calculation start:2022-06-30 08:48:24 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -129,18 +129,8 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -181,14 +171,9 @@
      Electronic energy:            -91.007350275947
      Total energy:                 -78.843676337127
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.00800
-     Total cpu time (sec):               0.01320
-
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -265,8 +250,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.27300
-     Total cpu time (sec):               0.18977
+     Total wall time (sec):              0.25190
+     Total cpu time (sec):               0.50188
 
 
   Determining CC cluster amplitudes
@@ -342,8 +327,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02900
-     Total cpu time (sec):               0.01803
+     Total wall time (sec):              0.01626
+     Total cpu time (sec):               0.03626
 
 
   Determining CC multipliers
@@ -439,8 +424,8 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
      Restarting right vector 1 from file r_001.
 
   - Davidson solver settings
@@ -468,32 +453,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6        0.964216902506
-        4      6        0.121770726882
-        6      6       -0.036132124926
-       13      6       -0.029902629306
-        1      3       -0.011600023306
-       10      6        0.010013571741
-        1      5        0.008692885382
-       22      6        0.008618559502
-       19      5       -0.007874999592
-       20      4       -0.007260549449
+        1      6       -0.964216902506
+        4      6       -0.121770726882
+        6      6        0.036132124926
+       13      6        0.029902629306
+        1      3        0.011600023306
+       10      6       -0.010013571741
+        1      5       -0.008692885382
+       22      6       -0.008618559502
+       19      5        0.007874999592
+       20      4        0.007260549449
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      4       1      6       -0.100761726289
-        1      5       1      6       -0.085630628248
-        1      6       5      6        0.066910787426
-        1      2       1      6       -0.063308996815
-        1      4       2      6       -0.061583402730
-        3      4       1      6       -0.054907735002
-        6      5       1      6        0.046252870581
-        4      5       1      6       -0.038223994234
-        7      4       1      6        0.032960704763
-        4      4       2      6       -0.032722188241
+        2      4       1      6        0.100761726289
+        1      5       1      6        0.085630628248
+        1      6       5      6       -0.066910787426
+        1      2       1      6        0.063308996815
+        1      4       2      6        0.061583402730
+        3      4       1      6        0.054907735002
+        6      5       1      6       -0.046252870581
+        4      5       1      6        0.038223994234
+        7      4       1      6       -0.032960704763
+        4      4       2      6        0.032722188241
      --------------------------------------------------
 
   - CCSD excitation energies:
@@ -523,8 +508,8 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
      Restarting left vector 1 from file r_001.
 
   - Davidson solver settings
@@ -665,7 +650,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982163    0.000000000000     0.1747E-07   0.1325E-09
+     1   0.247312982163    0.000000000000     0.1747E-07   0.1324E-09
   -------------------------------------------------------------------------
 
   Iteration:                 18
@@ -681,7 +666,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982130    0.000000000000     0.3553E-08   0.4840E-10
+     1   0.247312982129    0.000000000000     0.3553E-08   0.4839E-10
   -------------------------------------------------------------------------
 
   Iteration:                 20
@@ -697,7 +682,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982161    0.000000000000     0.8717E-09   0.3278E-12
+     1   0.247312982161    0.000000000000     0.8717E-09   0.3272E-12
   -------------------------------------------------------------------------
 
   Iteration:                 22
@@ -713,7 +698,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.1256E-09   0.5173E-12
+     1   0.247312982155    0.000000000000     0.1256E-09   0.5175E-12
   -------------------------------------------------------------------------
 
   Iteration:                 24
@@ -721,7 +706,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.4613E-10   0.5260E-12
+     1   0.247312982155    0.000000000000     0.4613E-10   0.5234E-12
   -------------------------------------------------------------------------
 
   Iteration:                 25
@@ -729,7 +714,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.1904E-10   0.1486E-12
+     1   0.247312982155    0.000000000000     0.1904E-10   0.1507E-12
   -------------------------------------------------------------------------
 
   Iteration:                 26
@@ -737,7 +722,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.7036E-11   0.1305E-12
+     1   0.247312982155    0.000000000000     0.7036E-11   0.1300E-12
   -------------------------------------------------------------------------
   Convergence criterion met in 26 iterations!
 
@@ -752,32 +737,32 @@
      -----------------------------------
         a       i         L(a,i)
      -----------------------------------
-        1      6        0.934302980285
-        4      6        0.113940647873
-        6      6       -0.032704845192
-       13      6       -0.027802552762
-        1      3       -0.011444229191
-       10      6        0.009054018781
-        1      5        0.008730825126
-       22      6        0.007422819385
-       19      5       -0.006892929045
-        8      4       -0.006439007669
+        1      6       -0.934302980285
+        4      6       -0.113940647873
+        6      6        0.032704845192
+       13      6        0.027802552762
+        1      3        0.011444229191
+       10      6       -0.009054018781
+        1      5       -0.008730825126
+       22      6       -0.007422819385
+       19      5        0.006892929045
+        8      4        0.006439007669
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        2      4       1      6       -0.171035162949
-        6      5       1      6        0.100231515518
-        3      4       1      6       -0.099701690101
-        1      5       1      6       -0.089497856573
-        4      5       1      6       -0.079150704118
-        1      6       5      6        0.071472425439
-        7      4       1      6        0.068295546905
-        1      2       1      6       -0.065072321962
-        4      4       2      6       -0.055704061628
-        3      5       2      6       -0.042583103145
+        2      4       1      6        0.171035162949
+        6      5       1      6       -0.100231515518
+        3      4       1      6        0.099701690101
+        1      5       1      6        0.089497856573
+        4      5       1      6        0.079150704118
+        1      6       5      6       -0.071472425439
+        7      4       1      6       -0.068295546905
+        1      2       1      6        0.065072321962
+        4      4       2      6        0.055704061628
+        3      5       2      6        0.042583103145
      --------------------------------------------------
 
   - CCSD excitation energies:
@@ -813,20 +798,18 @@
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X           0.0005582095      0.0010645411            0.0000005942
-     Y           0.0028939558      0.0056493936            0.0000163491
-     Z          -0.2019462617     -0.3960659967            0.0799840474
+     X          -0.0005582095     -0.0010645411            0.0000005942
+     Y          -0.0028939558     -0.0056493936            0.0000163491
+     Z           0.2019462617      0.3960659967            0.0799840474
      --------------------------------------------------------------------------
      Oscillator strength:      0.013190189064
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 14.482536 MB
 
-  Peak memory usage during the execution of eT: 30.141856 MB
+  Total wall time in eT (sec):              1.05150
+  Total cpu time in eT (sec):               2.06563
 
-  Total wall time in eT (sec):              1.90100
-  Total cpu time in eT (sec):               0.99661
-
-  Calculation ended: 2022-04-07 12:35:32 UTC -07:00
+  Calculation end:2022-06-30 08:48:25 UTC +02:00
 
   - Implementation references:
 

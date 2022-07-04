@@ -43,8 +43,8 @@ contains
       class(hf), intent(inout) :: wf
 !
       call wf%orbital_file%open_('write')
-      call wf%orbital_file%write_(int(wf%ao%n,kind=i64))
-      call wf%orbital_file%write_(int(wf%n_mo,kind=i64))
+      call wf%orbital_file%write_(int(wf%ao%n, kind=i64))
+      call wf%orbital_file%write_(int(wf%n_mo, kind=i64))
       call wf%orbital_file%write_(wf%orbital_energies, wf%n_mo)
       call wf%orbital_file%write_(wf%orbital_coefficients, wf%ao%n*wf%n_mo)
       call wf%orbital_file%close_('keep')

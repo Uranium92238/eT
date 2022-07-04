@@ -30,7 +30,7 @@ module eigen_davidson_solver_class
 !
    use abstract_solver_class,           only: abstract_solver
    use convergence_tool_class,          only: convergence_tool
-   use transformation_tool_class,       only: transformation_tool
+   use transformation_class,       only: transformation
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use start_vector_tool_class,         only: start_vector_tool
    use preconditioner_getter_class,     only: preconditioner_getter
@@ -47,7 +47,7 @@ module eigen_davidson_solver_class
       class(eigen_davidson_tool), allocatable, private  :: davidson
 !
       class(convergence_tool),          allocatable, private :: convergence_checker
-      class(transformation_tool),       allocatable, private :: transformer
+      class(transformation),       allocatable, private :: transformer
       class(eigen_storage_tool),        allocatable, private :: storer
       class(start_vector_tool),         allocatable, private :: start_vector
       class(preconditioner_getter),     allocatable, private :: preconditioner
@@ -90,7 +90,7 @@ contains
 !
       type(eigen_davidson_solver) :: this
 !
-      class(transformation_tool),       intent(in) :: transformer
+      class(transformation),       intent(in) :: transformer
       type(eigen_davidson_tool),        intent(in) :: davidson
       type(convergence_tool),           intent(in) :: convergence_checker
       class(eigen_storage_tool),        intent(in) :: storer
@@ -134,8 +134,6 @@ contains
       real(dp), dimension(:), allocatable :: residual_norm
       real(dp), dimension(:), allocatable :: c, residual, omega
       complex(dp), dimension(:), allocatable :: new_omega
-      real(dp) :: dummy = zero
-!
 !
       call mem%alloc(omega, this%n_solutions)
       call mem%alloc(new_omega, this%n_solutions)
@@ -180,7 +178,7 @@ contains
          do trial = this%davidson%first_new_trial(), this%davidson%last_new_trial()
 !
             call this%davidson%get_trial(c, trial)
-            call this%transformer%transform(c, residual, dummy)
+            call this%transformer%transform(c, residual)
 !
             call this%projector%project(residual)
             call this%davidson%set_transform(residual, trial)

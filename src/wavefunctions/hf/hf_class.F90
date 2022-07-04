@@ -39,11 +39,15 @@ module hf_class
    use timings_class, only: timings
    use range_class, only: range_
 !
+   use ao_eri_getter_class, only: ao_eri_getter
+!
    implicit none
 !
 !  Hartree-Fock hf
 !
    type, extends(wavefunction) :: hf
+!
+      class(ao_eri_getter), allocatable :: eri_getter
 !
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:,:), allocatable :: previous_ao_density
@@ -53,6 +57,7 @@ module hf_class
 !
       real(dp) :: coulomb_threshold  = 1.0D-12   ! Screening threshold (Fock, Coulomb)
       real(dp) :: exchange_threshold = 1.0D-10   ! Screening threshold (Fock, exchange)
+      real(dp) :: integral_cutoff    = 1.0D-12   ! Default: sqrt(epsilon)
       real(dp) :: gradient_threshold = 1.0D-7    ! Gradient threshold for SCF equations
 !
       real(dp) :: cumulative_fock_threshold = 1.0d0
@@ -81,10 +86,10 @@ module hf_class
 !
       logical :: cumulative_fock
 !
-      logical :: plot_active_density
-!
       integer :: packed_gradient_dimension
       type(output_file) :: mo_information_file
+!
+      logical :: coulomb_exchange_separated
 !
    contains
 !
@@ -121,13 +126,8 @@ module hf_class
       procedure :: read_frozen_orbitals_settings &
                 => read_frozen_orbitals_settings_hf
 !
-      procedure :: construct_ao_G                              => construct_ao_G_hf
-      procedure :: construct_ao_G_thread_terms                 => construct_ao_G_thread_terms_hf
-      procedure :: construct_ao_G_thread_terms_mo_screened     => construct_ao_G_thread_terms_mo_screened_hf
+      procedure :: get_G => get_G_hf
       procedure :: construct_ao_G_1der                         => construct_ao_G_1der_hf
-!
-      procedure :: construct_coulomb_ao_G                      => construct_coulomb_ao_G_hf
-      procedure :: construct_exchange_ao_G                     => construct_exchange_ao_G_hf
 !
       procedure :: set_ao_fock                                 => set_ao_fock_hf
       procedure :: get_ao_fock                                 => get_ao_fock_hf
@@ -153,13 +153,12 @@ module hf_class
       procedure :: set_initial_ao_density_guess                => set_initial_ao_density_guess_hf
       procedure :: set_ao_density_to_core_guess                => set_ao_density_to_core_guess_hf
       procedure :: get_n_electrons_in_density                  => get_n_electrons_in_density_hf
-      procedure :: construct_shp_density_schwarz               => construct_shp_density_schwarz_hf
 !
 !     MO orbital related routines
 !
       procedure :: initialize_orbitals                         => initialize_orbitals_hf
       procedure :: print_orbitals_and_energies                 => print_orbitals_and_energies_hf
-      procedure :: save_orbital_info                           => save_orbital_info_hf
+      procedure :: write_orbital_info                           => write_orbital_info_hf
       procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
 !
 !     Class variable initialize and destruct routines
@@ -186,16 +185,19 @@ module hf_class
       procedure :: get_ao_h                                    => get_ao_h_hf
       procedure :: get_ao_g                                    => get_ao_g_hf
 !
-      procedure :: set_screening_and_precision_thresholds      => set_screening_and_precision_thresholds_hf
-      procedure :: set_gradient_threshold                      => set_gradient_threshold_hf
-      procedure :: print_screening_settings                    => print_screening_settings_hf
+      procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
+      procedure :: set_coulomb_exchange_separation          => set_coulomb_exchange_separation_hf
+      procedure :: print_screening_settings                 => print_screening_settings_hf
+      procedure :: set_gradient_threshold                   => set_gradient_threshold_hf
 !
-      procedure :: prepare_for_roothan_hall                    => prepare_for_roothan_hall_hf
-      procedure :: prepare                                     => prepare_hf
+      procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_hf
+      procedure :: prepare                                  => prepare_hf
 !
 !     Properties
 !
       procedure :: calculate_expectation_value                 => calculate_expectation_value_hf
+      procedure :: get_electronic_dipole                       => get_electronic_dipole_hf
+      procedure :: get_electronic_quadrupole                   => get_electronic_quadrupole_hf
 !
 !     Frozen core
 !
@@ -220,10 +222,6 @@ module hf_class
       procedure :: get_n_active_hf_atoms                       => get_n_active_hf_atoms_hf
 !
       procedure :: flip_final_orbitals                         => flip_final_orbitals_hf
-!
-      procedure :: visualize_active_density &
-                => visualize_active_density_hf
-!
 !
       procedure :: prepare_for_scf => prepare_for_scf_hf
       procedure :: get_energy => get_energy_hf
@@ -271,6 +269,14 @@ module hf_class
       procedure :: get_tdhf_start_vector                       => get_tdhf_start_vector_hf
       procedure :: tdhf_summary                                => tdhf_summary_hf
 !
+      procedure :: get_dipole_gradient
+      procedure :: get_S2_transformation
+      procedure :: get_E2_transformation
+      procedure :: get_response_transformation
+!
+      procedure :: print_polarizability => print_polarizability_hf
+      procedure :: get_rpa_response_preconditioner => get_rpa_response_preconditioner_hf
+!
       procedure :: finalize_gs => finalize_gs_hf
 !
    end type hf
@@ -310,9 +316,12 @@ contains
 !
       wf%cumulative_fock_threshold  = 1.0d0
       wf%cumulative_fock            = .false.
+      wf%coulomb_exchange_separated = .false.
 !
       call wf%read_settings()
       call wf%print_banner()
+!
+      call wf%set_coulomb_exchange_separation()
 !
    end function new_hf
 !
@@ -411,7 +420,7 @@ contains
    end subroutine read_hf_settings_hf
 !
 !
-   subroutine print_summary_hf(wf, write_mo_info)
+   subroutine print_summary_hf(wf)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -422,22 +431,18 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
-      logical, intent(in) :: write_mo_info
-!
       call output%printf('m', '- Summary of '// &
                          &trim(convert_to_uppercase(wf%name_))// ' wavefunction &
                          &energetics (a.u.):', fs='(/t3,a)')
 !
       call wf%print_energy()
 !
-      if (write_mo_info) call wf%save_orbital_info()
-!
    end subroutine print_summary_hf
 !
 !
-   subroutine save_orbital_info_hf(wf)
+   subroutine write_orbital_info_hf(wf)
 !!
-!!    Save orbital info
+!!    Write orbital info
 !!    Written by Alexander C. Paul, Nov 2020
 !!
       implicit none
@@ -453,7 +458,7 @@ contains
 !
       call wf%mo_information_file%close_()
 !
-   end subroutine save_orbital_info_hf
+   end subroutine write_orbital_info_hf
 !
 !
    subroutine print_orbitals_and_energies_hf(wf, mo_energies, mo_coefficients, prefix)
@@ -939,7 +944,7 @@ contains
 !
       call dcopy(wf%ao%n**2, F, 1, G_ao, 1)
 !
-      call sandwich(G_ao, Po, Pv, wf%ao%n)
+      call sandwich(G_ao, Po, Pv, wf%ao%n, transpose_left=.true.)
 !
 !     tmp = Fvo = Pv^T F Po
 !
@@ -947,7 +952,7 @@ contains
 !
       call dcopy(wf%ao%n**2, F, 1, tmp, 1)
 !
-      call sandwich(tmp, Pv, Po, wf%ao%n)
+      call sandwich(tmp, Pv, Po, wf%ao%n, transpose_left=.true.)
 !
 !     G_ao = G_ao - tmp = Fov - Fvo
 !
@@ -1323,6 +1328,8 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
 !
+      wf%eri_getter = ao_eri_getter(wf%ao)
+!
    end subroutine prepare_hf
 !
 !
@@ -1371,12 +1378,12 @@ contains
 !
       class(hf) :: wf
 !
-      character(len=200) :: name_
+      character(len=:), allocatable :: name_
 !
       name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
 !
       call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
-      call output%print_separator('minimal', len_trim(name_) + 6, '=')
+      call output%print_separator('m', len(name_) + 3, '=')
 !
    end subroutine print_banner_hf
 !
@@ -1465,8 +1472,6 @@ contains
 !!
 !!    - Frozen hf orbitals
 !!
-!!    - plot active density
-!!
 !!    This routine is used at HF level to prepare mos and
 !!    frozen fock contributions.
 !!
@@ -1479,12 +1484,6 @@ contains
 !
       wf%frozen_core = input%is_keyword_present('core', 'frozen orbitals')
       wf%frozen_hf_mos = input%is_keyword_present('hf', 'frozen orbitals')
-!
-      wf%plot_active_density = input%is_keyword_present('plot hf active density', &
-                                                        'visualization')
-!
-      if (wf%plot_active_density .and. .not.  (wf%frozen_core .or. wf%frozen_hf_mos)) &
-         call output%warning_msg('no active density for CC to plot in HF, no plots produced.')
 !
    end subroutine read_frozen_orbitals_settings_hf
 !
@@ -1995,7 +1994,7 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(in) :: wf
 !
       logical :: restart_is_possible
 !
@@ -2071,6 +2070,62 @@ contains
          cumulative = .true.
 !
    end function can_do_cumulative_fock_hf
+!
+!
+   function get_electronic_dipole_hf(wf) result(mu_electronic)
+!!
+!!    Get electronic dipole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_pqk
+      integer :: k
+!
+      call mem%alloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
+      call wf%ao%get_oei('dipole', mu_pqk)
+!
+      do k = 1, 3
+!
+         mu_electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%ao_density)
+!
+      enddo
+!
+      call mem%dealloc(mu_pqk, wf%ao%n, wf%ao%n, 3)
+!
+   end function get_electronic_dipole_hf
+!
+!
+   function get_electronic_quadrupole_hf(wf) result(q_electronic)
+!!
+!!    Get electronic quadrupole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(6) :: q_electronic
+!
+      real(dp), dimension(:,:,:), allocatable :: q_pqk
+      integer :: k
+!
+      call mem%alloc(q_pqk, wf%ao%n, wf%ao%n, 6)
+      call wf%ao%get_oei('quadrupole', q_pqk)
+!
+      do k = 1, 6
+!
+         q_electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%ao_density)
+!
+      enddo
+!
+      call mem%dealloc(q_pqk, wf%ao%n, wf%ao%n, 6)
+!
+   end function get_electronic_quadrupole_hf
 !
 !
    subroutine finalize_gs_hf(wf)

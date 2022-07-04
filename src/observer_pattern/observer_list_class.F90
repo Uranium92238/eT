@@ -157,19 +157,11 @@ contains
 !
             if (i == this%n) then ! remove at the end
 !
-               if (associated(this%tail%next)) then
 !
-                  this%tail =>  this%tail%previous
-                  this%tail%next => null()
+               this%tail => null()
+               this%head => null()
 !
-               else ! remove single node
-!
-                  this%tail => null()
-                  this%head => null()
-!
-               endif
-!
-            else
+            else ! remove inside list
 !
                node_next => node%next
                node_previous => node%previous

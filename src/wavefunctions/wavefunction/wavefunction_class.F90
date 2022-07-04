@@ -168,7 +168,46 @@ module wavefunction_class
       procedure :: initialize_redundant_internal_coordinates &
                 => initialize_redundant_internal_coordinates_wavefunction
 !
+      procedure :: calculate_and_print_dipole &
+                => calculate_and_print_dipole_wavefunction
+!
+      procedure(get_electronic_dipole), deferred :: get_electronic_dipole
+!
+      procedure :: calculate_and_print_quadrupole &
+                => calculate_and_print_quadrupole_wavefunction
+!
+      procedure(get_electronic_quadrupole), deferred :: get_electronic_quadrupole
+!
    end type wavefunction
+!
+!
+   abstract interface
+!
+      function get_electronic_dipole(wf) result(mu_electronic)
+!
+         use parameters
+         import :: wavefunction
+!
+         implicit none
+!
+         class(wavefunction), intent(in) :: wf
+         real(dp), dimension(3) :: mu_electronic
+!
+      end function get_electronic_dipole
+!
+      function get_electronic_quadrupole(wf) result(q_electronic)
+!
+         use parameters
+         import :: wavefunction
+!
+         implicit none
+!
+         class(wavefunction), intent(in) :: wf
+         real(dp), dimension(6) :: q_electronic
+!
+      end function get_electronic_quadrupole
+!
+   end interface
 !
 !
 contains
@@ -1075,6 +1114,96 @@ contains
       call mem%dealloc(Z, wf%n_atomic_centers)
 !
    end subroutine initialize_redundant_internal_coordinates_wavefunction
+!
+!
+   subroutine calculate_and_print_dipole_wavefunction(wf)
+!!
+!!    Calculate and print dipole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Linda Goletto, and Alexander C. Paul, Apr 2019
+!!
+      use math_utilities, only: norm_R3
+!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(3, 3) :: dipole
+!
+      character(len=5), dimension(3) :: components
+      character(len=18), dimension(3) :: labels
+!
+      call output%printf('m', 'Dipole moment in [Debye]:', fs='(/t6,a)')
+      call output%print_separator('m', 25, '=', fs='(t6,a)')
+!
+      dipole(:,1) = wf%get_electronic_dipole() * au_to_debye
+      dipole(:,2) = wf%get_nuclear_dipole() * au_to_debye
+      dipole(:,3) = dipole(:,1) + dipole(:,2)
+!
+      components = ['x', 'y', 'z']
+      labels = [character(len=18) :: 'Electronic', 'Nuclear', 'Total']
+!
+      call output%printf('m', 'Conversion factor from Debye a.u.: (f11.9)', &
+                          reals=[one/au_to_debye], fs='(/t6,a)')
+!
+      call output%print_table("Comp.", components, labels, dipole, 3, 3)
+!
+      call output%printf('m', 'Norm of the total dipole moment: (f0.7)', &
+                         reals=[norm_R3(dipole(:,3))], fs='(t6,a)')
+!
+   end subroutine calculate_and_print_dipole_wavefunction
+!
+!
+   subroutine calculate_and_print_quadrupole_wavefunction(wf)
+!!
+!!    Calculate and print quadrupole
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
+!!    Linda Goletto, and Alexander C. Paul, Apr 2019
+!!
+      use math_utilities, only: norm_R3
+      use array_utilities, only: remove_trace
+!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(6, 3) :: quadrupole
+      character(len=5),  dimension(6) :: components
+      character(len=18), dimension(3) :: labels
+!
+      integer :: i
+!
+      call output%printf('m', 'Quadrupole moment in [Debye*Ang]:', fs='(/t6,a)')
+      call output%print_separator('m', 33, '=', fs='(t6,a)')
+!
+      quadrupole(:,1) = wf%get_electronic_quadrupole() * au_to_debye*bohr_to_angstrom
+      quadrupole(:,2) = wf%get_nuclear_quadrupole() * au_to_debye*bohr_to_angstrom
+      quadrupole(:,3) = quadrupole(:,1) + quadrupole(:,2)
+!
+      call output%printf('m', 'Conversion factor from Debye*Ang to a.u.: (f11.9)', &
+                          reals=[one/(au_to_debye*bohr_to_angstrom)], fs='(/t6,a)')
+!
+      components = ['xx', 'xy', 'xz', 'yy', 'yz', 'zz']
+      labels = [character(len=18) :: 'Electronic', 'Nuclear', 'Total']
+!
+      call output%print_table("Comp.", components, labels, quadrupole, 6, 3)
+!
+      call remove_trace(quadrupole(:,1))
+      call remove_trace(quadrupole(:,2))
+!
+      do i = 1, 6
+         quadrupole(i,3) = quadrupole(i,1) + quadrupole(i,2)
+      end do
+!
+      call output%printf('m', 'The traceless quadrupole is calculated as:', fs='(/t6,a)')
+      call output%printf('m', 'Q_ij = 1/2 [3*q_ij - tr(q)*delta_ij]', fs='(t9,a)')
+      call output%printf('m', 'where q_ij are the non-traceless matrix elements.', fs='(t6,a)')
+!
+      call output%printf('m', 'Traceless quadrupole in [Debye*Ang]', fs='(/t6,a)')
+!
+      call output%print_table("Comp.", components, labels, quadrupole, 6, 3)
+!
+   end subroutine calculate_and_print_quadrupole_wavefunction
 !
 !
 end module wavefunction_class

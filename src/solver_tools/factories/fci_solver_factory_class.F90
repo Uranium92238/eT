@@ -26,7 +26,7 @@ module fci_solver_factory_class
 !
    use kinds
    use global_out,                      only: output
-   use transformation_tool_class,       only: transformation_tool
+   use transformation_class,       only: transformation
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use fci_class,                       only: fci
    use eigen_davidson_tool_class,       only: eigen_davidson_tool
@@ -74,7 +74,7 @@ contains
 !!
       use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
       use null_projection_tool_class,      only: null_projection_tool
-      use fci_transformation_tool_class,   only: fci_transformation_tool
+      use fci_transformation_class,   only: fci_transformation
       use fci_eigen_storage_tool_class,    only: fci_eigen_storage_tool
       use fci_preconditioner_getter_class, only: fci_preconditioner_getter
 !
@@ -86,7 +86,7 @@ contains
 !
       class(eigen_davidson_tool),       allocatable :: davidson
       class(convergence_tool),          allocatable :: convergence_checker
-      class(transformation_tool),       allocatable :: transformer
+      class(transformation),       allocatable :: transformer
       class(eigen_storage_tool),        allocatable :: storer
       class(start_vector_tool),         allocatable :: start_vector
       class(preconditioner_getter),     allocatable :: preconditioner
@@ -104,7 +104,7 @@ contains
       start_vector = fci_start_vector_tool(wf, restart=this%restart)
       projector = null_projection_tool(wf%n_determinants)
 !
-      transformer    = fci_transformation_tool(wf)
+      transformer    = fci_transformation(wf)
       storer         = fci_eigen_storage_tool(wf)
       preconditioner = fci_preconditioner_getter(wf)
 !

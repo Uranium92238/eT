@@ -41,6 +41,7 @@ module qed_hf_class
    use parameters
    use memory_manager_class, only: mem
    use global_out, only: output
+   use qed_ao_eri_getter_class, only: qed_ao_eri_getter
 !
    implicit none
 !
@@ -60,7 +61,6 @@ module qed_hf_class
       procedure :: update_fock_and_energy          => update_fock_and_energy_qed_hf
 !
       procedure :: get_ao_h                        => get_ao_h_qed_hf
-      procedure :: get_ao_g                        => get_ao_g_qed_hf
 !
    end type qed_hf
 !
@@ -125,6 +125,8 @@ contains
       wf%qed = qed_tool()
       call wf%qed%initialize(wf%ao)
 !
+      wf%eri_getter = qed_ao_eri_getter(wf%ao, wf%qed)
+!
    end subroutine prepare_qed_hf
 !
 !
@@ -169,7 +171,7 @@ contains
 !
       else
 !
-         call wf%update_G_cumulative(wf%previous_ao_density)
+         call wf%update_G_cumulative()
 !
       endif
 !
@@ -193,7 +195,7 @@ contains
    end subroutine update_fock_and_energy_qed_hf
 !
 !
-   subroutine print_summary_qed_hf(wf, write_mo_info)
+   subroutine print_summary_qed_hf(wf)
 !!
 !!    Print Summary
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -204,9 +206,7 @@ contains
 !
       class(qed_hf), intent(inout) :: wf
 !
-      logical, intent(in) :: write_mo_info
-!
-      call wf%hf%print_summary(write_mo_info)
+      call wf%hf%print_summary()
       call wf%qed%print_summary()
 !
    end subroutine print_summary_qed_hf
@@ -258,7 +258,7 @@ contains
 !
       call mem%alloc(ao_F_fc, wf%ao%n, wf%ao%n)
 !
-      call wf%construct_ao_G(D, ao_F_fc)
+      call wf%get_G(D, ao_F_fc)
 !
       call wf%mo_transform(ao_F_fc, mo_fc_fock)
 !
@@ -288,45 +288,6 @@ contains
       call wf%qed%add_ao_h_contribution(h)
 !
    end subroutine get_ao_h_qed_hf
-!
-!
-   subroutine get_ao_g_qed_hf(wf, g, A, B, C, D, precision_, skip)
-!!
-!!    Get AO g
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
-!!    Adapted to HF by Tor S. Haugland, Oct 2021
-!!
-!!    Wrapper for constructing electron repulsion integrals g for the
-!!    shell quartet (A, B, C, D).
-!!
-!!    The integrals are placed in g.
-!!
-!!    Two optional arguments:
-!!
-!!       precision_:  (intent in) Double precision real corresponding to the Libint precision
-!!                   'epsilon' to use when calculating the integral. Does not guarantee a precision
-!!                   to the given value and should therefore be selected conservatively.
-!!
-!!       skip:       (intent out) If present, this integer will be 1 if Libint decided not to
-!!                   calculate the integral; it will be zero otherwise. If it is present, g will
-!!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
-!!                   to the routine if you wish to avoid zeroing out elements that are negligible.
-!!
-!!
-      implicit none
-!
-      class(qed_hf), intent(in) :: wf
-      integer :: A, B, C, D
-      real(dp), dimension(wf%ao%shells(A)%length * wf%ao%shells(B)%length * &
-                          wf%ao%shells(C)%length * wf%ao%shells(D)%length), intent(out) :: g
-      real(dp), optional, intent(in) :: precision_
-      integer, optional, intent(out) :: skip
-!
-      call wf%ao%get_eri(g, A, B, C, D, precision_, skip)
-      call wf%qed%add_ao_g_contribution(g, wf%ao%shells(A), wf%ao%shells(B), &
-                                           wf%ao%shells(C), wf%ao%shells(D))
-!
-   end subroutine get_ao_g_qed_hf
 !
 !
 end module qed_hf_class

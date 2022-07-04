@@ -1,0 +1,322 @@
+
+
+
+                     eT 1.8 - an electronic structure program
+
+  ------------------------------------------------------------------------
+   Author list in alphabetical order:
+  ------------------------------------------------------------------------
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
+  ------------------------------------------------------------------------
+   J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
+
+
+   This is eT 1.8.0 Ibiza
+  ------------------------------------------------------------
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
+
+
+  :: Input file
+  ================
+
+     Note: geometry section is excluded from this print
+
+     system
+        name: hof he
+        charge: 0
+     end system
+
+     do
+        tdhf response
+     end do
+
+     memory
+        available: 8
+     end memory
+
+     solver scf
+        algorithm:          scf-diis
+        energy threshold:   1.0d-12
+        gradient threshold: 1.0d-12
+     end solver scf
+
+     method
+        hf
+     end method
+
+     solver tdhf response
+        print iterations
+        residual threshold: 1.0d-10
+     end solver tdhf response
+
+
+  Calculation start:2022-06-30 08:45:11 UTC +02:00
+
+  Running on 2 OMP threads
+  Memory available for calculation: 8.000000 GB
+
+
+  :: RHF wavefunction
+  ===================
+
+     ==============================================================================
+                                     Geometry (angstrom)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     0.866810000000     0.601440000000     5.000000000000        1
+        2  H    -0.866810000000     0.601440000000     5.000000000000        2
+        3  O     0.000000000000    -0.075790000000     5.000000000000        3
+     ==============================================================================
+
+     ==============================================================================
+                                     Geometry (a.u.)
+     ==============================================================================
+        Atom           X                  Y                  Z         # in input
+     ==============================================================================
+        Basis: cc-pvdz
+        1  H     1.638033502034     1.136556880358     9.448630622825        1
+        2  H    -1.638033502034     1.136556880358     9.448630622825        2
+        3  O     0.000000000000    -0.143222342981     9.448630622825        3
+     ==============================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent AOs:
+
+     Linear dependence threshold:             0.10E-05
+     Number of atomic orbitals:               24
+     Number of orthonormal atomic orbitals:   24
+
+  - Molecular orbital details:
+
+     Number of occupied orbitals:         5
+     Number of virtual orbitals:         19
+     Number of molecular orbitals:       24
+
+
+  Generating initial SAD density
+  ==============================
+
+
+  Determining reference state
+  ===========================
+
+  - Setting initial AO density to sad
+
+     Energy of initial guess:               -75.634716243461
+     Number of electrons in guess:           10.000000000000
+
+  - Screening and integral thresholds:
+
+     Coulomb screening threshold:    0.1000E-17
+     Exchange screening threshold:   0.1000E-15
+     ERI cutoff:                     0.1000E-17
+     One-electron integral  cutoff:  0.1000E-22
+     Cumulative Fock threshold:      0.1000E+01
+
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-11
+     Energy threshold:              0.1000E-11
+
+  - DIIS tool settings:
+
+     DIIS dimension:   8
+
+     Storage (solver scf_errors): memory
+     Storage (solver scf_parameters): memory
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -75.942801070395     0.9759E-01     0.7594E+02
+     2           -75.974750702274     0.7069E-01     0.3195E-01
+     3           -75.989433314119     0.6740E-02     0.1468E-01
+     4           -75.989758818231     0.2752E-02     0.3255E-03
+     5           -75.989794771484     0.3945E-03     0.3595E-04
+     6           -75.989795819016     0.5159E-04     0.1048E-05
+     7           -75.989795840882     0.6200E-05     0.2187E-07
+     8           -75.989795841667     0.2170E-05     0.7852E-09
+     9           -75.989795841773     0.3084E-06     0.1057E-09
+    10           -75.989795841773     0.2613E-07     0.3695E-12
+    11           -75.989795841773     0.5653E-08     0.8527E-13
+    12           -75.989795841773     0.9210E-09     0.7105E-13
+    13           -75.989795841773     0.9986E-10     0.4263E-13
+    14           -75.989795841773     0.2637E-10     0.0000E+00
+    15           -75.989795841773     0.1879E-11     0.1421E-13
+    16           -75.989795841773     0.2658E-12     0.0000E+00
+  ---------------------------------------------------------------
+  Convergence criterion met in 16 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.644166115540
+     Nuclear repulsion energy:       8.002366974166
+     Electronic energy:            -83.992162815939
+     Total energy:                 -75.989795841773
+
+
+  Determining TDHF polarizabilities
+  =================================
+
+   - Davidson tool settings:
+
+     Number of parameters:                  190
+     Number of requested solutions:           1
+     Max reduced space dimension:           100
+
+     Storage (tdhf_response_trials): file
+     Storage (tdhf_response_transforms): file
+
+   - Davidson linear equation solver
+  -------------------------------------
+
+  A Davidson solver that solves a linear equation: (A - freq_k) X_k = 
+  F. This equation is solved in a reduced space. A description of the 
+  algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
+
+  - Davidson solver settings
+
+     Residual threshold:              0.10E-09
+     Max number of iterations:             100
+
+   Iteration       Residual norm
+  -------------------------------
+     1               0.3040E+01
+     2               0.8321E+00
+     3               0.8682E-01
+     4               0.1267E-01
+     5               0.2439E-02
+     6               0.2763E-03
+     7               0.1863E-04
+     8               0.1802E-05
+     9               0.1621E-06
+    10               0.7804E-08
+    11               0.4314E-09
+    12               0.3749E-10
+  -------------------------------
+  Convergence criterion met in 12 iterations!
+
+   - Davidson tool settings:
+
+     Number of parameters:                  190
+     Number of requested solutions:           1
+     Max reduced space dimension:           100
+
+     Storage (tdhf_response_trials): file
+     Storage (tdhf_response_transforms): file
+
+   - Davidson linear equation solver
+  -------------------------------------
+
+  A Davidson solver that solves a linear equation: (A - freq_k) X_k = 
+  F. This equation is solved in a reduced space. A description of the 
+  algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
+
+  - Davidson solver settings
+
+     Residual threshold:              0.10E-09
+     Max number of iterations:             100
+
+   Iteration       Residual norm
+  -------------------------------
+     1               0.2308E+01
+     2               0.6734E+00
+     3               0.2393E+00
+     4               0.5251E-01
+     5               0.9635E-02
+     6               0.1804E-02
+     7               0.2657E-03
+     8               0.2156E-04
+     9               0.1559E-05
+    10               0.2006E-06
+    11               0.1164E-07
+    12               0.7025E-09
+    13               0.5990E-10
+  -------------------------------
+  Convergence criterion met in 13 iterations!
+
+   - Davidson tool settings:
+
+     Number of parameters:                  190
+     Number of requested solutions:           1
+     Max reduced space dimension:           100
+
+     Storage (tdhf_response_trials): file
+     Storage (tdhf_response_transforms): file
+
+   - Davidson linear equation solver
+  -------------------------------------
+
+  A Davidson solver that solves a linear equation: (A - freq_k) X_k = 
+  F. This equation is solved in a reduced space. A description of the 
+  algorithm can be found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).
+
+  - Davidson solver settings
+
+     Residual threshold:              0.10E-09
+     Max number of iterations:             100
+
+   Iteration       Residual norm
+  -------------------------------
+     1               0.1393E+01
+     2               0.3850E+00
+     3               0.9657E-01
+     4               0.1551E-01
+     5               0.1344E-02
+     6               0.9822E-04
+     7               0.7846E-05
+     8               0.5492E-06
+     9               0.8235E-07
+    10               0.3738E-08
+    11               0.1270E-09
+    12               0.8274E-11
+  -------------------------------
+  Convergence criterion met in 12 iterations!
+
+  RHF polarizability for frequency  0.0000E+00:
+  --------------------------------------------
+     << mu_x, mu_x >>:    -10.500121393504
+     << mu_x, mu_y >>:     -0.000000000000
+     << mu_x, mu_z >>:     -0.000000000000
+     << mu_y, mu_x >>:     -0.000000000000
+     << mu_y, mu_y >>:     -6.647534751515
+     << mu_y, mu_z >>:      0.000000000000
+     << mu_z, mu_x >>:     -0.000000000000
+     << mu_z, mu_y >>:      0.000000000000
+     << mu_z, mu_z >>:     -2.970554866895
+  --------------------------------------------
+
+  Peak memory usage during the execution of eT: 126.352 KB
+
+  Total wall time in eT (sec):              1.76468
+  Total cpu time in eT (sec):               3.49819
+
+  Calculation end:2022-06-30 08:45:13 UTC +02:00
+
+  - Implementation references:
+
+     eT: https://doi.org/10.1063/5.0004713
+
+  eT terminated successfully!

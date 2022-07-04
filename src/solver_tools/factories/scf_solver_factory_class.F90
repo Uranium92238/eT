@@ -83,7 +83,7 @@ contains
    end function new_scf_solver_factory
 !
 !
-   subroutine create_scf_solver_factory(this, wf, solver, restart, skip)
+   subroutine create_scf_solver_factory(this, wf, solver, skip)
 !!
 !!    Create
 !!    Written by Sarai D. Folkestad, 2020
@@ -94,19 +94,17 @@ contains
       class(hf),                                  intent(inout)   :: wf
       class(scf_solver), allocatable,             intent(out)     :: solver
 !
-      logical, intent(in) :: restart, skip
+      logical, intent(in) :: skip
 !
       call this%convergence_checker%set_residual_threshold(wf%gradient_threshold)
 !
-      solver = scf_solver(restart             = restart,                      &
-                          acceleration_type   = this%acceleration_type,       &
+      solver = scf_solver(acceleration_type   = this%acceleration_type,       &
                           max_iterations      = this%max_iterations,          &
                           skip                = skip,                         &
                           dim_                = wf%n_mo,                      &
                           n_equations         = wf%n_densities,               &
                           gradient_dimension  = wf%packed_gradient_dimension, &
                           convergence_checker = this%convergence_checker)
-!
 !
    end subroutine create_scf_solver_factory
 !
@@ -130,6 +128,7 @@ contains
       this%convergence_checker = convergence_tool(1.0d-7, 1.0d-7, energy_convergence=.false.)
 !
       if (input%is_keyword_present('energy threshold', 'solver scf')) then
+!
          call input%get_keyword('energy threshold',  &
                                 'solver scf',        &
                                 energy_threshold)
@@ -143,20 +142,24 @@ contains
                              'solver scf',          &
                              this%max_iterations)
 !
-   algorithm = 'scf-diis'
-   call input%get_keyword('algorithm', 'solver scf', algorithm)
+      algorithm = 'scf-diis'
+      call input%get_keyword('algorithm', 'solver scf', algorithm)
+!   
+      if (trim(algorithm) .ne. 'scf-diis'    .and. &
+          trim(algorithm) .ne. 'scf'         .and. &
+          trim(algorithm) .ne. 'mo-scf-diis') then
+!   
+         call output%error_msg('did not recognize SCF algorithm')
+!   
+      endif
 !
-   if (trim(algorithm) .ne. 'scf-diis'    .and. &
-       trim(algorithm) .ne. 'scf'         .and. &
-       trim(algorithm) .ne. 'mo-scf-diis') then
+      this%acceleration_type = 'none'
+      if (trim(algorithm) == 'scf-diis' .or. &
+          trim(algorithm) == 'mo-scf-diis') then
 !
-      call output%error_msg('did not recognize SCF algorithm')
+         this%acceleration_type = 'diis'
 !
-   endif
-!
-   this%acceleration_type = 'none'
-   if (trim(algorithm) == 'scf-diis' .or. &
-      trim(algorithm) == 'mo-scf-diis') this%acceleration_type = 'diis'
+      end if
 !
    end subroutine read_settings
 !
