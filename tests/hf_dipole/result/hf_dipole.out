@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-24 10:20:43 UTC +02:00
-  Git branch:         print-table-routine
-  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
         charge: 0
      end system
 
@@ -66,14 +66,14 @@
      end hf mean value
 
 
-  Calculation start:2022-05-24 10:41:50 UTC +02:00
+  Calculation start:2022-06-30 08:45:02 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -112,23 +112,12 @@
      Number of molecular orbitals:       38
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-     3) Calculate dipole and/or quadrupole moments
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -163,22 +152,22 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1          -177.452442672057     0.7565E-01     0.1775E+03
-     2          -177.479038695768     0.1129E-01     0.2660E-01
+     2          -177.479038695767     0.1129E-01     0.2660E-01
      3          -177.480033265333     0.4145E-02     0.9946E-03
      4          -177.480160935731     0.1388E-02     0.1277E-03
      5          -177.480174929178     0.4311E-03     0.1399E-04
      6          -177.480176282849     0.8270E-04     0.1354E-05
      7          -177.480176366015     0.2291E-04     0.8317E-07
-     8          -177.480176376348     0.4810E-05     0.1033E-07
-     9          -177.480176377178     0.1046E-05     0.8308E-09
-    10          -177.480176377209     0.2394E-06     0.3095E-10
-    11          -177.480176377210     0.5253E-07     0.7674E-12
-    12          -177.480176377210     0.9777E-08     0.1705E-12
-    13          -177.480176377210     0.2792E-08     0.0000E+00
-    14          -177.480176377210     0.1441E-08     0.5684E-13
-    15          -177.480176377210     0.6293E-09     0.8527E-13
-    16          -177.480176377210     0.1436E-09     0.1137E-12
-    17          -177.480176377210     0.4657E-10     0.8527E-13
+     8          -177.480176376347     0.4810E-05     0.1033E-07
+     9          -177.480176377178     0.1046E-05     0.8310E-09
+    10          -177.480176377209     0.2394E-06     0.3098E-10
+    11          -177.480176377210     0.5253E-07     0.7958E-12
+    12          -177.480176377210     0.9777E-08     0.5684E-13
+    13          -177.480176377210     0.2792E-08     0.2842E-13
+    14          -177.480176377210     0.1441E-08     0.0000E+00
+    15          -177.480176377210     0.6293E-09     0.1705E-12
+    16          -177.480176377210     0.1436E-09     0.8527E-13
+    17          -177.480176377210     0.4657E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -190,7 +179,8 @@
      Total energy:                -177.480176377210
 
 
-  3) Calculate dipole and/or quadrupole moments
+  Determining HF properties
+  =========================
 
      Dipole moment in [Debye]:
      =========================
@@ -205,19 +195,12 @@
      ------------------------------------------------------------
      Norm of the total dipole moment: 1.8468449
 
-  - Timings for the RHF ground state calculation
+  Peak memory usage during the execution of eT: 313.000 KB
 
-     Total wall time (sec):              1.18447
-     Total cpu time (sec):               2.27827
+  Total wall time in eT (sec):              1.35903
+  Total cpu time in eT (sec):               2.69319
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 310.120 KB
-
-  Total wall time in eT (sec):              1.20584
-  Total cpu time in eT (sec):               2.29972
-
-  Calculation end:2022-05-24 10:41:51 UTC +02:00
+  Calculation end:2022-06-30 08:45:03 UTC +02:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:41 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: F
+        name: f
         charge: 0
         multiplicity: 2
      end system
@@ -65,12 +63,14 @@
      end do
 
 
+  Calculation start:2022-06-30 08:45:26 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: CUHF wavefunction
-  =======================
+  ====================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -105,22 +105,12 @@
      Number of molecular orbitals:           14
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a CUHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -154,16 +144,16 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -99.366571404793     0.3278E-01     0.9937E+02
+     1           -99.366571404793     0.3168E-01     0.9937E+02
      2           -99.371595746628     0.6587E-02     0.5024E-02
-     3           -99.371850235596     0.1513E-02     0.2545E-03
+     3           -99.371850235596     0.1546E-02     0.2545E-03
      4           -99.371861784133     0.2148E-03     0.1155E-04
-     5           -99.371861936244     0.2225E-04     0.1521E-06
-     6           -99.371861941150     0.6648E-06     0.4906E-08
-     7           -99.371861940004     0.1528E-07     0.1146E-08
-     8           -99.371861940125     0.2963E-09     0.1208E-09
-     9           -99.371861940121     0.2862E-11     0.4263E-11
-    10           -99.371861940121     0.3433E-13     0.0000E+00
+     5           -99.371861936244     0.2553E-04     0.1521E-06
+     6           -99.371861941150     0.7669E-06     0.4906E-08
+     7           -99.371861940004     0.1346E-07     0.1146E-08
+     8           -99.371861940125     0.2970E-09     0.1209E-09
+     9           -99.371861940121     0.2862E-11     0.4320E-11
+    10           -99.371861940121     0.3257E-13     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
@@ -180,21 +170,14 @@
      Sz:                   0.50000000
      Sz(Sz + 1):           0.75000000
      S^2:                  0.75000000
-     Spin contamination:  -0.00000000
+     Spin contamination:   0.00000000
 
-  - Timings for the CUHF ground state calculation
+  Peak memory usage during the execution of eT: 73.672 KB
 
-     Total wall time (sec):              0.30600
-     Total cpu time (sec):               0.35924
+  Total wall time in eT (sec):              0.35343
+  Total cpu time in eT (sec):               0.65696
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 72.836 KB
-
-  Total wall time in eT (sec):              0.32800
-  Total cpu time in eT (sec):               0.37138
-
-  Calculation ended: 2022-04-07 12:34:41 UTC -07:00
+  Calculation end:2022-06-30 08:45:26 UTC +02:00
 
   - Implementation references:
 

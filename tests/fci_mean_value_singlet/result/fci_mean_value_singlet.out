@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-25 13:30:12 UTC +02:00
-  Git branch:         fci-dipole-moments
-  Git hash:           ac014d6105c4a5efa7320ceaf173585df596153c
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2
+        name: h2
         charge: 0
         multiplicity: 1
      end system
@@ -80,14 +80,14 @@
      end fci mean value
 
 
-  Calculation start:2022-05-25 13:52:54 UTC +02:00
+  Calculation start:2022-06-30 08:49:33 UTC +02:00
 
-  Running on 6 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -124,22 +124,12 @@
      Number of molecular orbitals:        6
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -179,9 +169,9 @@
      4            -3.812090035985     0.6747E-04     0.1036E-04
      5            -3.812090089197     0.4394E-05     0.5321E-07
      6            -3.812090089361     0.2287E-06     0.1640E-09
-     7            -3.812090089361     0.2265E-07     0.1967E-12
-     8            -3.812090089361     0.8888E-09     0.4885E-14
-     9            -3.812090089361     0.3694E-10     0.4441E-15
+     7            -3.812090089361     0.2265E-07     0.1994E-12
+     8            -3.812090089361     0.8888E-09     0.4441E-14
+     9            -3.812090089361     0.3694E-10     0.1776E-14
   ---------------------------------------------------------------
   Convergence criterion met in 9 iterations!
 
@@ -191,11 +181,6 @@
      Nuclear repulsion energy:       2.432997747048
      Electronic energy:             -6.245087836409
      Total energy:                  -3.812090089361
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.01862
-     Total cpu time (sec):               0.06570
 
 
   :: FCI wavefunction
@@ -258,12 +243,12 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.2032E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.9369E-16
+     Minimal element of difference between approximate and actual diagonal:  -0.1135E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00115
-     Total cpu time (sec):               0.03062
+     Total wall time (sec):              0.00232
+     Total cpu time (sec):               0.01231
 
 
   Determining FCI eigenstates
@@ -351,7 +336,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673374    0.000000000000     0.2149E-05   0.6812E-10
+     1  -3.858553673374    0.000000000000     0.2149E-05   0.6813E-10
   -------------------------------------------------------------------------
 
   Iteration:                  9
@@ -359,7 +344,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673375    0.000000000000     0.2998E-06   0.1435E-11
+     1  -3.858553673375    0.000000000000     0.2998E-06   0.1445E-11
   -------------------------------------------------------------------------
 
   Iteration:                 10
@@ -367,7 +352,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673375    0.000000000000     0.4216E-07   0.4219E-13
+     1  -3.858553673375    0.000000000000     0.4216E-07   0.2842E-13
   -------------------------------------------------------------------------
 
   Iteration:                 11
@@ -375,7 +360,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673375    0.000000000000     0.6076E-08   0.1110E-13
+     1  -3.858553673375    0.000000000000     0.6076E-08   0.3997E-14
   -------------------------------------------------------------------------
 
   Iteration:                 12
@@ -383,7 +368,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673375    0.000000000000     0.1022E-08   0.1421E-13
+     1  -3.858553673375    0.000000000000     0.1022E-08   0.0000E+00
   -------------------------------------------------------------------------
 
   Iteration:                 13
@@ -391,7 +376,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673375    0.000000000000     0.1953E-09   0.3109E-14
+     1  -3.858553673375    0.000000000000     0.1953E-09   0.7550E-14
   -------------------------------------------------------------------------
 
   Iteration:                 14
@@ -399,7 +384,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.858553673375    0.000000000000     0.3164E-10   0.3109E-14
+     1  -3.858553673375    0.000000000000     0.3164E-10   0.6217E-14
   -------------------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -412,16 +397,16 @@
 
      Largest CI amplitudes:
      --------------------------
-     000022      0.984560523889
-     000202     -0.119155230751
-     0a0b02     -0.051382008213
-     0b0a02     -0.051382008213
-     200020     -0.047023588047
-     020002     -0.039351528146
-     002002     -0.039061255897
-     2000ba     -0.023746223454
-     2000ab     -0.023746223454
-     0002ab      0.023582996427
+     000022     -0.984560523889
+     000202      0.119155230751
+     0b0a02      0.051382008213
+     0a0b02      0.051382008213
+     200020      0.047023588047
+     020002      0.039351528146
+     002002      0.039061255897
+     2000ba      0.023746223454
+     2000ab      0.023746223454
+     0002ab     -0.023582996427
      --------------------------
 
   - Electronic energies:
@@ -435,8 +420,8 @@
      eV/Hartree (CODATA 2014): 27.21138602
 
 
-  Determining FCI mean_value
-  ==========================
+  Determining FCI mean values
+  ===========================
 
      Dipole moment in [Debye]:
      =========================
@@ -482,14 +467,12 @@
      zz          1.3266955622     -0.9126088953      0.4140866669
      ------------------------------------------------------------
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 188.320 KB
 
-  Peak memory usage during the execution of eT: 187.552 KB
+  Total wall time in eT (sec):              0.04336
+  Total cpu time in eT (sec):               0.06898
 
-  Total wall time in eT (sec):              0.02763
-  Total cpu time in eT (sec):               0.11174
-
-  Calculation end:2022-05-25 13:52:54 UTC +02:00
+  Calculation end:2022-06-30 08:49:33 UTC +02:00
 
   - Implementation references:
 

@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 I (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-11 15:13:34 UTC +02:00
-  Git branch:         tdhf-polarizabilities
-  Git hash:           b622077de980741b897a02834e0ff0753627bf98
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-05-11 15:14:53 UTC +02:00
 
 
   :: Input file
@@ -41,12 +39,12 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
         charge: 0
      end system
 
      do
-        time dependent hf
+        tdhf response
      end do
 
      memory
@@ -63,18 +61,19 @@
         hf
      end method
 
-     solver tdhf
-        polarizability
+     solver tdhf response
         residual threshold: 1.0d-10
-     end solver tdhf
+     end solver tdhf response
 
+
+  Calculation start:2022-06-30 08:45:10 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -113,24 +112,12 @@
      Number of molecular orbitals:       29
 
 
-  :: Time dependent Hartree-Fock engine
-  ========================================
-
-  Drives the calculation of the Hartree-Fock excitation energies and properties.
-
-  This is a RHF properties calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-     3) Calculate TDHF excitation energies
-     4) Calculate TDHF polarizabilities
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -172,14 +159,14 @@
      6           -78.844956297682     0.5159E-04     0.1048E-05
      7           -78.844956319548     0.6200E-05     0.2187E-07
      8           -78.844956320333     0.2170E-05     0.7853E-09
-     9           -78.844956320439     0.3084E-06     0.1055E-09
-    10           -78.844956320439     0.2613E-07     0.6253E-12
-    11           -78.844956320439     0.5653E-08     0.5684E-13
-    12           -78.844956320439     0.9210E-09     0.2842E-13
-    13           -78.844956320439     0.9986E-10     0.1421E-13
-    14           -78.844956320439     0.2637E-10     0.1563E-12
-    15           -78.844956320439     0.1878E-11     0.5684E-13
-    16           -78.844956320439     0.2645E-12     0.2842E-13
+     9           -78.844956320439     0.3084E-06     0.1056E-09
+    10           -78.844956320439     0.2613E-07     0.5116E-12
+    11           -78.844956320439     0.5653E-08     0.1421E-13
+    12           -78.844956320439     0.9210E-09     0.1421E-13
+    13           -78.844956320439     0.9986E-10     0.4263E-13
+    14           -78.844956320439     0.2638E-10     0.9948E-13
+    15           -78.844956320439     0.1878E-11     0.1421E-13
+    16           -78.844956320439     0.2640E-12     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -191,7 +178,8 @@
      Total energy:                 -78.844956320439
 
 
-  4) Calculate TDHF polarizabilities
+  Determining TDHF polarizabilities
+  =================================
 
   RHF polarizability for frequency  0.0000E+00:
   --------------------------------------------
@@ -199,26 +187,19 @@
      << mu_x, mu_y >>:      0.000035170468
      << mu_x, mu_z >>:      0.000532856992
      << mu_y, mu_x >>:      0.000035170424
-     << mu_y, mu_y >>:     -6.955801659939
+     << mu_y, mu_y >>:     -6.955801659938
      << mu_y, mu_z >>:      0.000016714010
      << mu_z, mu_x >>:      0.000532856994
      << mu_z, mu_y >>:      0.000016714011
      << mu_z, mu_z >>:     -3.279186040905
   --------------------------------------------
 
-  - Timings for the RHF properties calculation
+  Peak memory usage during the execution of eT: 184.112 KB
 
-     Total wall time (sec):              1.59700
-     Total cpu time (sec):               1.98810
+  Total wall time in eT (sec):              2.05429
+  Total cpu time in eT (sec):               4.08473
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 180.276 KB
-
-  Total wall time in eT (sec):              1.60700
-  Total cpu time in eT (sec):               1.99917
-
-  Calculation ended: 2022-05-11 15:14:55 UTC +02:00
+  Calculation end:2022-06-30 08:45:12 UTC +02:00
 
   - Implementation references:
 

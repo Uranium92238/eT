@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:50 UTC -07:00
 
 
   :: Input file
@@ -85,12 +83,14 @@
      end active atoms
 
 
+  Calculation start:2022-06-30 08:46:12 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 16.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -139,22 +139,12 @@
      Number of molecular orbitals:       32
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -197,36 +187,36 @@
     14          -151.989926572664     0.1038E-03     0.1077E-06
     15          -151.989926610858     0.6178E-04     0.3819E-07
     16          -151.989926624402     0.3685E-04     0.1354E-07
-    17          -151.989926629205     0.2194E-04     0.4803E-08
+    17          -151.989926629205     0.2194E-04     0.4802E-08
     18          -151.989926630908     0.1308E-04     0.1703E-08
-    19          -151.989926631512     0.7793E-05     0.6038E-09
-    20          -151.989926631726     0.4645E-05     0.2143E-09
-    21          -151.989926631802     0.2767E-05     0.7580E-10
-    22          -151.989926631829     0.1649E-05     0.2700E-10
-    23          -151.989926631838     0.9827E-06     0.9578E-11
-    24          -151.989926631842     0.5856E-06     0.3496E-11
-    25          -151.989926631843     0.3490E-06     0.9948E-12
-    26          -151.989926631844     0.2080E-06     0.6537E-12
-    27          -151.989926631844     0.1239E-06     0.1137E-12
+    19          -151.989926631512     0.7793E-05     0.6040E-09
+    20          -151.989926631726     0.4645E-05     0.2142E-09
+    21          -151.989926631802     0.2767E-05     0.7606E-10
+    22          -151.989926631829     0.1649E-05     0.2683E-10
+    23          -151.989926631838     0.9827E-06     0.9550E-11
+    24          -151.989926631842     0.5856E-06     0.3297E-11
+    25          -151.989926631843     0.3490E-06     0.1251E-11
+    26          -151.989926631843     0.2080E-06     0.5116E-12
+    27          -151.989926631843     0.1239E-06     0.2842E-13
     28          -151.989926631844     0.7385E-07     0.8527E-13
-    29          -151.989926631844     0.4401E-07     0.1137E-12
-    30          -151.989926631844     0.2623E-07     0.1990E-12
-    31          -151.989926631844     0.1563E-07     0.1705E-12
-    32          -151.989926631844     0.9314E-08     0.2842E-13
-    33          -151.989926631844     0.5551E-08     0.5684E-13
-    34          -151.989926631844     0.3308E-08     0.1137E-12
+    29          -151.989926631844     0.4401E-07     0.2558E-12
+    30          -151.989926631844     0.2623E-07     0.2558E-12
+    31          -151.989926631844     0.1563E-07     0.0000E+00
+    32          -151.989926631844     0.9314E-08     0.8527E-13
+    33          -151.989926631844     0.5551E-08     0.2842E-13
+    34          -151.989926631844     0.3308E-08     0.5684E-13
     35          -151.989926631844     0.1971E-08     0.2842E-13
-    36          -151.989926631844     0.1175E-08     0.2842E-13
-    37          -151.989926631844     0.7001E-09     0.0000E+00
-    38          -151.989926631844     0.4172E-09     0.1421E-12
-    39          -151.989926631844     0.2487E-09     0.3126E-12
-    40          -151.989926631844     0.1482E-09     0.3126E-12
-    41          -151.989926631844     0.8831E-10     0.2558E-12
-    42          -151.989926631844     0.5263E-10     0.3126E-12
-    43          -151.989926631844     0.3136E-10     0.2558E-12
-    44          -151.989926631844     0.1869E-10     0.1705E-12
-    45          -151.989926631844     0.1114E-10     0.2274E-12
-    46          -151.989926631844     0.6637E-11     0.8527E-13
+    36          -151.989926631844     0.1175E-08     0.1421E-12
+    37          -151.989926631844     0.7001E-09     0.5684E-13
+    38          -151.989926631844     0.4173E-09     0.2842E-13
+    39          -151.989926631844     0.2487E-09     0.2842E-13
+    40          -151.989926631844     0.1482E-09     0.2842E-13
+    41          -151.989926631843     0.8832E-10     0.1421E-12
+    42          -151.989926631844     0.5263E-10     0.1137E-12
+    43          -151.989926631843     0.3136E-10     0.1137E-12
+    44          -151.989926631844     0.1869E-10     0.5684E-13
+    45          -151.989926631844     0.1115E-10     0.1705E-12
+    46          -151.989926631844     0.6645E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 46 iterations!
 
@@ -237,12 +227,7 @@
      Electronic energy:           -185.043410295648
      Total energy:                -151.989926631844
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              1.90900
-     Total cpu time (sec):               1.77215
-
-     The smallest diagonal after decomposition is:  -0.6200E-16
+     The smallest diagonal after decomposition is:  -0.7705E-16
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -251,7 +236,7 @@
 
 
   :: CC2 wavefunction
-  ======================
+  ===================
 
      Bath orbital(s):         False
 
@@ -320,7 +305,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7525E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1664E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
@@ -329,8 +314,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.53400
-     Total cpu time (sec):               0.35486
+     Total wall time (sec):              0.31058
+     Total cpu time (sec):               0.62025
 
 
   Determining CC cluster amplitudes
@@ -400,17 +385,15 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.15100
-     Total cpu time (sec):               0.06035
+     Total wall time (sec):              0.02193
+     Total cpu time (sec):               0.04188
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 4.731904 MB
 
-  Peak memory usage during the execution of eT: 4.699672 MB
+  Total wall time in eT (sec):              2.42890
+  Total cpu time in eT (sec):               4.82045
 
-  Total wall time in eT (sec):              2.67400
-  Total cpu time in eT (sec):               2.26550
-
-  Calculation ended: 2022-04-07 12:34:53 UTC -07:00
+  Calculation end:2022-06-30 08:46:14 UTC +02:00
 
   - Implementation references:
 

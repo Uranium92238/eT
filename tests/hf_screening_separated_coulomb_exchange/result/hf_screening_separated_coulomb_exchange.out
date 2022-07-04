@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.5 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,29 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. H. Tveten
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.5.0 Furia (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2021-11-09 13:13:27 UTC +01:00
-  Git branch:         G-construction-tool-inheritance
-  Git hash:           8f37f43553f08979aada5db5dc2b9617a26673b3
-  Fortran compiler:   GNU 10.3.0
-  C compiler:         GNU 10.3.0
-  C++ compiler:       GNU 10.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2021-11-09 13:21:33 UTC +01:00
 
 
   :: Input file
@@ -40,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O string
+        name: h2o string
         charge: 0
         multiplicity: 1
      end system
@@ -65,12 +64,14 @@
      end method
 
 
+  Calculation start:2022-06-30 08:45:04 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -137,22 +138,12 @@
      Number of molecular orbitals:       42
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -186,18 +177,18 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -449.546150858738     0.1128E+00     0.4495E+03
+     1          -449.546150858739     0.1128E+00     0.4495E+03
      2          -449.774579678609     0.1216E-01     0.2284E+00
-     3          -449.777070756322     0.2431E-02     0.2491E-02
+     3          -449.777070756323     0.2431E-02     0.2491E-02
      4          -449.777207895631     0.3573E-04     0.1371E-03
      5          -449.777207931811     0.1164E-04     0.3618E-07
      6          -449.777207937663     0.1549E-05     0.5852E-08
-     7          -449.777207937738     0.2655E-06     0.7537E-10
-     8          -449.777207937738     0.3345E-07     0.2274E-12
-     9          -449.777207937739     0.3070E-08     0.3979E-12
-    10          -449.777207937738     0.5540E-09     0.1705E-12
-    11          -449.777207937738     0.1097E-09     0.0000E+00
-    12          -449.777207937738     0.3169E-10     0.0000E+00
+     7          -449.777207937738     0.2655E-06     0.7520E-10
+     8          -449.777207937739     0.3345E-07     0.5684E-12
+     9          -449.777207937739     0.3070E-08     0.5684E-13
+    10          -449.777207937739     0.5540E-09     0.5684E-13
+    11          -449.777207937739     0.1097E-09     0.0000E+00
+    12          -449.777207937739     0.3169E-10     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -206,21 +197,14 @@
      HOMO-LUMO gap:                  0.966178343734
      Nuclear repulsion energy:     158.230432129450
      Electronic energy:           -608.007640067189
-     Total energy:                -449.777207937738
+     Total energy:                -449.777207937739
 
-  - Timings for the RHF ground state calculation
+  Peak memory usage during the execution of eT: 396.920 KB
 
-     Total wall time (sec):              0.91600
-     Total cpu time (sec):               1.73906
+  Total wall time in eT (sec):              0.94522
+  Total cpu time in eT (sec):               1.87065
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 387.100 KB
-
-  Total wall time in eT (sec):              0.93700
-  Total cpu time in eT (sec):               1.76141
-
-  Calculation ended: 2021-11-09 13:21:33 UTC +01:00
+  Calculation end:2022-06-30 08:45:05 UTC +02:00
 
   - Implementation references:
 

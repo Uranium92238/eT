@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:32 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -84,12 +82,14 @@
      end solver cc es
 
 
+  Calculation start:2022-06-30 08:48:35 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -128,22 +128,12 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -180,19 +170,19 @@
      1           -78.796357979401     0.9791E-01     0.7880E+02
      2           -78.828453237453     0.7078E-01     0.3210E-01
      3           -78.843281517241     0.6747E-02     0.1483E-01
-     4           -78.843608975051     0.2753E-02     0.3275E-03
+     4           -78.843608975052     0.2753E-02     0.3275E-03
      5           -78.843645123311     0.3974E-03     0.3615E-04
      6           -78.843646182586     0.5223E-04     0.1059E-05
      7           -78.843646204409     0.6084E-05     0.2182E-07
-     8           -78.843646205153     0.2132E-05     0.7440E-09
-     9           -78.843646205256     0.3153E-06     0.1025E-09
-    10           -78.843646205256     0.2623E-07     0.4121E-12
-    11           -78.843646205256     0.5559E-08     0.4263E-13
-    12           -78.843646205256     0.1724E-08     0.1421E-13
+     8           -78.843646205153     0.2132E-05     0.7441E-09
+     9           -78.843646205256     0.3153E-06     0.1024E-09
+    10           -78.843646205256     0.2623E-07     0.4263E-12
+    11           -78.843646205256     0.5559E-08     0.1421E-13
+    12           -78.843646205256     0.1724E-08     0.5684E-13
     13           -78.843646205256     0.7589E-09     0.1421E-13
     14           -78.843646205256     0.1286E-09     0.2842E-13
-    15           -78.843646205256     0.2324E-10     0.4263E-13
-    16           -78.843646205256     0.4593E-11     0.1421E-13
+    15           -78.843646205256     0.2324E-10     0.1421E-13
+    16           -78.843646205256     0.4592E-11     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -203,18 +193,13 @@
      Electronic energy:            -91.011257612426
      Total energy:                 -78.843646205256
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.34600
-     Total cpu time (sec):               0.41572
-
   - Preparation for frozen core approximation
 
      There are 1 frozen core orbitals.
 
 
   :: CC3 wavefunction
-  ======================
+  ===================
 
      Bath orbital(s):         False
 
@@ -291,8 +276,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.38800
-     Total cpu time (sec):               0.21880
+     Total wall time (sec):              0.21320
+     Total cpu time (sec):               0.42261
 
 
   Determining CC cluster amplitudes
@@ -336,7 +321,7 @@
     2           -79.101859251322     0.1758E-02     0.1993E-01
     3           -79.102272191678     0.1159E-03     0.4129E-03
     4           -79.102287846723     0.9292E-05     0.1566E-04
-    5           -79.102288103565     0.7957E-06     0.2568E-06
+    5           -79.102288103566     0.7957E-06     0.2568E-06
     6           -79.102288109972     0.4958E-07     0.6406E-08
     7           -79.102288108746     0.2543E-08     0.1226E-08
     8           -79.102288108716     0.9307E-10     0.3001E-10
@@ -384,8 +369,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              1.76300
-     Total cpu time (sec):               0.88522
+     Total wall time (sec):              0.50324
+     Total cpu time (sec):               1.00318
 
 
   Determining CC excited state amplitudes
@@ -403,8 +388,6 @@
   Letters, 73(2), 393-398 (1980).
 
   - Settings for coupled cluster excited state solver (DIIS):
-
-     Calculation type:    valence
      Excitation vectors:  right
 
   - Convergence thresholds
@@ -639,23 +622,21 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.247301791911        6.729424523130
+        1                  0.247301791911        6.729424523129
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              3.16800
-     Total cpu time (sec):               1.92273
+     Total wall time (sec):              0.93239
+     Total cpu time (sec):               1.86218
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 14.028720 MB
 
-  Peak memory usage during the execution of eT: 14.020988 MB
+  Total wall time in eT (sec):              2.21260
+  Total cpu time in eT (sec):               4.38658
 
-  Total wall time in eT (sec):              5.70300
-  Total cpu time in eT (sec):               3.47970
-
-  Calculation ended: 2022-04-07 12:35:38 UTC -07:00
+  Calculation end:2022-06-30 08:48:37 UTC +02:00
 
   - Implementation references:
 

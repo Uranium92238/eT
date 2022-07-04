@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:28 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -95,12 +93,14 @@
      end cc response
 
 
+  Calculation start:2022-06-30 08:48:25 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -139,19 +139,8 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -179,7 +168,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2399E-11     0.7884E+02
+     1           -78.843851693631     0.2396E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -190,14 +179,9 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.01000
-     Total cpu time (sec):               0.01457
-
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -275,8 +259,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.28600
-     Total cpu time (sec):               0.20044
+     Total wall time (sec):              0.25414
+     Total cpu time (sec):               0.51330
 
 
   Determining CC cluster amplitudes
@@ -309,7 +293,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.100383481556     0.7515E-11     0.7910E+02
+    1           -79.100383481556     0.7516E-11     0.7910E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -353,8 +337,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01400
-     Total cpu time (sec):               0.01698
+     Total wall time (sec):              0.01762
+     Total cpu time (sec):               0.02738
 
 
   Determining CC multipliers
@@ -378,7 +362,7 @@
 
    Iteration       Residual norm
   -------------------------------
-     1               0.8872E-11
+     1               0.8873E-11
   -------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -433,8 +417,8 @@
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
      Restarting right vector 1 from file r_001.
      Restarting right vector 2 from file r_002.
      Restarting right vector 3 from file r_003.
@@ -449,9 +433,9 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.1441E-11   0.2472E+00
-     2   0.312716698779    0.000000000000     0.4941E-11   0.3127E+00
-     3   0.356085057592    0.000000000000     0.2428E-11   0.3561E+00
+     1   0.247194255572    0.000000000000     0.1440E-11   0.2472E+00
+     2   0.312716698779    0.000000000000     0.4940E-11   0.3127E+00
+     3   0.356085057592    0.000000000000     0.2322E-11   0.3561E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -503,32 +487,32 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      6        0.954551201852
-        3      6        0.178658232264
-        7      6       -0.072428436855
-       14      6        0.020845095882
-        2      3       -0.011040706129
-       12      6       -0.005883373005
-        8      2        0.005692890963
-        2      5        0.005144277710
-        5      4        0.004935182404
-       11      4        0.003612992496
+        2      6       -0.954551201852
+        3      6       -0.178658232264
+        7      6        0.072428436855
+       14      6       -0.020845095882
+        2      3        0.011040706129
+       12      6        0.005883373005
+        8      2       -0.005692890963
+        2      5       -0.005144277710
+        5      4       -0.004935182404
+       11      4       -0.003612992496
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         R(ai,bj)
      --------------------------------------------------
-        2      4       2      6        0.110664929270
-        1      5       2      6        0.079354628531
-        2      6       5      6       -0.060325722580
-        2      5       1      6        0.050061414585
-        3      4       2      6        0.047564612585
-        1      4       1      6        0.045251222953
-        1      2       2      6       -0.045012448109
-        4      5       2      6        0.039742197636
-        6      5       2      6        0.038941412498
-        3      5       1      6        0.034289057215
+        2      4       2      6       -0.110664929270
+        1      5       2      6       -0.079354628531
+        2      6       5      6        0.060325722580
+        2      5       1      6       -0.050061414585
+        3      4       2      6       -0.047564612585
+        1      4       1      6       -0.045251222953
+        1      2       2      6        0.045012448109
+        4      5       2      6       -0.039742197636
+        6      5       2      6       -0.038941412498
+        3      5       1      6       -0.034289057215
      --------------------------------------------------
 
      Electronic state nr. 3
@@ -575,7 +559,7 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.247194255572        6.726498310303
-        2                  0.312716698779        8.509454805379
+        2                  0.312716698779        8.509454805378
         3                  0.356085057592        9.689567958102
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
@@ -597,8 +581,8 @@
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
      Restarting left vector 1 from file l_001.
      Restarting left vector 2 from file l_002.
      Restarting left vector 3 from file l_003.
@@ -613,9 +597,9 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247194255572    0.000000000000     0.1724E-11   0.2472E+00
-     2   0.312716698779    0.000000000000     0.6556E-11   0.3127E+00
-     3   0.356085057592    0.000000000000     0.2982E-11   0.3561E+00
+     1   0.247194255572    0.000000000000     0.1722E-11   0.2472E+00
+     2   0.312716698779    0.000000000000     0.6550E-11   0.3127E+00
+     3   0.356085057592    0.000000000000     0.2972E-11   0.3561E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -635,7 +619,7 @@
         6      6       -0.032814400825
        13      6        0.027947643733
         1      3        0.010930020792
-        1      5       -0.007879253273
+        1      5       -0.007879253272
        22      6       -0.007408446952
        10      6       -0.006944886702
        19      5        0.006882560535
@@ -667,32 +651,32 @@
      -----------------------------------
         a       i         L(a,i)
      -----------------------------------
-        2      6        0.929176283477
-        3      6        0.170171916892
-        7      6       -0.067040287510
-       14      6        0.019343770379
-        2      3       -0.010988929729
-       12      6       -0.005562563577
-        8      2        0.005268480761
-        2      5        0.005150490900
-        5      4        0.004776593204
-       11      4        0.003612608696
+        2      6       -0.929176283477
+        3      6       -0.170171916892
+        7      6        0.067040287510
+       14      6       -0.019343770379
+        2      3        0.010988929729
+       12      6        0.005562563577
+        8      2       -0.005268480761
+        2      5       -0.005150490900
+        5      4       -0.004776593204
+       11      4       -0.003612608696
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        1      5       2      6        0.127019523012
-        2      4       2      6        0.118729473864
-        3      4       2      6        0.091137477755
-        6      5       2      6        0.082397334662
-        7      4       2      6       -0.081191332740
-        1      2       2      6       -0.072465986377
-        4      5       2      6        0.072390631931
-        2      6       5      6       -0.065336366667
-        3      5       1      6        0.053276119555
-        4      4       1      6        0.048446470294
+        1      5       2      6       -0.127019523012
+        2      4       2      6       -0.118729473864
+        3      4       2      6       -0.091137477755
+        6      5       2      6       -0.082397334662
+        7      4       2      6        0.081191332740
+        1      2       2      6        0.072465986377
+        4      5       2      6       -0.072390631931
+        2      6       5      6        0.065336366667
+        3      5       1      6       -0.053276119555
+        4      4       1      6       -0.048446470294
      --------------------------------------------------
 
      Electronic state nr. 3
@@ -740,7 +724,7 @@
      ---------------------------------------------------------------
         1                  0.247194255572        6.726498310303
         2                  0.312716698779        8.509454805378
-        3                  0.356085057592        9.689567958103
+        3                  0.356085057592        9.689567958102
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
@@ -777,16 +761,16 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.312716698779
-     Excitation energy [eV]:            8.509454805379
+     Excitation energy [eV]:            8.509454805378
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X          -0.0080987108     -0.0154960656            0.0001254982
-     Y           0.0000397230      0.0000465890            0.0000000019
-     Z           0.0000783294      0.0001426371            0.0000000112
+     X           0.0080987108      0.0154960656            0.0001254982
+     Y          -0.0000397230     -0.0000465890            0.0000000019
+     Z          -0.0000783294     -0.0001426371            0.0000000112
      --------------------------------------------------------------------------
      Oscillator strength:      0.000026166294
 
@@ -807,16 +791,14 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.102561743915
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 30.549400 MB
-
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.60200
-  Total cpu time in eT (sec):               0.39682
+  Peak memory usage during the execution of eT: 14.600448 MB
 
-  Calculation ended: 2022-04-07 12:35:29 UTC -07:00
+  Total wall time in eT (sec):              0.47218
+  Total cpu time in eT (sec):               0.90480
+
+  Calculation end:2022-06-30 08:48:26 UTC +02:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:59 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -80,12 +78,16 @@
      end do
 
 
+  Calculation start:2022-06-30 08:49:34 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
+
+  Will perform Coulomb and exchange terms in the Fock matrix collectively
 
   Libint electron repulsion integral precision:  0.1000E-23
 
@@ -126,25 +128,15 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Generate initial SAD density
+  Generating initial SAD density
+  ==============================
      Generated atomic density for H  using UHF/cc-pvdz
      Generated atomic density for O  using UHF/cc-pvdz
      Generated atomic density for He using UHF/cc-pvdz
 
 
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -192,23 +184,23 @@
   Fock matrix construction using density differences
      7           -78.843851692779     0.6096E-05     0.2185E-07
   Fock matrix construction using density differences
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
   Fock matrix construction using density differences
      9           -78.843851693630     0.3151E-06     0.1027E-09
   Fock matrix construction using density differences
-    10           -78.843851693631     0.2637E-07     0.4690E-12
+    10           -78.843851693631     0.2637E-07     0.4405E-12
   Fock matrix construction using density differences
-    11           -78.843851693631     0.5634E-08     0.2842E-13
+    11           -78.843851693631     0.5634E-08     0.0000E+00
   Fock matrix construction using density differences
-    12           -78.843851693631     0.1415E-08     0.4263E-13
+    12           -78.843851693631     0.1415E-08     0.8527E-13
   Fock matrix construction using density differences
-    13           -78.843851693631     0.6806E-09     0.1421E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
   Fock matrix construction using density differences
-    14           -78.843851693631     0.1491E-09     0.4263E-13
+    14           -78.843851693631     0.1491E-09     0.1421E-13
   Fock matrix construction using density differences
-    15           -78.843851693631     0.2501E-10     0.7105E-13
+    15           -78.843851693631     0.2501E-10     0.9948E-13
   Fock matrix construction using density differences
-    16           -78.843851693631     0.5169E-11     0.7105E-13
+    16           -78.843851693631     0.5165E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -219,18 +211,13 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.38200
-     Total cpu time (sec):               0.40398
-
   No frozen fock contributions!
 
   Libint electron repulsion integral precision:  0.1000E-23
 
 
   :: LOW MEMORY CC2 wavefunction
-  =================================
+  ==============================
 
      Bath orbital(s):         False
 
@@ -309,9 +296,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.24800
-     Total cpu time (sec):               0.19640
-  No MO preparations for low memory cc2
+     Total wall time (sec):              0.19588
+     Total cpu time (sec):               0.39580
 
 
   Determining CC cluster amplitudes
@@ -446,13 +432,13 @@
        4           0.8498E-13
      -----------------------------
 
-    9           -79.085769729575     0.8387E-12     0.4263E-13
+    9           -79.085769729576     0.8392E-12     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 9 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -79.085769729575
+     Final ground state energy (a.u.):   -79.085769729576
 
      Correlation energy (a.u.):           -0.241918035945
 
@@ -474,19 +460,17 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.24900
-     Total cpu time (sec):               0.14260
+     Total wall time (sec):              0.07233
+     Total cpu time (sec):               0.14226
 
   - Cleaning up low memory cc2 wavefunction
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 10.699752 MB
 
-  Peak memory usage during the execution of eT: 10.665728 MB
+  Total wall time in eT (sec):              0.76691
+  Total cpu time in eT (sec):               1.47962
 
-  Total wall time in eT (sec):              0.90300
-  Total cpu time in eT (sec):               0.76349
-
-  Calculation ended: 2022-04-07 12:36:00 UTC -07:00
+  Calculation end:2022-06-30 08:49:35 UTC +02:00
 
   - Implementation references:
 

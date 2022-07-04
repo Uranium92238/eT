@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-24 10:20:43 UTC +02:00
-  Git branch:         print-table-routine
-  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
      end system
 
      do
@@ -60,7 +60,7 @@
         ccsd
      end method
 
-     ! Solver settings:
+     ! solver settings:
 
      solver scf
         algorithm: scf-diis
@@ -81,17 +81,17 @@
         threshold: 1.0d-11
      end solver cholesky
 
-     ! Geometry:
+     ! geometry:
 
 
-  Calculation start:2022-05-24 10:41:50 UTC +02:00
+  Calculation start:2022-06-30 08:46:25 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -130,22 +130,12 @@
      Number of molecular orbitals:        8
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -184,9 +174,9 @@
      3           -77.772762594860     0.2431E-02     0.5323E-03
      4           -77.772786825286     0.2758E-04     0.2423E-04
      5           -77.772786829161     0.8793E-05     0.3875E-08
-     6           -77.772786829753     0.2077E-06     0.5913E-09
+     6           -77.772786829753     0.2077E-06     0.5914E-09
      7           -77.772786829753     0.3365E-09     0.3837E-12
-     8           -77.772786829753     0.1306E-12     0.1421E-13
+     8           -77.772786829753     0.1312E-12     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -196,11 +186,6 @@
      Nuclear repulsion energy:      10.468730839836
      Electronic energy:            -88.241517669589
      Total energy:                 -77.772786829753
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.02489
-     Total cpu time (sec):               0.04672
 
 
   :: CCSD wavefunction
@@ -278,8 +263,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00385
-     Total cpu time (sec):               0.00903
+     Total wall time (sec):              0.00652
+     Total cpu time (sec):               0.01651
 
 
   Determining CC cluster amplitudes
@@ -368,8 +353,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.00784
-     Total cpu time (sec):               0.01180
+     Total wall time (sec):              0.01645
+     Total cpu time (sec):               0.02408
 
 
   Determining CC multipliers
@@ -459,14 +444,12 @@
      ------------------------------------------------------------
      Norm of the total dipole moment: 1.5562422
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 112.640 KB
 
-  Peak memory usage during the execution of eT: 111.872 KB
+  Total wall time in eT (sec):              0.08923
+  Total cpu time in eT (sec):               0.15649
 
-  Total wall time in eT (sec):              0.05491
-  Total cpu time in eT (sec):               0.09175
-
-  Calculation end:2022-05-24 10:41:50 UTC +02:00
+  Calculation end:2022-06-30 08:46:25 UTC +02:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:41 UTC -07:00
 
 
   :: Input file
@@ -41,13 +39,13 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
         charge: 0
      end system
 
      do
         restart
-        time dependent hf
+        tdhf excited state
      end do
 
      memory
@@ -64,18 +62,20 @@
         hf
      end method
 
-     solver tdhf
-       states: 2
+     solver tdhf es
+       singlet states: 2
        residual threshold: 1.0d-10
-     end solver tdhf
+     end solver tdhf es
 
+
+  Calculation start:2022-06-30 08:45:19 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -114,19 +114,8 @@
      Number of molecular orbitals:       29
 
 
-  :: Time dependent Hartree-Fock engine
-  ========================================
-
-  Drives the calculation of the Hartree-Fock excitation energies and properties.
-
-  This is a RHF properties calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-     2) Calculate TDHF excitation energies
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -157,7 +146,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843646205256     0.2323E-10     0.7884E+02
+     1           -78.843646205256     0.2325E-10     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -169,7 +158,8 @@
      Total energy:                 -78.843646205256
 
 
-  2) Calculate TDHF excitation energies
+  Determining TDHF excitation energies
+  ====================================
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -201,8 +191,8 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.078189601095    0.000000000000     0.1403E-10   0.7819E-01
-     2   0.142327765331    0.000000000000     0.2416E-10   0.1423E+00
+     1   0.078189601095    0.000000000000     0.1397E-10   0.7819E-01
+     2   0.142327765331    0.000000000000     0.2420E-10   0.1423E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -217,19 +207,12 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Timings for the RHF properties calculation
+  Peak memory usage during the execution of eT: 215.856 KB
 
-     Total wall time (sec):              0.06600
-     Total cpu time (sec):               0.11973
+  Total wall time in eT (sec):              0.14724
+  Total cpu time in eT (sec):               0.24293
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 212.068 KB
-
-  Total wall time in eT (sec):              0.07900
-  Total cpu time in eT (sec):               0.13060
-
-  Calculation ended: 2022-04-07 12:34:41 UTC -07:00
+  Calculation end:2022-06-30 08:45:19 UTC +02:00
 
   - Implementation references:
 

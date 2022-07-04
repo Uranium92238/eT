@@ -9,7 +9,7 @@
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074 and eT-program/eT!1080
 - Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074
-- Transformation_tools renamed to transformation. eT-program/eT!1054
+- `Transformation_tools` renamed to transformation. eT-program/eT!1054
 - Davidson tool now counts the number of new trials. eT-program/eT!1089
 - Introduced tools to build the G-matrix (two-electron contribution to Fock) or Coulomb and exchange matrices separately. eT-program/eT!870
 - Restructured printing of mean values. eT-program/eT!1086

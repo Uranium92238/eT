@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:47 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -84,12 +82,14 @@
      end solver cc es
 
 
+  Calculation start:2022-06-30 08:46:01 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -128,22 +128,12 @@
      Number of molecular orbitals:       29
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -186,12 +176,12 @@
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4832E-12
+    10           -78.843851693631     0.2637E-07     0.4405E-12
     11           -78.843851693631     0.5634E-08     0.2842E-13
-    12           -78.843851693631     0.1415E-08     0.5684E-13
-    13           -78.843851693631     0.6806E-09     0.4263E-13
-    14           -78.843851693631     0.1491E-09     0.1421E-13
-    15           -78.843851693631     0.2501E-10     0.7105E-13
+    12           -78.843851693631     0.1415E-08     0.1421E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.0000E+00
+    15           -78.843851693631     0.2501E-10     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -202,14 +192,9 @@
      Electronic energy:            -90.959952268218
      Total energy:                 -78.843851693631
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.49500
-     Total cpu time (sec):               0.38141
-
 
   :: CC2 wavefunction
-  ======================
+  ===================
 
      Bath orbital(s):         False
 
@@ -287,8 +272,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.27500
-     Total cpu time (sec):               0.19689
+     Total wall time (sec):              0.23332
+     Total cpu time (sec):               0.46515
 
 
   Determining CC cluster amplitudes
@@ -359,8 +344,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.11100
-     Total cpu time (sec):               0.07789
+     Total wall time (sec):              0.06014
+     Total cpu time (sec):               0.11826
 
 
   Determining CC excited state amplitudes
@@ -379,8 +364,8 @@
      Number of requested solutions:           2
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   - Davidson solver settings
 
@@ -456,7 +441,7 @@
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
      1  19.723940242563    0.000000000000     0.2017E-03   0.3697E-05
-     2  19.789335555381    0.000000000000     0.3969E-03   0.2106E-04
+     2  19.789335555380    0.000000000000     0.3969E-03   0.2106E-04
   -------------------------------------------------------------------------
 
   Iteration:                  9
@@ -518,8 +503,8 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  19.723936409514    0.000000000000     0.8351E-08   0.3119E-10
-     2  19.789326448858    0.000000000000     0.3840E-08   0.3679E-10
+     1  19.723936409513    0.000000000000     0.8351E-08   0.3105E-10
+     2  19.789326448858    0.000000000000     0.3840E-08   0.3676E-10
   -------------------------------------------------------------------------
 
   Iteration:                 16
@@ -527,8 +512,8 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  19.723936409596    0.000000000000     0.9200E-09   0.8233E-10
-     2  19.789326448860    0.000000000000     0.1390E-08   0.2142E-11
+     1  19.723936409596    0.000000000000     0.9200E-09   0.8247E-10
+     2  19.789326448860    0.000000000000     0.1390E-08   0.2156E-11
   -------------------------------------------------------------------------
 
   Iteration:                 17
@@ -536,8 +521,8 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  19.723936409602    0.000000000000     0.2664E-09   0.6008E-11
-     2  19.789326448858    0.000000000000     0.1247E-09   0.2117E-11
+     1  19.723936409602    0.000000000000     0.2664E-09   0.5905E-11
+     2  19.789326448858    0.000000000000     0.1247E-09   0.2046E-11
   -------------------------------------------------------------------------
 
   Iteration:                 18
@@ -545,8 +530,8 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  19.723936409598    0.000000000000     0.4961E-10   0.3933E-11
-     2  19.789326448858    0.000000000000     0.1849E-10   0.5684E-13
+     1  19.723936409598    0.000000000000     0.4961E-10   0.3851E-11
+     2  19.789326448858    0.000000000000     0.1849E-10   0.1563E-12
   -------------------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -582,16 +567,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      1       -0.926615633655
-        3      1       -0.168553111335
-        7      1        0.110760119594
-       14      1       -0.043749964890
-       12      1        0.010462925050
-       23      1       -0.004757759275
-        4      1       -0.001024417321
-        5      1       -0.000802726289
-       17      1        0.000743169586
-        1      1        0.000572766360
+        2      1        0.926615633655
+        3      1        0.168553111335
+        7      1       -0.110760119594
+       14      1        0.043749964890
+       12      1       -0.010462925050
+       23      1        0.004757759275
+        4      1        0.001024417321
+        5      1        0.000802726289
+       17      1       -0.000743169586
+        1      1       -0.000572766360
      ------------------------------------
 
   - CC2 excitation energies:
@@ -600,19 +585,17 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.723936409598      536.715647475502
-        2                 19.789326448858      538.495001075677
+        1                 19.723936409598      536.715647475503
+        2                 19.789326448858      538.495001075676
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 10.699752 MB
 
-  Peak memory usage during the execution of eT: 23.141828 MB
+  Total wall time in eT (sec):              0.96926
+  Total cpu time in eT (sec):               1.90166
 
-  Total wall time in eT (sec):              1.23500
-  Total cpu time in eT (sec):               0.88387
-
-  Calculation ended: 2022-04-07 12:34:48 UTC -07:00
+  Calculation end:2022-06-30 08:46:02 UTC +02:00
 
   - Implementation references:
 

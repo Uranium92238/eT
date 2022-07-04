@@ -1,37 +1,36 @@
 
 
 
-                     eT 1.4 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, M. Scavino, 
-   A. Skeidsvoll, Å. H. Tveten
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.4.0 Eos (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2021-07-06 12:55:34 UTC +02:00
-  Git branch:         G-construction-tool-inheritance
-  Git hash:           a83ce9939b90618d2a21b0a9c5c0317b259533ef
-  Fortran compiler:   GNU 10.2.0
-  C compiler:         GNU 10.2.0
-  C++ compiler:       GNU 10.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2021-07-06 16:16:41 UTC +02:00
 
 
   :: Input file
@@ -40,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O string
+        name: h2o string
         charge: 0
         multiplicity: 1
      end system
@@ -70,12 +69,14 @@
      end active atoms
 
 
+  Calculation start:2022-06-30 08:45:33 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: MLHF wavefunction
-  =======================
+  ====================
 
   - MLHF settings:
 
@@ -151,30 +152,12 @@
      Number of molecular orbitals:       42
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a MLHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (MO-SCF-DIIS algorithm)
-
-  - SCF solver settings:
-
-     Maximum iterations:                   100
-     Acceleration type:                   diis
-
-     Residual threshold:            0.1000E-09
-     Energy threshold:              0.1000E-09
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -195,6 +178,16 @@
      One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
 
+  - SCF solver settings:
+
+     Maximum iterations:                   100
+     Acceleration type:                   diis
+
+  - Convergence thresholds
+
+     Residual threshold:            0.1000E-09
+     Energy threshold:              0.1000E-09
+
   - DIIS tool settings:
 
      DIIS dimension:   8
@@ -207,15 +200,15 @@
      1          -449.546150858738     0.5400E+00     0.4495E+03
      2          -449.584876546543     0.5395E-01     0.3873E-01
      3          -449.585298685713     0.1238E-01     0.4221E-03
-     4          -449.585321962209     0.1714E-03     0.2328E-04
+     4          -449.585321962210     0.1714E-03     0.2328E-04
      5          -449.585321970899     0.5908E-04     0.8690E-08
      6          -449.585321972542     0.2448E-05     0.1643E-08
-     7          -449.585321972545     0.6539E-07     0.3126E-11
-     8          -449.585321972545     0.1485E-07     0.0000E+00
+     7          -449.585321972546     0.6539E-07     0.3070E-11
+     8          -449.585321972545     0.1485E-07     0.5684E-13
      9          -449.585321972545     0.1707E-08     0.5684E-13
-    10          -449.585321972545     0.5353E-09     0.0000E+00
-    11          -449.585321972545     0.1137E-09     0.0000E+00
-    12          -449.585321972545     0.1027E-10     0.0000E+00
+    10          -449.585321972545     0.5353E-09     0.5684E-13
+    11          -449.585321972545     0.1137E-09     0.5684E-13
+    12          -449.585321972545     0.1028E-10     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -223,7 +216,7 @@
 
      HOMO-LUMO gap:                  0.992843220774
      Nuclear repulsion energy:     158.230432129450
-     Electronic energy:           -607.815754101995
+     Electronic energy:           -607.815754101996
      Total energy:                -449.585321972545
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
@@ -232,19 +225,12 @@
      Active-inactive energy:        26.974330971521
      Inactive energy:             -523.660135835336
 
-  - Timings for the MLHF ground state calculation
+  Peak memory usage during the execution of eT: 249.704 KB
 
-     Total wall time (sec):              0.28200
-     Total cpu time (sec):               0.52794
+  Total wall time in eT (sec):              0.18600
+  Total cpu time in eT (sec):               0.35116
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 224.756 KB
-
-  Total wall time in eT (sec):              0.29700
-  Total cpu time in eT (sec):               0.54347
-
-  Calculation ended: 2021-07-06 16:16:41 UTC +02:00
+  Calculation end:2022-06-30 08:45:33 UTC +02:00
 
   - Implementation references:
 

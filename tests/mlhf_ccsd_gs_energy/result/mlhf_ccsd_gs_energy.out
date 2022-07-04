@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:30 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: 2 H2O close
+        name: 2 h2o close
         charge: 0
         multiplicity: 1
      end system
@@ -80,12 +78,14 @@
      end active atoms
 
 
+  Calculation start:2022-06-30 08:48:26 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: MLHF wavefunction
-  =======================
+  ====================
 
   - MLHF settings:
 
@@ -93,6 +93,8 @@
      Virtual orbitals:     PAOs
 
      Cholesky decomposition threshold:  0.10E-01
+
+     MO screening enabled
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -135,22 +137,12 @@
      Number of molecular orbitals:       48
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a MLHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (MO-SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -197,15 +189,15 @@
      5          -152.018703912213     0.1006E-02     0.1389E-04
      6          -152.018704702591     0.1890E-03     0.7904E-06
      7          -152.018704720002     0.2445E-04     0.1741E-07
-     8          -152.018704720373     0.5552E-05     0.3710E-09
-     9          -152.018704720397     0.1150E-05     0.2410E-10
+     8          -152.018704720373     0.5552E-05     0.3712E-09
+     9          -152.018704720397     0.1150E-05     0.2413E-10
     10          -152.018704720398     0.2301E-06     0.8811E-12
-    11          -152.018704720398     0.7198E-07     0.2842E-13
-    12          -152.018704720398     0.1570E-07     0.1705E-12
-    13          -152.018704720398     0.2151E-08     0.1137E-12
+    11          -152.018704720398     0.7198E-07     0.1421E-12
+    12          -152.018704720398     0.1570E-07     0.8527E-13
+    13          -152.018704720398     0.2151E-08     0.2842E-13
     14          -152.018704720398     0.5725E-09     0.5684E-13
-    15          -152.018704720398     0.4649E-10     0.1705E-12
-    16          -152.018704720398     0.8080E-11     0.1137E-12
+    15          -152.018704720398     0.4648E-10     0.0000E+00
+    16          -152.018704720398     0.8077E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -220,16 +212,11 @@
 
      Active energy:               -104.805789875469
      Active-inactive energy:        19.262564524015
-     Inactive energy:             -103.861874602338
-
-  - Timings for the MLHF ground state calculation
-
-     Total wall time (sec):              1.26500
-     Total cpu time (sec):               1.51603
+     Inactive energy:             -103.861874602337
 
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -298,7 +285,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9407E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1569E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1389E-14
 
   - Settings for integral handling:
 
@@ -307,8 +294,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.50100
-     Total cpu time (sec):               1.18900
+     Total wall time (sec):              1.39712
+     Total cpu time (sec):               2.76341
 
 
   Determining CC cluster amplitudes
@@ -339,11 +326,11 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -152.224703416268     0.7638E-01     0.1522E+03
+    1          -152.224703416269     0.7638E-01     0.1522E+03
     2          -152.228974477795     0.2179E-01     0.4271E-02
     3          -152.232921954254     0.5776E-02     0.3947E-02
-    4          -152.233529148104     0.1217E-02     0.6072E-03
-    5          -152.233528796463     0.2569E-03     0.3516E-06
+    4          -152.233529148105     0.1217E-02     0.6072E-03
+    5          -152.233528796464     0.2569E-03     0.3516E-06
     6          -152.233541280768     0.7053E-04     0.1248E-04
     7          -152.233541468614     0.1823E-04     0.1878E-06
     8          -152.233541024860     0.5389E-05     0.4438E-06
@@ -353,10 +340,10 @@
    12          -152.233540897467     0.7080E-07     0.1499E-08
    13          -152.233540900974     0.1974E-07     0.3507E-08
    14          -152.233540900548     0.4213E-08     0.4254E-09
-   15          -152.233540900454     0.8468E-09     0.9402E-10
+   15          -152.233540900454     0.8468E-09     0.9399E-10
    16          -152.233540900453     0.2799E-09     0.1506E-11
-   17          -152.233540900460     0.4641E-10     0.7304E-11
-   18          -152.233540900458     0.1231E-10     0.1450E-11
+   17          -152.233540900460     0.4641E-10     0.7276E-11
+   18          -152.233540900459     0.1231E-10     0.1421E-11
    19          -152.233540900458     0.3090E-11     0.5969E-12
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
@@ -401,17 +388,15 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.67900
-     Total cpu time (sec):               0.42195
+     Total wall time (sec):              0.48995
+     Total cpu time (sec):               0.97991
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 24.228776 MB
 
-  Peak memory usage during the execution of eT: 24.154948 MB
+  Total wall time in eT (sec):              3.64291
+  Total cpu time in eT (sec):               7.16418
 
-  Total wall time in eT (sec):              3.47700
-  Total cpu time in eT (sec):               3.15790
-
-  Calculation ended: 2022-04-07 12:35:33 UTC -07:00
+  Calculation end:2022-06-30 08:48:29 UTC +02:00
 
   - Implementation references:
 

@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 I (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-10 18:28:19 UTC +02:00
-  Git branch:         tdhf-polarizabilities
-  Git hash:           2c6631060987fd90d4a092d955c1c53957e73a6b
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-05-10 18:29:40 UTC +02:00
 
 
   :: Input file
@@ -41,12 +39,12 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
         charge: 0
      end system
 
      do
-        time dependent hf
+        tdhf response
      end do
 
      memory
@@ -63,19 +61,20 @@
         hf
      end method
 
-     solver tdhf
+     solver tdhf response
         print iterations
-        polarizability
         residual threshold: 1.0d-10
-     end solver tdhf
+     end solver tdhf response
 
+
+  Calculation start:2022-06-30 08:45:11 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -112,24 +111,12 @@
      Number of molecular orbitals:       24
 
 
-  :: Time dependent Hartree-Fock engine
-  ========================================
-
-  Drives the calculation of the Hartree-Fock excitation energies and properties.
-
-  This is a RHF properties calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-     3) Calculate TDHF excitation energies
-     4) Calculate TDHF polarizabilities
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -170,15 +157,15 @@
      5           -75.989794771484     0.3945E-03     0.3595E-04
      6           -75.989795819016     0.5159E-04     0.1048E-05
      7           -75.989795840882     0.6200E-05     0.2187E-07
-     8           -75.989795841667     0.2170E-05     0.7853E-09
-     9           -75.989795841773     0.3084E-06     0.1056E-09
-    10           -75.989795841773     0.2613E-07     0.4690E-12
-    11           -75.989795841773     0.5653E-08     0.2842E-13
-    12           -75.989795841773     0.9210E-09     0.1421E-13
-    13           -75.989795841773     0.9986E-10     0.1421E-13
-    14           -75.989795841773     0.2637E-10     0.4263E-13
-    15           -75.989795841773     0.1878E-11     0.0000E+00
-    16           -75.989795841773     0.2633E-12     0.5684E-13
+     8           -75.989795841667     0.2170E-05     0.7852E-09
+     9           -75.989795841773     0.3084E-06     0.1057E-09
+    10           -75.989795841773     0.2613E-07     0.3695E-12
+    11           -75.989795841773     0.5653E-08     0.8527E-13
+    12           -75.989795841773     0.9210E-09     0.7105E-13
+    13           -75.989795841773     0.9986E-10     0.4263E-13
+    14           -75.989795841773     0.2637E-10     0.0000E+00
+    15           -75.989795841773     0.1879E-11     0.1421E-13
+    16           -75.989795841773     0.2658E-12     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -190,7 +177,8 @@
      Total energy:                 -75.989795841773
 
 
-  4) Calculate TDHF polarizabilities
+  Determining TDHF polarizabilities
+  =================================
 
    - Davidson tool settings:
 
@@ -303,36 +291,29 @@
      9               0.8235E-07
     10               0.3738E-08
     11               0.1270E-09
-    12               0.8275E-11
+    12               0.8274E-11
   -------------------------------
   Convergence criterion met in 12 iterations!
 
   RHF polarizability for frequency  0.0000E+00:
   --------------------------------------------
      << mu_x, mu_x >>:    -10.500121393504
-     << mu_x, mu_y >>:      0.000000000000
-     << mu_x, mu_z >>:      0.000000000000
-     << mu_y, mu_x >>:      0.000000000000
+     << mu_x, mu_y >>:     -0.000000000000
+     << mu_x, mu_z >>:     -0.000000000000
+     << mu_y, mu_x >>:     -0.000000000000
      << mu_y, mu_y >>:     -6.647534751515
      << mu_y, mu_z >>:      0.000000000000
-     << mu_z, mu_x >>:      0.000000000000
+     << mu_z, mu_x >>:     -0.000000000000
      << mu_z, mu_y >>:      0.000000000000
      << mu_z, mu_z >>:     -2.970554866895
   --------------------------------------------
 
-  - Timings for the RHF properties calculation
+  Peak memory usage during the execution of eT: 126.352 KB
 
-     Total wall time (sec):              0.74000
-     Total cpu time (sec):               1.41028
+  Total wall time in eT (sec):              1.76468
+  Total cpu time in eT (sec):               3.49819
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 123.768 KB
-
-  Total wall time in eT (sec):              0.74900
-  Total cpu time in eT (sec):               1.41996
-
-  Calculation ended: 2022-05-10 18:29:41 UTC +02:00
+  Calculation end:2022-06-30 08:45:13 UTC +02:00
 
   - Implementation references:
 
