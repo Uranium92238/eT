@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-24 10:20:43 UTC +02:00
-  Git branch:         print-table-routine
-  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
      end system
 
      do
@@ -60,7 +60,7 @@
         cc2
      end method
 
-     ! Solver settings:
+     ! solver settings:
 
      solver scf
         algorithm: scf-diis
@@ -83,14 +83,14 @@
      end solver cholesky
 
 
-  Calculation start:2022-05-24 10:41:50 UTC +02:00
+  Calculation start:2022-06-30 08:45:54 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -129,22 +129,12 @@
      Number of molecular orbitals:       38
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -186,16 +176,16 @@
      6          -177.480195433667     0.8262E-04     0.1353E-05
      7          -177.480195516708     0.2289E-04     0.8304E-07
      8          -177.480195527015     0.4801E-05     0.1031E-07
-     9          -177.480195527843     0.1045E-05     0.8289E-09
-    10          -177.480195527874     0.2388E-06     0.3070E-10
-    11          -177.480195527875     0.5236E-07     0.9663E-12
+     9          -177.480195527843     0.1045E-05     0.8287E-09
+    10          -177.480195527874     0.2388E-06     0.3087E-10
+    11          -177.480195527875     0.5236E-07     0.9379E-12
     12          -177.480195527875     0.9618E-08     0.1421E-12
-    13          -177.480195527875     0.4310E-08     0.1137E-12
-    14          -177.480195527875     0.1983E-08     0.1705E-12
-    15          -177.480195527875     0.6772E-09     0.1990E-12
-    16          -177.480195527875     0.1634E-09     0.8527E-13
-    17          -177.480195527875     0.4727E-10     0.8527E-13
-    18          -177.480195527875     0.8072E-11     0.5684E-13
+    13          -177.480195527875     0.4310E-08     0.0000E+00
+    14          -177.480195527875     0.1983E-08     0.2842E-13
+    15          -177.480195527875     0.6772E-09     0.2842E-13
+    16          -177.480195527875     0.1634E-09     0.1421E-12
+    17          -177.480195527875     0.4727E-10     0.2842E-13
+    18          -177.480195527875     0.8071E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -205,11 +195,6 @@
      Nuclear repulsion energy:      48.499011140892
      Electronic energy:           -225.979206668767
      Total energy:                -177.480195527875
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              1.19178
-     Total cpu time (sec):               2.36831
 
 
   :: CC2 wavefunction
@@ -290,8 +275,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.51379
-     Total cpu time (sec):               1.01242
+     Total wall time (sec):              0.60738
+     Total cpu time (sec):               1.19774
 
 
   Determining CC cluster amplitudes
@@ -337,7 +322,7 @@
    13          -177.879146248424     0.5290E-09     0.2515E-10
    14          -177.879146248423     0.6468E-10     0.1307E-11
    15          -177.879146248424     0.1009E-10     0.1108E-11
-   16          -177.879146248424     0.2178E-11     0.2842E-13
+   16          -177.879146248424     0.2177E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -365,8 +350,8 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.16676
-     Total cpu time (sec):               0.33677
+     Total wall time (sec):              0.18334
+     Total cpu time (sec):               0.36332
 
 
   Determining CC multipliers
@@ -417,8 +402,8 @@
 
   - Finished solving the cc2 multipliers equations
 
-     Total wall time (sec):              0.11061
-     Total cpu time (sec):               0.22061
+     Total wall time (sec):              0.24070
+     Total cpu time (sec):               0.48063
 
   - CC multipliers solver summary:
 
@@ -455,14 +440,12 @@
      ------------------------------------------------------------
      Norm of the total dipole moment: 1.6296700
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 28.123632 MB
 
-  Peak memory usage during the execution of eT: 28.117872 MB
+  Total wall time in eT (sec):              2.24859
+  Total cpu time in eT (sec):               4.46812
 
-  Total wall time in eT (sec):              2.02427
-  Total cpu time in eT (sec):               3.99931
-
-  Calculation end:2022-05-24 10:41:52 UTC +02:00
+  Calculation end:2022-06-30 08:45:56 UTC +02:00
 
   - Implementation references:
 

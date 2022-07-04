@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.1 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-22 13:26:25 UTC -07:00
-  Git branch:         hotfix-fci-omp-2
-  Git hash:           f6688f56674453383aa1834a969a34d29f185ac7
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
-  Forced batching:    ON
-  Runtime checks:     ON
+  Forced batching:    OFF
+  Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-22 13:31:36 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O
+        name: h2o
         charge: 0
         multiplicity: 1
      end system
@@ -80,12 +78,14 @@
      end solver fci
 
 
+  Calculation start:2022-06-30 08:49:34 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -122,18 +122,8 @@
      Number of molecular orbitals:        7
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -164,7 +154,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.959292303909     0.1281E-12     0.7496E+02
+     1           -74.959292303910     0.1281E-12     0.7496E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -173,12 +163,7 @@
      HOMO-LUMO gap:                  0.990754169402
      Nuclear repulsion energy:       9.253567250513
      Electronic energy:            -84.212859554423
-     Total energy:                 -74.959292303909
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.00100
-     Total cpu time (sec):               0.00171
+     Total energy:                 -74.959292303910
 
 
   :: FCI wavefunction
@@ -240,24 +225,17 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.3169E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.1943E-15
+     Maximal difference between approximate and actual diagonal:              0.2832E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.2832E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.05300
-     Total cpu time (sec):               0.05434
+     Total wall time (sec):              0.00864
+     Total cpu time (sec):               0.01720
 
 
-  :: Full CI engine
-  ====================
-
-  Calculates the FCI states and energies
-
-  This is a FCI fci calculation.
-  The following tasks will be performed:
-
-     1) Diagonalization of the Hamiltonian (davidson algorithm)
+  Determining FCI eigenstates
+  ===========================
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -294,9 +272,9 @@
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
      1 -75.007116016036    0.000000000000     0.4315E-10   0.7501E+02
-     2 -74.610617220395    0.000000000000     0.5598E-10   0.7461E+02
-     3 -74.550949193651    0.000000000000     0.3479E-10   0.7455E+02
-     4 -74.515608319901    0.000000000000     0.2530E-10   0.7452E+02
+     2 -74.610617220395    0.000000000000     0.5601E-10   0.7461E+02
+     3 -74.550949193651    0.000000000000     0.3477E-10   0.7455E+02
+     4 -74.515608319901    0.000000000000     0.2531E-10   0.7452E+02
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -304,72 +282,72 @@
 
      Electronic state nr. 1
 
-     Energy (Hartree):    -75.007116016036
-     Spin Multiplicity:     1.000000000000
+     Energy (Hartree):     -75.007116016036
+     Spin Multiplicity:      1.000000000000
 
      Largest CI amplitudes:
      ---------------------------
-     0022222      0.987288672283
-     2022022     -0.073824157947
-     0222022     -0.044380460424
-     ba2ba22     -0.044039633596
-     ab2ab22     -0.044039633593
-     0220222     -0.043896663140
-     2020222     -0.039379407285
-     022a2b2      0.033717146417
-     022b2a2      0.033717146416
-     ba2ab22     -0.033523360064
+     0022222     -0.987288672283
+     2022022      0.073824157947
+     0222022      0.044380460424
+     ba2ba22      0.044039633596
+     ab2ab22      0.044039633593
+     0220222      0.043896663140
+     2020222      0.039379407285
+     022a2b2     -0.033717146417
+     022b2a2     -0.033717146416
+     ba2ab22      0.033523360064
      ---------------------------
 
      Electronic state nr. 2
 
-     Energy (Hartree):    -74.610617220395
-     Spin Multiplicity:     3.000000000000
+     Energy (Hartree):     -74.610617220395
+     Spin Multiplicity:      3.000000000000
 
      Largest CI amplitudes:
      ---------------------------
-     0ba2222      0.692078645965
-     0ab2222     -0.692078645964
-     bab2a22     -0.098013611253
-     aba2b22      0.098013611250
-     2ba2022     -0.049366250121
-     2ab2022      0.049366250121
-     20ab222      0.048404989610
-     20ba222     -0.048404989608
-     02ab222      0.045498129218
-     02ba222     -0.045498129215
+     0ba2222     -0.692078645965
+     0ab2222      0.692078645964
+     bab2a22      0.098013611253
+     aba2b22     -0.098013611250
+     2ba2022      0.049366250121
+     2ab2022     -0.049366250121
+     20ab222     -0.048404989610
+     20ba222      0.048404989608
+     02ab222     -0.045498129218
+     02ba222      0.045498129215
      ---------------------------
 
      Electronic state nr. 3
 
-     Energy (Hartree):    -74.550949193651
-     Spin Multiplicity:     1.000000000000
+     Energy (Hartree):     -74.550949193651
+     Spin Multiplicity:      1.000000000000
 
      Largest CI amplitudes:
      ---------------------------
-     0ab2222      0.686258832627
-     0ba2222      0.686258832627
-     aba2b22      0.092094025766
-     bab2a22      0.092094025766
-     baa2b22      0.075050466284
-     abb2a22      0.075050466282
-     02a22b2     -0.062669057601
-     02b22a2     -0.062669057599
-     02ba222      0.054724518781
-     02ab222      0.054724518778
+     0ab2222     -0.686258832627
+     0ba2222     -0.686258832627
+     aba2b22     -0.092094025766
+     bab2a22     -0.092094025766
+     baa2b22     -0.075050466284
+     abb2a22     -0.075050466282
+     02a22b2      0.062669057601
+     02b22a2      0.062669057599
+     02ba222     -0.054724518781
+     02ab222     -0.054724518778
      ---------------------------
 
      Electronic state nr. 4
 
-     Energy (Hartree):    -74.515608319901
-     Spin Multiplicity:     3.000000000000
+     Energy (Hartree):     -74.515608319901
+     Spin Multiplicity:      3.000000000000
 
      Largest CI amplitudes:
      ---------------------------
      0a2b222      0.685162874544
      0b2a222     -0.685162874543
-     b022a22     -0.117456878156
      a022b22      0.117456878156
+     b022a22     -0.117456878156
      ab2ab22     -0.075091722017
      ba2ba22      0.075091722014
      0a222b2     -0.058988030435
@@ -384,26 +362,19 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                -75.007116016036    -2041.047588159273
+        1                -75.007116016036    -2041.047588159274
         2                -74.610617220395    -2030.258306374619
-        3                -74.550949193651    -2028.634656665837
-        4                -74.515608319901    -2027.672982507943
+        3                -74.550949193651    -2028.634656665841
+        4                -74.515608319901    -2027.672982507944
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  - Timings for the FCI fci calculation
+  Peak memory usage during the execution of eT: 439.712 KB
 
-     Total wall time (sec):              0.01400
-     Total cpu time (sec):               0.00916
+  Total wall time in eT (sec):              0.05649
+  Total cpu time in eT (sec):               0.06064
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 428.360 KB
-
-  Total wall time in eT (sec):              0.08100
-  Total cpu time in eT (sec):               0.07459
-
-  Calculation ended: 2022-04-22 13:31:36 UTC -07:00
+  Calculation end:2022-06-30 08:49:34 UTC +02:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:34:37 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O-H2O-tip3p
+        name: h2o-h2o-tip3p
         charge: 0
      end system
 
@@ -69,12 +67,14 @@
      end method
 
 
+  Calculation start:2022-06-30 08:45:00 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -149,22 +149,12 @@
      Number of molecular orbitals:       41
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -204,7 +194,7 @@
     11           -76.390964640759     0.1228E-02     0.6849E-05
     12           -76.390967414293     0.7798E-03     0.2774E-05
     13           -76.390968538905     0.4973E-03     0.1125E-05
-    14           -76.390968994548     0.3162E-03     0.4556E-06
+    14           -76.390968994547     0.3162E-03     0.4556E-06
     15           -76.390969179248     0.2015E-03     0.1847E-06
     16           -76.390969254094     0.1282E-03     0.7485E-07
     17           -76.390969284431     0.8164E-04     0.3034E-07
@@ -212,32 +202,32 @@
     19           -76.390969301707     0.3308E-04     0.4983E-08
     20           -76.390969303727     0.2106E-04     0.2019E-08
     21           -76.390969304545     0.1341E-04     0.8184E-09
-    22           -76.390969304877     0.8535E-05     0.3317E-09
+    22           -76.390969304877     0.8535E-05     0.3318E-09
     23           -76.390969305011     0.5434E-05     0.1344E-09
-    24           -76.390969305066     0.3459E-05     0.5451E-10
-    25           -76.390969305088     0.2202E-05     0.2204E-10
-    26           -76.390969305097     0.1402E-05     0.8981E-11
-    27           -76.390969305100     0.8925E-06     0.3624E-11
-    28           -76.390969305102     0.5682E-06     0.1478E-11
-    29           -76.390969305103     0.3617E-06     0.5826E-12
-    30           -76.390969305103     0.2303E-06     0.1563E-12
-    31           -76.390969305103     0.1466E-06     0.1421E-12
-    32           -76.390969305103     0.9333E-07     0.7105E-13
+    24           -76.390969305066     0.3459E-05     0.5447E-10
+    25           -76.390969305088     0.2202E-05     0.2201E-10
+    26           -76.390969305097     0.1402E-05     0.9095E-11
+    27           -76.390969305100     0.8925E-06     0.3510E-11
+    28           -76.390969305102     0.5682E-06     0.1492E-11
+    29           -76.390969305103     0.3617E-06     0.6395E-12
+    30           -76.390969305103     0.2303E-06     0.2274E-12
+    31           -76.390969305103     0.1466E-06     0.4263E-13
+    32           -76.390969305103     0.9333E-07     0.5684E-13
     33           -76.390969305103     0.5941E-07     0.0000E+00
-    34           -76.390969305103     0.3782E-07     0.2842E-13
-    35           -76.390969305103     0.2408E-07     0.1421E-13
+    34           -76.390969305103     0.3782E-07     0.1421E-13
+    35           -76.390969305103     0.2408E-07     0.2842E-13
     36           -76.390969305103     0.1533E-07     0.2842E-13
-    37           -76.390969305103     0.9759E-08     0.4263E-13
-    38           -76.390969305103     0.6213E-08     0.2842E-13
-    39           -76.390969305103     0.3955E-08     0.0000E+00
-    40           -76.390969305103     0.2518E-08     0.2842E-13
-    41           -76.390969305103     0.1603E-08     0.1279E-12
-    42           -76.390969305103     0.1020E-08     0.1137E-12
-    43           -76.390969305103     0.6496E-09     0.9948E-13
-    44           -76.390969305103     0.4136E-09     0.8527E-13
-    45           -76.390969305103     0.2633E-09     0.4263E-13
-    46           -76.390969305103     0.1676E-09     0.1421E-13
-    47           -76.390969305103     0.1067E-09     0.7105E-13
+    37           -76.390969305103     0.9759E-08     0.8527E-13
+    38           -76.390969305103     0.6213E-08     0.9948E-13
+    39           -76.390969305103     0.3955E-08     0.1421E-13
+    40           -76.390969305103     0.2518E-08     0.1421E-13
+    41           -76.390969305103     0.1603E-08     0.5684E-13
+    42           -76.390969305103     0.1020E-08     0.1421E-13
+    43           -76.390969305103     0.6496E-09     0.2842E-13
+    44           -76.390969305103     0.4136E-09     0.2842E-13
+    45           -76.390969305103     0.2633E-09     0.0000E+00
+    46           -76.390969305103     0.1676E-09     0.5684E-13
+    47           -76.390969305103     0.1067E-09     0.5684E-13
     48           -76.390969305103     0.6793E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 48 iterations!
@@ -254,19 +244,12 @@
      QM/MM SCF Contribution:         0.323022340868     8.78989   202.700
      QM/MM Electrostatic Energy:    -0.350876629340    -9.54784  -220.178
 
-  - Timings for the RHF ground state calculation
+  Peak memory usage during the execution of eT: 268.488 KB
 
-     Total wall time (sec):              1.66300
-     Total cpu time (sec):               1.36299
+  Total wall time in eT (sec):              1.83741
+  Total cpu time in eT (sec):               3.64887
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 262.612 KB
-
-  Total wall time in eT (sec):              1.67600
-  Total cpu time in eT (sec):               1.37529
-
-  Calculation ended: 2022-04-07 12:34:39 UTC -07:00
+  Calculation end:2022-06-30 08:45:02 UTC +02:00
 
   - Implementation references:
 

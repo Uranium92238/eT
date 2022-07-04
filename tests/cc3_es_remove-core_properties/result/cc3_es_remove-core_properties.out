@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-22 22:51:20 UTC +02:00
-  Git branch:         task-structure-reference-engines
-  Git hash:           e62c2115bc81b6746b9621b51cbb12aaa7b7dca3
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -85,7 +85,7 @@
      end solver cc es
 
 
-  Calculation start:2022-05-22 22:53:32 UTC +02:00
+  Calculation start:2022-06-30 08:48:56 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -131,22 +131,12 @@
      Number of molecular orbitals:       15
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -187,12 +177,12 @@
      6           -78.806369659203     0.1193E-04     0.1355E-06
      7           -78.806369660762     0.3301E-05     0.1558E-08
      8           -78.806369660945     0.8317E-06     0.1829E-09
-     9           -78.806369660959     0.1352E-06     0.1415E-10
-    10           -78.806369660959     0.4496E-08     0.1137E-12
-    11           -78.806369660959     0.2386E-08     0.5684E-13
-    12           -78.806369660959     0.8987E-09     0.5684E-13
+     9           -78.806369660959     0.1352E-06     0.1411E-10
+    10           -78.806369660959     0.4496E-08     0.1279E-12
+    11           -78.806369660959     0.2386E-08     0.0000E+00
+    12           -78.806369660959     0.8987E-09     0.1421E-13
     13           -78.806369660959     0.1587E-09     0.1421E-13
-    14           -78.806369660959     0.1519E-10     0.2842E-13
+    14           -78.806369660959     0.1518E-10     0.1421E-13
     15           -78.806369660959     0.2113E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
@@ -203,11 +193,6 @@
      Nuclear repulsion energy:      12.116100574587
      Electronic energy:            -90.922470235546
      Total energy:                 -78.806369660959
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.09864
-     Total cpu time (sec):               0.18153
 
 
   :: CC3 wavefunction
@@ -288,8 +273,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.02530
-     Total cpu time (sec):               0.05530
+     Total wall time (sec):              0.03817
+     Total cpu time (sec):               0.07814
 
 
   Determining CC cluster amplitudes
@@ -380,8 +365,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.06692
-     Total cpu time (sec):               0.12692
+     Total wall time (sec):              0.09832
+     Total cpu time (sec):               0.19831
 
 
   Determining CC multipliers
@@ -439,8 +424,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.12124
-     Total cpu time (sec):               0.24115
+     Total wall time (sec):              0.19367
+     Total cpu time (sec):               0.39363
 
   - CC multipliers solver summary:
 
@@ -492,8 +477,6 @@
   Letters, 73(2), 393-398 (1980).
 
   - Settings for coupled cluster excited state solver (DIIS):
-
-     Calculation type:    remove core
      Excitation vectors:  right
 
   - Convergence thresholds
@@ -601,7 +584,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.251258521271       0.1591E-04
+     1      0.251258521272       0.1591E-04
      2      0.357220067571       0.5696E-04
   -----------------------------------------------
 
@@ -861,14 +844,14 @@
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.251258594446        6.837094604304
-        2                  0.357220066442        9.720453122040
+        2                  0.357220066442        9.720453122041
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              0.21463
-     Total cpu time (sec):               0.42458
+     Total wall time (sec):              0.36134
+     Total cpu time (sec):               0.72122
 
 
   Determining CC excited state amplitudes
@@ -886,8 +869,6 @@
   Letters, 73(2), 393-398 (1980).
 
   - Settings for coupled cluster excited state solver (DIIS):
-
-     Calculation type:    remove core
      Excitation vectors:  left
 
   - Convergence thresholds
@@ -1021,7 +1002,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.251258593210       0.6571E-07
+     1      0.251258593211       0.6571E-07
      2      0.357220076124       0.3253E-05
   -----------------------------------------------
 
@@ -1255,8 +1236,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.18780
-     Total cpu time (sec):               0.37777
+     Total wall time (sec):              0.29929
+     Total cpu time (sec):               0.59911
 
 
   Biorthonormalization of excited CC states
@@ -1291,7 +1272,7 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.357220066442
-     Excitation energy [eV]:            9.720453122040
+     Excitation energy [eV]:            9.720453122041
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1328,7 +1309,6 @@
 
      Conversion factor from au to Debye: 2.541746473
 
-
      Comp.            Nuclear           State 0           State 1           State 2
      ------------------------------------------------------------------------------
      X           0.3779452249      0.0000083271      0.0025608088      0.0026550105
@@ -1336,14 +1316,12 @@
      Z         122.9455816642      0.0039887806      0.0100864952      0.0074253752
      ------------------------------------------------------------------------------
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 1.395680 MB
 
-  Peak memory usage during the execution of eT: 1.393392 MB
+  Total wall time in eT (sec):              1.26066
+  Total cpu time in eT (sec):               2.45827
 
-  Total wall time in eT (sec):              0.80876
-  Total cpu time in eT (sec):               1.59142
-
-  Calculation end:2022-05-22 22:53:33 UTC +02:00
+  Calculation end:2022-06-30 08:48:57 UTC +02:00
 
   - Implementation references:
 

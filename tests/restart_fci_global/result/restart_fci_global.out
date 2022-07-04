@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-25 14:12:01 UTC +02:00
-  Git branch:         fci-dipole-moments
-  Git hash:           ac014d6105c4a5efa7320ceaf173585df596153c
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O
+        name: h2o
         charge: 1
         multiplicity: 2
      end system
@@ -77,7 +77,7 @@
      end solver fci
 
 
-  Calculation start:2022-05-25 14:14:52 UTC +02:00
+  Calculation start:2022-06-30 08:49:34 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -87,7 +87,7 @@
 
 
   :: ROHF wavefunction
-  =======================
+  ====================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -126,18 +126,8 @@
      Number of molecular orbitals:            7
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a ROHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Requested restart. Reading orbitals from file
 
@@ -168,7 +158,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.652410642769     0.4018E-12     0.7465E+02
+     1           -74.652410642769     0.4000E-12     0.7465E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -186,11 +176,6 @@
      Sz(Sz + 1):           0.75000000
      S^2:                  0.75000000
      Spin contamination:   0.00000000
-
-  - Timings for the ROHF ground state calculation
-
-     Total wall time (sec):              0.01259
-     Total cpu time (sec):               0.01426
 
 
   :: FCI wavefunction
@@ -257,8 +242,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00246
-     Total cpu time (sec):               0.00246
+     Total wall time (sec):              0.00705
+     Total cpu time (sec):               0.01695
 
 
   Determining FCI eigenstates
@@ -301,10 +286,10 @@
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
      1 -74.692085805113    0.000000000000     0.2007E-10   0.7469E+02
-     2 -74.612599930733    0.000000000000     0.5795E-10   0.7461E+02
-     3 -74.382687297414    0.000000000000     0.4204E-10   0.7438E+02
-     4 -74.132033916286    0.000000000000     0.3924E-11   0.7413E+02
-     5 -74.062698387151    0.000000000000     0.1384E-10   0.7406E+02
+     2 -74.612599930733    0.000000000000     0.5792E-10   0.7461E+02
+     3 -74.382687297414    0.000000000000     0.4189E-10   0.7438E+02
+     4 -74.132033916286    0.000000000000     0.3911E-11   0.7413E+02
+     5 -74.062698387151    0.000000000000     0.1387E-10   0.7406E+02
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -336,16 +321,16 @@
 
      Largest CI amplitudes:
      ---------------------------
-     002a222     -0.990913305779
-     202a022     -0.069883204004
-     022a022     -0.035065532612
-     00222a2     -0.033968374233
-     a022ba2     -0.032156657077
-     ab2aba2      0.031914323063
-     ba2aab2      0.031816360280
-     ba20a22     -0.031662132801
-     022a202     -0.029272354184
-     02202a2      0.027816747380
+     002a222      0.990913305779
+     202a022      0.069883204004
+     022a022      0.035065532612
+     00222a2      0.033968374233
+     a022ba2      0.032156657077
+     ab2aba2     -0.031914323063
+     ba2aab2     -0.031816360280
+     ba20a22      0.031662132801
+     022a202      0.029272354184
+     02202a2     -0.027816747380
      ---------------------------
 
      Electronic state nr. 3
@@ -355,16 +340,16 @@
 
      Largest CI amplitudes:
      ---------------------------
-     0022a22     -0.984514626151
-     0a2ba22      0.082376560007
-     a022022      0.060183194391
-     0b2aa22      0.050695885590
-     a02b2a2     -0.050029683079
-     a002222     -0.045766139104
-     ab2a022      0.036306705037
-     0220a22      0.034695678369
-     2020a22      0.033281468493
-     0a2ab22      0.031680674426
+     0022a22      0.984514626151
+     0a2ba22     -0.082376560007
+     a022022     -0.060183194391
+     0b2aa22     -0.050695885590
+     a02b2a2      0.050029683079
+     a002222      0.045766139104
+     ab2a022     -0.036306705037
+     0220a22     -0.034695678369
+     2020a22     -0.033281468494
+     0a2ab22     -0.031680674426
      ---------------------------
 
      Electronic state nr. 4
@@ -374,10 +359,10 @@
 
      Largest CI amplitudes:
      ---------------------------
-     0aba222     -0.560568685377
      0baa222      0.560568685377
-     0aab222      0.560568685377
-     a0b2a22     -0.091471675981
+     0aba222     -0.560568685377
+     0aab222      0.560568685376
+     a0b2a22     -0.091471675982
      a0a2b22      0.091471675981
      b0a2a22      0.091471675981
      abaab22      0.078937458316
@@ -411,24 +396,22 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                -74.692085805113    -2032.475179481897
+        1                -74.692085805113    -2032.475179481896
         2                -74.612599930733    -2030.312258671010
         3                -74.382687297414    -2024.056017254896
-        4                -74.132033916286    -2017.235391343789
-        5                -74.062698387151    -2015.348675495595
+        4                -74.132033916286    -2017.235391343792
+        5                -74.062698387151    -2015.348675495600
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 1.938048 MB
-
   :: There was 1 warning during the execution of eT. ::
 
-  Total wall time in eT (sec):              0.02340
-  Total cpu time in eT (sec):               0.02508
+  Peak memory usage during the execution of eT: 1.938608 MB
 
-  Calculation end:2022-05-25 14:14:52 UTC +02:00
+  Total wall time in eT (sec):              0.04225
+  Total cpu time in eT (sec):               0.06495
+
+  Calculation end:2022-06-30 08:49:34 UTC +02:00
 
   - Implementation references:
 

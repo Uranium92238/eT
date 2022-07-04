@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:48 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: 3 H2O
+        name: 3 h2o
         charge: 0
      end system
 
@@ -86,12 +84,14 @@
      end mlcc
 
 
+  Calculation start:2022-06-30 08:49:05 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: MLHF wavefunction
-  =======================
+  ====================
 
   - MLHF settings:
 
@@ -99,6 +99,8 @@
      Virtual orbitals:     PAOs
 
      Cholesky decomposition threshold:  0.10E-01
+
+     MO screening enabled
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -147,22 +149,12 @@
      Number of molecular orbitals:       57
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a MLHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (MO-SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (MO-SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -206,20 +198,20 @@
      2          -227.998626638344     0.1450E+00     0.5068E-01
      3          -228.013710247464     0.2730E-01     0.1508E-01
      4          -228.014085259024     0.4193E-02     0.3750E-03
-     5          -228.014102788344     0.9764E-03     0.1753E-04
-     6          -228.014103753624     0.2336E-03     0.9653E-06
+     5          -228.014102788343     0.9764E-03     0.1753E-04
+     6          -228.014103753623     0.2336E-03     0.9653E-06
      7          -228.014103782709     0.6086E-04     0.2909E-07
-     8          -228.014103785289     0.1272E-04     0.2580E-08
-     9          -228.014103785425     0.3241E-05     0.1357E-09
-    10          -228.014103785436     0.7938E-06     0.1154E-10
-    11          -228.014103785437     0.5573E-07     0.9379E-12
-    12          -228.014103785437     0.1882E-07     0.2558E-12
-    13          -228.014103785437     0.6103E-08     0.5116E-12
-    14          -228.014103785437     0.1608E-08     0.2558E-12
-    15          -228.014103785437     0.2295E-09     0.5684E-13
-    16          -228.014103785437     0.7702E-10     0.1137E-12
-    17          -228.014103785437     0.2645E-10     0.3979E-12
-    18          -228.014103785437     0.7181E-11     0.1705E-12
+     8          -228.014103785290     0.1272E-04     0.2580E-08
+     9          -228.014103785425     0.3241E-05     0.1358E-09
+    10          -228.014103785437     0.7938E-06     0.1202E-10
+    11          -228.014103785438     0.5573E-07     0.1137E-11
+    12          -228.014103785439     0.1882E-07     0.1705E-12
+    13          -228.014103785439     0.6103E-08     0.1137E-12
+    14          -228.014103785438     0.1608E-08     0.1421E-12
+    15          -228.014103785438     0.2295E-09     0.5684E-13
+    16          -228.014103785438     0.7703E-10     0.5684E-13
+    17          -228.014103785438     0.2646E-10     0.5684E-13
+    18          -228.014103785438     0.7180E-11     0.1421E-12
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -227,23 +219,18 @@
 
      HOMO-LUMO gap:                  0.699236376531
      Nuclear repulsion energy:      84.733460047369
-     Electronic energy:           -312.747563832806
-     Total energy:                -228.014103785437
+     Electronic energy:           -312.747563832807
+     Total energy:                -228.014103785438
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
      Active energy:               -227.773825996349
-     Active-inactive energy:        38.567634665092
+     Active-inactive energy:        38.567634665091
      Inactive energy:             -123.541372501549
-
-  - Timings for the MLHF ground state calculation
-
-     Total wall time (sec):              1.80900
-     Total cpu time (sec):               1.97830
 
 
   :: MLCC2 wavefunction
-  ========================
+  =====================
 
      Bath orbital(s):         False
 
@@ -316,10 +303,10 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              2.10600
-     Total cpu time (sec):               1.94902
+     Total wall time (sec):              2.11787
+     Total cpu time (sec):               4.23741
 
-     The smallest diagonal after decomposition is:  -0.1456E-15
+     The smallest diagonal after decomposition is:  -0.2220E-15
 
   - MLCC2 orbital partitioning:
 
@@ -360,30 +347,30 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -228.204739307126     0.2898E-01     0.2282E+03
-    2          -228.205406024201     0.6057E-02     0.6667E-03
-    3          -228.205561633968     0.8949E-03     0.1556E-03
-    4          -228.205581302871     0.2680E-03     0.1967E-04
-    5          -228.205581813781     0.5613E-04     0.5109E-06
-    6          -228.205581907913     0.1909E-04     0.9413E-07
-    7          -228.205581962262     0.5119E-05     0.5435E-07
-    8          -228.205581970483     0.1339E-05     0.8221E-08
-    9          -228.205581969772     0.2985E-06     0.7105E-09
-   10          -228.205581970053     0.8529E-07     0.2807E-09
-   11          -228.205581969958     0.2262E-07     0.9547E-10
-   12          -228.205581970015     0.7352E-08     0.5755E-10
-   13          -228.205581970020     0.2394E-08     0.4860E-11
-   14          -228.205581970026     0.6433E-09     0.6168E-11
-   15          -228.205581970028     0.2247E-09     0.1393E-11
-   16          -228.205581970028     0.7611E-10     0.4263E-12
-   17          -228.205581970028     0.1941E-10     0.8527E-13
-   18          -228.205581970028     0.4958E-11     0.2842E-13
+    1          -228.204739307127     0.2898E-01     0.2282E+03
+    2          -228.205406024202     0.6057E-02     0.6667E-03
+    3          -228.205561633969     0.8949E-03     0.1556E-03
+    4          -228.205581302872     0.2680E-03     0.1967E-04
+    5          -228.205581813783     0.5613E-04     0.5109E-06
+    6          -228.205581907915     0.1909E-04     0.9413E-07
+    7          -228.205581962263     0.5119E-05     0.5435E-07
+    8          -228.205581970484     0.1339E-05     0.8221E-08
+    9          -228.205581969774     0.2985E-06     0.7105E-09
+   10          -228.205581970054     0.8529E-07     0.2807E-09
+   11          -228.205581969959     0.2262E-07     0.9550E-10
+   12          -228.205581970017     0.7352E-08     0.5753E-10
+   13          -228.205581970021     0.2394E-08     0.4889E-11
+   14          -228.205581970028     0.6433E-09     0.6168E-11
+   15          -228.205581970029     0.2247E-09     0.1393E-11
+   16          -228.205581970029     0.7611E-10     0.4263E-12
+   17          -228.205581970029     0.1941E-10     0.5684E-13
+   18          -228.205581970029     0.4958E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -228.205581970028
+     Final ground state energy (a.u.):  -228.205581970029
 
      Correlation energy (a.u.):           -0.191478184591
 
@@ -391,31 +378,29 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-        3      4       -0.007987291905
-        6      5        0.006860269544
-        2      4        0.005872160691
-       11      3        0.004425176859
-        9      3        0.004319058017
+        3      4       -0.007987291902
+        6      5        0.006860269539
+        2      4        0.005872160688
+       11      3        0.004425176861
+        9      3        0.004319058011
         1      4        0.004241184194
-        3      2        0.004038688421
+        3      2        0.004038688433
        17      3       -0.003410476388
-        2      3        0.003178980768
-       18      2        0.002890272696
+        2      3        0.003178980767
+       18      2        0.002890272695
      ------------------------------------
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.50700
-     Total cpu time (sec):               0.35112
+     Total wall time (sec):              0.23891
+     Total cpu time (sec):               0.47890
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 66.301344 MB
 
-  Peak memory usage during the execution of eT: 66.202316 MB
+  Total wall time in eT (sec):              4.53847
+  Total cpu time in eT (sec):               9.03857
 
-  Total wall time in eT (sec):              4.48100
-  Total cpu time in eT (sec):               4.33212
-
-  Calculation ended: 2022-04-07 12:35:52 UTC -07:00
+  Calculation end:2022-06-30 08:49:09 UTC +02:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.7 - an electronic structure program
+                     eT 1.8 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -9,30 +9,28 @@
    J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
    L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
    H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. RoncaM. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
    H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.7.0 Hydra
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-04-07 12:33:31 UTC -07:00
-  Git branch:         release-v1.7.0
-  Git hash:           c5c382d7d23365463896a87c37298e4a37e4c962
-  Fortran compiler:   GNU 11.2.0
-  C compiler:         GNU 11.2.0
-  C++ compiler:       GNU 11.2.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
+  Fortran compiler:   GNU 9.4.0
+  C compiler:         GNU 9.4.0
+  C++ compiler:       GNU 9.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
   Runtime checks:     OFF
   ------------------------------------------------------------
-
-  Calculation started: 2022-04-07 12:35:59 UTC -07:00
 
 
   :: Input file
@@ -41,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-       name: Ozone
+       name: ozone
      end system
 
      do
@@ -75,12 +73,16 @@
      end method
 
 
+  Calculation start:2022-06-30 08:49:35 UTC +02:00
+
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
+
+  Will perform Coulomb and exchange terms in the Fock matrix collectively
 
   Libint electron repulsion integral precision:  0.1000E-23
 
@@ -119,23 +121,13 @@
      Number of molecular orbitals:       42
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-
-
-  1) Generate initial SAD density
+  Generating initial SAD density
+  ==============================
      Generated atomic density for O  using UHF/cc-pvdz
 
 
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -182,7 +174,7 @@
   Fock matrix construction using density differences
      6          -224.265560152942     0.1474E-02     0.6648E-04
   Fock matrix construction using density differences
-     7          -224.265586748991     0.6005E-03     0.2660E-04
+     7          -224.265586748992     0.6005E-03     0.2660E-04
   Fock matrix construction using density differences
      8          -224.265595555115     0.1830E-03     0.8806E-05
   Fock matrix construction using density differences
@@ -192,33 +184,33 @@
   Fock matrix construction using density differences
     11          -224.265596149759     0.5826E-05     0.3017E-08
   Fock matrix construction using density differences
-    12          -224.265596150163     0.2565E-05     0.4040E-09
+    12          -224.265596150162     0.2565E-05     0.4038E-09
   Fock matrix construction using density differences
-    13          -224.265596150268     0.1295E-05     0.1054E-09
+    13          -224.265596150268     0.1295E-05     0.1055E-09
   Fock matrix construction using density differences
-    14          -224.265596150306     0.6215E-06     0.3826E-10
+    14          -224.265596150306     0.6215E-06     0.3809E-10
   Fock matrix construction using density differences
-    15          -224.265596150314     0.3151E-06     0.7390E-11
+    15          -224.265596150314     0.3151E-06     0.7702E-11
   Fock matrix construction using density differences
-    16          -224.265596150315     0.1212E-06     0.1251E-11
+    16          -224.265596150315     0.1212E-06     0.1052E-11
   Fock matrix construction using density differences
-    17          -224.265596150315     0.4099E-07     0.4263E-12
+    17          -224.265596150315     0.4099E-07     0.3411E-12
   Fock matrix construction using density differences
-    18          -224.265596150315     0.3185E-07     0.2842E-13
+    18          -224.265596150315     0.3185E-07     0.8527E-13
   Fock matrix construction using density differences
-    19          -224.265596150315     0.2288E-07     0.1705E-12
+    19          -224.265596150315     0.2288E-07     0.1421E-12
   Fock matrix construction using density differences
-    20          -224.265596150315     0.1098E-07     0.2558E-12
+    20          -224.265596150315     0.1098E-07     0.1705E-12
   Fock matrix construction using density differences
-    21          -224.265596150315     0.7963E-08     0.1421E-12
+    21          -224.265596150315     0.7963E-08     0.5684E-13
   Fock matrix construction using density differences
-    22          -224.265596150315     0.6392E-08     0.2842E-13
+    22          -224.265596150315     0.6392E-08     0.5684E-13
   Fock matrix construction using density differences
-    23          -224.265596150315     0.1258E-08     0.2842E-13
+    23          -224.265596150315     0.1258E-08     0.1137E-12
   Fock matrix construction using density differences
-    24          -224.265596150315     0.1267E-08     0.0000E+00
+    24          -224.265596150315     0.1267E-08     0.1705E-12
   Fock matrix construction using density differences
-    25          -224.265596150315     0.7460E-09     0.2842E-13
+    25          -224.265596150315     0.7460E-09     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -229,18 +221,13 @@
      Electronic energy:           -293.149755421610
      Total energy:                -224.265596150315
 
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              2.06700
-     Total cpu time (sec):               2.19589
-
   No frozen fock contributions!
 
   Libint electron repulsion integral precision:  0.1000E-23
 
 
   :: CCSD wavefunction
-  =======================
+  ====================
 
      Bath orbital(s):         False
 
@@ -310,7 +297,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.8323E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1443E-14
 
   - Settings for integral handling:
 
@@ -319,9 +306,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.48500
-     Total cpu time (sec):               0.81237
-  No MO preparations for ccsd
+     Total wall time (sec):              0.81765
+     Total cpu time (sec):               1.62036
 
 
   Determining CC cluster amplitudes
@@ -453,19 +439,17 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.36300
-     Total cpu time (sec):               1.56353
+     Total wall time (sec):              2.48625
+     Total cpu time (sec):               4.96950
 
   - Cleaning up ccsd wavefunction
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 59.297016 MB
 
-  Peak memory usage during the execution of eT: 59.286296 MB
+  Total wall time in eT (sec):              5.57175
+  Total cpu time in eT (sec):              11.07592
 
-  Total wall time in eT (sec):              3.94900
-  Total cpu time in eT (sec):               4.61349
-
-  Calculation ended: 2022-04-07 12:36:03 UTC -07:00
+  Calculation end:2022-06-30 08:49:41 UTC +02:00
 
   - Implementation references:
 

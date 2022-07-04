@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-24 10:20:43 UTC +02:00
-  Git branch:         print-table-routine
-  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: HOF He
+        name: hof he
         charge: 0
      end system
 
@@ -66,14 +66,14 @@
      end hf mean value
 
 
-  Calculation start:2022-05-24 10:42:01 UTC +02:00
+  Calculation start:2022-06-30 08:45:02 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -112,23 +112,12 @@
      Number of molecular orbitals:       38
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
-     3) Calculate dipole and/or quadrupole moments
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -171,14 +160,14 @@
      7          -177.480176366015     0.2291E-04     0.8317E-07
      8          -177.480176376348     0.4810E-05     0.1033E-07
      9          -177.480176377178     0.1046E-05     0.8307E-09
-    10          -177.480176377209     0.2394E-06     0.3089E-10
+    10          -177.480176377209     0.2394E-06     0.3092E-10
     11          -177.480176377210     0.5253E-07     0.8527E-12
-    12          -177.480176377210     0.9777E-08     0.2274E-12
+    12          -177.480176377210     0.9777E-08     0.5684E-13
     13          -177.480176377210     0.2792E-08     0.2842E-13
-    14          -177.480176377210     0.1441E-08     0.0000E+00
+    14          -177.480176377210     0.1441E-08     0.1137E-12
     15          -177.480176377210     0.6293E-09     0.8527E-13
     16          -177.480176377210     0.1436E-09     0.0000E+00
-    17          -177.480176377210     0.4657E-10     0.2842E-13
+    17          -177.480176377210     0.4658E-10     0.1705E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -190,7 +179,8 @@
      Total energy:                -177.480176377210
 
 
-  3) Calculate dipole and/or quadrupole moments
+  Determining HF properties
+  =========================
 
      Quadrupole moment in [Debye*Ang]:
      =================================
@@ -223,19 +213,12 @@
      zz      -2675.8460541016   2674.9603024600     -0.8857516415
      ------------------------------------------------------------
 
-  - Timings for the RHF ground state calculation
+  Peak memory usage during the execution of eT: 313.000 KB
 
-     Total wall time (sec):              0.53579
-     Total cpu time (sec):               1.05414
+  Total wall time in eT (sec):              1.24306
+  Total cpu time in eT (sec):               2.44051
 
-  ------------------------------------------------------------
-
-  Peak memory usage during the execution of eT: 310.120 KB
-
-  Total wall time in eT (sec):              0.54625
-  Total cpu time in eT (sec):               1.06613
-
-  Calculation end:2022-05-24 10:42:02 UTC +02:00
+  Calculation end:2022-06-30 08:45:04 UTC +02:00
 
   - Implementation references:
 

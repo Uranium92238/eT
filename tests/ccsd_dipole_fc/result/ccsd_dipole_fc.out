@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-24 10:20:43 UTC +02:00
-  Git branch:         print-table-routine
-  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O
+        name: h2o
         charge: 0
      end system
 
@@ -65,7 +65,7 @@
         ccsd
      end method
 
-     ! Solver settings:
+     ! solver settings:
 
      solver scf
         algorithm: scf-diis
@@ -88,14 +88,14 @@
      end solver cholesky
 
 
-  Calculation start:2022-05-24 10:41:50 UTC +02:00
+  Calculation start:2022-06-30 08:46:26 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -132,22 +132,12 @@
      Number of molecular orbitals:       13
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -189,12 +179,12 @@
      6           -75.952529042896     0.1214E-04     0.1364E-06
      7           -75.952529044535     0.3369E-05     0.1638E-08
      8           -75.952529044727     0.8367E-06     0.1927E-09
-     9           -75.952529044742     0.1360E-06     0.1438E-10
-    10           -75.952529044742     0.4602E-08     0.1563E-12
+     9           -75.952529044742     0.1360E-06     0.1430E-10
+    10           -75.952529044742     0.4602E-08     0.1279E-12
     11           -75.952529044742     0.6939E-09     0.4263E-13
-    12           -75.952529044742     0.1022E-09     0.1421E-13
+    12           -75.952529044742     0.1022E-09     0.0000E+00
     13           -75.952529044742     0.1158E-10     0.2842E-13
-    14           -75.952529044742     0.6202E-12     0.4263E-13
+    14           -75.952529044742     0.6200E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -204,11 +194,6 @@
      Nuclear repulsion energy:       8.002366450719
      Electronic energy:            -83.954895495461
      Total energy:                 -75.952529044742
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.12180
-     Total cpu time (sec):               0.15678
 
   - Preparation for frozen core approximation
 
@@ -283,7 +268,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4740E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2593E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.4229E-15
 
   - Settings for integral handling:
 
@@ -292,8 +277,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.02884
-     Total cpu time (sec):               0.05901
+     Total wall time (sec):              0.02809
+     Total cpu time (sec):               0.06241
 
 
   Determining CC cluster amplitudes
@@ -384,8 +369,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01863
-     Total cpu time (sec):               0.03292
+     Total wall time (sec):              0.01907
+     Total cpu time (sec):               0.03473
 
 
   Determining CC multipliers
@@ -471,20 +456,18 @@
 
      Comp.         Electronic           Nuclear             Total
      ------------------------------------------------------------
-     x           0.0000000000      0.0000000000      0.0000000000
+     x          -0.0000000000      0.0000000000     -0.0000000000
      y           0.0000000000      0.0000000000      0.0000000000
      z          -0.4193130375      2.8652884285      2.4459753910
      ------------------------------------------------------------
      Norm of the total dipole moment: 2.4459754
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 557.352 KB
 
-  Peak memory usage during the execution of eT: 555.768 KB
+  Total wall time in eT (sec):              0.16521
+  Total cpu time in eT (sec):               0.30984
 
-  Total wall time in eT (sec):              0.20749
-  Total cpu time in eT (sec):               0.31512
-
-  Calculation end:2022-05-24 10:41:50 UTC +02:00
+  Calculation end:2022-06-30 08:46:26 UTC +02:00
 
   - Implementation references:
 

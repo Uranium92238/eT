@@ -15,11 +15,11 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.8.0 Ibiza
   ------------------------------------------------------------
-  Configuration date: 2022-05-24 10:20:43 UTC +02:00
-  Git branch:         print-table-routine
-  Git hash:           1157268f5d70f578f075ecec79197686fa8ef232
+  Configuration date: 2022-06-30 08:43:06 UTC +02:00
+  Git branch:         release-v1.8.0
+  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
   Fortran compiler:   GNU 9.4.0
   C compiler:         GNU 9.4.0
   C++ compiler:       GNU 9.4.0
@@ -39,7 +39,7 @@
      Note: geometry section is excluded from this print
 
      system
-        name: H2O He
+        name: h2o he
         charge: 0
      end system
 
@@ -80,14 +80,14 @@
      end cc mean value
 
 
-  Calculation start:2022-05-24 10:41:50 UTC +02:00
+  Calculation start:2022-06-30 08:45:50 UTC +02:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
   :: RHF wavefunction
-  ======================
+  ===================
 
      ==============================================================================
                                      Geometry (angstrom)
@@ -124,22 +124,12 @@
      Number of molecular orbitals:        7
 
 
-  :: Hartree-Fock engine
-  =========================
-
-  Drives the calculation of the Hartree-Fock state.
-
-  This is a RHF ground state calculation.
-  The following tasks will be performed:
-
-     1) Generate initial SAD density
-     2) Calculation of reference state (SCF-DIIS algorithm)
+  Generating initial SAD density
+  ==============================
 
 
-  1) Generate initial SAD density
-
-
-  2) Calculation of reference state (SCF-DIIS algorithm)
+  Determining reference state
+  ===========================
 
   - Setting initial AO density to sad
 
@@ -173,14 +163,14 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.889701962820     0.1071E+00     0.7489E+02
+     1           -74.889701962821     0.1071E+00     0.7489E+02
      2           -74.940474931397     0.1469E-01     0.5077E-01
      3           -74.942054999957     0.2353E-02     0.1580E-02
      4           -74.942080036553     0.5610E-04     0.2504E-04
      5           -74.942080053363     0.1780E-04     0.1681E-07
      6           -74.942080057695     0.2053E-06     0.4333E-08
-     7           -74.942080057696     0.9667E-09     0.3695E-12
-     8           -74.942080057696     0.7842E-12     0.5684E-13
+     7           -74.942080057696     0.9667E-09     0.3837E-12
+     8           -74.942080057696     0.7877E-12     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -190,11 +180,6 @@
      Nuclear repulsion energy:       8.002366974166
      Electronic energy:            -82.944447031862
      Total energy:                 -74.942080057696
-
-  - Timings for the RHF ground state calculation
-
-     Total wall time (sec):              0.05034
-     Total cpu time (sec):               0.04455
 
 
   :: CCS wavefunction
@@ -272,8 +257,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00819
-     Total cpu time (sec):               0.01742
+     Total wall time (sec):              0.00687
+     Total cpu time (sec):               0.01684
 
 
   Determining CC cluster amplitudes
@@ -305,7 +290,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -74.942080057696     0.1202E-11     0.7494E+02
+    1           -74.942080057696     0.1210E-11     0.7494E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -333,8 +318,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00414
-     Total cpu time (sec):               0.00413
+     Total wall time (sec):              0.00114
+     Total cpu time (sec):               0.00114
 
 
   Determining CC multipliers
@@ -367,14 +352,14 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.2405E-11
+    1          0.2422E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00044
-     Total cpu time (sec):               0.00044
+     Total wall time (sec):              0.00057
+     Total cpu time (sec):               0.00057
 
   - CC multipliers solver summary:
 
@@ -411,14 +396,12 @@
      ------------------------------------------------------------
      Norm of the total dipole moment: 1.5339994
 
-  ------------------------------------------------------------
+  Peak memory usage during the execution of eT: 62.416 KB
 
-  Peak memory usage during the execution of eT: 61.856 KB
+  Total wall time in eT (sec):              0.05461
+  Total cpu time in eT (sec):               0.09004
 
-  Total wall time in eT (sec):              0.11296
-  Total cpu time in eT (sec):               0.10612
-
-  Calculation end:2022-05-24 10:41:50 UTC +02:00
+  Calculation end:2022-06-30 08:45:50 UTC +02:00
 
   - Implementation references:
 
