@@ -42,6 +42,9 @@ end solver cc multipliers
 
 visualization
    plot cc density
+   file format:  cube
+   grid spacing: 0.2
+   grid buffer:  1.0
 end visualization
 
 solver cc propagation
