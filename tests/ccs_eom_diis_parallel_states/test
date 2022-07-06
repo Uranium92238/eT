@@ -33,11 +33,11 @@ f.append(get_filter(re=r'.*Number of states reduced to',
 options = cli()
 
 ierr = 0
-for inp in ['ccs_eom_diis_parallel_states.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccs_eom_diis_parallel_states.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

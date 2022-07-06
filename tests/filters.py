@@ -361,3 +361,23 @@ def get_geoopt_filter(tolerance):
     ]
 
     return f
+
+
+def get_lanczos_filter(tolerance, convergence=True, restart=False, Newton=False):
+    """
+    Returns filters for a Lanczos calculation
+    """
+
+    from runtest import get_filter
+
+    f = get_gs_filter(tolerance, convergence, restart, Newton)
+
+    f.append(
+        get_filter(
+            from_string="State.      energy [a.u]         energy [eV]         Osc. strength",
+            num_lines=12,
+            abs_tolerance=tolerance,
+            mask=[2, 4],
+        )
+    )
+    return f

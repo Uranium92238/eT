@@ -33,12 +33,12 @@ f.append(get_filter(from_string='QM/PCM SCF Contribution:',
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy_pcm_external.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f},
-                extra_args='-pcm water_ief.pcm')
+inp = 'hf_energy_pcm_external.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f},
+            extra_args='-pcm water_ief.pcm')
 
 sys.exit(ierr)

@@ -28,13 +28,13 @@ g = [get_filter(abs_tolerance=threshold, ignore_sign=True)]
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy_pure_321g.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f,
-                         'molden': g,
-                         'mo_information.out': g})
+inp = 'hf_energy_pure_321g.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f,
+                     'molden': g,
+                     'mo_information.out': g})
 
 sys.exit(ierr)

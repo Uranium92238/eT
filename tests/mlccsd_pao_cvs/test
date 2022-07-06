@@ -28,11 +28,11 @@ f = get_es_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ['mlccsd_pao_cvs.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'mlccsd_pao_cvs.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

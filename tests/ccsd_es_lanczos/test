@@ -7,34 +7,23 @@ import sys
 sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
-from runtest import version_info, get_filter, cli, run
+from runtest import version_info, cli, run
 
 # this tells runtest how to run your code
 from runtest_config import configure
+
+# functions to get the filters
+from filters import get_lanczos_filter, get_file_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
 # construct filter(s)
-f = [
-    get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10),
+f = get_lanczos_filter(tolerance=1.0e-10)
+g = get_file_filter(tolerance=1.0e-7)
 
-    get_filter(from_string='State.      energy [a.u]         energy [eV]         Osc. strength',
-               num_lines=11,
-               abs_tolerance=1.0e-10,
-               mask=[2])
-]
-
-
-g = [get_filter(abs_tolerance=1.0e-7)]
-
-checkfiles = ["ccsd_es_lanczos.lanczos30_X",
-              "ccsd_es_lanczos.lanczos30_Y",
-              "ccsd_es_lanczos.lanczos30_Z"]
-
-test_dir = Path(__file__).parent
-checkfiles = [test_dir / i for i in checkfiles]
+filters = {'out' : f}
+filters.update({f'lanczos30_{component}' : g for component in "XYZ"})
 
 # invoke the command line interface parser which returns options
 options = cli()
@@ -45,16 +34,6 @@ inp = 'ccsd_es_lanczos.inp'
 ierr += run(options,
             configure,
             input_files=inp,
-            filters={'out': f,
-                     'lanczos30_X': g,
-                     'lanczos30_Y': g,
-                     'lanczos30_Z': g})
+            filters=filters)
 
-missing_files = [i for i in checkfiles if not i.exists()]
-filerror = len(missing_files)
-
-if filerror > 0:
-    print("Missing files:")
-    print("\n".join([i.name for i in missing_files]))
-
-sys.exit(ierr + filerror)
+sys.exit(ierr)

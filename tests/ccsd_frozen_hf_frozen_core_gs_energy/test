@@ -27,11 +27,11 @@ f = get_gs_filter(threshold, convergence)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_frozen_hf_frozen_core_gs_energy.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_frozen_hf_frozen_core_gs_energy.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

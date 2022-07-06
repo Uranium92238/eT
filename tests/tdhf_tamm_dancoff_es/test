@@ -27,11 +27,11 @@ f = get_tdhf_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ['tdhf_tamm_dancoff_es.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'tdhf_tamm_dancoff_es.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

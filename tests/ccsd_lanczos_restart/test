@@ -7,65 +7,45 @@ import sys
 sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
-from runtest import version_info, get_filter, cli, run
+from runtest import version_info, cli, run
 
 # this tells runtest how to run your code
 from runtest_config import configure
+
+# functions to get the filters
+from filters import get_lanczos_filter, get_file_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
 
 # construct filter(s)
-f = [
-    get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10),
+f1 = get_lanczos_filter(tolerance=1.0e-10)
+g = get_file_filter(tolerance=1.0e-7)
 
-    get_filter(from_string='State.      energy [a.u]         energy [eV]         Osc. strength',
-               num_lines=11,
-               abs_tolerance=1.0e-10,
-               mask=[2])
-]
+filters30 = {'out' : f1}
+filters30.update({f'lanczos30_{component}' : g for component in "XYZ"})
 
-checkfiles = ["ccsd_lanczos_restart.lanczos30_X",
-              "ccsd_lanczos_restart.lanczos30_Y",
-              "ccsd_lanczos_restart.lanczos30_Z",
-              "ccsd_lanczos_restart.lanczos60_X",
-              "ccsd_lanczos_restart.lanczos60_Y",
-              "ccsd_lanczos_restart.lanczos60_Z"]
-
-
-test_dir = Path(__file__).parent
-checkfiles = [test_dir / i for i in checkfiles]
+f2 = get_lanczos_filter(tolerance=1.0e-10, restart=True)
+filters60 = {'out' : f2}
+filters60.update({f'lanczos60_{component}' : g for component in "XYZ"})
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_cl_30.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-ks --scratch ./scratch',
-                filters={'out': f})
+inp = 'ccsd_lanczos_cl30.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-save .',
+            filters=filters30)
 
-for inp in ['ccsd_cl_60.inp']:
-    #
-    # the run function runs the code and filters the outputs
-    # don't provide -ks to delete scratch after succesful run
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='--scratch ./scratch',
-                filters={'out': f})
+inp = 'ccsd_lanczos_cl60.inp'
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-load ccsd_lanczos_cl30_restart_files',
+            filters=filters60)
 
 sys.exit(ierr)
-missing_files = [i for i in checkfiles if not i.exists()]
-filerror = len(missing_files)
-
-if filerror > 0:
-    print("Missing files:")
-    print("\n".join([i.name for i in missing_files]))
-
-sys.exit(ierr + filerror)

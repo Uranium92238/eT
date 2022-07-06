@@ -34,11 +34,11 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_cvs_eom_degeneracy.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_cvs_eom_degeneracy.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

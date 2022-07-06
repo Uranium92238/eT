@@ -34,11 +34,11 @@ f.extend(g)
 options = cli()
 
 ierr = 0
-for inp in ['cc3_es_remove-core_properties.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'cc3_es_remove-core_properties.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

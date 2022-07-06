@@ -33,11 +33,11 @@ f.append(get_filter(from_string=' Fock matrix construction using density differe
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy_cumulative.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'hf_energy_cumulative.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

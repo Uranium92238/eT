@@ -28,41 +28,19 @@ options = cli()
 
 ierr = 0
 
-#  Run ccsd calculation, filter and compare to reference
-#  - extra arguments -ks and --scratch to keep the scratch 
-#    after the first calculation
-#  - scratch will be in build/tests/test_name/scratch
-#  - If we don't provide the "filters" line, the first output file 
-#    would not be filtered and compared
-#  - We can also provide a second filter list e.g. g to check both 
-#    output files for different things
-#
-for inp in ['hf.inp']:
-    #
-    # the run function runs the code with extra arguments
-    # keep the scratch in the tests folder in build
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-ks --scratch ./scratch')
+inp = 'hf.inp'
+# the run function runs the code with extra arguments
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-ks --scratch ./scratch')
 
-# reset ierr: helpful if the first calculation is supposed to crash
-# e.g. if the calculations has to little iterations to converge
 ierr = 0
-#
-#  Run HF calculation with the same filter list f
-#  We could also provide a different filter list g
-#
-for inp in ['restart_hf.inp']:
-    #
-    # the run function runs the code and filters the outputs
-    # don't provide -ks to delete scratch after succesful run
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='--scratch ./scratch',
-                filters={'out': f})
+inp = 'restart_hf.inp'
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='--scratch ./scratch',
+            filters={'out': f})
 
 sys.exit(ierr)

@@ -29,12 +29,12 @@ g = get_es_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ["plot_ntos_ccsd.inp"]:
-    # the run function runs the code and filters the outputs
-    ierr += run(options, configure,
-                input_files=inp,
-                filters={"r_001_nto_v_001.cube": f,
-                         "r_001_nto_o_001.cube": f,
-                         "out": g})
+inp = "plot_ntos_ccsd.inp"
+# the run function runs the code and filters the outputs
+ierr += run(options, configure,
+            input_files=inp,
+            filters={"r_001_nto_v_001.cube": f,
+                     "r_001_nto_o_001.cube": f,
+                     "out": g})
 
 sys.exit(ierr)
