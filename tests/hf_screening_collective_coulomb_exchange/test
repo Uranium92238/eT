@@ -34,11 +34,11 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['hf_screening_collective_coulomb_exchange.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'hf_screening_collective_coulomb_exchange.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

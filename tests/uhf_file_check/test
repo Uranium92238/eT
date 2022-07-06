@@ -33,13 +33,13 @@ test_dir = Path(__file__).parent
 checkfile = test_dir / "uhf_file_check.mo_information.out"
 
 ierr = 0
-for inp in ['uhf_file_check.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f,
-                         'mo_information.out': g})
+inp = 'uhf_file_check.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f,
+                     'mo_information.out': g})
 
 if checkfile.exists():
     filerror = 0

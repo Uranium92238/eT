@@ -27,11 +27,11 @@ f = get_mlhf_filter(threshold)
 options = cli()
 
 ierr = 0
-for inp in ['mlhf_pao_energy.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'mlhf_pao_energy.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

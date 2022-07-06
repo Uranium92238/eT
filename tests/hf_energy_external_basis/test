@@ -29,12 +29,12 @@ options = cli()
 cwd = str(Path.cwd())
 
 ierr = 0
-for inp in ['hf_energy_external_basis.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f},
-                extra_args='-basis '+cwd+'/tests/hf_energy_external_basis')
+inp = 'hf_energy_external_basis.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f},
+            extra_args='-basis '+cwd+'/tests/hf_energy_external_basis')
 
 sys.exit(ierr)

@@ -19,7 +19,6 @@ from filters import get_eom_filter, get_gs_filter
 assert version_info.major == 2
 
 # construct filter(s)
-
 n_states = 3
 threshold = 1.0e-10
 convergence = True
@@ -32,41 +31,21 @@ f2 = get_eom_filter(n_states, threshold, convergence, restart)
 options = cli()
 
 ierr = 0
+inp = 'ccsd.inp'
+# the run function runs the code with extra arguments
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-ks --scratch ./scratch',
+            filters={'out': f1})
 
-#  Run ccsd calculation, filter and compare to reference
-#  - extra arguments -ks and --scratch to keep the scratch 
-#    after the first calculation
-#  - scratch will be in build/tests/test_name/scratch
-#  - If we don't provide the "filters" line, the first output file 
-#    would not be filtered and compared
-#  - We can also provide a second filter list e.g. g to check both 
-#    output files for different things
-#
-for inp in ['ccsd.inp']:
-    #
-    # the run function runs the code with extra arguments
-    # keep the scratch in the tests folder in build
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-ks --scratch ./scratch',
-                filters={'out': f1}) 
-
-# reset ierr: helpful if the first calculation is supposed to crash
-# e.g. if the calculations has to little iterations to converge
 ierr = 0
-#
-#
-for inp in ['restart_ccsd.inp']:
-    #
-    # the run function runs the code and filters the outputs
-    # don't provide -ks to delete scratch after succesful run
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='--scratch ./scratch',
-                filters={'out': f2})
+
+inp = 'restart_ccsd.inp'
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='--scratch ./scratch',
+            filters={'out': f2})
 
 sys.exit(ierr)

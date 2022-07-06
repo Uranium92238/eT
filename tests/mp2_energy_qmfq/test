@@ -29,11 +29,11 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['mp2_energy_qmfq.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'mp2_energy_qmfq.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

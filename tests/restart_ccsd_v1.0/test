@@ -30,15 +30,13 @@ f = get_eom_filter(n_states, threshold, convergence, restart)
 options = cli()
 
 ierr = 0
-
-for inp in ['restart_ccsd_v1.0.inp']:
-    #
-    # the run function runs the code and filters the outputs
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-load-v1-0 ./old_restart_files',
-                filters={'out': f})
+inp = 'restart_ccsd_v1.0.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-load-v1-0 ./old_restart_files',
+            filters={'out': f})
 
 sys.exit(ierr)
+

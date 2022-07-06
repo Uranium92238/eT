@@ -35,11 +35,11 @@ f.extend(g)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_es_dipole_moments.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_es_dipole_moments.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

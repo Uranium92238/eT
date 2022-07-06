@@ -1,6 +1,7 @@
 # eT v1.9.0
 ### Tests
 - Added checks for cube and auxiliary files to the time-dependent CC tests. eT-program/eT!1096
+- Removed for loop over the inputs in the test scripts. eT-program/eT!1098
 
 # eT v1.8.0
 ### Features

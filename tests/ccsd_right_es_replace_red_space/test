@@ -27,11 +27,11 @@ f = get_es_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_right_es_replace_red_space.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_right_es_replace_red_space.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

@@ -45,5 +45,4 @@ ierr += run(options,
             input_files=inp,
             extra_args='--scratch ./scratch',
             filters={'out': f2})
-
 sys.exit(ierr)

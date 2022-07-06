@@ -27,40 +27,20 @@ options = cli()
 
 ierr = 0
 
-# Run the first mlhf calculation with a maximum number of iterations
-# equal to 5:
-# - extra arguments -ks and --scratch to keep the scratch 
-#   after the first calculation
-# - we are not checking the output on the first calculation;
-#   to do so, add the "filters" line
-#
-for inp in ['mlhf_5_iterations.inp']:
-    #
-    # the run function runs the code with extra arguments
-    # keep the scratch in the tests folder in build
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-ks --scratch ./scratch')
+inp = 'mlhf_5_iterations.inp'
+# the run function runs the code with extra arguments
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-ks --scratch ./scratch')
 
-# reset ierr: helpful if the first calculation is supposed to crash
-# e.g. if the calculations has to little iterations to converge
 ierr = 0
-
-#
-# Run the second mlhf calculation with the keyword "restart"
-# and without a fixed maximum number of iterations
-#
-for inp in ['restart_mlhf.inp']:
-    #
-    # the run function runs the code and filters the outputs
-    # don't provide -ks to delete scratch after succesful run
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='--scratch ./scratch',
-                filters={'out': f})
+inp = 'restart_mlhf.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='--scratch ./scratch',
+            filters={'out': f})
 
 sys.exit(ierr)
