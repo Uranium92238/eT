@@ -1,0 +1,61 @@
+system
+   name: 3H2O
+   charge: 0
+end system
+
+do
+   excited state
+end do
+
+memory
+   available: 8
+end memory
+
+method
+   hf
+   ccsd
+end method
+
+frozen orbitals
+   hf
+   core
+end frozen orbitals
+
+active atoms
+   selection type: list
+   ccsd: {4, 5, 6}
+end active atoms
+
+solver scf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver cc gs
+   energy threshold: 1.0d-11
+   omega threshold:  1.0d-11
+end solver cc gs
+
+solver cc es
+   singlet states: 4
+   residual threshold: 1.0d-11
+   right eigenvectors
+end solver cc es
+
+geometry
+basis: 6-31G
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ H          0.86681        0.60000        0.00000
+ H         -0.86681        0.60000        0.00000
+ O          0.00000       -0.07579        0.00000
+ H          0.86681        0.60200        -5.00000
+ H         -0.86681        0.60200        -5.00000
+ O          0.00000       -0.07579        -5.00000
+end geometry
+

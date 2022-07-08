@@ -2,6 +2,7 @@
 ### Tests
 - Added checks for cube and auxiliary files to the time-dependent CC tests. eT-program/eT!1096
 - Removed for loop over the inputs in the test scripts. eT-program/eT!1098
+- Frozen HF tests with excitation energies and transition moments. eT-program/eT!1101
 
 # eT v1.8.0
 ### Features
