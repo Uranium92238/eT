@@ -23,10 +23,6 @@ method
    mlhf
 end method
 
-multilevel hf
-   inactive coulomb exchange: separated
-end multilevel hf
-
 active atoms
    selection type: list
    hf: {1, 2, 3}

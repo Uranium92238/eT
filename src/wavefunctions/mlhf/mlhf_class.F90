@@ -86,7 +86,6 @@ module mlhf_class
       logical :: full_space_optimization
       logical :: print_initial_hf
       logical :: C_screening
-      logical :: inactive_coulomb_exchange_separated
 !
       real(dp), dimension(:,:), allocatable :: imo_to_mo ! Unitary transformation between initial MO basis (IMO)
                                                            ! and current MO basis
@@ -267,6 +266,8 @@ contains
       call zero_array(wf%frozen_CCT, wf%ao%n**2)
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
+      call wf%set_coulomb_exchange_separation()
 !
       wf%eri_getter = ao_eri_getter(wf%ao)
 !
@@ -1185,7 +1186,6 @@ contains
 !!
 !!    Constructs G(De) in the MO basis
 !!
-!
       use timings_class,     only : timings
 !
       implicit none
@@ -1812,14 +1812,9 @@ contains
 !!    Set Coulomb and exchange separation
 !!    Written by Linda Goletto, Aug 2020
 !!
-!!    If the 'coulomb exchange terms' keyword is defined in the input,
-!!    sets the first element of the wf%coulomb_exchange_separation list
-!!    to 'requested' and the second element to the input request;
-!!    if the 'coulomb exchange terms' keyword is not defined in the input,
-!!    sets the first element of the wf%coulomb_exchange_separation list
-!!    to 'default' and the second element to either 'separated' or
-!!    'collective', according to the number of active AOs being larger or
-!!    smaller/equal to a limit.
+!!    If the 'coulomb exchange terms' keyword is set to 'separated'
+!!    or the number of active AOs is larger than 4000 the Coulomb and
+!!    Exchange parts will be calculated separately.
 !!
       implicit none
 !
@@ -1834,10 +1829,10 @@ contains
       if (input%is_keyword_present('coulomb exchange terms', 'solver scf')) then
 !
          call input%get_keyword('coulomb exchange terms', &
-                                           'solver scf',  &
-                                            coulomb_exchange_separation)
+                                'solver scf',  &
+                                 coulomb_exchange_separation)
 !
-         wf%coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
+         wf%coulomb_exchange_separated = (trim(coulomb_exchange_separation) == 'separated')
 !
       else
 !
@@ -1856,46 +1851,12 @@ contains
       if (wf%coulomb_exchange_separated) then
 !
          call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
-                                                   & matrix separately', fs='(/t3,a)')
+                                 & matrix separately', fs='(/t3,a)')
 !
       else
 !
          call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
-                                                 & matrix collectively', fs='(/t3,a)')
-!
-      endif
-!
-      if (input%is_keyword_present('inactive coulomb exchange', 'multilevel hf')) then
-!
-         call input%get_keyword('inactive coulomb exchange', &
-                                           'multilevel hf',  &
-                                            coulomb_exchange_separation)
-!
-         wf%inactive_coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
-!
-      else
-!
-         if (wf%ao%n .le. n_ao_limit) then
-!
-            wf%inactive_coulomb_exchange_separated = .false.
-!
-         else
-!
-            wf%inactive_coulomb_exchange_separated = .true.
-!
-         endif
-!
-      endif
-!
-      if (wf%inactive_coulomb_exchange_separated) then
-!
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the inactive Fock&
-                                                   & matrix separately', fs='(t3,a)')
-!
-      else
-!
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the inactive Fock&
-                                                 & matrix collectively', fs='(t3,a)')
+                                 & matrix collectively', fs='(/t3,a)')
 !
       endif
 !

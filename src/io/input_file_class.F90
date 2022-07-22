@@ -53,11 +53,11 @@ module input_file_class
       procedure :: close_                                               => close_input_file
 !
       procedure :: read_and_process_input &
-                => read_and_process_input_input_file 
+                => read_and_process_input_input_file
 !
       procedure :: check_for_errors                                     => check_for_errors_input_file
 !
-      procedure :: print_input_except_geometry & 
+      procedure :: print_input_except_geometry &
                 => print_input_except_geometry_input_file
 !
       procedure :: get_n_elements_for_keyword
@@ -105,7 +105,7 @@ module input_file_class
       procedure :: read_keywords_and_geometry => read_keywords_and_geometry_input_file
 !
       procedure :: cleanup &
-                => cleanup_input_file 
+                => cleanup_input_file
 !
       procedure, private :: cleanup_geometry
       procedure, private :: cleanup_keywords
@@ -413,8 +413,7 @@ contains
                       'cholesky threshold',         &
                       'project on minimal basis',   &
                       'cholesky virtuals',          &
-                      'no mo screening',            &
-                      'inactive coulomb exchange']
+                      'no mo screening']
 !
 !
       pcm%name_    = 'pcm'
@@ -772,9 +771,9 @@ contains
 !!    Read and process input
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
-      implicit none 
+      implicit none
 !
-      class(input_file), intent(inout) :: this 
+      class(input_file), intent(inout) :: this
 !
       call this%open_()
       call this%read_keywords_and_geometry()
@@ -787,10 +786,10 @@ contains
 !!
 !!    Print input except geometry
 !!    Written by Eirik F. Kjønstad, May 2022
-!! 
-      implicit none 
+!!
+      implicit none
 !
-      class(input_file), intent(in) :: this 
+      class(input_file), intent(in) :: this
 !
       integer :: n
 !
@@ -803,7 +802,7 @@ contains
 !
          call output%printf('m', this%keyword_lines(n), fs='(t6,a)', ll=120)
 !
-      enddo 
+      enddo
 !
    end subroutine print_input_except_geometry_input_file
 !
@@ -2477,7 +2476,7 @@ contains
 !!
 !!    Includes parts by Eirik F. Kjønstad, Jan 2020
 !!
-!!    Reads input file, extracting information into 
+!!    Reads input file, extracting information into
 !!    this%keyword_lines (input file lines excluding the geometry)
 !!    and into this%qm_geometry and this%mm_geometry.
 !!
@@ -2678,13 +2677,13 @@ contains
 !!    Cleanup
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
-      implicit none 
+      implicit none
 !
-      class(input_file), intent(inout) :: this 
+      class(input_file), intent(inout) :: this
 !
       call this%cleanup_keywords()
       call this%cleanup_geometry()
-! 
+!
    end subroutine cleanup_input_file
 !
 !
