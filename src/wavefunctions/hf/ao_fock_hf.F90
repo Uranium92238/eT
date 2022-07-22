@@ -128,8 +128,6 @@ contains
 !!    Called by solver when a new density has been obtained and
 !!    the next Fock and energy is to be computed.
 !!
-!
-!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -141,8 +139,9 @@ contains
 !
    module subroutine get_G_hf(wf, D, G)
 !!
+!!    Get G
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2022
 !!
-!
       use abstract_G_adder_class,      only: abstract_G_adder
       use abstract_G_screener_class,   only: abstract_G_screener
       use ao_G_builder_class,          only: ao_G_builder
@@ -509,14 +508,9 @@ contains
 !!    Set Coulomb and exchange separation
 !!    Written by Linda Goletto, Aug 2020
 !!
-!!    If the 'coulomb exchange terms' keyword is defined in the input,
-!!    sets the first element of the wf%coulomb_exchange_separation list
-!!    to 'requested' and the second element to the input request;
-!!    if the 'coulomb exchange terms' keyword is not defined in the input,
-!!    sets the first element of the wf%coulomb_exchange_separation list
-!!    to 'default' and the second element to either 'separated' or
-!!    'collective', according to the number of atoms being larger or
-!!    smaller/equal to a limit set to 200.
+!!    If the 'coulomb exchange terms' keyword is set to 'separated'
+!!    or the number of atoms is larger than 200 the Coulomb and
+!!    Exchange parts will be calculated separately.
 !!
       implicit none
 !
@@ -528,8 +522,8 @@ contains
       if (input%is_keyword_present('coulomb exchange terms', 'solver scf')) then
 !
          call input%get_keyword('coulomb exchange terms', &
-                                           'solver scf',  &
-                                            coulomb_exchange_separation)
+                                'solver scf',  &
+                                 coulomb_exchange_separation)
 !
          wf%coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
 !
@@ -550,12 +544,12 @@ contains
       if (wf%coulomb_exchange_separated) then
 !
          call output%printf('v', 'Will perform Coulomb and exchange terms in the Fock&
-                                                   & matrix separately', fs='(/t3,a)')
+                                 & matrix separately', fs='(/t3,a)')
 !
       else
 !
          call output%printf('v', 'Will perform Coulomb and exchange terms in the Fock&
-                                                 & matrix collectively', fs='(/t3,a)')
+                                 & matrix collectively', fs='(/t3,a)')
 !
       endif
 !
@@ -570,6 +564,7 @@ contains
 !!    Sets the screening thresholds for Coulomb and exchange
 !!    integrals given the convergence threshold for the gradient
 !!    unless other thresholds are already set on input.
+!!
       implicit none
 !
       class(hf), intent(inout) :: wf

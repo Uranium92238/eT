@@ -1,3 +1,7 @@
+# eT v1.8.1
+### Bugfixes
+- Fixes bug where keyword `coulomb exchange terms` was not read in MLHF. eT-program/eT!1104
+
 # eT v1.8.0
 ### Features
 - Added calculation of FCI densities and dipole and quadrupole tests. eT-program/eT!1087
