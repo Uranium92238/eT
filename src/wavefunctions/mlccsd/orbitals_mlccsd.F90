@@ -445,7 +445,7 @@ contains
          if (wf%do_cc2 .and. wf%do_ccs) then
 !
             call cd_tool_v%restricted_decomposition(C, wf%n_cc2_v, n_active_aos_ccsd + n_active_aos_cc2, first_ao_ccsd)
-            call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_v), wf%n_cc2_v, wf%n_ccsd_v + 1)
+            call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_v), wf%n_cc2_v, wf%n_o + wf%n_ccsd_v + 1)
 !
             call cd_tool_v%full_decomposition(C, wf%n_ccs_v)
             call wf%set_orbital_coefficients(C(:,1:wf%n_ccs_v), wf%n_ccs_v, wf%n_o + wf%n_ccsd_v + wf%n_cc2_v + 1)

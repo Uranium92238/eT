@@ -1,3 +1,7 @@
+# eT v1.8.2
+### Bugfixes
+- Fix construction of virtual Cholesky orbitals in 3-level MLCCSD. eT-program/eT!1107
+
 # eT v1.8.1
 ### Bugfixes
 - Fixes bug where keyword `coulomb exchange terms` was not read in MLHF. eT-program/eT!1104
