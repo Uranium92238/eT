@@ -106,8 +106,9 @@ contains
 !
    module subroutine get_G_MO_screened_mlhf(wf, D, G)
 !!
+!!    Get G MO screened
+!!    Written by Eirik F. Kjønstad, Linda Goletto, Sarai D. Folkestad, 2018-2022
 !!
-!
       use abstract_G_adder_class,         only: abstract_G_adder
       use abstract_G_tool_factory_class,  only: abstract_G_tool_factory
       use abstract_G_screener_class,      only: abstract_G_screener
