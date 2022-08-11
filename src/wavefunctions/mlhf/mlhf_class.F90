@@ -86,6 +86,7 @@ module mlhf_class
       logical :: full_space_optimization
       logical :: print_initial_hf
       logical :: C_screening
+      logical :: inactive_coulomb_exchange_separated
 !
       real(dp), dimension(:,:), allocatable :: imo_to_mo ! Unitary transformation between initial MO basis (IMO)
                                                            ! and current MO basis
@@ -130,7 +131,7 @@ module mlhf_class
 !
       procedure :: get_G_MO_screened => get_G_MO_screened_mlhf
 !
-      procedure :: prepare_for_cc                           => prepare_for_cc_mlhf
+      procedure :: prepare_for_post_HF_method               => prepare_for_post_HF_method_mlhf
       procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
       procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
       procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
@@ -1778,13 +1779,12 @@ contains
    end subroutine get_full_idempotent_density_mlhf
 !
 !
-   subroutine prepare_for_cc_mlhf(wf)
+   subroutine prepare_for_post_HF_method_mlhf(wf)
 !!
-!!    Prepare for CC
+!!    Prepare for post-HF method
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Prepares frozen fock terms,
-!!    and places energy in hf_energy
+!!    Prepares frozen fock terms, and places energy in hf_energy
 !!
       implicit none
 !
@@ -1794,17 +1794,15 @@ contains
 !
       wf%exists_frozen_fock_terms = .true. ! Always true for MLHF
 !
-!     Change the MOs if frozen core or frozen hf
-!     is requested
+!     Change the MOs if frozen core or frozen hf is requested
 !
       call wf%prepare_mos()
 !
-!     Prepare frozen Fock terms from frozen core
-!     and frozen HF
+!     Prepare frozen Fock terms from frozen core and frozen HF
 !
       call wf%prepare_frozen_fock_terms()
 !
-   end subroutine prepare_for_cc_mlhf
+   end subroutine prepare_for_post_HF_method_mlhf
 !
 !
    subroutine set_coulomb_exchange_separation_mlhf(wf)
@@ -1850,13 +1848,13 @@ contains
 !
       if (wf%coulomb_exchange_separated) then
 !
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
-                                 & matrix separately', fs='(/t3,a)')
+         call output%printf('v', 'Will perform Coulomb and exchange terms &
+                           &in the active Fock matrix separately', fs='(/t3,a)')
 !
       else
 !
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
-                                 & matrix collectively', fs='(/t3,a)')
+         call output%printf('v', 'Will perform Coulomb and exchange terms &
+                           &in the active Fock matrix collectively', fs='(/t3,a)')
 !
       endif
 !

@@ -1,3 +1,7 @@
+# eT v1.8.3
+### Bugfixes
+- Fixed uninitialized `exists_frozen_fock_terms` in FCI. eT-program/eT!1110
+
 # eT v1.8.2
 ### Bugfixes
 - Fix construction of virtual Cholesky orbitals in 3-level MLCCSD. eT-program/eT!1107
