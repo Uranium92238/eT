@@ -4,6 +4,10 @@
 - Removed for loop over the inputs in the test scripts. eT-program/eT!1098
 - Frozen HF tests with excitation energies and transition moments. eT-program/eT!1101
 
+# eT v1.8.3
+### Bugfixes
+- Fixed uninitialized `exists_frozen_fock_terms` in FCI. eT-program/eT!1110
+
 # eT v1.8.2
 ### Bugfixes
 - Fix construction of virtual Cholesky orbitals in 3-level MLCCSD. eT-program/eT!1107
