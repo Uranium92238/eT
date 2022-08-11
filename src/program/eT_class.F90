@@ -26,11 +26,11 @@ module eT_class
 !
    use timings_class, only: timings
 !
-   implicit none 
+   implicit none
 !
    type :: eT
 !
-      type(timings), allocatable, private :: timer 
+      type(timings), allocatable, private :: timer
 !
    contains
 !
@@ -41,7 +41,7 @@ module eT_class
 !
       procedure, private, nopass :: get_and_print_n_threads
       procedure, private, nopass :: set_global_print_levels_in_output_and_timing
-      procedure, private, nopass :: print_compilation_info 
+      procedure, private, nopass :: print_compilation_info
 !
       procedure, private :: print_timestamp
       procedure, private, nopass :: get_date_and_time
@@ -60,26 +60,26 @@ module eT_class
    end type eT
 !
 !
-   interface eT 
+   interface eT
 !
-      procedure :: new_eT 
+      procedure :: new_eT
 !
-   end interface eT 
+   end interface eT
 !
 !
-contains 
+contains
 !
 !
    function new_eT() result(this)
 !!
-!!    New 
+!!    New
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
       use timings_class, only: timings
 !
-      implicit none 
+      implicit none
 !
-      type(eT) :: this 
+      type(eT) :: this
 !
       this%timer = timings("Total time in eT", pl='minimal')
 !
@@ -89,7 +89,7 @@ contains
    subroutine run(this)
 !!
 !!    Run
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Alexander C. Paul, and Rolf H. Myhre, 2018-2022
 !!
       use parameters
@@ -98,11 +98,11 @@ contains
       use timings_class,            only: timings, timing
       use citation_printer_class,   only: eT_citations, citation_printer
       use timings_file_class,       only: timings_file
-      use memory_manager_class,     only: mem 
+      use memory_manager_class,     only: mem
 !
-      implicit none 
+      implicit none
 !
-      class(eT), intent(inout) :: this 
+      class(eT), intent(inout) :: this
 !
       call this%timer%turn_on()
 !
@@ -150,7 +150,7 @@ contains
 !!
       use global_in, only: input
 !
-      implicit none 
+      implicit none
 !
       class(eT), intent(in) :: this
 !
@@ -167,9 +167,9 @@ contains
 !!
       use global_out, only: output
 !
-      implicit none 
+      implicit none
 !
-      class(eT), intent(in) :: this 
+      class(eT), intent(in) :: this
 !
       call output%printf('m', 'Total wall time in eT (sec): (f20.5)', &
                          reals=[this%timer%get_elapsed_time('wall')], fs='(/t3,a)')
@@ -187,9 +187,9 @@ contains
 !!
       use global_out, only: output
 !
-      implicit none 
+      implicit none
 !
-      class(eT), intent(in) :: this 
+      class(eT), intent(in) :: this
 !
       character(len=*), intent(in) :: print_label
 !
@@ -197,7 +197,7 @@ contains
 !
       call this%get_date_and_time(timestamp)
       call output%printf('m', 'Calculation (a0):', chars=[print_label], fs='(/t3,a)', adv=.false.)
-      call output%printf('m', "(a0)", chars=[timestamp], fs='(t1,a)')      
+      call output%printf('m', "(a0)", chars=[timestamp], fs='(t1,a)')
 !
    end subroutine print_timestamp
 !
@@ -210,7 +210,7 @@ contains
       use omp_lib
       use global_out, only: output
 !
-      implicit none 
+      implicit none
 !
       integer :: n_threads
 !
@@ -240,9 +240,9 @@ contains
       use memory_manager_class, only: memory_manager
       use input_file_class, only: input_file
 !
-      implicit none 
+      implicit none
 !
-      class(input_file), intent(in) :: input 
+      class(input_file), intent(in) :: input
 !
       character(len=200) :: mem_unit
       integer(i64)       :: mem_total
@@ -263,7 +263,7 @@ contains
 !
    subroutine run_calculations(this)
 !!
-!!    Run calculations 
+!!    Run calculations
 !!    Written by Eirik F. Kjønstad, May 2022
 !!
       use global_out, only: output
@@ -272,9 +272,9 @@ contains
       use hf_class, only: hf
       use libint_initialization, only: initialize_libint_c, finalize_libint_c
 !
-      implicit none 
+      implicit none
 !
-      class(eT), intent(in) :: this 
+      class(eT), intent(in) :: this
 !
       class(hf), allocatable :: ref_wf
 !
@@ -292,11 +292,12 @@ contains
 !
          if (input%requested_cc_calculation()) then
 !
-            call ref_wf%prepare_for_cc()
+            call ref_wf%prepare_for_post_HF_method()
             call this%run_cc_calculation(ref_wf)
 !
          else if (input%requested_fci_calculation()) then
 !
+            call ref_wf%prepare_for_post_HF_method()
             call this%run_fci_calculation(ref_wf)
 !
          endif
@@ -332,10 +333,10 @@ contains
       implicit none
 !
       class(hf), allocatable, intent(inout)              :: ref_wf
-      class(reference_wavefunction_factory), allocatable :: ref_wf_factory 
+      class(reference_wavefunction_factory), allocatable :: ref_wf_factory
 !
       class(hf_engine), allocatable  :: ref_engine
-      type(reference_engine_factory) :: ref_engine_factory 
+      type(reference_engine_factory) :: ref_engine_factory
 !
       ref_wf_factory = reference_wavefunction_factory()
 !
@@ -399,7 +400,7 @@ contains
       implicit none
 !
       class(hf), intent(in) :: ref_wf
-!  
+!
       class(fci), allocatable                     :: fci_wf
       type(fci_wavefunction_factory), allocatable :: fci_wf_factory
 !
@@ -493,7 +494,7 @@ contains
 !
       implicit none
 !
-      class(eT), intent(in) :: this 
+      class(eT), intent(in) :: this
 !
       call output%printf('m', 'eT (i0).(i0) - an electronic structure program ', &
                       ints=[major_version, minor_version], fs='(///t22,a)')
@@ -559,9 +560,9 @@ contains
       use citation_printer_class, only: eT_citations
       use global_out, only: output
 !
-      implicit none 
+      implicit none
 !
-      class(eT), intent(in) :: this 
+      class(eT), intent(in) :: this
 !
       call mem%print_max_used()
 !

@@ -116,7 +116,7 @@ module hf_class
 !     Preparation and cleanup routines
 !
       procedure :: cleanup                                     => cleanup_hf
-      procedure :: prepare_for_cc                              => prepare_for_cc_hf
+      procedure :: prepare_for_post_HF_method                  => prepare_for_post_HF_method_hf
 !
       procedure :: read_settings                               => read_settings_hf
       procedure :: read_hf_settings                            => read_hf_settings_hf
@@ -639,14 +639,13 @@ contains
    end subroutine cleanup_hf
 !
 !
-   subroutine prepare_for_cc_hf(wf)
+   subroutine prepare_for_post_HF_method_hf(wf)
 !!
-!!    Prepare for CC
+!!    Prepare for post-HF method
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Prepares frozen Fock terms and sets the HF energy
 !!
-!
       use array_utilities, only : zero_array
 !
       implicit none
@@ -657,9 +656,7 @@ contains
 !
 !     Check if there are frozen Fock contributions; if not, return
 !
-      if ((.not. wf%frozen_core) .and. &
-          (.not. wf%frozen_hf_MOs) .and. &
-          (.not. wf%embedded)) then
+      if (.not. (wf%frozen_core .or. wf%frozen_hf_MOs .or. wf%embedded)) then
 !
          call output%printf('v', 'No frozen fock contributions!', fs='(/t3,a)')
          wf%exists_frozen_fock_terms = .false.
@@ -683,7 +680,7 @@ contains
 !
       call wf%prepare_frozen_fock_terms()
 !
-   end subroutine prepare_for_cc_hf
+   end subroutine prepare_for_post_HF_method_hf
 !
 !
    subroutine construct_ao_density_hf(wf)
