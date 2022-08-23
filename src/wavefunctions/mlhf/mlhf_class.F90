@@ -131,7 +131,7 @@ module mlhf_class
 !
       procedure :: get_G_MO_screened => get_G_MO_screened_mlhf
 !
-      procedure :: prepare_for_cc                           => prepare_for_cc_mlhf
+      procedure :: prepare_for_post_HF_method               => prepare_for_post_HF_method_mlhf
       procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
       procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
       procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
@@ -267,6 +267,8 @@ contains
       call zero_array(wf%frozen_CCT, wf%ao%n**2)
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
+!
+      call wf%set_coulomb_exchange_separation()
 !
       wf%eri_getter = ao_eri_getter(wf%ao)
 !
@@ -1185,7 +1187,6 @@ contains
 !!
 !!    Constructs G(De) in the MO basis
 !!
-!
       use timings_class,     only : timings
 !
       implicit none
@@ -1778,13 +1779,12 @@ contains
    end subroutine get_full_idempotent_density_mlhf
 !
 !
-   subroutine prepare_for_cc_mlhf(wf)
+   subroutine prepare_for_post_HF_method_mlhf(wf)
 !!
-!!    Prepare for CC
+!!    Prepare for post-HF method
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Prepares frozen fock terms,
-!!    and places energy in hf_energy
+!!    Prepares frozen fock terms, and places energy in hf_energy
 !!
       implicit none
 !
@@ -1794,17 +1794,15 @@ contains
 !
       wf%exists_frozen_fock_terms = .true. ! Always true for MLHF
 !
-!     Change the MOs if frozen core or frozen hf
-!     is requested
+!     Change the MOs if frozen core or frozen hf is requested
 !
       call wf%prepare_mos()
 !
-!     Prepare frozen Fock terms from frozen core
-!     and frozen HF
+!     Prepare frozen Fock terms from frozen core and frozen HF
 !
       call wf%prepare_frozen_fock_terms()
 !
-   end subroutine prepare_for_cc_mlhf
+   end subroutine prepare_for_post_HF_method_mlhf
 !
 !
    subroutine set_coulomb_exchange_separation_mlhf(wf)
@@ -1812,14 +1810,9 @@ contains
 !!    Set Coulomb and exchange separation
 !!    Written by Linda Goletto, Aug 2020
 !!
-!!    If the 'coulomb exchange terms' keyword is defined in the input,
-!!    sets the first element of the wf%coulomb_exchange_separation list
-!!    to 'requested' and the second element to the input request;
-!!    if the 'coulomb exchange terms' keyword is not defined in the input,
-!!    sets the first element of the wf%coulomb_exchange_separation list
-!!    to 'default' and the second element to either 'separated' or
-!!    'collective', according to the number of active AOs being larger or
-!!    smaller/equal to a limit.
+!!    If the 'coulomb exchange terms' keyword is set to 'separated'
+!!    or the number of active AOs is larger than 4000 the Coulomb and
+!!    Exchange parts will be calculated separately.
 !!
       implicit none
 !
@@ -1834,10 +1827,10 @@ contains
       if (input%is_keyword_present('coulomb exchange terms', 'solver scf')) then
 !
          call input%get_keyword('coulomb exchange terms', &
-                                           'solver scf',  &
-                                            coulomb_exchange_separation)
+                                'solver scf',  &
+                                 coulomb_exchange_separation)
 !
-         wf%coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
+         wf%coulomb_exchange_separated = (trim(coulomb_exchange_separation) == 'separated')
 !
       else
 !
@@ -1855,47 +1848,13 @@ contains
 !
       if (wf%coulomb_exchange_separated) then
 !
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
-                                                   & matrix separately', fs='(/t3,a)')
+         call output%printf('v', 'Will perform Coulomb and exchange terms &
+                           &in the active Fock matrix separately', fs='(/t3,a)')
 !
       else
 !
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the active Fock&
-                                                 & matrix collectively', fs='(/t3,a)')
-!
-      endif
-!
-      if (input%is_keyword_present('inactive coulomb exchange', 'multilevel hf')) then
-!
-         call input%get_keyword('inactive coulomb exchange', &
-                                           'multilevel hf',  &
-                                            coulomb_exchange_separation)
-!
-         wf%inactive_coulomb_exchange_separated = (coulomb_exchange_separation == 'separated')
-!
-      else
-!
-         if (wf%ao%n .le. n_ao_limit) then
-!
-            wf%inactive_coulomb_exchange_separated = .false.
-!
-         else
-!
-            wf%inactive_coulomb_exchange_separated = .true.
-!
-         endif
-!
-      endif
-!
-      if (wf%inactive_coulomb_exchange_separated) then
-!
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the inactive Fock&
-                                                   & matrix separately', fs='(t3,a)')
-!
-      else
-!
-         call output%printf('v', 'Will perform Coulomb and exchange terms in the inactive Fock&
-                                                 & matrix collectively', fs='(t3,a)')
+         call output%printf('v', 'Will perform Coulomb and exchange terms &
+                           &in the active Fock matrix collectively', fs='(/t3,a)')
 !
       endif
 !
