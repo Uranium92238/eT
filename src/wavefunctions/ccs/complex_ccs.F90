@@ -20,7 +20,7 @@
 submodule (ccs_class) complex_ccs
 !
 !!
-!!    Complex submodule 
+!!    Complex submodule
 !!
 !!    Gathers routines that makes the CCS wavefunction complex, and that are otherwise related to
 !!    the complex wavefunction.
@@ -362,6 +362,86 @@ contains
                          fs='(t6,a)')
 !
    end subroutine integral_factory_complex
+!
+!
+   module subroutine calculate_energy_omega_term_ccs_complex(wf)
+!!
+!!    Calculate energy_complex omega term (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2019
+!!
+!!    Adds multipliers dot omega to the energy_complex,
+!!
+!!       energy_complex += sum_mu tbar_mu Omega_mu,
+!!
+!!    which appears in the energy_complex expression:
+!!
+!!          < Lambda|H|CC > when Omega != 0.
+!!
+!!    This routine does not have to be overwritten in descendants.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      complex(dp), dimension(:), allocatable :: multipliers, omega
+!
+!
+      call mem%alloc(multipliers, wf%n_gs_amplitudes)
+      call mem%alloc(omega, wf%n_gs_amplitudes)
+!
+      call wf%get_multipliers_complex(multipliers)
+      call wf%construct_omega_complex(omega)
+!
+      wf%energy_complex = wf%energy_complex + zdot(wf%n_gs_amplitudes, multipliers, 1, omega, 1)
+!
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+      call mem%dealloc(omega, wf%n_gs_amplitudes)
+!
+   end subroutine calculate_energy_omega_term_ccs_complex
+!
+!
+   module subroutine calculate_energy_length_dipole_term_ccs_complex(wf, electric_field)
+!!
+!!    Calculate energy_complex length dipole term (CCS)
+!!    Written by Andreas Skeidsvoll, Jan 2019
+!!
+!!    Adds dipole part of the length gauge electromagnetic potential to the energy_complex,
+!!
+!!       energy_complex += 2 sum_ii (-mu·E)_ii,
+!!
+!!    where mu is the vector of electric dipole integral matrices
+!!    and E is a uniform classical electric
+!!    vector field. This routine does not have to be overwritten in descendants.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      complex(dp), dimension(3), intent(in) :: electric_field
+!
+      complex(dp), dimension(:,:,:), allocatable :: mu
+!
+      integer :: i
+!
+!     Construct t1_complex transformed dipole moment
+!
+      call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
+      call wf%get_t1_oei_complex('dipole', mu)
+!
+!     Add one_complex-electron electric field contribution to the diagonal
+!     of Fock and one_complex-electron integral terms
+!
+      do i = 1, wf%n_o
+!
+         wf%energy_complex = wf%energy_complex - two_complex*(mu(i, i, 1)*electric_field(1)   &
+                                      + mu(i, i, 2)*electric_field(2) &
+                                      + mu(i, i, 3)*electric_field(3))
+!
+      enddo
+!
+      call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
+!
+   end subroutine calculate_energy_length_dipole_term_ccs_complex
 !
 !
 end submodule complex_ccs

@@ -214,7 +214,6 @@ contains
 !
 !     Active
 !
-!
       call cd_tool_o%restricted_decomposition(C, wf%n_cc2_o, n_active_aos, first_ao)
       call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_o), wf%n_cc2_o, 1)
 !
@@ -1328,7 +1327,7 @@ contains
                   wf%n_mo)
 !
       do i = 1, wf%n_mo
-         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-6) then
+         if (abs(I2(i,i) - one) .gt. 1.0d-6) then
             call output%error_msg(trim(wf%name_)//' orbitals are not normal')
          endif
       enddo
@@ -1336,7 +1335,7 @@ contains
       do i = 1, wf%n_mo
          do j = 1, i-1
             if (abs(I2(i,j)) .gt. 1.0d-6) then
-            call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
+               call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
             endif
          enddo
       enddo
