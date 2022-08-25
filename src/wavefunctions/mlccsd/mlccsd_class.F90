@@ -159,9 +159,6 @@ module mlccsd_class
       procedure :: get_amplitudes               => get_amplitudes_mlccsd
       procedure :: set_amplitudes               => set_amplitudes_mlccsd
 !
-      procedure :: form_newton_raphson_t_estimate &
-                  => form_newton_raphson_t_estimate_mlccsd
-!
 !     Jacobian transformation
 !
       procedure :: jacobian_transformation    => jacobian_transformation_mlccsd
@@ -538,7 +535,7 @@ contains
       if (wf%n_cc2_o < 0 .or. wf%n_ccs_o < 0 .or. &
           wf%n_cc2_v < 0 .or. wf%n_ccs_v < 0 ) call output%error_msg('negative orbital space size.')
 !
-      if (wf%n_ccsd_o +wf%n_cc2_o + wf%n_ccs_o .ne. wf%n_o) &
+      if (wf%n_ccsd_o + wf%n_cc2_o + wf%n_ccs_o .ne. wf%n_o) &
          call output%error_msg('occupied spaces do not add to n_o.')
 !
       if (wf%n_ccsd_v + wf%n_cc2_v + wf%n_ccs_v .ne. wf%n_v) &
@@ -1144,57 +1141,6 @@ contains
       call mem%dealloc(g_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
    end subroutine set_t2_to_cc2_guess_mlccsd
-!
-!
-   subroutine form_newton_raphson_t_estimate_mlccsd(wf, t, dt)
-!!
-!!    Form Newton-Raphson t estimate
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
-!!
-!!    The correction is assumed to be obtained from either
-!!    solving the Newton-Raphson equation
-!!
-!!       A dt = -omega,
-!!
-!!    where A and omega are given in the biorthonormal basis,
-!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon)
-!!
-!!        dt = -omega/epsilon
-!!
-!!    Epsilon is the vector of orbital differences.
-!!
-!!    On exit, t = t + dt, where the appropriate basis change has been accounted
-!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
-!!    dt is expressed in the basis compatible with t.
-!!
-      implicit none
-!
-      class(mlccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t
-!
-      integer :: ai, aiai
-!
-!     Change dt doubles diagonal to match the definition of the
-!     double amplitudes
-!
-!$omp parallel do private(ai, aiai)
-      do ai = 1, wf%n_ccsd_o*wf%n_ccsd_v
-!
-         aiai = ai*(ai - 3)/2 + 2*ai
-         dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
-!
-      enddo
-!$omp end parallel do
-!
-!     Add the dt vector to the t vector
-!
-      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
-!
-   end subroutine form_newton_raphson_t_estimate_mlccsd
 !
 !
    subroutine cleanup_mlccsd(wf)

@@ -107,23 +107,15 @@ contains
       real(dp), dimension(wf%n_singlet_states), intent(in) :: energies
       character(len=*), intent(in) :: side
 !
-      if (trim(side) .eq. 'right') then 
+      if (trim(side) .eq. 'right') then
 !
          call dcopy(wf%n_singlet_states, energies, 1, &
                     wf%right_excitation_energies, 1)
 !
-      elseif (trim(side) .eq. 'left') then 
+      elseif (trim(side) .eq. 'left') then
 !
          call dcopy(wf%n_singlet_states, energies, 1, &
                     wf%left_excitation_energies, 1)
-!
-      elseif (trim(side) .eq. 'both') then 
-!
-         call dcopy(wf%n_singlet_states, energies, 1, &
-                    wf%left_excitation_energies, 1)
-!
-         call dcopy(wf%n_singlet_states, energies, 1, &
-                    wf%right_excitation_energies, 1)
 !
       endif
 !

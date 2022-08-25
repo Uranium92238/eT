@@ -306,7 +306,6 @@ set(eT_fortran_sources
    src/tools/record_storer_class.F90
    src/tools/string_utilities.F90
    src/tools/visualization_class.F90
-   src/tools/task_list_class.F90
    src/tools/z_matrix_tool_class.F90
    src/tools/electrostatics/point_charges_class.F90
    src/tools/electrostatics/point_charge_class.F90

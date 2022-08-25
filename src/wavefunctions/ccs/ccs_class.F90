@@ -315,7 +315,6 @@ module ccs_class
 !
 !     Procedures related to the multiplier solver
 !
-      procedure :: print_banner_davidson_cc_multipliers          => print_banner_davidson_cc_multipliers_ccs
       procedure :: get_initial_cc_multipliers                    => get_initial_cc_multipliers_ccs
       procedure :: cc_multipliers_summary                        => cc_multipliers_summary_ccs
 !
@@ -357,10 +356,7 @@ module ccs_class
       procedure :: calculate_energy                              => calculate_energy_ccs
       procedure :: calculate_energy_complex                      => calculate_energy_ccs_complex
 !
-      procedure :: calculate_energy_omega_term                   => calculate_energy_omega_term_ccs
       procedure :: calculate_energy_omega_term_complex           => calculate_energy_omega_term_ccs_complex
-!
-      procedure :: calculate_energy_length_dipole_term           => calculate_energy_length_dipole_term_ccs
       procedure :: calculate_energy_length_dipole_term_complex   => calculate_energy_length_dipole_term_ccs_complex
 !
       procedure :: compute_eom_transition_moments                => compute_eom_transition_moments_ccs
