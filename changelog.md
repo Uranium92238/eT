@@ -8,6 +8,10 @@
 ### Structure
 - Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
 
+# eT v1.8.4
+### Bugfixes
+- Fixed bug where visualizing the active hf density was giving a plot of the hf density. eT-program/eT!1113
+
 # eT v1.8.3
 ### Bugfixes
 - Fixed uninitialized `exists_frozen_fock_terms` in FCI. eT-program/eT!1110
@@ -30,7 +34,7 @@
 - Removed unused routines in stream\_file.F90. eT-program/eT!1069
 - Removed unused routines in array\_utilities.F90. eT-program/eT!1071
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074 and eT-program/eT!1080
-- Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers.  eT-program/eT!1076
+- Remove frequency from transformation tool. Dummy frequencies removed from general linear and general eigen davidson solvers. eT-program/eT!1076
 - Restructured eT program and added factories for engines and wavefunctions. eT-program/eT!1074
 - `Transformation_tools` renamed to transformation. eT-program/eT!1054
 - Davidson tool now counts the number of new trials. eT-program/eT!1089
