@@ -75,6 +75,9 @@ contains
       this%mean_value = hf_mean_value_task()
       call this%mean_value%execute(wf)
 !
+!     If we don't prepare here, we cannot plot active HF densities
+      call wf%prepare_for_post_HF_method()
+!
       this%visualization = hf_visualization_task()
       call this%visualization%execute(wf)
 !
@@ -118,4 +121,4 @@ contains
 !
 !
    end module hf_gs_engine_class
-   
+

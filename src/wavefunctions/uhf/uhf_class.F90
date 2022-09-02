@@ -146,8 +146,6 @@ module uhf_class
 !
       procedure :: set_n_mo                              => set_n_mo_uhf
 !
-      procedure :: cleanup                               => cleanup_uhf
-!
       procedure :: get_F                                 => get_F_uhf
       procedure :: set_C_and_e                           => set_C_and_e_uhf
       procedure :: diagonalize_fock  => diagonalize_fock_uhf
@@ -883,31 +881,6 @@ contains
 !
    end subroutine write_orbital_info_uhf
 !
-!
-   subroutine cleanup_uhf(wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(uhf) :: wf
-!
-      call wf%save_ao_density()
-!
-!     Deallocations
-!
-      call wf%destruct_orbital_energies()
-      call wf%destruct_orbital_coefficients()
-      call wf%destruct_fock()
-      call wf%destruct_ao_density()
-!
-      call wf%destruct_mo_fock()
-!
-      deallocate(wf%ao)
-      if (wf%embedded) deallocate(wf%embedding)
-!
-   end subroutine cleanup_uhf
 !
    subroutine get_F_uhf(wf, F_packed)
 !!
