@@ -292,12 +292,10 @@ contains
 !
          if (input%requested_cc_calculation()) then
 !
-            call ref_wf%prepare_for_post_HF_method()
             call this%run_cc_calculation(ref_wf)
 !
          else if (input%requested_fci_calculation()) then
 !
-            call ref_wf%prepare_for_post_HF_method()
             call this%run_fci_calculation(ref_wf)
 !
          endif
