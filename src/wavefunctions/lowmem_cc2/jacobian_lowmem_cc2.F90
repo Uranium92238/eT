@@ -111,7 +111,6 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ji once at the beginning of the calculation
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -145,8 +144,7 @@ contains
 !
 !     X_ji   = L_kcjb t^cb_ki
 !
-      call mem%alloc(X_ji, wf%n_o, wf%n_o)
-      call zero_array(X_ji, wf%n_o**2)
+      call mem%alloc(X_ji, wf%n_o, wf%n_o, set_zero=.true.)
 !
       req0 = 0
 !
@@ -282,7 +280,6 @@ contains
 !!    Transferred here as separate subroutine in order to only
 !!    compute X_ab once at the beginning of the calculation
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -315,8 +312,7 @@ contains
 !
 !     X_ab = t_akcj L_kcjb
 !
-      call mem%alloc(X_ab, wf%n_v, wf%n_v)
-      call zero_array(X_ab, wf%n_v**2)
+      call mem%alloc(X_ab, wf%n_v, wf%n_v, set_zero=.true.)
 !
       req0 = 0
 !
@@ -434,7 +430,7 @@ contains
 !!
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -505,7 +501,6 @@ contains
 !!       X_ab  =  L_kcjb t^ac_kj
 !!       X_ji   = L_kcjb t^cb_ki
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !
       implicit none
@@ -579,9 +574,7 @@ contains
                                    batch_j%first, batch_j%get_last(),  &
                                    1, wf%n_v)
 !
-            call mem%alloc(L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
-!
-            call zero_array(L_kcbj, batch_k%length*batch_j%length*wf%n_v**2)
+            call mem%alloc(L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length, set_zero=.true.)
 !
             call add_1243_to_1234(two, g_kcjb, L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
             call add_1342_to_1234(-one, g_kcjb, L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
@@ -1160,7 +1153,6 @@ contains
 !!
 !!    Integrals, g_akbc and g_bjac, moved out of i batching loop
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1423_to_1234, add_2413_to_1234
 !
       implicit none
@@ -1299,9 +1291,7 @@ contains
                call wf%eri_t1%get('ooov', g_kijb, 1, wf%n_o, batch_i%first, batch_i%get_last(), &
                                                       1, wf%n_o, batch_b%first, batch_b%get_last())
 !
-               call mem%alloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
-!
-               call zero_array(L_kjbi, wf%n_o**2*batch_b%length*batch_i%length)
+               call mem%alloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length, set_zero=.true.)
 !
                call add_1423_to_1234(two, g_kijb, L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
                call add_2413_to_1234(-one, g_kijb, L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
@@ -1738,7 +1728,6 @@ contains
 !!
 !!    Integral, g_abkc, moved out of i batching loop
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !
       implicit none
@@ -1882,9 +1871,7 @@ contains
 !
 !              L_abkc = 2 g_abkc - g_ackb ordered as L_abck
 !
-               call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
-!
-               call zero_array(L_abck, batch_a%length*(wf%n_v**2)*batch_k%length)
+               call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length, set_zero=.true.)
 !
                call add_1243_to_1234(two, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
                call add_1342_to_1234(-one, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)

@@ -41,7 +41,7 @@ contains
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

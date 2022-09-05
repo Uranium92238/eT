@@ -69,7 +69,7 @@ contains
 !!
 !!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -164,7 +164,6 @@ contains
 !!          = sum_bjJ (2 L^J_bj L^J_ia b_bj - L^J_baL^J_ij b_bj)
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_132
 !
       implicit none
@@ -191,8 +190,7 @@ contains
       timer = timings('Jacobian transpose CCS B1', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(X_J, wf%eri_t1%n_J)
-      call zero_array(X_J, wf%eri_t1%n_J)
+      call mem%alloc(X_J, wf%eri_t1%n_J, set_zero=.true.)
 !
       batch_j = batching_index(wf%n_o)
 !

@@ -583,7 +583,6 @@ contains
 !!    Construct X2 in packed form and store in wf%x2
 !!
 !!
-      use array_utilities, only: zero_array
       use reordering, only: packin
 !
       implicit none
@@ -597,9 +596,8 @@ contains
       call mem%alloc(x_aibj, wf%n_ccsd_v + wf%n_cc2_v, &
                              wf%n_ccsd_o + wf%n_cc2_o, &
                              wf%n_ccsd_v + wf%n_cc2_v, &
-                             wf%n_ccsd_o + wf%n_cc2_o)
-!
-      call zero_array(x_aibj, ((wf%n_ccsd_v + wf%n_cc2_v)**2)*((wf%n_ccsd_o + wf%n_cc2_o)**2))
+                             wf%n_ccsd_o + wf%n_cc2_o, &
+                             set_zero=.true.)
 !
       if (wf%do_cc2) call wf%construct_cc2_amplitudes(x_aibj)
 !
@@ -642,7 +640,7 @@ contains
 !!    Note: assumes wf%x2 in memory
 !!
       use reordering, only: squareup, add_1432_to_1234
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -1033,7 +1031,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1256,8 +1254,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf

@@ -48,7 +48,7 @@ contains
 !!
 !!    Creates intermediates needed in the jacobian transpose calculation.
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
       use reordering, only: squareup, add_3214_to_1234
       use reordering, only: add_2143_to_1234, add_2341_to_1234
 !
@@ -106,8 +106,7 @@ contains
 !
 !     Construct L_ovov ordered as L_vovo and make d2, e2, and f2 intermediates
 !
-      call mem%alloc(L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_vovo, wf%n_o**2 * wf%n_v**2)
+      call mem%alloc(L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_2143_to_1234(two, g_ovov, L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o )
       call add_2341_to_1234(-one, g_ovov, L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -143,7 +142,7 @@ contains
 !!
       use reordering, only: squareup, packin, symmetric_sum
       use reordering, only: sort_1234_to_1324, sort_1234_to_1324
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -193,8 +192,7 @@ contains
 !     Add the CCSD contributions to the doubles vector arising from
 !     the incoming singles vector
 !
-      call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(sigma_aibj, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%jacobian_transpose_doubles_a2(sigma_aibj, b(1 : wf%n_t1))
 !
@@ -493,7 +491,6 @@ contains
 !!    Modified by Tor S. Haugland, Nov 2019
 !!    Reads intermediate for term 3 from the file 'jacobian_transpose_e1_intermediate'.
 !!
-      use array_utilities, only: zero_array
       use reordering, only: squareup, add_3421_to_1234, add_2431_to_1234
 !
       implicit none
@@ -575,8 +572,7 @@ contains
 !     Form L_aiml = L_mlia = 2 * g_mlia - g_mail
 !                          = 2 * g_mlia - g_ilma
 !
-      call mem%alloc(L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call zero_array(L_aiml, wf%n_v*wf%n_o**3)
+      call mem%alloc(L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o, set_zero=.true.)
 !
       call add_3421_to_1234(two, g_mlia, L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call add_2431_to_1234(-one, g_mlia, L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -618,7 +614,6 @@ contains
 !!    and adds it to the transformed vector sigma_ai.
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: squareup, sort_123_to_132
       use reordering, only: sort_123_to_132, sort_1234_to_2431
       use reordering, only: add_21_to_12, sort_123_to_312
@@ -740,14 +735,9 @@ contains
       call sort_1234_to_2431(X_eldi, X_lide, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_eldi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(Y_liJ, wf%n_o, wf%n_o, wf%eri_t1%n_J)
-      call zero_array(Y_liJ, wf%n_o**2*wf%eri_t1%n_J)
-!
-      call mem%alloc(X_ia, wf%n_o, wf%n_v)
-      call zero_array(X_ia, wf%n_o*wf%n_v)
-!
-      call mem%alloc(Y_J, wf%eri_t1%n_J)
-      call zero_array(Y_J, wf%eri_t1%n_J)
+      call mem%alloc(Y_liJ, wf%n_o, wf%n_o, wf%eri_t1%n_J, set_zero=.true.)
+      call mem%alloc(X_ia, wf%n_o, wf%n_v, set_zero=.true.)
+      call mem%alloc(Y_J, wf%eri_t1%n_J, set_zero=.true.)
 !
 !     Contractions with L_J_vv
 !
@@ -881,7 +871,6 @@ contains
 !!
 !!    (A. S. and S. D. F. Nov 2019)
 !!
-      use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_4132, sort_1234_to_2314
       use reordering, only: add_4123_to_1234, add_3421_to_1234
 !
@@ -955,8 +944,7 @@ contains
 !
 !      Reorder and add the intermediates to X_kdli
 !
-      call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(X_kdli, wf%n_o**3 * wf%n_v)
+      call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
       call add_4123_to_1234(one, X_ikdl, X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call add_3421_to_1234(one, X_lidk, X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -1144,7 +1132,6 @@ contains
 !!    (T. H. S., Oct 2019)
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_1324, sort_1234_to_3241
 !
       implicit none
@@ -1178,8 +1165,7 @@ contains
       call mem%alloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call sort_1234_to_1324(t_aibj, t_cekl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(X_idkl, wf%n_v*wf%n_o**3)
+      call mem%alloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
 !     Prepare for batching over d
 !
@@ -1267,7 +1253,6 @@ contains
 !!    Reads intermediate for term 1 from the file 'jacobian_transpose_g1_intermediate'.
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: squareup_and_sort_1234_to_2314
       use reordering, only: sort_1234_to_3214, add_21_to_12
 !
@@ -1395,11 +1380,9 @@ contains
 !
 !     Contractions with L_J_vv
 !
-      call mem%alloc(s_ia, wf%n_o, wf%n_v)
-      call zero_array(s_ia, wf%n_o*wf%n_v)
+      call mem%alloc(s_ia, wf%n_o, wf%n_v, set_zero=.true.)
 !
-      call mem%alloc(Y_J_oo, wf%eri_t1%n_J, wf%n_o, wf%n_o)
-      call zero_array(Y_J_oo, wf%eri_t1%n_J*wf%n_o**2)
+      call mem%alloc(Y_J_oo, wf%eri_t1%n_J, wf%n_o, wf%n_o, set_zero=.true.)
 !
       req0 = 0
       req1 = wf%eri_t1%n_J*wf%n_v
@@ -1490,7 +1473,6 @@ contains
 !!    and adds it to the transformed vector sigma_aibj.
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, sort_123_to_132, sort_1234_to_1243
 !
       implicit none
@@ -1528,8 +1510,7 @@ contains
 !
 !     Reorder to b_aijc = b_aicj
 !
-      call mem%alloc(b_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call zero_array(b_aijc, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(b_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v, set_zero=.true.)
 !
       call sort_1234_to_1243(b_aibj, b_aijc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1627,8 +1608,7 @@ contains
 !
 !     Prepare to batch over b to make g_cb_jk = g_cbjk successively
 !
-      call mem%alloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(g_ckbj, (wf%n_o*wf%n_v)**2) ! g_cbjk reordered
+      call mem%alloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.) ! g_cbjk reordered
 !
       rec0 = wf%n_o**2*wf%eri_t1%n_J
       rec1 = wf%n_v*wf%eri_t1%n_J  + (wf%n_o**2)*(wf%n_v)
@@ -1711,7 +1691,6 @@ contains
 !!
       use batching_index_class, only: batching_index
       use reordering, only: add_1423_to_1234, sort_1234_to_1432, add_1432_to_1234
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -1795,8 +1774,7 @@ contains
 !
 !     Make g_ckbi = g_cbik in batches over b
 !
-      call mem%alloc(g_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(g_ckbi, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(g_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       rec0 = wf%n_o**2*wf%eri_t1%n_J
       rec1 = wf%n_v*wf%eri_t1%n_J  + (wf%n_o**2)*(wf%n_v)
@@ -2178,7 +2156,6 @@ contains
 !!
       use reordering, only: squareup, add_4321_to_1234, add_4123_to_1234
       use reordering, only: sort_1234_to_3412, add_1432_to_1234
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -2238,8 +2215,7 @@ contains
 !     Form L_dibj = L_jbid = 2 * g_jbid - g_jdib
 !                          = 2 * g_jbid(j,b,i,d) - g_jbid(j,d,i,b)
 !
-      call mem%alloc(L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_dibj, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_4321_to_1234(two, g_jbid, L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_jbid, L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -2272,8 +2248,7 @@ contains
 !
 !     Form L_dlbi = L_ldib = L_dibj(b,i,d,l)
 !
-      call mem%alloc(L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_dlbi, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call sort_1234_to_3412(L_dibj, L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

@@ -39,7 +39,7 @@ contains
 !!    Call either cumulative or non-cumulative updating depending on options
 !!
 !
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

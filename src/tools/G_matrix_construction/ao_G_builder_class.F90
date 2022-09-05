@@ -35,7 +35,7 @@ module ao_G_builder_class
    use ao_eri_getter_class,         only: ao_eri_getter
 !
    use memory_manager_class,        only: mem
-   use array_utilities,             only: zero_array
+   use array_initialization,        only: zero_array
    use reordering,                  only: symmetric_sum
 !
    use abstract_G_screener_class,   only: abstract_G_screener
@@ -150,8 +150,7 @@ contains
 !
 !$    n_threads = omp_get_max_threads()
 !
-      call mem%alloc(G_thread, ao%n, ao%n, n_threads)
-      call zero_array(G_thread, (ao%n**2)*n_threads)
+      call mem%alloc(G_thread, ao%n, ao%n, n_threads, set_zero=.true.)
 !
 !$omp parallel do private(s1, s2, s3, s3_tilde, s4, s1s2, s3s4, s1s2_packed, s4_max, s4_tilde, eri, &
 !$omp degeneracy_12, degeneracy_34, degeneracy_12_34, degeneracy, skip, thread, s1s2_tilde, D_max_s1s2s3s4) &

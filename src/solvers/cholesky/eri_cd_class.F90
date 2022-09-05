@@ -3145,7 +3145,7 @@ contains
 !!
 !!    Passes the Cholesky vectors to the integrals (eri_tool)
 !!
-      use array_utilities, only: zero_array, transpose_
+      use array_utilities, only: transpose_
       use abstract_eri_cholesky_class, only: abstract_eri_cholesky
       use batching_index_class, only: batching_index
       use reordering, only: sort_123_to_213, sort_123_to_312
@@ -3220,8 +3220,7 @@ contains
 !
       call this%Q_inverse%open_('read', 'rewind')
 !
-      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky)
-      call zero_array(aux_chol_inverse, this%n_cholesky**2)
+      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky, set_zero=.true.)
 !
       do I = 1, this%n_cholesky
 !
@@ -3302,8 +3301,7 @@ contains
 !
          do K_shp = 1, n_shp_in_basis
 !
-            call mem%alloc(g_wxK, n_ao, n_ao, basis_shell_info(K_shp,4))
-            call zero_array(g_wxK, n_ao**2*basis_shell_info(K_shp,4))
+            call mem%alloc(g_wxK, n_ao, n_ao, basis_shell_info(K_shp,4), set_zero=.true.)
 !
             C = basis_shell_info(K_shp, 1)
             D = basis_shell_info(K_shp, 2)
@@ -3485,7 +3483,7 @@ contains
 !!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
 !!
 !
-      use array_utilities, only: zero_array, transpose_, get_abs_max
+      use array_utilities, only: transpose_, get_abs_max
       use batching_index_class, only: batching_index
 !
       implicit none
@@ -3552,8 +3550,7 @@ contains
 !
       call this%Q_inverse%open_('read', 'rewind')
 !
-      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky)
-      call zero_array(aux_chol_inverse, this%n_cholesky**2)
+      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky, set_zero=.true.)
 !
       do I = 1, this%n_cholesky
 !
@@ -3695,8 +3692,7 @@ contains
 !
          call batch_J%determine_limits(current_J_batch)
 !
-         call mem%alloc(L_wxJ, n_construct_aop, batch_J%length)
-         call zero_array(L_wxJ, n_construct_aop*batch_J%length)
+         call mem%alloc(L_wxJ, n_construct_aop, batch_J%length, set_zero=.true.)
 !
          do K_shp = 1, n_shp_in_basis
 !

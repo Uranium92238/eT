@@ -80,7 +80,8 @@ contains
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup, symmetric_sum, packin
 !
       implicit none
@@ -127,8 +128,7 @@ contains
 !
 !     CC2 contributions to the transformed doubles vector
 !
-      call mem%alloc(rho_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-      call zero_array(rho_aibj, (wf%n_cc2_o**2)*(wf%n_cc2_v**2))
+      call mem%alloc(rho_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, set_zero=.true.)
 !
 !     Contributions from singles vector c
 !
@@ -575,7 +575,7 @@ contains
 !!          a : unrestricted
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array, copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_1243_to_1234, add_1342_to_1234, add_3214_to_1234
       use reordering, only: add_1432_to_1234, sort_1234_to_3214
 !
@@ -612,8 +612,7 @@ contains
 !
 !     Make X_aijb = 2 c_aibj - c_ajbi
 !
-      call mem%alloc(X_aijb, n_cc2_v, n_cc2_o, n_cc2_o, n_cc2_v)
-      call zero_array(X_aijb, (n_cc2_v**2)*(n_cc2_o**2))
+      call mem%alloc(X_aijb, n_cc2_v, n_cc2_o, n_cc2_o, n_cc2_v, set_zero=.true.)
 !
       call add_1243_to_1234(two, c_aibj, X_aijb, n_cc2_v, n_cc2_o, n_cc2_o, n_cc2_v)
       call add_1342_to_1234(-one, c_aibj, X_aijb, n_cc2_v, n_cc2_o, n_cc2_o, n_cc2_v)

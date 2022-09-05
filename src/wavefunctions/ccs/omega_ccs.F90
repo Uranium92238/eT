@@ -38,7 +38,7 @@ contains
 !!    Construct Omega (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

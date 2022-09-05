@@ -87,15 +87,12 @@ contains
 !!    Set the number of rows and collumns of the array.
 !!    Allocate the array
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(cholesky_block_node) :: node
 !
-      call mem%alloc(node%array, node%n_J, node%range_p%length, node%range_q%length)
-      call zero_array(node%array, node%n_J*node%range_p%length*node%range_q%length)
+      call mem%alloc(node%array, node%n_J, node%range_p%length, node%range_q%length, &
+                     set_zero=.true.)
 !
    end subroutine initialize_cholesky_block_node
 !

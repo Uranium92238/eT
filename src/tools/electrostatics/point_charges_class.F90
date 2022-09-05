@@ -29,7 +29,7 @@ module point_charges_class
    use memory_manager_class, only: mem
    use global_out,           only: output
 !
-   implicit none 
+   implicit none
 !
    type :: point_charges
 !
@@ -37,7 +37,7 @@ module point_charges_class
       real(dp), dimension(:,:), allocatable  :: r
       real(dp), dimension(:),   allocatable  :: q
 !
-   contains 
+   contains
 !
       procedure :: initialize &
                 => initialize_point_charges
@@ -57,7 +57,7 @@ module point_charges_class
                 => get_quadrupole_point_charges
 !
       procedure :: get_coulomb_interaction_1der &
-                => get_coulomb_interaction_1der_point_charges 
+                => get_coulomb_interaction_1der_point_charges
 !
       procedure :: get_potential_at_external_points &
                 => get_potential_at_external_points_point_charges
@@ -65,13 +65,13 @@ module point_charges_class
    end type point_charges
 !
 !
-   interface point_charges 
+   interface point_charges
 !
-      procedure :: new_point_charges 
+      procedure :: new_point_charges
 !
    end interface point_charges
 !
-contains  
+contains
 !
 !
    pure function new_point_charges(n_charges) result(this)
@@ -124,7 +124,7 @@ contains
 !!    Get coulomb interaction
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2020
 !!
-!!    Calculates 
+!!    Calculates
 !!
 !!       E = sum_(i != j)  1/2 q_i q_j / |r_i - r_j|
 !!
@@ -143,7 +143,7 @@ contains
       do i = 1, this%n_charges
          do j = i + 1, this%n_charges
 !
-            r_ij = this%r(:,i) - this%r(:, j) 
+            r_ij = this%r(:,i) - this%r(:, j)
 !
             abs_r_ij = sqrt(r_ij(1)**2 + r_ij(2)**2 + r_ij(3)**2)*angstrom_to_bohr
 !
@@ -151,7 +151,7 @@ contains
                call output%error_msg('two charges are placed on top of each other.')
 !
             E = E + this%q(i)*this%q(j)/abs_r_ij
-! 
+!
          enddo
       enddo
 !
@@ -163,11 +163,11 @@ contains
 !!    Get coulomb interaction
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2020
 !!
-!!    Calculate 
+!!    Calculate
 !!
 !!       E = sum_(i != j)  1/2 q_i q_j / |r_i - r_j|
 !!
-!!    for two different sets of point chares   
+!!    for two different sets of point chares
 !!
       implicit none
 !
@@ -185,7 +185,7 @@ contains
       do i = 1, this%n_charges
          do j = 1, that%n_charges
 !
-            r_ij = this%r(:,i) - that%r(:, j) 
+            r_ij = this%r(:,i) - that%r(:, j)
 !
             abs_r_ij = sqrt(r_ij(1)**2 + r_ij(2)**2 + r_ij(3)**2)*angstrom_to_bohr
 !
@@ -207,12 +207,12 @@ contains
 !!
 !!    Calculates and returns the potential on external charges from the nuclei
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
       class(point_charges),                        intent(in)  :: this
-      integer,                                     intent(in)  :: n_external_charges 
+      integer,                                     intent(in)  :: n_external_charges
       real(dp), dimension(3, n_external_charges),  intent(in)  :: r
       real(dp), dimension(n_external_charges),     intent(out) :: potential
 !
@@ -225,7 +225,7 @@ contains
       do p = 1, n_external_charges
          do i = 1, this%n_charges
 !
-            r_ip = this%r(:,i) - r(:, p) 
+            r_ip = this%r(:,i) - r(:, p)
 !
             abs_r_ip = sqrt(r_ip(1)**2 + r_ip(2)**2 + r_ip(3)**2)*angstrom_to_bohr
 !
@@ -246,22 +246,22 @@ contains
 !
    pure function get_dipole_point_charges(this) result(d)
 !!
-!!    Get dipole 
-!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!    Get dipole
+!!    Written by Eirik F. Kjønstad, Apr 2019
 !!
-!!    Calculates the dipole moment for a set of point charges    
+!!    Calculates the dipole moment for a set of point charges
 !!
-      implicit none 
+      implicit none
 !
-      class(point_charges), intent(in) :: this 
+      class(point_charges), intent(in) :: this
 !
-      real(dp), dimension(3) :: d 
+      real(dp), dimension(3) :: d
 !
-      integer :: i 
+      integer :: i
 !
-      d = zero 
+      d = zero
 !
-      do i = 1, this%n_charges 
+      do i = 1, this%n_charges
 !
          d(:) = d(:) + this%q(i) * this%r(:,i)
 !
@@ -274,27 +274,27 @@ contains
 !
    pure function get_quadrupole_point_charges(this) result(q)
 !!
-!!    Get quadrupole 
-!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!    Get quadrupole
+!!    Written by Eirik F. Kjønstad, Apr 2019
 !!
 !!    Returns the quadrupole q ordered as xx, xy, xz, yy, yz, zz
 !!
-      implicit none 
+      implicit none
 !
-      class(point_charges), intent(in) :: this 
+      class(point_charges), intent(in) :: this
 !
-      real(dp), dimension(6) :: Q 
+      real(dp), dimension(6) :: Q
 !
       integer :: j
 !
-      Q = zero 
+      Q = zero
 !
-      do j = 1, this%n_charges  
+      do j = 1, this%n_charges
 !
-         Q(1) = Q(1) + this%R(1, j) * this%R(1, j) * this%q(j) 
-         Q(2) = Q(2) + this%R(1, j) * this%R(2, j) * this%q(j) 
+         Q(1) = Q(1) + this%R(1, j) * this%R(1, j) * this%q(j)
+         Q(2) = Q(2) + this%R(1, j) * this%R(2, j) * this%q(j)
          Q(3) = Q(3) + this%R(1, j) * this%R(3, j) * this%q(j)
-         Q(4) = Q(4) + this%R(2, j) * this%R(2, j) * this%q(j) 
+         Q(4) = Q(4) + this%R(2, j) * this%R(2, j) * this%q(j)
          Q(5) = Q(5) + this%R(2, j) * this%R(3, j) * this%q(j)
          Q(6) = Q(6) + this%R(3, j) * this%R(3, j) * this%q(j)
 !
@@ -310,7 +310,7 @@ contains
 !!    Get coulomb interaction 1der
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2020
 !!
-!!    Calculates first derivative of Coulomb interaction energy 
+!!    Calculates first derivative of Coulomb interaction energy
 !!
       implicit none
 !
@@ -326,7 +326,7 @@ contains
 !
       E = zero
 !
-      do i = 1, this%n_charges 
+      do i = 1, this%n_charges
          do j = 1, i - 1
 !
             r_ij = (this%r(:,i) - this%r(:,j)) * angstrom_to_bohr

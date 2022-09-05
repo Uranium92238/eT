@@ -90,7 +90,8 @@ contains
 !!    left transition density, as the equations are the same, but the
 !!    required information is different for the left GS and the left ES.
 !!
-      use array_utilities, only: add_to_subblock, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: add_to_subblock
 !
       implicit none
 !
@@ -181,7 +182,7 @@ contains
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: sort_12_to_21, sort_1234_to_3412
       use reordering, only: construct_covariant_1324
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -266,7 +267,7 @@ contains
 !!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
 !!
       use omp_lib
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
       use reordering, only: construct_contravariant_t3
 !
       implicit none
@@ -360,8 +361,7 @@ contains
       n_threads = 1
 !
 !$    n_threads = omp_get_max_threads()
-      call mem%alloc(density_oo_thread, wf%n_o, wf%n_o, n_threads)
-      call zero_array(density_oo_thread, wf%n_o**2*n_threads)
+      call mem%alloc(density_oo_thread, wf%n_o, wf%n_o, n_threads, set_zero=.true.)
 !
       batch_a = batching_index(wf%n_v)
       batch_b = batching_index(wf%n_v)
@@ -798,7 +798,6 @@ contains
 !!       rho^L_cd += 1/2 sum_{abijk} tbar^abc_ijk t^abd_ijk
 !!
       use reordering, only: construct_contravariant_t3, add_21_to_12
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -925,11 +924,9 @@ contains
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(tbar_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%alloc(density_ai, wf%n_v, wf%n_o)
-      call zero_array(density_ai, wf%n_t1)
+      call mem%alloc(density_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
-      call mem%alloc(Y_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call zero_array(Y_clik, wf%n_v*wf%n_o**3)
+      call mem%alloc(Y_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o, set_zero=.true.)
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !

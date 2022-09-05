@@ -173,7 +173,7 @@ contains
 !!    Use saved intermediates to construct Y_ik and Y_ca.
 !!    Create intermediate X_kc using transpose to save time re-ordering g_iakc
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: sort_12_to_21, add_1432_to_1234, sort_12_to_21
 !
       implicit none
@@ -451,7 +451,7 @@ contains
 !!    Now uses BLAS dger for outer-product instead of for-loops.
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array, copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: sort_12_to_21, add_1432_to_1234
       use reordering, only: add_2143_to_1234, add_4123_to_1234
 !
@@ -486,8 +486,7 @@ contains
       call mem%alloc(F_ai, wf%n_v, wf%n_o)
       call sort_12_to_21(wf%fock_ia, F_ai, wf%n_o, wf%n_v)
 !
-      call mem%alloc(sigma_aibj_temp, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(sigma_aibj_temp, wf%n_o**2 * wf%n_v**2)
+      call mem%alloc(sigma_aibj_temp, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call dger(wf%n_v * wf%n_o,    &
                 wf%n_v * wf%n_o,    &
@@ -512,8 +511,7 @@ contains
       call mem%alloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ooov', g_ikjb)
 !
-      call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_kibj, (wf%n_o**3)*wf%n_v)
+      call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -537,8 +535,7 @@ contains
 !
 !     Term 4: L_cajb c_ci
 !
-      call mem%alloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(sigma_ajbi, wf%n_t1**2)
+      call mem%alloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       req0 = (wf%n_v)*(wf%n_o)*(wf%eri_t1%n_J)
       req1 = max((wf%n_v)*(wf%eri_t1%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)

@@ -46,17 +46,17 @@ contains
 !!    F(X) mu transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
 !!
-!!    Directs the transformation by the excited configuration contribution (mu) 
+!!    Directs the transformation by the excited configuration contribution (mu)
 !!    of the F matrix:
 !!
 !!       F'(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
 !!
 !!    with < X / = < mu / X_mu. For the full F transformation, see F_transformation
-!!    routine.   
+!!    routine.
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup, symmetric_sum, packin
 !
       implicit none
@@ -69,7 +69,7 @@ contains
       real(dp), dimension(wf%n_t1 + wf%n_t2), intent(in) :: x
 !
       real(dp), dimension(:,:), allocatable     :: c_ai, x_ai, rho_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, x_aibj, rho_aibj 
+      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, x_aibj, rho_aibj
 !
       type(timings), allocatable :: timer
 !
@@ -77,12 +77,10 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(c_ai,   wf%n_v, wf%n_o)
-      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
+      call mem%alloc(rho_ai, wf%n_v, wf%n_o, set_zero=.true.)
       call mem%alloc(x_ai,   wf%n_v, wf%n_o)
 !
       call dcopy(wf%n_t1, x, 1, x_ai, 1)
-!
-      call zero_array(rho_ai, wf%n_v*wf%n_o)
 !
       call dcopy(wf%n_t1, c, 1, c_ai, 1)
 !
@@ -112,9 +110,7 @@ contains
       call dcopy(wf%n_t1, rho_ai, 1, rho, 1)
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(rho_aibj, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%F_doubles_a2_1(c_ai, rho_aibj, x_ai)
 !
@@ -142,7 +138,6 @@ contains
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_4123_to_1234, sort_1234_to_3214
 !
       implicit none
@@ -170,9 +165,7 @@ contains
 !
       call wf%eri_t1%get('ovov',g_iajb)
 !
-      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(L_aibj, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
       call add_2143_to_1234(two, g_iajb, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_iajb, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -347,7 +340,7 @@ contains
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_1432_to_1234, sort_12_to_21
       use reordering, only: add_4321_to_1234, add_2143_to_1234
 !

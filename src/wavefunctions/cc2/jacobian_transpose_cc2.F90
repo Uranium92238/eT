@@ -77,7 +77,7 @@ contains
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
 !!    sent to the routine.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: squareup, symmetric_sum, packin
 !
       implicit none
@@ -114,8 +114,7 @@ contains
 !
 !     :: CC2 contributions to the transformed doubles vector ::
 !
-      call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(sigma_aibj, wf%n_t1**2)
+      call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
 !     Contributions from singles vector b
 !

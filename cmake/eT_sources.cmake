@@ -290,6 +290,7 @@ set(eT_fortran_sources
    src/tools/rectangular_full_packed_utilities_r.F90
    src/tools/generated_tools/rectangular_full_packed_utilities_c.F90
    src/tools/timings_class.F90
+   src/tools/array_initialization.F90
    src/tools/array_utilities.F90
    src/tools/packed_array_utilities_r.F90
    src/tools/generated_tools/packed_array_utilities_c.F90

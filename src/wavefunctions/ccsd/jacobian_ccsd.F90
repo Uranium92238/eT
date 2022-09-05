@@ -89,7 +89,8 @@ contains
 !!    On exit, c is overwritten by rho. That is, c_ai = rho_ai,
 !!    and c_aibj = rho_aibj.
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: symmetric_sum, sort_1234_to_1324, squareup
       use reordering, only: packin_and_add_from_1324_order
 !
@@ -118,12 +119,10 @@ contains
 !     CCSD contributions
 !
       call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(rho_aibj, wf%n_t1**2)
       call squareup(c(wf%n_t1+1:), c_aibj, wf%n_t1)
-!
       call scale_diagonal(two, c_aibj, wf%n_t1)
+!
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
 !     Contributions from singles vector c
 !
@@ -352,7 +351,6 @@ contains
 !!    rho_aibj^C2 = sum_kcl g_ljkc (t_ki^ac c_bl + t_li^bc c_ak + t_lk^ba c_ci)
 !!                 - sum_kcl L_ljkc (t_il^ab c_ck + t_ik^ac c_bl)
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234, sort_1234_to_3142
       use reordering, only: sort_1234_to_1342, add_3124_to_1234
       use reordering, only: add_1243_to_1234, add_4213_to_1234
@@ -520,8 +518,7 @@ contains
 !                  1234   = 2 * g_ljkc - g_kjlc = 2* g_kj_lc(kj,lc) - g_kj_lc(lj,kc)
 !                                                            4213             1243
 !
-      call mem%alloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_ljck, (wf%n_o**3)*wf%n_v)
+      call mem%alloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_1243_to_1234(two, g_ljkc, L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4213_to_1234(-one, g_ljkc, L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -640,7 +637,7 @@ contains
 !!                                      = X_bd t_aidj
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
       use reordering, only: sort_12_to_21, sort_123_to_213, sort_1234_to_4132
       use reordering, only: sort_1234_to_1432, sort_1234_to_3241
       use reordering, only: sort_1234_to_1243, sort_1234_to_1423
@@ -750,14 +747,11 @@ contains
 !
 !     Make intermediates that require L_J_vv
 !
-      call mem%alloc(V_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o)
-      call zero_array(V_J_vo, wf%L_t1%n_J * wf%n_v * wf%n_o)
+      call mem%alloc(V_J_vo, wf%L_t1%n_J, wf%n_v, wf%n_o, set_zero=.true.)
 !
-      call mem%alloc(WL_oovv, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-      call zero_array(WL_oovv, wf%n_v**2 * wf%n_o**2)
+      call mem%alloc(WL_oovv, wf%n_o, wf%n_o, wf%n_v, wf%n_v, set_zero=.true.)
 !
-      call mem%alloc(N_vv, wf%n_v, wf%n_v)
-      call zero_array(N_vv, wf%n_v**2)
+      call mem%alloc(N_vv, wf%n_v, wf%n_v, set_zero=.true.)
 !
       req0 = 0
       req1 = wf%L_t1%load_memory_estimate(wf%n_o + 1, wf%n_mo, wf%n_o + 1, wf%n_o + 1)
@@ -1061,7 +1055,7 @@ contains
 !!
 !!    which is constructed in prepare_for_jacobian
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -1122,7 +1116,6 @@ contains
 !!    L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kcld(kc,ld) - 2*g_kcld(kd,lc)
 !!
       use reordering, only: add_4123_to_1234, add_4321_to_1234, squareup
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -1152,8 +1145,7 @@ contains
 !
 !     Construct L_ckdl reordered as L_dlck
 !
-      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_dlck, wf%n_t1**2)
+      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
 !     L_dlck(d,l,c,k) =- g_kcld(k,d,l,c) (4123)
 !
@@ -1512,7 +1504,6 @@ contains
 !!    rho_aibj^I2 = sum_ck L_bj,kc * c_ai,ck
 !!                - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj )
 !!
-      use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_2314, sort_1234_to_1432
       use reordering, only: add_3421_to_1234, add_3124_to_1234, add_3214_to_1234
 !
@@ -1600,9 +1591,7 @@ contains
 !
 !     Construct L_bjkc ordered as L_ckbj = 2 g_bjkc - g_bckj
 !
-      call mem%alloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(L_ckbj, (wf%n_t1)**2)
+      call mem%alloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_3421_to_1234(two, g_bjkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2006,7 +1995,6 @@ contains
 !!    which is a wf variable.
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: squareup_and_sort_1234_to_2413
       use reordering, only: sort_1234_to_4231, sort_1234_to_3124
 !
@@ -2026,8 +2014,7 @@ contains
       timer = timings('Jacobian CCSD D2 intermediate construction', pl='verbose')
       call timer%turn_on()
 !
-      call mem%alloc(X_kijb_full, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call zero_array(X_kijb_full, (wf%n_o**3)*wf%n_v)
+      call mem%alloc(X_kijb_full, wf%n_o, wf%n_o, wf%n_o, wf%n_v, set_zero=.true.)
 !
 !     Order amplitudes as t_ij_cd = t_ij^cd = t_ci_dj
 !
@@ -2129,7 +2116,6 @@ contains
 !!    which is a wf variable
 !!
       use reordering, only: add_2143_to_1234, add_2341_to_1234, squareup
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -2148,9 +2134,7 @@ contains
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ovov', g_ldkc)
 !
-      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(L_dlck, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
       call add_2143_to_1234(two, g_ldkc, L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_ldkc, L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2220,7 +2204,6 @@ contains
 !!
       use reordering, only: add_2143_to_1234, add_2341_to_1234
       use reordering, only: squareup, sort_1234_to_1432
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -2240,9 +2223,8 @@ contains
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ovov', g_ldkc)
 !
-      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
-      call zero_array(L_dlck, (wf%n_v**2)*(wf%n_o**2))
       call add_2143_to_1234(two, g_ldkc, L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_ldkc, L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

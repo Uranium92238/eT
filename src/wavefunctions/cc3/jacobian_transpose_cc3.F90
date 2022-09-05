@@ -55,7 +55,7 @@ contains
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale, zero_array
       use reordering, only: construct_covariant_1324, symmetrize_add_to_packed
 !
       implicit none
@@ -86,8 +86,7 @@ contains
 !
 !     Compute CC3 contributions to sigma
 !
-      call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(sigma_abij, (wf%n_v*wf%n_o)**2)
+      call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
 !     Construct covariant _b_abij = 1/3 (2 b^ab_ij + b^ba_ij)
 !
@@ -246,7 +245,6 @@ contains
 !!           u^abc_ijk = 4t^abc_ijk + t_bca_ijk + t_cab_ijk
 !!                     - 2t^acb_ijk - 2t_cba_ijk - 2t_bac_ijk
 !!
-      use array_utilities, only: zero_array
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
 !
@@ -307,8 +305,7 @@ contains
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Array for the whole intermediate X_ai
-      call mem%alloc(X_ai, wf%n_v, wf%n_o)
-      call zero_array(X_ai, wf%n_t1)
+      call mem%alloc(X_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
@@ -728,7 +725,7 @@ contains
 !!
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_contravariant_t3
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -851,8 +848,7 @@ contains
 !
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call zero_array(Y_cmjk, wf%n_v*wf%n_o**3)
+      call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o, set_zero=.true.)
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
@@ -864,7 +860,7 @@ contains
 !
          call mem%alloc(g_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-         call mem%alloc(Y_ebci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%alloc(Y_ebci, wf%n_v, wf%n_v, wf%n_v, wf%n_o, set_zero=.true.)
 !
          if (wf%n_o .le. wf%n_v) then
             call mem%alloc(sorting, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
@@ -900,9 +896,9 @@ contains
          call mem%alloc(g_ibkc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
          call mem%alloc(g_jbkc, wf%n_v, wf%n_v, batch_i%max_length, batch_i%max_length)
 !
-         call mem%alloc(Y_ebci, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
-         call mem%alloc(Y_ebcj, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
-         call mem%alloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(Y_ebci, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length, set_zero=.true.)
+         call mem%alloc(Y_ebcj, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length, set_zero=.true.)
+         call mem%alloc(Y_ebck, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length, set_zero=.true.)
 !
          if (wf%n_o .le. wf%n_v) then
             call mem%alloc(sorting, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
@@ -1583,7 +1579,7 @@ contains
 !!    sigma_cl += sum_bek Y_ebck * g_lkbe
 !!    sigma_bl += sum_cek Y_ebck * g_leck
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: sort_1234_to_2134, sort_123_to_132, sort_123_to_312
 !
       implicit none

@@ -45,7 +45,8 @@ contains
 !!    for the current amplitudes of the object wfn
 !!
       use reordering, only: squareup, symmetric_sum, sort_1234_to_1324, packin
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
 !
       implicit none
 !
@@ -76,8 +77,7 @@ contains
 !
 !     Construct doubles contributions
 !
-      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(omega_aibj, wf%n_t1**2)
+      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, wf%n_t1)
@@ -600,7 +600,7 @@ contains
       use packed_array_utilities_r, only: construct_full_contra_in_place
       use packed_array_utilities_r, only: symmetrize_and_pack
       use packed_array_utilities_r, only: construct_1432_and_contra
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: sort_1234_to_1324, sort_1234_to_1432, add_3421_to_1234, add_3421_to_1234
       use reordering, only: sort_1234_to_2314, sort_1234_to_2341
 
@@ -729,7 +729,7 @@ contains
 !!    Both are permuted added to the projection vector element omega2(ai,bj) of
 !!    the wavefunction object wf.
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_1432_to_1234
 !
       implicit none
@@ -888,7 +888,7 @@ contains
 !!       u_aibj = 2t_aibj - t_ajbi
 !!
       use reordering, only: squareup, add_1432_to_1234
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

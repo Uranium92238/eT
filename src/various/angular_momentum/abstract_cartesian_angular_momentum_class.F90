@@ -53,7 +53,7 @@ contains
 !!
 !!    Return angular part of the AOs evaluated at x, y, z
 !!
-      use array_utilities, only: constant_array
+      use array_initialization, only: constant_array
 !
       implicit none
 !

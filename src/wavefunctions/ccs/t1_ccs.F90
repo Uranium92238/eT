@@ -48,7 +48,7 @@ contains
 !!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
 !!    part, where it is equal to t_i^a.
 !!
-      use array_utilities, only: zero_array, sandwich
+      use array_utilities, only: sandwich
 !
       implicit none
 !
@@ -62,11 +62,8 @@ contains
 !
 !     Construct the X and Y arrays
 !
-      call mem%alloc(X, wf%n_mo, wf%n_mo)
-      call mem%alloc(Y, wf%n_mo, wf%n_mo)
-!
-      call zero_array(X, (wf%n_mo)**2)
-      call zero_array(Y, (wf%n_mo)**2)
+      call mem%alloc(X, wf%n_mo, wf%n_mo, set_zero=.true.)
+      call mem%alloc(Y, wf%n_mo, wf%n_mo, set_zero=.true.)
 !
 !$omp parallel do private(p)
       do p = 1, wf%n_mo
@@ -119,7 +116,7 @@ contains
 !!
 !!    Based on t1_transform_ccs by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      use array_utilities, only: zero_array, sandwich
+      use array_utilities, only: sandwich
 !
       implicit none
 !
@@ -133,11 +130,8 @@ contains
 !
 !     Construct the X and Y arrays
 !
-      call mem%alloc(X, wf%n_mo, wf%n_mo)
-      call mem%alloc(Y, wf%n_mo, wf%n_mo)
-!
-      call zero_array(X, (wf%n_mo)**2)
-      call zero_array(Y, (wf%n_mo)**2)
+      call mem%alloc(X, wf%n_mo, wf%n_mo, set_zero=.true.)
+      call mem%alloc(Y, wf%n_mo, wf%n_mo, set_zero=.true.)
 !
 !$omp parallel do private(p)
       do p = 1, wf%n_mo

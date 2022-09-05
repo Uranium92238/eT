@@ -792,7 +792,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -829,7 +829,7 @@ contains
 !!    Set initial multipliers guess
 !!    Written by Alexander C. Paul , Oct 2020
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -987,7 +987,7 @@ contains
 !!    Wrapper for a lower-level Jacobian transformation that is the best approximation
 !!    with a lower computational scaling.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use warning_suppressor
 !
       implicit none
@@ -1048,8 +1048,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -1083,7 +1081,7 @@ contains
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
 !
-      use array_utilities, only: constant_array
+      use array_initialization, only: constant_array
 !
       implicit none
 !
@@ -1328,7 +1326,7 @@ contains
 !!    Makes bath orbital with all corresponding integrals
 !!    zero
 !!
-      use array_utilities, only: zero_array, copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -1345,8 +1343,8 @@ contains
 !
       call wf%destruct_orbital_coefficients()
 !
-      call mem%alloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo + wf%n_bath_orbitals)
-      call zero_array(wf%orbital_coefficients, wf%ao%n*(wf%n_mo + wf%n_bath_orbitals))
+      call mem%alloc(wf%orbital_coefficients, wf%ao%n, wf%n_mo + wf%n_bath_orbitals, &
+                     set_zero=.true.)
 !
 !$omp parallel do private(p, x)
       do p = 1, wf%n_mo
@@ -1365,8 +1363,7 @@ contains
       call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
 !
       call wf%destruct_orbital_energies()
-      call mem%alloc(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
-      call zero_array(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
+      call mem%alloc(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals, set_zero=.true.)
 !
 !
 !$omp parallel do private(p)
@@ -1390,9 +1387,7 @@ contains
          call wf%destruct_mo_fock_frozen()
          call mem%alloc(wf%mo_fock_frozen, &
                         wf%n_mo + wf%n_bath_orbitals, &
-                        wf%n_mo + wf%n_bath_orbitals)
-!
-         call zero_array(wf%mo_fock_frozen, (wf%n_mo+wf%n_bath_orbitals)**2)
+                        wf%n_mo + wf%n_bath_orbitals, set_zero=.true.)
 !
 !$omp parallel do private(p, q)
          do p = 1, wf%n_mo
@@ -1451,8 +1446,6 @@ contains
 !!    Only excitations into the last virtual orbital
 !!    (the bath orbital) are allowed.
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1515,7 +1508,7 @@ contains
       use reordering, only: sort_12_to_21, sort_123_to_231, sort_1234_to_3412
       use reordering, only: symmetric_sum, packin
       use direct_stream_file_class, only: direct_stream_file
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_utilities, only: scale_diagonal
       use sequential_file_class, only: sequential_file
 !
       implicit none
@@ -2867,7 +2860,7 @@ contains
 !!    See J. Chem. Phys. 150, 194112 (2019) for further
 !!    details
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

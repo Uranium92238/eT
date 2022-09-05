@@ -44,7 +44,7 @@ contains
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -125,7 +125,6 @@ contains
 !!
 !!       Y_ba = sum_bj t_bjck L_kcja = - sum_bj g_bjck L_kcja / ε_bjck
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_3214_to_1234, add_3412_to_1234
       use reordering, only: add_1432_to_1234, add_2143_to_1234, add_2341_to_1234
 !
@@ -165,11 +164,9 @@ contains
       batch_j = batching_index(wf%n_o)
       batch_k = batching_index(wf%n_o)
 !
-      call mem%alloc(X_ck, wf%n_v, wf%n_o)
-      call zero_array(X_ck, wf%n_v*wf%n_o)
+      call mem%alloc(X_ck, wf%n_v, wf%n_o, set_zero=.true.)
 !
-      call mem%alloc(Y_ba, wf%n_v, wf%n_v)
-      call zero_array(Y_ba, wf%n_v**2)
+      call mem%alloc(Y_ba, wf%n_v, wf%n_v, set_zero=.true.)
 !
       call mem%batch_setup(batch_j, batch_k, req0, req1(1), req1(2), req2, &
                            tag='jacobian_transpose_cc2_a1_lowmem_cc2 1')
@@ -191,9 +188,7 @@ contains
                                    batch_j%first, batch_j%get_last(),  &
                                    1, wf%n_v)
 !
-            call mem%alloc(L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
-!
-            call zero_array(L_jcka, (wf%n_v**2)*(batch_j%length)*(batch_k%length))
+            call mem%alloc(L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v, set_zero=.true.)
 !
             call add_3214_to_1234(two, g_kcja, L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
             call add_3412_to_1234(-one, g_kcja, L_jcka, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
@@ -240,9 +235,7 @@ contains
 !
 !           X_ck = sum_bj u_ckbj b_bj
 !
-            call mem%alloc(u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-!
-            call zero_array(u_ckbj, (wf%n_v**2)*(batch_k%length)*(batch_j%length))
+            call mem%alloc(u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length, set_zero=.true.)
 !
             call add_3412_to_1234(two, g_bjck, u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
             call add_1432_to_1234(-one, g_bjck, u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
@@ -319,9 +312,7 @@ contains
                                    batch_k%first, batch_k%get_last(),  &
                                    1, wf%n_v)
 !
-            call mem%alloc(L_aick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
-!
-            call zero_array(L_aick, (wf%n_v**2)*(batch_i%length)*(batch_k%length))
+            call mem%alloc(L_aick, wf%n_v, batch_i%length, wf%n_v, batch_k%length, set_zero=.true.)
 !
             call add_2143_to_1234(two, g_iakc, L_aick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
             call add_2341_to_1234(-one, g_iakc, L_aick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
@@ -372,7 +363,6 @@ contains
 !!
 !!       X_ij = sum_bck t_ckbj L_ibkc
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_3412_to_1234, add_1432_to_1234
 !
       implicit none
@@ -408,8 +398,7 @@ contains
 !
       req2 = 2*wf%n_o**2
 !
-      call mem%alloc(X_ij, wf%n_o, wf%n_o)
-      call zero_array(X_ij, wf%n_o**2)
+      call mem%alloc(X_ij, wf%n_o, wf%n_o, set_zero=.true.)
 !
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
@@ -435,8 +424,7 @@ contains
                                    1, wf%n_o,                    &
                                    batch_c%first, batch_c%get_last())
 !
-            call mem%alloc(L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
-            call zero_array(L_ickb, (wf%n_o**2)*(batch_c%length)*(batch_b%length))
+            call mem%alloc(L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length, set_zero=.true.)
 !
             call add_3412_to_1234(-one, g_ibkc, L_ickb, wf%n_o, batch_c%length, wf%n_o, batch_b%length)
 !
@@ -790,7 +778,7 @@ contains
 !!
 !!    The term is calculated in batches over the k, b, c
 !!
-      use array_utilities, only: zero_array, copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_3214_to_1234, add_2143_to_1234, add_4321_to_1234
 !
       implicit none
@@ -848,8 +836,7 @@ contains
 !
             call batch_c%determine_limits(current_c_batch)
 !
-            call mem%alloc(X_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
-            call zero_array(X_bjci, (wf%n_o**2)*(batch_b%length)*(batch_c%length))
+            call mem%alloc(X_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o, set_zero=.true.)
 !
             do current_k_batch = 1, batch_k%num_batches
 !
@@ -1097,7 +1084,6 @@ contains
 !!
 !!    The term is calculated in batches over the k and j.
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_4321_to_1234, add_4123_to_1234
       use reordering, only: add_2143_to_1234, add_2341_to_1234
 !
@@ -1171,8 +1157,7 @@ contains
 !
             call mem%dealloc(g_jbkl, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
-            call mem%alloc(Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-            call zero_array(Y_akbj, (wf%n_v**2)*(batch_k%length)*(batch_j%length))
+            call mem%alloc(Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length, set_zero=.true.)
 !
             call add_4321_to_1234(two, X_jbka, Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
             call add_4123_to_1234(-one, X_jbka, Y_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
@@ -1261,7 +1246,7 @@ contains
 !!
 !!    The term is calculated in batches over the k, j and c indices.
 !!
-      use array_utilities, only: zero_array, copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_1432_to_1234, add_2143_to_1234, add_4321_to_1234
 !
       implicit none
@@ -1319,8 +1304,7 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call mem%alloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-            call zero_array(X_akbj, (wf%n_v**2)*batch_k%length*batch_j%length)
+            call mem%alloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length, set_zero=.true.)
 !
             do current_c_batch = 1, batch_c%num_batches
 !

@@ -117,7 +117,7 @@ contains
 !!       D_rsKaKb = sum_JaJb <KaKb|E_rs|JaJb> C_JaJb
 !!                = sum_Ja <Ka|E_pq^a|Ja> C_JaKb + sum_Jb <Kb|E_pq^b|Jb> C_KaJb
 !!
-      use array_utilities, only:zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -195,7 +195,7 @@ contains
 !!                  + sum_Kb sum_pq <Ib|E_pq^b|Kb> G_pqIaKb
 !!
 !
-      use array_utilities, only:zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

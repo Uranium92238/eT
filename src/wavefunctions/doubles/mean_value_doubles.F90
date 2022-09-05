@@ -117,7 +117,7 @@ contains
 !!    corresponding to terms of the ground state density
 !!    and the left transition density.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: squareup
 !
       implicit none

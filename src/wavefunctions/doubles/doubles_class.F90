@@ -258,8 +258,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -304,7 +302,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
-      use array_utilities, only: constant_array
+      use array_initialization, only: constant_array
 !
       implicit none
 !
@@ -353,8 +351,6 @@ contains
 !!    for an IP calculation (valence).
 !!
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(doubles), intent(in) :: wf

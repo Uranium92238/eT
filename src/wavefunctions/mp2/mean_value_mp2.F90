@@ -49,7 +49,7 @@ contains
 !!    On entry, it is assumed that the energy is equal to the HF energy
 !!    (i.e. the routine only adds the correction to the energy variable).
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: add_1432_to_1234
       use timings_class, only: timings
 !

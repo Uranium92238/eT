@@ -120,7 +120,7 @@ contains
 !!    Run
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-      use array_utilities, only: zero_array, zero_array_complex
+      use array_initialization, only: zero_array, zero_array_complex
 !
       implicit none
 !

@@ -302,7 +302,7 @@ contains
 !!
 !!    Converts z matrix to cartesian coordinates
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

@@ -151,7 +151,6 @@ contains
 !!    these are not Cholesky vectors since the auxilliary basis is
 !!    the RI basis.
 !!
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_132
       use batching_index_class, only: batching_index
       use abstract_eri_cholesky_class, only: abstract_eri_cholesky

@@ -269,10 +269,8 @@ contains
 !
       info = 0
 !
-      call mem%alloc(X_red, davidson%dim_red, davidson%dim_red)
+      call mem%alloc(X_red, davidson%dim_red, davidson%dim_red, set_zero=.true.)
       call mem%alloc(A_red, davidson%dim_red, davidson%dim_red)
-!
-      call zero_array(X_red, davidson%dim_red**2)
       call dcopy(davidson%dim_red**2, davidson%A_red, 1, A_red, 1)
 !
       if (davidson%non_unit_metric) then

@@ -526,7 +526,7 @@ contains
 !!    and constructed.
 !!
       use reordering, only: squareup, add_1432_to_1234
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -735,7 +735,7 @@ contains
 !!
 !!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: symmetric_sum, add_2143_to_1234, add_2341_to_1234
 !
       implicit none
@@ -752,8 +752,7 @@ contains
 !
 !     Construct t2bar
 !
-      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-      call zero_array(t2bar, (wf%n_cc2_v**2)*(wf%n_cc2_o)**2)
+      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, set_zero=.true.)
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
@@ -893,7 +892,6 @@ contains
 !!    Construct t2bar
 !!    Written by Sarai D. Folkestad, May, 2019
 !!
-      use array_utilities, only: zero_array
       use reordering, only: symmetric_sum, add_2143_to_1234
       use reordering, only: add_2341_to_1234, packin
 !
@@ -905,8 +903,7 @@ contains
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-      call zero_array(t2bar, (wf%n_cc2_v**2)*(wf%n_cc2_o**2))
+      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, set_zero=.true.)
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
@@ -962,8 +959,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -1095,7 +1090,7 @@ contains
 !!    and once after occupied-occupied and virtual-virtual
 !!    Fock matrices are block diagonalized.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

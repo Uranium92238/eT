@@ -55,7 +55,7 @@ contains
 !!
 !!    Solid harmonic from Molecular electronic structure theory eqn. (6.4.47)
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use math_utilities, only: factorial, binomial
 !
       implicit none

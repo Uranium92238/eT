@@ -151,7 +151,8 @@ contains
 !!    Written by Regina Matveeva and Ida-Marie Høyvik, Sept 2021
 !!
       use global_out, only: output
-      use array_utilities, only: get_l2_norm, zero_array
+      use array_utilities, only: get_l2_norm
+      use array_initialization, only:  zero_array
 !
       implicit none
 !
@@ -186,9 +187,7 @@ contains
          call output%printf('m', 'Right hand side is zero to within threshold (e6.1).', &
                             reals=[this%residual_threshold], fs='(/t3,a)')
 !
-         call mem%alloc(solution, this%davidson%n_parameters)
-!
-         call zero_array(solution, this%davidson%n_parameters)
+         call mem%alloc(solution, this%davidson%n_parameters, set_zero=.true.)
 !
          call this%storer%store(solution, 1)
 !
