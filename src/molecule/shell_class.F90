@@ -522,7 +522,7 @@ contains
 !!    Construct Racah's normalized orbitals for a point
 !!    x,y,z relative to the nucleus
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

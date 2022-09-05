@@ -128,7 +128,6 @@ contains
 !!       - Prepares the wavefunction for Jacobian
 !!          and Jacobian transposetransformation
 !!
-      use array_utilities, only: zero_array
       use string_utilities, only: convert_to_uppercase
 !
       implicit none
@@ -480,7 +479,7 @@ contains
 !!    L and R are reduced space eigenvectors of the order of chain length.
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

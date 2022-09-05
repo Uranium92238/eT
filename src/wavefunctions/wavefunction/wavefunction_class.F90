@@ -402,7 +402,7 @@ contains
 !!    For restricted space optional argument first_ao
 !!    may be used.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -552,7 +552,8 @@ contains
 !!    Added flip of orbitals.
 !!    Diagonalization using wrapper.
 !!
-      use array_utilities, only: copy_and_scale, diagonalize_symmetric
+      use array_utilities, only: diagonalize_symmetric
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

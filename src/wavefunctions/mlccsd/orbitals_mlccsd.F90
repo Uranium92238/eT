@@ -988,7 +988,7 @@ contains
 !!    Construct orbitals cc2
 !!    Written by Sarai D. Folkestad
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

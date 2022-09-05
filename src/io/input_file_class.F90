@@ -614,6 +614,7 @@ contains
       system%name_    = 'system'
       system%required = .true.
       system%keywords = [character(len=30) ::   &
+                        'n',             &
                         'name',                 &
                         'cartesian gaussians',  &
                         'pure gaussians',       &

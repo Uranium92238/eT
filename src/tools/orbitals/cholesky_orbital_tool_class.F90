@@ -42,7 +42,7 @@ module cholesky_orbital_tool_class
 !
       integer :: initial_rank, rank
 !
-      contains 
+      contains
 !
          procedure :: restricted_decomposition &
                    => restricted_decomposition_cholesky_orbital_tool
@@ -81,7 +81,7 @@ contains
 !
    pure function new_cholesky_orbital_tool(n_ao, threshold) result(this)
 !!
-!!    New cholesky orbital tool 
+!!    New cholesky orbital tool
 !!    Written by Sarai D. Folkestad, 2021
 !!
       implicit none
@@ -133,7 +133,7 @@ contains
 !!    The optional 'factor' allows for scaling. The density should be idempotent.
 !!
 !
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -167,7 +167,7 @@ contains
       implicit none
 !
       class(cholesky_orbital_tool), intent(inout) :: this
-!  
+!
       integer, intent(in) :: n
 !
       real(dp), dimension(this%n_ao, n), intent(inout) :: C
@@ -226,7 +226,7 @@ contains
 !
          active_ao_list(I) = I + first_active_ao - 1
 !
-      enddo 
+      enddo
 !$omp end parallel do
 !
       call this%cholesky_decomposition_limited_diagonal(this%D,            &
@@ -251,10 +251,10 @@ contains
 !!    Full decomposition
 !!    Written by Sarai D. Folkestad, 2021
 !!
-!!    Full Cholesky decomposition of the density. Terminates when all diagonals are 
+!!    Full Cholesky decomposition of the density. Terminates when all diagonals are
 !!    below the threshold
 !!
-!!    After this routine the density should have zero rank 
+!!    After this routine the density should have zero rank
 !
       implicit none
 !
@@ -311,7 +311,7 @@ contains
 !!    Routine is used for decomposition of density to construct active orbitals.
 !!
 !!    The number of pivots may specified through the optional
-!!    argument n_vectors_requested  
+!!    argument n_vectors_requested
 !!
 !!    On exit matrix_xy = matrix_xy - sum_J L_xJ*LyJ
 !!

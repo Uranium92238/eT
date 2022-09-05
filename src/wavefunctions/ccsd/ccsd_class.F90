@@ -360,7 +360,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -426,7 +426,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: construct_packed_contravariant
 !
       implicit none
@@ -585,7 +585,7 @@ contains
 !!    tag specified the printed label for the vector, e.g. tag = "t" for
 !!    the cluster amplitudes.
 !!
-      use array_utilities, only: get_n_highest, zero_array
+      use array_utilities, only: get_n_highest
       use index_invert, only : invert_compound_index, invert_packed_index
 !
       implicit none
@@ -611,10 +611,9 @@ contains
       if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
 !
       call mem%alloc(dominant_indices, n_elements)
-      call mem%alloc(dominant_values, n_elements)
+      call mem%alloc(dominant_values, n_elements, set_zero=.true.)
 !
       dominant_indices = 0
-      call zero_array(dominant_values, n_elements)
       call get_n_highest(n_elements, wf%n_t2, abs_x2, dominant_values, dominant_indices)
 !
 !     Print largest contributions

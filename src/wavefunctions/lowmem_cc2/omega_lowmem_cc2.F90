@@ -41,7 +41,7 @@ contains
 !!    Direqts the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -187,7 +187,7 @@ contains
 !!    omega^a_k = sum_bij u^ab_ij L_J_jb L_J_ik
 !!    omega^c_i = sum_abj u^ab_ij L_J_jb L_J_ca
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: sort_12_to_21, sort_123_to_132
 !
       implicit none

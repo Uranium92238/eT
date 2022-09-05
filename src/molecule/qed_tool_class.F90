@@ -97,12 +97,12 @@ contains
 !
       call input%get_required_keyword('modes', 'qed', qed%n_modes)
 !
-      call mem%alloc(qed%frequency,             qed%n_modes)
-      call mem%alloc(qed%polarizations,      3, qed%n_modes)
-      call mem%alloc(qed%coherent_state,        qed%n_modes)
-      call mem%alloc(qed%coupling,              qed%n_modes)
-      call mem%alloc(qed%coupling_bilinear,     qed%n_modes)
-      call mem%alloc(qed%coupling_self,         qed%n_modes)
+      call mem%alloc(qed%frequency,             qed%n_modes, set_zero=.true.)
+      call mem%alloc(qed%polarizations,      3, qed%n_modes, set_zero=.true.)
+      call mem%alloc(qed%coherent_state,        qed%n_modes, set_zero=.true.)
+      call mem%alloc(qed%coupling,              qed%n_modes, set_zero=.true.)
+      call mem%alloc(qed%coupling_bilinear,     qed%n_modes, set_zero=.true.)
+      call mem%alloc(qed%coupling_self,         qed%n_modes, set_zero=.true.)
 !
       call qed%read_settings()
 !
@@ -180,8 +180,6 @@ contains
 !!
 !!    Designed to be overwritten by descendants.
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(qed_tool), intent(inout) :: qed
@@ -208,7 +206,6 @@ contains
          call output%error_msg("Keyword wavevector or polarization must be specified")
       endif
 !
-      qed%coherent_state(:) = 0.0d0
       if ( input%is_keyword_present('coherent state', 'qed') &
            .or. input%is_keyword_present('hf coherent state', 'qed')) then
          qed%is_optimizing_photons = .false.
@@ -217,8 +214,6 @@ contains
       endif
 !
 !     Either coupling or bilinear and self couplings must be specified
-!
-      call zero_array(qed%coupling, qed%n_modes)
 !
       if ( input%is_keyword_present('coupling', 'qed')) then
          call input%get_array_for_keyword('coupling', 'qed', qed%n_modes, qed%coupling)
@@ -273,7 +268,7 @@ contains
 !!       mu_wx = <w| (e dot mu_el) |x> + (e dot mu_nuc) S_wx / N_el
 !!          e : transversal polarization vector
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -311,7 +306,7 @@ contains
 !!    Q_wx = <w| (e^T dot Q dot e) |x>
 !!       e : transversal polarization vector
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -371,7 +366,8 @@ contains
 !!    also known as the dipole self-energy.
 !!       g2_wx = sum_p g_wp g_px = lambda^2 / 2 * sum_p mu_wp mu_px
 !!
-      use array_utilities, only: invert, zero_array, symmetric_sandwich
+      use array_utilities, only: invert, symmetric_sandwich
+      use array_initialization, only: zero_array
 !
       implicit none
 !

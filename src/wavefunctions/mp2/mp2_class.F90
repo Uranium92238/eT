@@ -62,7 +62,7 @@ contains
 !!    Written by Andreas Skeidsvoll, 2018
 !!
       use wavefunction_class, only: wavefunction
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

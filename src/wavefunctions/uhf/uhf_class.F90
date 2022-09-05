@@ -283,7 +283,7 @@ contains
 !!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale, zero_array
 !
       implicit none
 !
@@ -599,7 +599,7 @@ contains
 !!    density possesses this symmetry.
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1167,7 +1167,7 @@ contains
 !!    occupation numbers.
 !!
 !
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use array_utilities, only: symmetric_sandwich
 !
       implicit none

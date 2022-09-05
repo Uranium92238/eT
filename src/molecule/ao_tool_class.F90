@@ -431,7 +431,7 @@ contains
 !!
 !!    Makes the AO tool ready to use, copying from an ao_tool template
 !!
-      use array_utilities, only: copy_integer
+      use array_initialization, only: copy_integer
       use timings_class, only: timings
 !
       implicit none
@@ -1101,7 +1101,7 @@ contains
 !!       - 'nuclear'      Nuclear attraction contribution to one-electron Hamiltonian (h)
 !!       - 'overlap'      AO overlap (S)
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use timings_class, only: timings
 !
       implicit none
@@ -1175,7 +1175,7 @@ contains
 !!    Uses get_oei_c routine, which gives x_ABqk contributions to x for the shells A and B,
 !!    where k refers to the shell centers (k = 1, 2 refers to A, B) and q to their xyz-coord.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1256,9 +1256,6 @@ contains
 !!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
 !!                   to the routine if you wish to avoid zeroing out elements that are negligible.
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(ao_tool), intent(in) :: ao
@@ -1690,9 +1687,7 @@ contains
 !!
       use timings_class, only: timings
 !
-      use array_utilities, only: zero_array,       &
-                                 zero_array_int,   &
-                                 full_cholesky_decomposition
+      use array_utilities, only: full_cholesky_decomposition
 !
       implicit none
 !
@@ -1730,11 +1725,8 @@ contains
 !
 !     Decompose AO overlap
 !
-      call mem%alloc(L, ao%n, ao%n)
-      call mem%alloc(pivots, ao%n)
-!
-      call zero_array(L, ao%n**2)
-      call zero_array_int(pivots, ao%n)
+      call mem%alloc(L, ao%n, ao%n, set_zero=.true.)
+      call mem%alloc(pivots, ao%n, set_zero=.true.)
 !
       call full_cholesky_decomposition(s_p,                   &
                                        L,                     &
@@ -1777,9 +1769,7 @@ contains
 !
       call mem%dealloc(L, ao%n, ao%n)
 !
-      call mem%alloc(ao%P, ao%n, ao%n_orthonormal_ao)
-!
-      call zero_array(ao%P, ao%n * ao%n_orthonormal_ao)
+      call mem%alloc(ao%P, ao%n, ao%n_orthonormal_ao, set_zero=.true.)
 !
 !$omp parallel do private(j)
       do j = 1, ao%n_orthonormal_ao
@@ -1821,7 +1811,7 @@ contains
 !!
 !!    Moved and adapted to AO tool, removed loop allocations, Eirik F. Kjønstad, 2020
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -2306,7 +2296,9 @@ contains
 !!       abs ( g_wxyz ) <= g_wxwx^1/2 * g_yzyz^1/2 <= g_wxwx^1/2 * (max g)
 !!
       use timings_class, only: timings
-      use array_utilities, only: quicksort_with_index_descending, get_abs_max, quicksort_ascending_int, zero_array
+      use array_utilities, only: quicksort_with_index_descending, get_abs_max, &
+                                 quicksort_ascending_int
+      use array_initialization, only:  zero_array
 !
       implicit none
 !
@@ -2525,7 +2517,7 @@ contains
 !!    'aos_at_point' : Value of the aos at the grid point (vector of dim n_ao)
 !!
       use math_utilities, only: binomial, factorial
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -2760,7 +2752,7 @@ contains
 !!    Copy geometry dependent variables
 !!    Written by Alexander C. Paul, Feb 2021
 !!
-      use array_utilities, only: copy_integer
+      use array_initialization, only: copy_integer
 !
       implicit none
 !
@@ -2846,7 +2838,7 @@ contains
 !!    Construct OEI screened (one-electron integral)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2021
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -3057,7 +3049,7 @@ contains
 !!    Get ao normalization factor
 !!    Written by Alexander C. Paul, May 2021
 !!
-      use array_utilities, only: constant_array
+      use array_initialization, only: constant_array
 !
       implicit none
 !
@@ -3290,7 +3282,8 @@ contains
 !!    sh_X_max(p) = max_q shp_X_max(p, q)
 !!
       use omp_lib
-      use array_utilities, only: get_abs_max, zero_array
+      use array_utilities, only: get_abs_max
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -3369,8 +3362,6 @@ contains
 !!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
 !!                   to the routine if you wish to avoid zeroing out elements that are negligible.
 !!
-!
-      use array_utilities, only: zero_array
       use shell_class, only: shell
 !
       implicit none
@@ -3423,9 +3414,7 @@ contains
 !!                   not be zeroed out if Libint decides not to calculate g. Thus, only pass 'skip'
 !!                   to the routine if you wish to avoid zeroing out elements that are negligible.
 !!
-!
       use shell_class, only: shell
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -3499,7 +3488,7 @@ contains
 !!    Skip integral
 !!    Written by Sarai D. Folkestad, 2021
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

@@ -44,9 +44,6 @@ contains
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(ccs), intent(inout)              :: wf
@@ -59,9 +56,7 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(h, wf%n_mo, wf%n_mo)
-      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
-!
-      call zero_array(F_eff, wf%n_mo**2)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo, set_zero=.true.)
 !
       call wf%get_t1_oei('hamiltonian', h, screening=.true.)
 !
@@ -165,8 +160,6 @@ contains
 !!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -181,8 +174,7 @@ contains
 !
 !     Create interaction potential by scaling dipole integrals by minus electric field
 !
-      call mem%alloc(potential, wf%n_mo, wf%n_mo, 3)
-      call zero_array(potential, wf%n_mo*wf%n_mo*3)
+      call mem%alloc(potential, wf%n_mo, wf%n_mo, 3, set_zero=.true.)
 !
       call daxpy((wf%n_mo)**2, -electric_field(1), mu(:,:,1), 1, potential(:,:,1), 1)
       call daxpy((wf%n_mo)**2, -electric_field(2), mu(:,:,2), 1, potential(:,:,2), 1)
@@ -273,7 +265,6 @@ contains
 !!       - N^4 scaling.
 !!
       use batching_index_class, only : batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_132
 !
       implicit none
@@ -308,8 +299,7 @@ contains
 !
 !     Add occupied-virtual contributions: F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
-      call mem%alloc(X_J, wf%L_t1%n_J)
-      call zero_array(X_J, wf%L_t1%n_J)
+      call mem%alloc(X_J, wf%L_t1%n_J, set_zero=.true.)
 !
 !     - Exchange term: L_aj^J L^J_ji
 !
@@ -447,7 +437,6 @@ contains
 !!
 !
       use batching_index_class, only : batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_132
 !
       implicit none
@@ -503,8 +492,7 @@ contains
 !
 !     Construct X_J = sum_j L^J_jj
 !
-      call mem%alloc(X_J, wf%L_t1%n_J)
-      call zero_array(X_J, wf%L_t1%n_J)
+      call mem%alloc(X_J, wf%L_t1%n_J, set_zero=.true.)
 !
       req0 = 0
       req1_j = wf%L_t1%n_J*wf%n_o ! NOTE: this is an overestimate but used due to
@@ -541,8 +529,7 @@ contains
 !
 !     F_ia += 2 L_Jia X_J
 !
-      call mem%alloc(F_ia, i_range%length, a_range%length)
-      call zero_array(F_ia, i_range%length*a_range%length)
+      call mem%alloc(F_ia, i_range%length, a_range%length, set_zero=.true.)
 !
       req0 = 0
       req1_a = wf%L_t1%n_J*i_range%length
@@ -677,7 +664,6 @@ contains
 !!
 !
       use batching_index_class, only : batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_132
 !
       implicit none
@@ -733,8 +719,7 @@ contains
 !
 !     Construct X_J = sum_j L^J_jj
 !
-      call mem%alloc(X_J, wf%L_t1%n_J)
-      call zero_array(X_J, wf%L_t1%n_J)
+      call mem%alloc(X_J, wf%L_t1%n_J, set_zero=.true.)
 !
 !     batching over j
 !
@@ -776,8 +761,7 @@ contains
 !
 !     batching over a
 !
-      call mem%alloc(F_ab, a_range%length, b_range%length)
-      call zero_array(F_ab, a_range%length*b_range%length)
+      call mem%alloc(F_ab, a_range%length, b_range%length, set_zero=.true.)
 !
       req0 = 0
       req1_b = wf%L_t1%n_J*a_range%length
@@ -917,9 +901,7 @@ contains
 !!       Added limits for i and j for
 !!       subblock calculation
 !!
-!
       use batching_index_class, only : batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_132
 !
       implicit none
@@ -973,8 +955,7 @@ contains
 !
 !     Construct X_J = sum_j L^J_jj
 !
-      call mem%alloc(X_J, wf%L_t1%n_J)
-      call zero_array(X_J, wf%L_t1%n_J)
+      call mem%alloc(X_J, wf%L_t1%n_J, set_zero=.true.)
 !
       req0 = 0
       req1_j = wf%L_t1%n_J*wf%n_o ! NOTE: this estimate is not correct but used due to
@@ -1014,8 +995,7 @@ contains
 !
 !     batching over a
 !
-      call mem%alloc(F_ik, i_range%length, j_range%length)
-      call zero_array(F_ik, i_range%length*j_range%length)
+      call mem%alloc(F_ik, i_range%length, j_range%length, set_zero=.true.)
 !
       req0 = 0
       req1_k = wf%L_t1%n_J*i_range%length

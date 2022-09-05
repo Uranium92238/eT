@@ -133,7 +133,7 @@ contains
 !!    corresponding to terms of the ground state density
 !!    and the left transition density.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -270,7 +270,6 @@ contains
 !!                - sum_aibj t_i^a L^J_ja L^J_ib t_j^b
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -295,8 +294,7 @@ contains
       timer = timings('Calculate energy (ccs)', 'n')
       call timer%turn_on()
 
-      call mem%alloc(X_J, wf%eri_t1%n_J)
-      call zero_array(X_J, wf%eri_t1%n_J)
+      call mem%alloc(X_J, wf%eri_t1%n_J, set_zero=.true.)
 !
       req0 = 0
 !

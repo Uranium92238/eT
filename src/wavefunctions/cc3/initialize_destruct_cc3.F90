@@ -115,7 +115,6 @@ contains
 !!    Written by Alexander C. Paul, Jan 2022
 !!
       use eri_1idx_transformed_tool_class, only: eri_1idx_transformed_tool
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -128,8 +127,7 @@ contains
          wf%L_c1 = eri_cholesky_disk('C1')
          call wf%L_c1%initialize(wf%L_t1%n_J, 2, [wf%n_o, wf%n_v])
 !
-         call mem%alloc(c1, wf%n_v, wf%n_o)
-         call zero_array(c1, wf%n_t1)
+         call mem%alloc(c1, wf%n_v, wf%n_o, set_zero=.true.)
 !
          call wf%construct_c1_cholesky(c1, wf%L_t1, wf%L_c1)
          wf%eri_c1 = eri_adapter(eri_1idx_transformed_tool(wf%L_t1, wf%L_c1), wf%n_o, wf%n_v)

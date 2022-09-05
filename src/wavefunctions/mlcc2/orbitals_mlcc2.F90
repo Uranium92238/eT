@@ -267,7 +267,8 @@ contains
 !!    Note that after this routine, the Fock matrix in wf
 !!    corresponds to the old basis but the MOs are updated.
 !!
-      use array_utilities, only : block_diagonalize_symmetric, zero_array
+      use array_utilities, only: block_diagonalize_symmetric
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -491,7 +492,7 @@ contains
 !!    Transform orbital coefficients to CNTO
 !!    basis.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -851,7 +852,7 @@ contains
 !!
 !!    Construct occupiued NTOs, leave canonical virtuals
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

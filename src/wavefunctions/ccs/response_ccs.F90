@@ -266,7 +266,7 @@ contains
 !!    NB: Terms where mu == nu are separated out in construct_es_density
 !!        and construct_right_transition_density
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -533,7 +533,7 @@ contains
 !!
 !!       eta^X_mu = < Lambda| [X, tau_mu] |CC >
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -683,7 +683,7 @@ contains
 !!
 !!       xi^X_mu = < mu| exp(-T) X exp(T)|R >
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -829,7 +829,7 @@ contains
 !!    If state_l > state_r the density is arbitrarily called "left transition density" (LTDM).
 !!    If state_l = state_r the density is a state density.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

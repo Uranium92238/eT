@@ -68,7 +68,7 @@ contains
 !!
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -166,7 +166,6 @@ contains
 !!    Separate calculation of both terms due to batching.
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_123_to_213
 !
       implicit none
@@ -197,8 +196,7 @@ contains
 !
 !     :: Term 1: rho_ai = sum_bj 2 g_aijb * c_bj ::
 !
-      call mem%alloc(X_J, wf%eri_t1%n_J)
-      call zero_array(X_J, wf%eri_t1%n_J)
+      call mem%alloc(X_J, wf%eri_t1%n_J, set_zero=.true.)
 !
       req0 = 0
 !

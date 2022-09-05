@@ -116,7 +116,7 @@ contains
 !!    R^a_i = 1/2 L^a_i
 !!    R^ab_ij = 1/6 (2L^ab_ij + L^ba_ij)
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale, zero_array
       use reordering, only: construct_packed_contravariant
       use reordering, only: construct_packed_covariant
 !

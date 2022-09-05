@@ -107,17 +107,17 @@ contains
 !!    F(X) mu transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2019
 !!
-!!    Directs the transformation by the excited configuration contribution (mu) 
+!!    Directs the transformation by the excited configuration contribution (mu)
 !!    of the F matrix:
 !!
 !!       F'(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
 !!
 !!    with < X / = < mu / X_mu. For the full F transformation, see F_transformation
-!!    routine.   
+!!    routine.
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -144,7 +144,6 @@ contains
 !!
 !!    rho_A1,0_ai = 2 * L_iajb * c_bj
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_2341_to_1234
 !
       implicit none
@@ -162,12 +161,9 @@ contains
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ovov', g_iajb)
 !
-      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
 !     L_iajb = 2 g_iajb - g_ibja (ordered as L_aibj)
 !
-      call zero_array(L_aibj, (wf%n_v**2)*(wf%n_o**2))
-!
+      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
       call add_2143_to_1234(two, g_iajb, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_iajb, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -302,7 +298,6 @@ contains
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       use reordering, only: add_2143_to_1234, add_4123_to_1234
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -327,9 +322,7 @@ contains
       call mem%alloc(g_ikjb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ooov', g_ikjb)
 !
-      call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(L_kibj, (wf%n_o**3)*wf%n_v)
+      call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -421,7 +414,6 @@ contains
 !!    (A. K. Schnack-Petersen and) Eirik F. Kjønstad Sep 2021
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234, sort_1234_to_2143
 !
       implicit none
@@ -443,8 +435,7 @@ contains
 !
       integer :: current_c_batch, req0, req1
 !
-      call mem%alloc(X_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call zero_array(X_iajb, (wf%n_o**2)*(wf%n_v**2))
+      call mem%alloc(X_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v, set_zero=.true.)
 !
 !     Prepare for batching over index c
 !

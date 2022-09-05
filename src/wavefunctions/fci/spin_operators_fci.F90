@@ -67,7 +67,6 @@ contains
 !!    we evaluate the expectation value as a dot-product of S+|FCI> vectors
 !!
       use omp_lib, only: omp_get_max_threads, omp_get_thread_num
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -91,10 +90,6 @@ contains
       n_alpha_plus_1_strings = binomial(wf%n_mo, wf%n_alpha + 1)
       n_beta_minus_1_strings = binomial(wf%n_mo, wf%n_beta  - 1)
 !
-      call mem%alloc(sp_ci_coefficients, n_alpha_plus_1_strings, &
-                                         n_beta_minus_1_strings, &
-                                         n_threads)
-!
       call mem%alloc(creation_alpha_strings, wf%n_alpha_strings, wf%n_mo)
       call mem%alloc(creation_alpha_signs,   wf%n_alpha_strings, wf%n_mo)
 !
@@ -115,9 +110,9 @@ contains
                                                       wf%beta_strings,           &
                                                       wf%n_beta)
 !
-      call zero_array(sp_ci_coefficients, n_alpha_plus_1_strings * &
-                                          n_beta_minus_1_strings * &
-                                          n_threads)
+      call mem%alloc(sp_ci_coefficients, n_alpha_plus_1_strings, &
+                                         n_beta_minus_1_strings, &
+                                         n_threads, set_zero=.true.)
 !
 !$omp parallel do &
 !$omp shared(sp_ci_coefficients, ci_coefficients, creation_alpha_strings, &
@@ -153,7 +148,7 @@ contains
          call daxpy(n_alpha_plus_1_strings*n_beta_minus_1_strings, one, &
                      sp_ci_coefficients(:,:,thread_n), 1, sp_ci_coefficients(:,:,1), 1)
 !
-      enddo 
+      enddo
 !
       sm_sp = ddot(n_alpha_plus_1_strings*n_beta_minus_1_strings, &
                    sp_ci_coefficients, 1, sp_ci_coefficients, 1)

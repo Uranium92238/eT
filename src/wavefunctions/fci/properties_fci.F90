@@ -151,7 +151,7 @@ contains
 !!    where the alpha determinants Ja and Ka are related by a single excitation
 !!    and analogously for the beta determinants Jb and Kb
 !!
-      use array_utilities, only:zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -185,7 +185,6 @@ contains
 !!
 !!    where the alpha determinants Ja and Ka are related by a single excitation
 !!
-      use array_utilities, only:zero_array
       use omp_lib
 !
       implicit none
@@ -203,8 +202,7 @@ contains
 !
 !$    n_threads = omp_get_max_threads()
 !
-      call mem%alloc(D, wf%n_mo, wf%n_mo, n_threads)
-      call zero_array(D, wf%n_mo**2*n_threads)
+      call mem%alloc(D, wf%n_mo, wf%n_mo, n_threads, set_zero=.true.)
 !
 !$omp parallel do private(Ka, Kb, Ja, pq, p, q, sign_, thread_n) shared(D, wf)
       do Ja = 1, wf%n_alpha_strings
@@ -249,7 +247,6 @@ contains
 !!
 !!    where the beta determinants Jb and Kb are related by a single excitation
 !!
-      use array_utilities, only:zero_array
       use omp_lib
 !
       implicit none
@@ -267,8 +264,7 @@ contains
 !
 !$    n_threads = omp_get_max_threads()
 !
-      call mem%alloc(D, wf%n_mo, wf%n_mo, n_threads)
-      call zero_array(D, wf%n_mo**2*n_threads)
+      call mem%alloc(D, wf%n_mo, wf%n_mo, n_threads, set_zero=.true.)
 !
 !$omp parallel do private(Ka, Kb, Jb, pq, p, q, sign_, thread_n) shared(D, wf)
       do Jb = 1, wf%n_beta_strings

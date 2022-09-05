@@ -233,7 +233,7 @@ contains
 !!    and constructs screening vectors
 !!
       use atomic_center_class, only: atomic_center
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -295,12 +295,11 @@ contains
 !!    - constructs the active density.
 !!
 !
-      use timings_class,                  only: timings
-      use array_utilities,                only : identity_array
-      use ao_G_builder_class,             only: ao_G_builder
-      use abstract_G_adder_class,         only: abstract_G_adder
-      use abstract_G_screener_class,      only: abstract_G_screener
-      use G_tool_factory_class,           only: G_tool_factory
+      use array_initialization,      only: identity_array
+      use ao_G_builder_class,        only: ao_G_builder
+      use abstract_G_adder_class,    only: abstract_G_adder
+      use abstract_G_screener_class, only: abstract_G_screener
+      use G_tool_factory_class,      only: G_tool_factory
 !
       implicit none
 !
@@ -420,8 +419,8 @@ contains
 !!    and adds the inactive part of the Fock matrix (G_De_new).
 !!
 !
-      use array_utilities, only: symmetric_sandwich_right_transposition, symmetric_sandwich
-      use timings_class,     only : timings
+      use array_utilities, only: symmetric_sandwich_right_transposition, &
+                                 symmetric_sandwich
 !
       implicit none
 !
@@ -509,7 +508,7 @@ contains
 !!    if no virtual mo coefficients have been generated.
 !!
 !
-      use array_utilities, only : invert
+      use array_utilities, only: invert
 !
       implicit none
 !
@@ -597,8 +596,8 @@ contains
 !!    magnitude of the diagonal elements of the AO density.
 !!
 !
-      use array_utilities, only : invert, generalized_diagonalization, &
-                                  count_n_true, extract_columns_of_matrix
+      use array_utilities, only: invert, generalized_diagonalization, &
+                                 count_n_true, extract_columns_of_matrix
 !
       implicit none
 !
@@ -1187,8 +1186,6 @@ contains
 !!
 !!    Constructs G(De) in the MO basis
 !!
-      use timings_class,     only : timings
-!
       implicit none
 !
       class(mlhf), intent(inout) :: wf
@@ -1218,7 +1215,7 @@ contains
 !!    only for a properly converged wavefunction.
 !!
 !
-      use string_utilities, only : convert_to_uppercase
+      use string_utilities, only: convert_to_uppercase
 !
       implicit none
 !
@@ -1260,10 +1257,8 @@ contains
 !!    orbital coefficients
 !!
 !
-      use array_utilities, only : copy_and_scale
+      use array_initialization, only: copy_and_scale
       use cholesky_orbital_tool_class, only: cholesky_orbital_tool
-      use timings_class,     only : timings
-!
       implicit none
 !
       class(mlhf) :: wf
@@ -1359,8 +1354,8 @@ contains
 !!    Written by Sarai D. Folkestad, Anders Hutcheson
 !!    and Linda Goletto, Oct 2019
 !!
-!
-      use array_utilities, only : symmetric_sandwich, identity_array
+      use array_initialization, only: identity_array
+      use array_utilities, only: symmetric_sandwich
 !
       implicit none
 !
@@ -1504,7 +1499,7 @@ contains
 !!    has to be updated to the new MO basis
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1567,7 +1562,8 @@ contains
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
-      use array_utilities, only: block_diagonalize_symmetric, zero_array
+      use array_utilities, only: block_diagonalize_symmetric
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1668,7 +1664,7 @@ contains
 !!    Sarai D. Folkestad, Dec 2019
 !!
 !
-      use string_utilities, only : convert_to_uppercase
+      use string_utilities, only: convert_to_uppercase
 !
       implicit none
 !

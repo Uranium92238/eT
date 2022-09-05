@@ -145,7 +145,7 @@ contains
       integer, intent(in) :: n_states, max_iterations
       logical, intent(in) :: records_in_memory
 !
-      this%wf => wf 
+      this%wf => wf
 !
       this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) &
                         // ' excited state (' // trim(transformation) //')', pl='normal')
@@ -238,7 +238,7 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      this%wf => wf 
+      this%wf => wf
 !
       this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) &
                         // ' excited state (' // trim(transformation) //')', pl='normal')
@@ -325,7 +325,7 @@ contains
 !!    The solver is used in combination with DIIS as a preconvergence step to increase the
 !!    robustness of DIIS. See "do_davidson_preconvergence" in the DIIS excited state solver.
 !!
-      use array_utilities, only: get_l2_norm, zero_array
+      use array_utilities, only: get_l2_norm
 !
       implicit none
 !
@@ -366,14 +366,10 @@ contains
       call this%initialize_energies()
       this%energies = zero
 !
-      call mem%alloc(prev_energies, this%n_singlet_states)
-      call mem%alloc(residual_norms, this%n_singlet_states)
-!
-      call zero_array(prev_energies, this%n_singlet_states)
-      call zero_array(residual_norms, this%n_singlet_states)
+      call mem%alloc(prev_energies, this%n_singlet_states, set_zero=.true.)
+      call mem%alloc(residual_norms, this%n_singlet_states, set_zero=.true.)
 !
       call mem%alloc(converged, this%n_singlet_states)
-!
       converged = .false.
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
@@ -536,7 +532,7 @@ contains
 !!       then alpha = omega_k when c is X_k or a trial
 !!       generated from a residual corresponding to a guess for X_k.
 !!
-      use array_utilities, only: invert, get_l2_norm, zero_array
+      use array_utilities, only: invert, get_l2_norm
 !
       implicit none
 !
@@ -633,7 +629,6 @@ contains
 !     and enter the iterative micro iterations Davidson loop
 !
       call mem%alloc(converged, this%n_singlet_states)
-!
       converged = .false.
 !
       iteration         = 0
@@ -641,11 +636,8 @@ contains
 !
       call mem%alloc(residual, this%wf%n_es_amplitudes)
 !
-      call mem%alloc(norm_X, this%n_singlet_states)
-      call mem%alloc(micro_residual_norms, this%n_singlet_states)
-!
-      call zero_array(norm_X, this%n_singlet_states)
-      call zero_array(micro_residual_norms, this%n_singlet_states)
+      call mem%alloc(norm_X, this%n_singlet_states, set_zero=.true.)
+      call mem%alloc(micro_residual_norms, this%n_singlet_states, set_zero=.true.)
 !
       do while (.not. all(converged) .and. iteration .le. this%max_micro_iterations)
 !

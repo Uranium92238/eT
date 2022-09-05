@@ -4705,7 +4705,7 @@ contains
 !!    Construct:
 !!       t_pqr = 4t_pqr - 2t_qpr - 2t_rqp - 2t_prq + t_qrp + t_rpq
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

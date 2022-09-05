@@ -59,7 +59,8 @@ contains
 !!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
 !!    and c(aibj) = rho_aibj.
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: symmetrize_add_contra_to_packed
 !
@@ -88,8 +89,7 @@ contains
 !
       call wf%construct_c1_cholesky(c(1:wf%n_t1), wf%L_t1, wf%L_c1)
 !
-      call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(rho_abij, (wf%n_v*wf%n_o)**2)
+      call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
       call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(c(wf%n_t1+1:), c_abij, wf%n_v, wf%n_o, &
@@ -1040,7 +1040,7 @@ contains
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

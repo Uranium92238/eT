@@ -136,7 +136,8 @@ contains
 !!
 !
       use omp_lib
-      use array_utilities, only: copy_and_scale, get_abs_max, zero_array
+      use array_initialization, only: copy_and_scale, zero_array
+      use array_utilities, only: get_abs_max
       use reordering, only: symmetric_sum
 !
       use abstract_G_adder_class,      only: abstract_G_adder

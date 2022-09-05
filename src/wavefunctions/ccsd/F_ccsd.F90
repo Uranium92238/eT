@@ -46,17 +46,18 @@ contains
 !!    F(X) mu transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
 !!
-!!    Directs the transformation by the excited configuration contribution (mu) 
+!!    Directs the transformation by the excited configuration contribution (mu)
 !!    of the F matrix:
 !!
 !!       F'(X)_mu,nu = < X | [[H-bar,tau_mu],tau_nu] | HF >
 !!
 !!    with < X / = < mu / X_mu. For the full F transformation, see F_transformation
-!!    routine.   
+!!    routine.
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup, symmetric_sum, sort_1234_to_1324
       use reordering, only: packin_and_add_from_1324_order
 !
@@ -83,13 +84,11 @@ contains
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
-      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
+      call mem%alloc(rho_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call mem%alloc(x_ai, wf%n_v, wf%n_o)
 !
       call dcopy(wf%n_t1, x, 1, x_ai, 1)
-!
-      call zero_array(rho_ai, wf%n_v*wf%n_o)
 !
       call dcopy(wf%n_t1, c, 1, c_ai, 1)
 !
@@ -129,8 +128,7 @@ contains
       call dcopy(wf%n_t1, rho_ai, 1, rho, 1)
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(rho_aibj, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%F_doubles_a2_1(c_ai, rho_aibj, x_ai)
 !
@@ -372,7 +370,6 @@ contains
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_2413, sort_1234_to_1423, sort_1234_to_3421
       use reordering, only: sort_1234_to_2314, sort_1234_to_4132, add_2341_to_1234
       use reordering, only: sort_1234_to_1432, packin
@@ -401,8 +398,7 @@ contains
       call mem%alloc(c_jkbc, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call sort_1234_to_2413(c_aibj, c_jkbc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(X_jkid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call zero_array(X_jkid, wf%n_v*(wf%n_o**3))
+      call mem%alloc(X_jkid, wf%n_o, wf%n_o, wf%n_o, wf%n_v, set_zero=.true.)
 !
       req0 = (wf%eri_t1%n_J)*(wf%n_o)*(wf%n_v)
       req1 = (wf%eri_t1%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2
@@ -748,7 +744,6 @@ contains
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
       use reordering, only: add_1243_to_1234, add_4213_to_1234
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -767,13 +762,10 @@ contains
 !
 !     Construct L_iljb ordered as L_ilbj = 2 g_iljb - g_jlib
 !
-      call mem%alloc(L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
       call mem%alloc(g_iljb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call wf%eri_t1%get('ooov', g_iljb)
 !
-      call wf%eri_t1%get('ooov',g_iljb)
-!
-      call zero_array(L_ilbj, wf%n_v*(wf%n_o**3))
+      call mem%alloc(L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_1243_to_1234(two, g_iljb, L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4213_to_1234(-one, g_iljb, L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -865,7 +857,7 @@ contains
 !!
       use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_2134, add_1432_to_1234, add_21_to_12
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -926,8 +918,7 @@ contains
       call sort_1234_to_2134(X_bjdi, X_jbdi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_bjdi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(rho_ia, wf%n_o, wf%n_v)
-      call zero_array(rho_ia, wf%n_o*wf%n_v)
+      call mem%alloc(rho_ia, wf%n_o, wf%n_v, set_zero=.true.)
 !
       req0 = (wf%eri_t1%n_J)*(wf%n_o)*(wf%n_v)
       req1 = (wf%eri_t1%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2          &
@@ -1040,7 +1031,6 @@ contains
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_2341_to_1234
       use reordering, only: sort_1234_to_1342, sort_1234_to_1342
 !
@@ -1070,8 +1060,7 @@ contains
       call mem%alloc(g_ldic, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ovov',g_ldic)
 !
-      call mem%alloc(L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_dlci, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_2143_to_1234(two, g_ldic, L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_ldic, L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1977,7 +1966,6 @@ contains
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_1342, sort_1234_to_3412, sort_1234_to_2431
       use reordering, only: sort_1234_to_1432, sort_1234_to_1423, sort_1234_to_3421
       use reordering, only: add_1324_to_1234, add_1432_to_1234
@@ -2022,13 +2010,9 @@ contains
 !
 !     Construct intermediates for terms 1 and 3:
 !
-      call mem%alloc(X_ibdk, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call mem%alloc(Y_dbik, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call zero_array(X_ibdk, (wf%n_v**2)*(wf%n_o**2))
-      call zero_array(Y_dbik, (wf%n_v**2)*(wf%n_o**2))
-      call zero_array(rho_abij, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(X_ibdk, wf%n_o, wf%n_v, wf%n_v, wf%n_o, set_zero=.true.)
+      call mem%alloc(Y_dbik, wf%n_v, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
+      call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
       req0 = (wf%n_o)*(wf%n_v)*(wf%eri_t1%n_J)
       req1 = max((wf%n_v)*(wf%eri_t1%n_J) + (wf%n_o)*(wf%n_v)**2,       & ! L_dc^J, g_ibdc
@@ -2323,7 +2307,6 @@ contains
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_4123_to_1234, sort_1234_to_2134
 !
       implicit none
@@ -2348,8 +2331,7 @@ contains
       call mem%alloc(g_jlkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ooov',g_jlkc)
 !
-      call mem%alloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_ljck, wf%n_v*(wf%n_o**3))
+      call mem%alloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_2143_to_1234(two, g_jlkc, L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_jlkc, L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -2448,7 +2430,6 @@ contains
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_2341_to_1234
       use reordering, only: add_2134_to_1234, add_2431_to_1234
 !
@@ -2474,8 +2455,7 @@ contains
 !
 !     X_ad = L_dakc * c_ck
 !
-      call mem%alloc(X_ad, wf%n_v, wf%n_v)
-      call zero_array(X_ad, wf%n_v**2)
+      call mem%alloc(X_ad, wf%n_v, wf%n_v, set_zero=.true.)
 !
       req0 = (wf%eri_t1%n_J)*(wf%n_v)*(wf%n_o)
       req1 = max((wf%eri_t1%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
@@ -2498,8 +2478,7 @@ contains
                                 1, wf%n_o,                           &
                                 1, wf%n_v)
 !
-         call mem%alloc(L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
-         call zero_array(L_adck, (wf%n_v**2)*batch_d%length*wf%n_o)
+         call mem%alloc(L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o, set_zero=.true.)
          call add_2143_to_1234(two, g_dakc, L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
          call add_2341_to_1234(-one, g_dakc, L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
 !
@@ -2545,8 +2524,7 @@ contains
 !
 !     X_aidk = L_dcia * c_ck
 !
-      call mem%alloc(X_aidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(X_aidk, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(X_aidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       req0 = (wf%eri_t1%n_J)*(wf%n_v)*(wf%n_o)
       req1 = max((wf%eri_t1%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
@@ -2569,8 +2547,7 @@ contains
                                 batch_d%first, batch_d%get_last(),   &
                                 1, wf%n_v)
 !
-         call mem%alloc(L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
-         call zero_array(L_aidc, (wf%n_v**2)*wf%n_o*batch_d%length)
+         call mem%alloc(L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v, set_zero=.true.)
          call add_2134_to_1234(two, g_iadc, L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
          call add_2431_to_1234(-one, g_iadc, L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
 !
@@ -2878,7 +2855,6 @@ contains
 !!
 !!    Edited by A. K. Schnack-Petersen og E. F. Kjønstad, Sep 2021
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_2341_to_1234
       use reordering, only: sort_1234_to_1432, add_1432_to_1234
 !
@@ -2902,11 +2878,9 @@ contains
 !     Construct L_jbld = 2 g_jbld - g_jdlb (ordered as L_bjdl)
 !
       call mem%alloc(g_jbld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%alloc(L_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(L_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
-      call wf%eri_t1%get('ovov',g_jbld)
-!
-      call zero_array(L_bjdl, (wf%n_v**2)*(wf%n_o**2))
+      call wf%eri_t1%get('ovov', g_jbld)
 !
       call add_2143_to_1234(two, g_jbld, L_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_jbld, L_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)

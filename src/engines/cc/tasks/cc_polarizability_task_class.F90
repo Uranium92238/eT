@@ -226,7 +226,7 @@ contains
 !!    Determine t responses
 !!    Written Eirik F. Kjønstad, 2022
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use davidson_cc_linear_equations_class, only: davidson_cc_linear_equations
 !
       implicit none

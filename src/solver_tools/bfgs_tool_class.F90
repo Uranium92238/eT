@@ -45,7 +45,8 @@ module bfgs_tool_class
    use parameters
    use global_out, only: output
    use memory_manager_class, only: mem
-   use array_utilities, only: zero_array, copy_and_scale, get_l2_norm
+   use array_initialization, only: zero_array, copy_and_scale
+   use array_utilities, only: get_l2_norm
 !
 !
    type :: bfgs_tool

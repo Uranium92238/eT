@@ -544,7 +544,7 @@ contains
 !!
 !
 
-      use array_utilities, only : zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -646,7 +646,7 @@ contains
 !!
 !!    Prepares frozen Fock terms and sets the HF energy
 !!
-      use array_utilities, only : zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -802,7 +802,7 @@ contains
 !!    to be allocated and properly set.
 !!
 !
-      use array_utilities, only : identity_array
+      use array_initialization, only: identity_array
       use timings_class, only : timings
 !
       implicit none
@@ -1402,7 +1402,7 @@ contains
 !!       - Embedding QM/MM or PCM fock
 !!
 !
-      use array_utilities, only : zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1544,7 +1544,7 @@ contains
 !!    3. Prints screenings
 !!
 !
-      use array_utilities, only : zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

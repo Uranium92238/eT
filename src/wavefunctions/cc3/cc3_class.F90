@@ -521,7 +521,8 @@ contains
 !!
 !!    Computes L^T * R for full space L and R (singles, doubles, triples)
 !!
-      use array_utilities, only: copy_and_scale, scale_diagonal
+      use array_initialization, only: copy_and_scale
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup_and_sort_1234_to_1324, add_1243_to_1234
 !
       implicit none
@@ -1321,7 +1322,6 @@ contains
 !!
 !!    Constructs the "C1 Cholesky vector"
 !!
-      use array_utilities, only: zero_array
       use abstract_eri_cholesky_class, only: abstract_eri_cholesky
 !
       implicit none
@@ -1340,8 +1340,7 @@ contains
       call wf%construct_cholesky_c1_vo(L, L_c1, c1)
       call wf%construct_cholesky_c1_vv(L, L_c1, c1)
 !
-      call mem%alloc(L_Jia, L%n_J, wf%n_o, wf%n_v)
-      call zero_array(L_Jia, L%n_J*wf%n_o*wf%n_v)
+      call mem%alloc(L_Jia, L%n_J, wf%n_o, wf%n_v, set_zero=.true.)
       call L_c1%set(L_Jia, 1, wf%n_o, wf%n_o + 1, wf%n_mo)
       call mem%dealloc(L_Jia, L%n_J, wf%n_o, wf%n_v)
 !
@@ -1428,7 +1427,6 @@ contains
 !!    and returns the result in L_J_ai_c1
 !!
       use abstract_eri_cholesky_class, only: abstract_eri_cholesky
-      use array_utilities, only: zero_array
       use reordering, only: add_132_to_123, sort_123_to_132
 !
       implicit none
