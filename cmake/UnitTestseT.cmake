@@ -45,3 +45,6 @@ add_eT_unittest(cart_angular_momentum_7 "angular-momentum")
 #
 add_eT_unittest(tools "tools")
 add_eT_unittest(memory "memory")
+
+add_eT_unittest(z_matrix "z-matrix")
+
