@@ -21,10 +21,10 @@ from filters import get_gs_filter
 # construct filter(s)
 threshold = 1.0e-8
 convergence = True
-Newton = True
+newton = True
 restart = False
 
-f = get_gs_filter(threshold, convergence, restart, Newton)
+f = get_gs_filter(threshold, convergence=convergence, restart=restart, newton=newton)
 
 # invoke the command line interface parser which returns options
 options = cli()

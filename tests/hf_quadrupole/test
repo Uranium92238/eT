@@ -20,11 +20,10 @@ assert version_info.major == 2
 
 # construct filter(s)
 threshold = 1.0e-9
-
 f = get_hf_filter(threshold)
-
 g = get_mean_value_filter(threshold, 6)
-f.extend(g)
+f += g
+
 # invoke the command line interface parser which returns options
 options = cli()
 

@@ -25,7 +25,7 @@ module sequential_file_class
 !!
 !!
 !
-   use kinds    
+   use kinds
    use abstract_file_class, only : abstract_file
    use global_out, only : output
 !
@@ -203,13 +203,13 @@ contains
          the_file%action_ = trim(file_action)
       else
          the_file%action_ = 'readwrite'
-      endif 
+      endif
 !
       if(present(position_)) then
          pos = trim(position_)
       else
          pos = 'rewind'
-      endif 
+      endif
 !
       if (the_file%is_open) then
 !
@@ -221,7 +221,7 @@ contains
            action=the_file%action_, status='unknown', form=the_file%format_, &
            position=pos, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error .ne. 0) then 
+      if (io_error .ne. 0) then
          call output%error_msg('could not open eT sequential file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
@@ -341,7 +341,7 @@ contains
 !
    subroutine copy_sequential_file(the_file, filename)
 !!
-!!    Copy 
+!!    Copy
 !!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
 !!
 !!    Very similar to abstract copy, but with access to output
@@ -361,7 +361,7 @@ contains
       character :: byte
 !
 !     Check that file is closed
-      if(the_file%is_open) then 
+      if(the_file%is_open) then
 !
          call output%error_msg(the_file%name_//' is not closed in copy.')
 !
@@ -369,10 +369,10 @@ contains
 !
 !     Open the file with stream unformatted access
       open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
-           form='unformatted', action='read', status='old', & 
+           form='unformatted', action='read', status='old', &
            iostat=io_error, iomsg=io_msg)
 !
-      if(io_error .ne. 0) then 
+      if(io_error .ne. 0) then
 !
          call output%error_msg('Failed to open '//trim(the_file%name_)//' in copy.'//&
                               &' io_msg: '//trim(io_msg))
@@ -384,7 +384,7 @@ contains
            form='unformatted', action='write', status='new', &
            iostat=io_error, iomsg=io_msg)
 !
-      if(io_error .ne. 0) then 
+      if(io_error .ne. 0) then
 !
          call output%error_msg('Failed to open '//trim(filename)//' in copy.'//&
                               &' io_msg: '//trim(io_msg))
@@ -405,7 +405,7 @@ contains
 !     Close the files
       close(copy_unit, status='keep', iostat=io_error, iomsg=io_msg)
 !
-      if(io_error .ne. 0) then 
+      if(io_error .ne. 0) then
 !
          call output%error_msg('Failed to close '//trim(filename)//' in copy.'//&
                               &' io_msg: '//trim(io_msg))
@@ -414,7 +414,7 @@ contains
 !
       close(the_file%unit_, status='keep', iostat=io_error, iomsg=io_msg)
 !
-      if(io_error .ne. 0) then 
+      if(io_error .ne. 0) then
 !
          call output%error_msg('Failed to close '//trim(the_file%name_)//' in copy.'//&
                               &' io_msg: '//trim(io_msg))
@@ -445,7 +445,7 @@ contains
 !
       rewind(the_file%unit_, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error .ne. 0) then 
+      if (io_error .ne. 0) then
          call output%error_msg('Could not rewind eT file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
@@ -476,9 +476,9 @@ contains
       endif
 !
       do i = 1,skips
-         read(the_file%unit_, iostat=io_error, iomsg=io_msg) 
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg)
 !
-         if (io_error .ne. 0) then 
+         if (io_error .ne. 0) then
             call output%error_msg('Could not skip eT sequential file '//trim(the_file%name_)//&
                                  &'. Error message: '//trim(io_msg))
          endif
@@ -501,9 +501,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit_, iostat=io_error, iomsg=io_msg) 
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg)
       else
-         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) 
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg)
       endif
 !
       if(io_error .ne. 0) then
@@ -926,7 +926,7 @@ contains
 !
       class(sequential_file), intent(in)  :: the_file
 !
-      integer, optional :: io_stat 
+      integer, optional :: io_stat
 !
       integer              :: io_error
       character(len=100)   :: io_msg
@@ -937,10 +937,10 @@ contains
          read(the_file%unit_, *, iostat=io_error, iomsg=io_msg)
       endif
 !
-      if (present(io_stat) .and. io_error .le. 0) then 
+      if (present(io_stat) .and. io_error .le. 0) then
 !
          io_stat = io_error
-!  
+!
       elseif (io_error .ne. 0) then
 !
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&

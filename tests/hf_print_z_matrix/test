@@ -21,7 +21,7 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-9
 f = get_hf_filter(threshold)
-f.extend(get_z_matrix_filter())
+f += get_z_matrix_filter()
 
 # invoke the command line interface parser which returns options
 options = cli()

@@ -24,8 +24,8 @@ threshold = 1.0e-10
 convergence = True
 restart = True
 
-f1 = get_gs_filter(threshold, convergence)
-f2 = get_eom_filter(n_states, threshold, convergence, restart)
+f1 = get_gs_filter(threshold, convergence=convergence)
+f2 = get_eom_filter(n_states, threshold, convergence=convergence, restart=restart)
 
 # invoke the command line interface parser which returns options
 options = cli()
