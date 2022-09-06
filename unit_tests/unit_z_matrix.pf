@@ -1,0 +1,93 @@
+module unit_z_matrix
+
+   use parameters
+
+   use output_file_class, only: output_file
+   use global_out, only: output
+
+   use z_matrix_tool_class, only: z_matrix_tool
+
+   use funit
+
+   implicit none
+
+contains
+!
+   @test
+   subroutine test_z_matrix_tool()
+!
+      implicit none
+!
+      type(z_matrix_tool), allocatable :: z_matrix
+!
+      integer :: n_atoms = 9, i, j
+!
+      real(dp), dimension(:,:), allocatable :: R, cartesian
+      real(dp), dimension(:), allocatable :: distances, angles, dihedrals
+      character(len=2), dimension(:), allocatable :: symbols
+!
+      output = output_file('eT.out')
+      call output%open_()
+!
+      z_matrix = z_matrix_tool(n_atoms)
+      call z_matrix%initialize()
+!
+      allocate(R(3, n_atoms))
+      allocate(cartesian(3, n_atoms))
+      allocate(distances(n_atoms-1))
+      allocate(angles(n_atoms-2))
+      allocate(dihedrals(n_atoms-3))
+      allocate(symbols(n_atoms))
+!
+      R = reshape([ 0.000000d0,  0.000000d0,  0.000000d0,  &
+                   -1.267042d0, -0.831610d0,  0.000000d0,  &
+                    0.000000d0,  1.229439d0,  0.000000d0,  &
+                    1.158967d0, -0.727718d0,  0.000000d0,  &
+                    1.173209d0, -1.735763d0,  0.000000d0,  &
+                    2.035841d0, -0.226201d0,  0.000000d0,  &
+                   -2.121189d0, -0.156089d0,  0.000000d0,  &
+                   -1.310647d0, -1.472742d0,  0.885504d0,  &
+                   -1.310647d0, -1.472742d0, -0.885504d0], &
+                  [3, n_atoms])
+!
+      symbols = ["C ", "C ", "O ", "N ", "H ", "H ", "H ", "H ", "H "]
+!
+      call z_matrix%construct(R, symbols)
+!
+      distances = [1.515576d0, 1.368495d0, 1.229439d0, 1.008146d0, &
+                   1.010162d0, 1.088988d0, 1.094106d0, 1.094106d0]
+!
+      angles = [114.597d0, 122.125d0, 122.934d0, 118.108d0, &
+                108.382d0, 110.785d0, 110.785d0]
+!
+      dihedrals = [180.000d0, 0.000d0, 180.000d0, 0.000d0, -120.040d0, 120.040d0]
+!
+      do i = 1, n_atoms-1
+         @assertEqual(1.0d-8, abs(z_matrix%distances(i)-distances(i)))
+      end do
+!
+      do i = 1, n_atoms-2
+         @assertEqual(1.0d-8, abs(z_matrix%angles(i)-angles(i)))
+      end do
+!
+      do i = 1, n_atoms-3
+         @assertEqual(1.0d-8, abs(z_matrix%dihedrals(i)-dihedrals(i)))
+      end do
+!
+      call z_matrix%convert_to_cartesian(cartesian)
+!
+      do j = 1, n_atoms
+         do i = 1, 3
+!
+            @assertEqual(1.0d-8, R(i, j)-cartesian(i, j))
+!
+         end do
+      end do
+!
+      call z_matrix%cleanup_z_matrix()
+      call output%close_()
+!
+   end subroutine test_z_matrix_tool
+!
+!
+end module unit_z_matrix
