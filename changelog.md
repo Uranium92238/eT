@@ -8,6 +8,7 @@
 - Frozen HF tests with excitation energies and transition moments. eT-program/eT!1101
 - Added unit test for z-matrix tool. eT-program/eT!1103
 - Added restart test for CCS and 3-level MLCCSD tests. eT-program/eT!1105
+- Simplified the use of keyword arguments in `filters.py`. eT-program/eT!1106
 
 ### Structure
 - Removed unused routines in CCS and MLCCSD. eT-program/eT!1105

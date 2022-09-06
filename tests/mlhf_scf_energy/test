@@ -20,7 +20,6 @@ assert version_info.major == 2
 
 # construct filter(s)
 threshold = 1.0e-10
-
 f = get_mlhf_filter(threshold)
 
 # invoke the command line interface parser which returns options

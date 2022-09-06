@@ -24,7 +24,7 @@ threshold = 1.0e-10
 convergence = True
 restart = True
 
-f = get_eom_filter(n_states, threshold, convergence, restart)
+f = get_eom_filter(n_states, threshold, convergence=convergence, restart=restart)
 
 # invoke the command line interface parser which returns options
 options = cli()

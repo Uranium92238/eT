@@ -21,7 +21,7 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-9
 
-f = get_hf_filter(threshold,idempotent=False)
+f = get_hf_filter(threshold, idempotent=False)
 
 # iterations after switch to cumulative Fock construction
 f.append(get_filter(from_string=' Fock matrix construction using density differences', 

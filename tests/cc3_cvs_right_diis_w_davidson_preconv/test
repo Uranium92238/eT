@@ -13,7 +13,7 @@ from runtest import version_info, cli, run
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_es_filter
+from filters import get_cc_es_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -23,7 +23,7 @@ n_states = 10
 threshold = 1.0e-6
 restart = True
 
-f = get_es_filter(n_states, threshold, restart=restart)
+f = get_cc_es_filter(n_states, threshold, restart=restart)
 
 # invoke the command line interface parser which returns options
 options = cli()
@@ -34,7 +34,7 @@ inp = 'ccsd.inp'
 ierr += run(options,
             configure,
             input_files=inp,
-            extra_args='-save .') 
+            extra_args='-save .')
 
 ierr = 0
 inp = 'cc3_cvs_right_diis_w_davidson_preconv.inp'

@@ -16,9 +16,7 @@ from runtest_config import configure
 assert version_info.major == 2
 
 # construct filter(s)
-#
 # cannot check transition dipole moment as the states can change in every run
-#
 f = [
     get_filter(from_string='State                (Hartree)             (eV)',
                num_lines=6,

@@ -22,9 +22,7 @@ from filters import get_mlhf_filter
 assert version_info.major == 2
 
 threshold = 1.0e-10
-# construct filter(s)
 f = get_mlhf_filter(threshold) 
-
 
 # invoke the command line interface parser which returns options
 options = cli()

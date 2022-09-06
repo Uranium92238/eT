@@ -21,7 +21,7 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-10
 convergence = True
-f = get_gs_filter(threshold, convergence)
+f = get_gs_filter(threshold, convergence=convergence)
 
 # invoke the command line interface parser which returns options
 options = cli()

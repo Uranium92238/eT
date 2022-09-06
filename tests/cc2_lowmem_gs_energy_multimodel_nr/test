@@ -7,7 +7,7 @@ import sys
 sys.path.append(str(Path(__file__).parents[1]))
 
 # we import essential functions from the runtest library
-from runtest import version_info, get_filter, cli, run
+from runtest import version_info, cli, run
 
 # this tells runtest how to run your code
 from runtest_config import configure
@@ -21,10 +21,10 @@ from filters import get_gs_filter
 # construct filter(s)
 threshold = 1.0e-10
 convergence = True
-Newton = True
+newton = True
 restart = False
 
-f = get_gs_filter(threshold, convergence, restart, Newton)
+f = get_gs_filter(threshold, convergence=convergence, restart=restart, newton=newton)
 
 # invoke the command line interface parser which returns options
 options = cli()
