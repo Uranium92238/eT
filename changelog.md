@@ -1,7 +1,11 @@
+# eT v1.8.5
+### Bugfixes
+- Fixed bug in the FCI linear transformation where $`E_{qp}`$ was applied instead of $`E_{pq}`$ . eT-program/eT!1115
+
 # eT v1.8.4
 ### Bugfixes
 - Fixed bug where visualizing the active hf density was giving a plot of the hf density. eT-program/eT!1113
--
+
 # eT v1.8.3
 ### Bugfixes
 - Fixed uninitialized `exists_frozen_fock_terms` in FCI. eT-program/eT!1110
