@@ -13,6 +13,10 @@
 ### Structure
 - Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
 
+# eT v1.8.5
+### Bugfixes
+- Fixed bug in the FCI linear transformation where $`E_{qp}`$ was applied instead of $`E_{pq}`$ . eT-program/eT!1115
+
 # eT v1.8.4
 ### Bugfixes
 - Fixed bug where visualizing the active hf density was giving a plot of the hf density. eT-program/eT!1113

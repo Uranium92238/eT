@@ -220,14 +220,14 @@ contains
 !
 !$omp parallel do private(Ia, Ib, pq, p, q, sign_, Ka)
       do Ib = 1, wf%n_beta_strings
-         do Ia = 1, wf%n_alpha_strings
+         do Ka = 1, wf%n_alpha_strings
             do pq = 1, wf%n_alpha_excitations
 !
-               p  = wf%excitation_maps_alpha(Ia, pq, 1)
-               q  = wf%excitation_maps_alpha(Ia, pq, 2)
-               Ka = wf%excitation_maps_alpha(Ia, pq, 3)
+               p  = wf%excitation_maps_alpha(Ka, pq, 1)
+               q  = wf%excitation_maps_alpha(Ka, pq, 2)
+               Ia = wf%excitation_maps_alpha(Ka, pq, 3)
 !
-               sign_ = real(wf%excitation_maps_alpha(Ia, pq, 4), kind=dp)
+               sign_ = real(wf%excitation_maps_alpha(Ka, pq, 4), kind=dp)
 !
                sigma(Ia,Ib) = sigma(Ia,Ib) + sign_ * G_pqKaKb(p, q, Ka, Ib)
 !
@@ -239,16 +239,15 @@ contains
 !     sigma_IaIb += sum_Kb sum_pq <Ib|E_pq^b|Kb> G_pqIaKb
 !
 !$omp parallel do private(Ia, Ib, pq, p, q, sign_, Kb)
-      do Ib = 1, wf%n_beta_strings
-         do pq = 1, wf%n_beta_excitations
+      do Ia = 1, wf%n_alpha_strings
+         do Kb = 1, wf%n_beta_strings
+            do pq = 1, wf%n_beta_excitations
 
-            p  = wf%excitation_maps_beta(Ib, pq, 1)
-            q  = wf%excitation_maps_beta(Ib, pq, 2)
-            Kb = wf%excitation_maps_beta(Ib, pq, 3)
+               p  = wf%excitation_maps_beta(Kb, pq, 1)
+               q  = wf%excitation_maps_beta(Kb, pq, 2)
+               Ib = wf%excitation_maps_beta(Kb, pq, 3)
 !
-            sign_ = real(wf%excitation_maps_beta(Ib, pq, 4), kind=dp)
-!
-            do Ia = 1, wf%n_alpha_strings
+               sign_ = real(wf%excitation_maps_beta(Kb, pq, 4), kind=dp)
 !
                sigma(Ia, Ib) = sigma(Ia, Ib) + sign_ * G_pqKaKb(p, q, Ia, Kb)
 !
