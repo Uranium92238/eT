@@ -1,3 +1,7 @@
+# eT v1.8.6
+### Features
+- Update of Libint library that ships with eT to include higher angular momentum. eT-program/eT!1119
+
 # eT v1.8.5
 ### Bugfixes
 - Fixed bug in the FCI linear transformation where $`E_{qp}`$ was applied instead of $`E_{pq}`$ . eT-program/eT!1115
