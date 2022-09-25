@@ -1,5 +1,6 @@
 # eT v1.9.0
 ### Features
+- Added total and iteration timers to solvers. eT-program/eT!1109
 - Added option to zero out arrays when allocating. eT-program/eT!1112
 
 ### Tests

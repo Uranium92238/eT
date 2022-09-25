@@ -27,10 +27,11 @@ module eigen_davidson_solver_class
    use parameters
    use memory_manager_class, only: mem
    use eigen_davidson_tool_class, only: eigen_davidson_tool
+   use timings_class, only: timings
 !
    use abstract_solver_class,           only: abstract_solver
    use convergence_tool_class,          only: convergence_tool
-   use transformation_class,       only: transformation
+   use transformation_class,            only: transformation
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use start_vector_tool_class,         only: start_vector_tool
    use preconditioner_getter_class,     only: preconditioner_getter
@@ -90,7 +91,7 @@ contains
 !
       type(eigen_davidson_solver) :: this
 !
-      class(transformation),       intent(in) :: transformer
+      class(transformation),            intent(in) :: transformer
       type(eigen_davidson_tool),        intent(in) :: davidson
       type(convergence_tool),           intent(in) :: convergence_checker
       class(eigen_storage_tool),        intent(in) :: storer
@@ -111,6 +112,9 @@ contains
       this%projector           = projector
       this%n_solutions         = n_solutions
       this%max_iterations      = max_iterations
+!
+      this%total_timer = timings("Eigen davidson solver total", pl='m')
+      this%iteration_timer = timings("Eigen davidson solver iteration", pl='m')
 !
    end function new_eigen_davidson_solver
 !
@@ -134,6 +138,8 @@ contains
       real(dp), dimension(:), allocatable :: residual_norm
       real(dp), dimension(:), allocatable :: c, residual, omega
       complex(dp), dimension(:), allocatable :: new_omega
+!
+      call this%total_timer%turn_on()
 !
       call mem%alloc(omega, this%n_solutions)
       call mem%alloc(new_omega, this%n_solutions)
@@ -171,6 +177,8 @@ contains
 !
       do while (.not. all(converged) .and. (iteration .le. this%max_iterations))
 !
+         call this%iteration_timer%turn_on()
+!
          iteration = iteration + 1
 !
          call this%davidson%update_reduced_space()
@@ -201,6 +209,9 @@ contains
 !
          call dcopy(this%n_solutions, real(new_omega), 1, omega, 1)
 !
+         call this%iteration_timer%turn_off()
+         call this%iteration_timer%reset()
+!
       enddo
 !
       call mem%dealloc(c, this%davidson%n_parameters)
@@ -216,6 +227,8 @@ contains
       call mem%dealloc(new_omega, this%n_solutions)
 !
       call this%davidson%cleanup()
+!
+      call this%total_timer%turn_off()
 !
    end subroutine run_eigen_davidson_solver
 !

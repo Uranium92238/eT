@@ -78,7 +78,7 @@ contains
 !
       type(timings), allocatable :: timer
 !
-      timer = timings('Jacobian CC3 transformation', pl='normal')
+      timer = timings('Jacobian CC3 transformation', pl='n')
       call timer%turn_on()
 !
       call zero_array(rho, wf%n_t1 + wf%n_t2)

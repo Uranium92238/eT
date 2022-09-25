@@ -83,8 +83,6 @@ module asymmetric_lanczos_cc_es_class
 !
       real(dp), dimension(:), allocatable :: energies
 !
-      type(timings) :: timer
-!
       class(abstract_projection_tool), allocatable :: projector
 !
       class(ccs), pointer :: wf
@@ -136,8 +134,8 @@ contains
 !
       type(asymmetric_lanczos_cc_es) :: this
 !
-      this%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state')
-      call this%timer%turn_on()
+      this%total_timer = timings('Asymmetric Lanczos ES solver')
+      call this%total_timer%turn_on()
 !
 !     Set printables
 !
@@ -676,16 +674,16 @@ contains
 !
       call this%destruct_energies()
 !
-      call this%timer%turn_off()
+      call this%total_timer%turn_off()
 !
       call output%printf('m', '- Finished solving the ' //  &
                          trim(convert_to_uppercase(this%wf%name_)) // ' excited &
                          &state equations.', fs='(/t3,a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_asymmetric_lanczos_cc_es
 !

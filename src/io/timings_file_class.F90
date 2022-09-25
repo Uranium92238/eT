@@ -23,7 +23,6 @@ module timings_file_class
 !!    Timings file class module
 !!    Written by Sarai D. Folkestad, Sep 2021
 !!
-!!
 !
    use kinds
    use output_file_class, only: output_file
@@ -35,7 +34,6 @@ module timings_file_class
       procedure, public :: print_banner => print_banner_timings_file
       procedure, public :: print_time => print_time_timings_file
       procedure, private :: print_formated_task_name
-      procedure, nopass, private :: get_format
 !
    end type timings_file
 !
@@ -73,11 +71,12 @@ contains
 !
       class(timings_file) :: the_file
 !
-      if (.not. the_file%is_open) call the_file%error_msg('tried to print to closed timings file')
+      if (.not. the_file%is_open) &
+         call the_file%error_msg('tried to print to closed timings file')
 !
+      call the_file%printf('m', 'Description(x41)wall[s](x10)cpu[s]  cpu/wall', &
+                           fs='(/t3,a)', ll=100)
 !
-      call the_file%printf('m', 'Description                                 wall[s]         &
-                                 &cpu[s]    cpu/wall', fs='(/t3,a)', ll=200)
       call the_file%print_separator('m', 85, '-', fs='(t3,a)')
 !
    end subroutine print_banner_timings_file
@@ -94,7 +93,7 @@ contains
 !
       real(dp), intent(in) :: wall, cpu
       character(len=*), intent(in) :: name_
-      character(len=100), intent(in) :: pl
+      character(len=*), intent(in) :: pl
 !
       call print_formated_task_name(the_file, name_, pl)
 !
@@ -115,12 +114,11 @@ contains
 !
    subroutine print_formated_task_name(the_file, name_, pl)
 !!
-!!    Print fromated task name 
+!!    Print fromated task name
 !!    Written by Sarai D. Folkestad, Sep 2021
 !!
 !!    Prints the timing description (name_)
-!!    If needed, over several lines. Line breaks at spaces are 
-!!    preferred.
+!!    If needed, over several lines. Line breaks at spaces are preferred.
 !!
       use string_utilities, only: n_instances_of_character, last_instance_of_character
 !
@@ -128,73 +126,45 @@ contains
 !
       class(timings_file), intent(inout) :: the_file
       character(len=*), intent(in) :: name_
-      character(len=100), intent(in) :: pl
+      character(len=*), intent(in) :: pl
 !
-      integer :: name_length, offset, chunk_length, cursor
+      integer :: name_length, offset, cursor
 !
-      character(len=100) :: name_chunk
+      character(len=100) :: remaining_name
 !
-      character(len=20) :: format_string_name
+      integer, parameter :: max_length = 46
+      character(len=5) :: format_string, local_format_string
 !
-      integer, parameter :: max_len = 35
+      write(format_string, '(a,i0,a)') "(b", max_length, ")"
 !
-      name_length = len(trim(name_))
+      name_length = len_trim(name_)
 !
-      if (name_length .gt. max_len) then
+      if (name_length <= max_length) then
+         call the_file%printf(pl, format_string, adv=.false., chars=[name_])
+         return
+      end if
 !
-         offset = 0
-         name_chunk = name_
+      offset = 1
+      remaining_name = name_
 !
-         do while (len_trim(name_chunk) .gt. max_len)
+      do while (len_trim(remaining_name) .gt. max_length)
 !
-            cursor = max_len
-            if (n_instances_of_character(trim(name_chunk(1:cursor)), ' ') > 0) &
-               cursor = last_instance_of_character(trim(name_chunk(1:cursor)), ' ')
+         cursor = max_length
+         if (n_instances_of_character(trim(remaining_name(1:cursor)), ' ') > 0) &
+            cursor = last_instance_of_character(trim(remaining_name(1:cursor)), ' ')
 !
-            name_chunk = name_chunk(1:cursor)
+         write(local_format_string, '(a,i0,a)') "(b", cursor, ")"
+         call the_file%printf(pl, trim(local_format_string), &
+                              chars=[trim(remaining_name(1:cursor))])
 !
-            chunk_length = len_trim(name_chunk)
-            format_string_name = the_file%get_format(chunk_length, max_len)
-            call the_file%printf(pl, trim(format_string_name), chars=[trim(name_chunk)])
+         offset = offset + cursor
+         remaining_name = adjustl(name_(offset:))
 !
-            offset = offset + cursor
-            name_chunk = adjustl(name_(offset + 1:))
+      enddo
 !
-         enddo
-!
-         chunk_length = len_trim(name_chunk)
-         format_string_name = the_file%get_format(chunk_length, max_len)
-         call the_file%printf(pl, trim(format_string_name), adv=.false., chars=[trim(name_chunk)])
-!
-      else
-!
-         format_string_name = the_file%get_format(name_length, max_len)
-         call the_file%printf(pl, trim(format_string_name), adv=.false., chars=[name_])
-!
-      endif
-
+      call the_file%printf(pl, format_string, adv=.false., chars=[trim(remaining_name)])
 !
    end subroutine print_formated_task_name
 !
-!
-   function get_format(length, max_length) result(format_)
-!!
-!!    Get format
-!!    Written by Sarai D. Folkestad, Sep 2021
-!!
-      implicit none
-!
-      integer, intent(in) :: length, max_length
-!
-      character(len=20) :: format_
-!
-      if (max_length - length .gt. 0) then
-         write(format_, '(a2,i0,a4,i0,a1)') &
-              '(a', length, ') (x', max_length-length,')'
-      else
-         write(format_, '(a2,i0,a1)') '(a', max_length, ')'
-      endif
-!
-   end function get_format
 !
 end module timings_file_class
