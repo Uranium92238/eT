@@ -69,8 +69,6 @@ module diis_cc_gs_class
 !
       logical :: restart
 !
-      type(timings) :: timer
-!
       class(amplitude_updater), allocatable :: t_updater
 !
       class(convergence_tool), allocatable :: convergence_checker
@@ -128,8 +126,9 @@ contains
 !
       this%wf => wf
 !
-      this%timer = timings('CC GS solver time', pl='minimal')
-      call this%timer%turn_on()
+      this%iteration_timer = timings('DIIS CC GS iteration', pl='normal')
+      this%total_timer = timings('CC GS solver total', pl='minimal')
+      call this%total_timer%turn_on()
 !
 !     Print solver banner
 !
@@ -228,8 +227,6 @@ contains
 !
       integer :: iteration
 !
-      type(timings), allocatable :: iteration_timer
-!
       call this%diis%initialize()
 !
       call mem%alloc(omega, this%wf%n_gs_amplitudes)
@@ -241,8 +238,6 @@ contains
                          &Delta E (a.u.) ', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
-      iteration_timer = timings('DIIS CC GS iteration time', pl='normal')
-!
       iteration = 0
       previous_energy = zero
 !
@@ -251,7 +246,7 @@ contains
       do while (.not. converged .and. iteration .le. this%max_iterations)
 !
          iteration = iteration + 1
-         call iteration_timer%turn_on()
+         call this%iteration_timer%turn_on()
 !
 !        Calculate the energy and error vector omega
 !
@@ -302,8 +297,8 @@ contains
          previous_energy = energy
          call this%wf%save_amplitudes()
 !
-         call iteration_timer%turn_off()
-         call iteration_timer%reset()
+         call this%iteration_timer%turn_off()
+         call this%iteration_timer%reset()
 !
       enddo
 !
@@ -333,15 +328,15 @@ contains
 !
       call this%wf%save_amplitudes()
 !
-      call this%timer%turn_off()
+      call this%total_timer%turn_off()
 !
       call output%printf('m', '- Finished solving the (a0) ground state equations', &
                          chars=[convert_to_uppercase(this%wf%name_)], fs='(/t3, a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6, a)')
+                         reals=[this%total_timer%get_elapsed_time('wall')], fs='(/t6, a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6, a)')
+                         reals=[this%total_timer%get_elapsed_time('cpu')], fs='(t6, a)')
 !
    end subroutine cleanup_diis_cc_gs
 !

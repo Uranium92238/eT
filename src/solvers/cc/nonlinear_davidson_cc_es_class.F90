@@ -147,9 +147,9 @@ contains
 !
       this%wf => wf
 !
-      this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) &
-                        // ' excited state (' // trim(transformation) //')', pl='normal')
-      call this%timer%turn_on()
+      this%total_timer = timings('Non-linear Davidson ES solver (' // &
+                                 trim(transformation) //')', pl='normal')
+      call this%total_timer%turn_on()
 !
       this%name_ = 'Non-linear Davidson coupled cluster excited state solver'
       this%tag   = 'Davidson'
@@ -240,9 +240,9 @@ contains
 !
       this%wf => wf
 !
-      this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) &
-                        // ' excited state (' // trim(transformation) //')', pl='normal')
-      call this%timer%turn_on()
+      this%total_timer = timings('Non-linear Davidson ES solver (' // &
+                                 trim(transformation) //')', pl='normal')
+      call this%total_timer%turn_on()
 !
       this%name_ = 'Non-linear Davidson coupled cluster excited state solver'
       this%tag   = 'Davidson'
@@ -389,7 +389,7 @@ contains
 !
          iteration = iteration + 1
 !
-         write(timer_name, '(a,i0)') 'Nonlinear Davidson: macro iteration ', iteration
+         write(timer_name, '(a,i0)') 'Non-linear Davidson: macro iteration ', iteration
          macro_iteration_time = timings(trim(timer_name), pl="n")
          call macro_iteration_time%turn_on()
 !
@@ -643,7 +643,7 @@ contains
 !
          iteration = iteration + 1
 !
-         write(timer_name, '(a,i0)') 'Nonlinear Davidson: micro iteration ', iteration
+         write(timer_name, '(a,i0)') 'Non-linear Davidson: micro iteration ', iteration
          micro_iteration_time = timings(trim(timer_name), pl="n")
          call micro_iteration_time%turn_on()
 !

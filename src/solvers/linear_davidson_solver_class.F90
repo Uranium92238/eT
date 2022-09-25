@@ -47,6 +47,7 @@ module linear_davidson_solver_class
    use parameters
    use memory_manager_class, only: mem
    use linear_davidson_tool_class, only: linear_davidson_tool
+   use timings_class, only: timings
 !
    use transformation_class,                    only: transformation
    use linear_equation_storage_tool_class,      only: linear_equation_storage_tool
@@ -142,6 +143,9 @@ contains
       this%residual_threshold  = residual_threshold
       this%frequencies         = frequencies
 !
+      this%total_timer = timings("Linear davidson solver total", pl='m')
+      this%iteration_timer = timings("Linear davidson solver iteration", pl='m')
+!
    end function new_linear_davidson_solver
 !
 !
@@ -166,6 +170,8 @@ contains
       real(dp), dimension(:),    allocatable     :: c, residual
       real(dp), dimension(:),    allocatable     :: solution
       real(dp), dimension(:,:),  allocatable     :: rhs
+!
+      call this%total_timer%turn_on()
 !
       call mem%alloc(rhs, this%davidson%n_parameters, this%n_rhs)
 !
@@ -239,6 +245,8 @@ contains
 !
       do while (.not. all(converged) .and. (iteration .le. this%max_iterations))
 !
+         call this%iteration_timer%turn_on()
+!
          iteration = iteration + 1
 !
 !        Reduced space preparations
@@ -281,17 +289,21 @@ contains
 !
          call mem%dealloc(solution, this%davidson%n_parameters)
 !
+         call this%iteration_timer%turn_off()
+         call this%iteration_timer%reset()
+!
       enddo
 !
       call mem%dealloc(c, this%davidson%n_parameters)
       call mem%dealloc(residual, this%davidson%n_parameters)
       call mem%dealloc(residual_norm, this%n_solutions)
+      call mem%dealloc(rhs, this%davidson%n_parameters, this%n_rhs)
 !
       call this%printer%print_summary(this%n_solutions, converged, iteration)
 !
       call mem%dealloc(converged, this%n_solutions)
 !
-      call mem%dealloc(rhs, this%davidson%n_parameters, this%n_rhs)
+      call this%total_timer%turn_off()
 !
    end subroutine run_linear_davidson_solver
 !

@@ -72,10 +72,8 @@ module abstract_cc_es_class
 !
       real(dp), dimension(:), allocatable :: energies
 !
-      type(timings) :: timer
-!
       class(convergence_tool), allocatable         :: convergence_checker
-      class(start_vector_tool), allocatable     :: start_vectors
+      class(start_vector_tool), allocatable        :: start_vectors
       class(abstract_projection_tool), allocatable :: projector
       class(precondition_tool), allocatable        :: preconditioner
 !
@@ -189,16 +187,16 @@ contains
 !
       call this%destruct_energies()
 !
-      call this%timer%turn_off()
+      call this%total_timer%turn_off()
 !
       call output%printf('m', '- Finished solving the ' //  &
                         trim(convert_to_uppercase(this%wf%name_)) // ' excited state &
                         &equations ('// trim(this%transformation) //')', fs='(/t3,a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_abstract_cc_es
 !
