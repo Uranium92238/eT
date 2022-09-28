@@ -13,6 +13,7 @@
 
 ### Structure
 - Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
+- Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
 
 # eT v1.8.5
 ### Bugfixes
