@@ -434,9 +434,9 @@ contains
       allocate(array(M), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array(array, size_array)
+      if (set_zero_) call zero_array(array, int(size_array))
 !
-      if (present(set_zero)) call zero_array(array, size_array)
+      if (present(set_zero)) call zero_array(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -477,7 +477,7 @@ contains
       allocate(array(M,N), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array(array, size_array)
+      if (set_zero_) call zero_array(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -518,7 +518,7 @@ contains
       allocate(array(M,N,O), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array(array, size_array)
+      if (set_zero_) call zero_array(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -559,7 +559,7 @@ contains
       allocate(array(M,N,O,P), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array(array, size_array)
+      if (set_zero_) call zero_array(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -600,7 +600,7 @@ contains
       allocate(array(M,N,O,P,Q), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array(array, size_array)
+      if (set_zero_) call zero_array(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -641,7 +641,7 @@ contains
       allocate(array(M), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_complex(array, size_array)
+      if (set_zero_) call zero_array_complex(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -682,7 +682,7 @@ contains
       allocate(array(M,N), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_complex(array, size_array)
+      if (set_zero_) call zero_array_complex(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -723,7 +723,7 @@ contains
       allocate(array(M,N,O), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_complex(array, size_array)
+      if (set_zero_) call zero_array_complex(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -764,7 +764,7 @@ contains
       allocate(array(M,N,O,P), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_complex(array, size_array)
+      if (set_zero_) call zero_array_complex(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -1111,7 +1111,7 @@ contains
       allocate(array(M), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_int(array, size_array)
+      if (set_zero_) call zero_array_int(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -1152,7 +1152,7 @@ contains
       allocate(array(M,N), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_int(array, size_array)
+      if (set_zero_) call zero_array_int(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -1193,7 +1193,7 @@ contains
       allocate(array(M,N,K), stat=error, errmsg=error_msg)
 !
       if (present(set_zero)) set_zero_ = set_zero
-      if (set_zero_) call zero_array_int(array, size_array)
+      if (set_zero_) call zero_array_int(array, int(size_array))
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
