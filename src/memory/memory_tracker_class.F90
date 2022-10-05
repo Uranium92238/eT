@@ -76,7 +76,8 @@ contains
 !
       this%tag = trim(tag)
 !
-      call output%printf('debug', 'Memory tracker initialized - ' // this%tag, ll=100)
+      call output%printf('debug', 'Memory tracker initialized - (a0)', &
+                         chars=[this%tag], ll=100)
 !
    end function new_memory_tracker
 !
@@ -104,7 +105,7 @@ contains
          write(max_string, '(i0)') this%max_allowed
 !
          call output%printf('v','Exceeded expected memory in memory tracker: (a0)', &
-                             chars=[this%tag])
+                            chars=[this%tag])
          call output%printf('v', '(a0) B used out of (a0) B allowed.', &
                             chars=[current_string, max_string])
 !
@@ -128,7 +129,7 @@ contains
       write(difference,'(i0)') this%max_allowed - this%max_used
 !
       call output%printf('debug', 'Memory tracker finalized - ' // this%tag // ':')
-      call output%printf('debug', 'allowed: (i0) B  used: (i0) B  difference: (i0) B', &
+      call output%printf('debug', 'allowed: (a0) B  used: (a0) B  difference: (a0) B', &
                          chars=[allowed_string, used_string, difference], ll=100)
 !
    end subroutine destructor

@@ -134,6 +134,9 @@ module doubles_class
       procedure :: get_full_multipliers &
                 => get_multipliers_doubles
 !
+      procedure :: get_full_multipliers_complex &
+                => get_multipliers_doubles_complex
+!
 !     Projectors for excited and ionized states
 !
       procedure :: cvs_projection                        => cvs_projection_doubles
@@ -574,9 +577,26 @@ contains
       real(dp), dimension(wf%n_es_amplitudes) :: multipliers
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1), 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1:), 1)
 !
    end subroutine get_multipliers_doubles
+!
+!
+   subroutine get_multipliers_doubles_complex(wf, multipliers)
+!!
+!!    Get multipliers complex
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      complex(dp), dimension(wf%n_es_amplitudes) :: multipliers
+!
+      call zcopy(wf%n_t1, wf%t1bar_complex, 1, multipliers, 1)
+      call zcopy(wf%n_t2, wf%t2bar_complex, 1, multipliers(wf%n_t1 + 1:), 1)
+!
+   end subroutine get_multipliers_doubles_complex
 !
 !
 end module doubles_class
