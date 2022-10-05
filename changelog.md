@@ -1,3 +1,9 @@
+# eT v1.8.7
+### Bugfixes
+- Revert update of Libint library, as the eT compilation fails. eT-program/eT!1125
+- Fixed debug print in `memory_tracker.F90` that crashed because it expected integers but received strings (eT-program/eT#586). eT-program/eT!1125
+- Fixed segfault that appears in EOM properties with Intel 20.2.6 (eT-program/eT#586). eT-program/eT!1125
+
 # eT v1.8.6
 ### Features
 - Update of Libint library that ships with eT to include higher angular momentum. eT-program/eT!1119
