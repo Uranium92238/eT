@@ -95,10 +95,18 @@ contains
       class(doubles) :: wf
       type(timings)  :: timer
 !
+      real(dp), dimension(:), allocatable :: tbar
+!
       timer = timings('Ground state density', pl='m')
       call timer%turn_on
 !
-      call wf%mu_ref_density_terms(wf%density, 0, [wf%t1bar, wf%t2bar])
+      call mem%alloc(tbar, wf%n_t1 + wf%n_t2)
+      call wf%get_full_multipliers(tbar)
+!
+      call wf%mu_ref_density_terms(wf%density, 0, tbar)
+!
+      call mem%dealloc(tbar, wf%n_t1 + wf%n_t2)
+!
       call wf%density_ccs_ref_ref_oo(wf%density)
 !
       call timer%turn_off

@@ -10,18 +10,18 @@ To compile Libint, follow the instructions below or consult the [Libint Wiki](ht
 
 
 ## Installing Libint
-Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.1.tgz).
+Download the [Libint library for eT](https://www.etprogram.org/libint/libint-2.7.0-beta.6.tgz).
 Unpack the tar file:
 ```shell
-tar -xvzf libint-2.7.1.tgz
+tar -xvzf libint-2.7.0-beta.6.tgz
 ```
 Enter the generated folder:
 ```shell
-cd libint-2.7.1
+cd libint-2.7.0-beta.6
 ```
 Compile (with 4 threads (-j flag), increase if more are available):
 ```shell
-cmake . -DCMAKE_INSTALL_PREFIX=/where/you/want/to/install/libint/libint-2.7.1 -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DCMAKE_CXX_FLAGS=[C++ compiler flags]
+cmake . -DCMAKE_INSTALL_PREFIX=/where/you/want/to/install/libint/libint-2.7.0-beta.6 -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DCMAKE_CXX_FLAGS=[C++ compiler flags]
 cmake --build . -j 4
 ```
 CMake will attempt to install Libint in the directory specified by `-DCMAKE_INSTALL_PREFIX`.
