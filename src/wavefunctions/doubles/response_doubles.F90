@@ -134,6 +134,8 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
 !
+      real(dp), dimension(:), allocatable :: tbar
+!
       type(timings)     :: timer
       character(len=25) :: timer_name
 !
@@ -141,8 +143,12 @@ contains
       timer = timings(trim(timer_name), pl='m')
       call timer%turn_on()
 !
-      call wf%mu_nu_density_terms(density, 0, [wf%t1bar, wf%t2bar], &
-                               state, wf%r0(state), R)
+      call mem%alloc(tbar, wf%n_t1+wf%n_t2)
+      call wf%get_full_multipliers(tbar)
+!
+      call wf%mu_nu_density_terms(density, 0, tbar, state, wf%r0(state), R)
+!
+      call mem%dealloc(tbar, wf%n_t1+wf%n_t2)
 !
       call wf%density_ccs_ref_mu_ov(density, R)
       call wf%density_mu_mu_oo(density, -wf%r0(state))

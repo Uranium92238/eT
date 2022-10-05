@@ -15,6 +15,17 @@
 - Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
 - Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
 
+# eT v1.8.7
+### Bugfixes
+- Revert update of Libint library, as the eT compilation fails. eT-program/eT!1125
+- Fixed debug print in `memory_tracker.F90` that crashed because it expected integers but received strings (eT-program/eT#586). eT-program/eT!1125
+- Fixed segfault that appears in EOM properties with Intel 20.2.6 (eT-program/eT#586). eT-program/eT!1125
+
+# eT v1.8.6
+### Features
+- Update of Libint library that ships with eT to include higher angular momentum. eT-program/eT!1119
+
+
 # eT v1.8.5
 ### Bugfixes
 - Fixed bug in the FCI linear transformation where $`E_{qp}`$ was applied instead of $`E_{pq}`$ . eT-program/eT!1115
