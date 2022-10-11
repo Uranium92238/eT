@@ -428,7 +428,7 @@ contains
       call mem%alloc(L_J_2, this%n_J * batcher%max_length * this%dim_)
 !
       if (.not. all_in_mem) then
-         temp_file = direct_stream_file('temp_file', this%n_J, dp, 'new')
+         temp_file = direct_stream_file('temp_file', this%n_J, word_size=dp, status_='new')
          call temp_file%open_()
       endif
 !
