@@ -249,7 +249,7 @@ add_eT_runtest(ccsd_td_gl2                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_gl2_gaussian_envelope                "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
-add_eT_runtest(ccsd_td_cholesky_disk_eri_none               "eT;short;ccsd;complex;td:disk")
+add_eT_runtest(ccsd_td_cholesky_disk_eri_none               "eT;short;ccsd;complex;td;disk")
 add_eT_runtest(ccsd_td_eri_none                             "eT;short;ccsd;complex;td;disk")
 add_eT_runtest(ccsd_td_cholesky_disk                        "eT;short;ccsd;complex;td;disk")
 add_eT_runtest(ri_ccsd                                      "eT;short;ccsd;ri")

@@ -358,7 +358,7 @@ contains
 !
       call mem%alloc(Y_ji, wf%n_o, n_cc2_o)
 !
-      call wf%jacobian_a1_intermediate_oo%open_('read', 'rewind')
+      call wf%jacobian_a1_intermediate_oo%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_oo%read_(Y_ji, n_cc2_o*wf%n_o)
 !
@@ -387,7 +387,7 @@ contains
 !
       call mem%alloc(Y_ab, n_cc2_v, wf%n_v)
 !
-      call wf%jacobian_a1_intermediate_vv%open_('read', 'rewind')
+      call wf%jacobian_a1_intermediate_vv%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_vv%read_(Y_ab, n_cc2_v*wf%n_v)
 !
@@ -911,8 +911,8 @@ contains
 !
       call mem%dealloc(u_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
 !
-      wf%jacobian_a1_intermediate_oo = sequential_file('jacobian_a1_intermediate_oo_doubles')
-      call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
+      wf%jacobian_a1_intermediate_oo = stream_file('jacobian_a1_intermediate_oo_doubles')
+      call wf%jacobian_a1_intermediate_oo%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_oo%write_(Y_ji, n_cc2_o*wf%n_o)
 !
@@ -957,8 +957,8 @@ contains
 !
       call mem%dealloc(g_jckb, n_cc2_o, n_cc2_v, n_cc2_o, wf%n_v)
 !
-      wf%jacobian_a1_intermediate_vv = sequential_file('jacobian_a1_intermediate_vv_doubles')
-      call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
+      wf%jacobian_a1_intermediate_vv = stream_file('jacobian_a1_intermediate_vv_doubles')
+      call wf%jacobian_a1_intermediate_vv%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_vv%write_(Y_Ab, n_cc2_v*wf%n_v)
 !

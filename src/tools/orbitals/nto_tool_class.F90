@@ -183,14 +183,14 @@ contains
 !
       if (files_found) then
 !
-         call this%M_file%open_('read', 'rewind')
+         call this%M_file%open_('rewind')
 !
          call this%M_file%read_(this%n_states)
          call this%M_file%read_(this%M, this%n_o**2)
 !
          call this%M_file%close_()
 !
-         call this%N_file%open_('read', 'rewind')
+         call this%N_file%open_('rewind')
 !
          call this%N_file%read_(n_states)
 !
@@ -220,14 +220,14 @@ contains
 !
       class(nto_tool), intent(inout) :: this
 !
-      call this%M_file%open_('write', 'rewind')
+      call this%M_file%open_('rewind')
 !
       call this%M_file%write_(this%n_states)
       call this%M_file%write_(this%M, this%n_o**2)
 !
       call this%M_file%close_()
 !
-      call this%N_file%open_('write', 'rewind')
+      call this%N_file%open_('rewind')
 !
       call this%N_file%write_(this%n_states)
       call this%N_file%write_(this%N, this%n_v**2)

@@ -469,7 +469,7 @@ contains
       call mem%dealloc(X_alji, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       wf%X_ajil = direct_stream_file('X_ajil',wf%n_v*wf%n_o**2)
-      call wf%X_ajil%open_('write')
+      call wf%X_ajil%open_()
 !
       call wf%X_ajil%write_(X_ajil, 1, wf%n_o)
 !
@@ -609,7 +609,7 @@ contains
       call mem%batch_setup(batch_i, req_0, req_i, 'sort_x_to_abid_and_write_cc3')
 !
       wf%X_abid = direct_stream_file('X_abid',wf%n_v**2)
-      call wf%X_abid%open_('write')
+      call wf%X_abid%open_()
 !
       call mem%alloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
       call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%max_length, wf%n_v)

@@ -26,7 +26,7 @@ contains
       real(dp), dimension(:), allocatable :: distances, angles, dihedrals
       character(len=2), dimension(:), allocatable :: symbols
 !
-      output = output_file('eT.out')
+      output = output_file('unit_z_matrix.out')
       call output%open_()
 !
       z_matrix = z_matrix_tool(n_atoms)

@@ -20,15 +20,15 @@
 module direct_stream_file_class
 !
 !!
-!!    Direct access stream file class module
-!!    Written by Rolf H. Myhre, Feb. 2020
+!! Direct access stream file class module
+!! Written by Rolf H. Myhre, Feb. 2020
 !!
-!!    Stream file that acts as a Fortran direct file
-!!    Byte positions and read/write lengths are calculated based on record dimension
-!!    in new_direct_stream and records sent in to read and write.
+!! Stream file that acts as a Fortran direct file
+!! Byte positions and read/write lengths are calculated based on record dimension
+!! in new_direct_stream and records sent in to read and write.
 !!
-!!    Because of various compiler bugs, specific wrappers like real_2 must be called
-!!    where the number refers to the rank of the array.
+!! Because of various compiler bugs, specific wrappers like real_2 must be called
+!! where the number refers to the rank of the array.
 !!
 !
    use kinds
@@ -47,68 +47,75 @@ module direct_stream_file_class
 !
 !     Real double precision read
 !
-      procedure :: read_1_real_dp_direct_stream_file
-      procedure :: read_2_real_dp_direct_stream_file
-      procedure :: read_3_real_dp_direct_stream_file
-      procedure :: read_4_real_dp_direct_stream_file
+      procedure, private :: read_1_real_dp_direct_stream_file
+      procedure, private :: read_2_real_dp_direct_stream_file
+      procedure, private :: read_3_real_dp_direct_stream_file
+      procedure, private :: read_4_real_dp_direct_stream_file
 !
 !     Complex double precision read
 !
-      procedure :: read_1_complex_dp_direct_stream_file
-      procedure :: read_2_complex_dp_direct_stream_file
-      procedure :: read_3_complex_dp_direct_stream_file
-      procedure :: read_4_complex_dp_direct_stream_file
+      procedure, private :: read_1_complex_dp_direct_stream_file
+      procedure, private :: read_2_complex_dp_direct_stream_file
+      procedure, private :: read_3_complex_dp_direct_stream_file
+      procedure, private :: read_4_complex_dp_direct_stream_file
 !
 !     Read generic
 !
-      generic :: read_ => read_1_real_dp_direct_stream_file,    &
-                          read_2_real_dp_direct_stream_file,    &
-                          read_3_real_dp_direct_stream_file,    &
-                          read_4_real_dp_direct_stream_file,    &
-                          read_1_complex_dp_direct_stream_file, &
-                          read_2_complex_dp_direct_stream_file, &
-                          read_3_complex_dp_direct_stream_file, &
-                          read_4_complex_dp_direct_stream_file
+      generic, public :: read_ => read_1_real_dp_direct_stream_file,    &
+                                  read_2_real_dp_direct_stream_file,    &
+                                  read_3_real_dp_direct_stream_file,    &
+                                  read_4_real_dp_direct_stream_file,    &
+                                  read_1_complex_dp_direct_stream_file, &
+                                  read_2_complex_dp_direct_stream_file, &
+                                  read_3_complex_dp_direct_stream_file, &
+                                  read_4_complex_dp_direct_stream_file
 
 !
 !     Specialized read routines
 !
-      procedure :: read_range               => read_range_direct_stream_file
-      procedure :: read_compound_full_batch => read_compound_full_batch_direct_stream_file
+      procedure, public :: read_range &
+                        => read_range_direct_stream_file
+      procedure, public :: read_compound_full_batch &
+                        => read_compound_full_batch_direct_stream_file
 !
 !     Write routines
 !
 !     Real double precision write
 !
-      procedure :: write_1_real_dp_direct_stream_file
-      procedure :: write_2_real_dp_direct_stream_file
-      procedure :: write_3_real_dp_direct_stream_file
-      procedure :: write_4_real_dp_direct_stream_file
+      procedure, private :: write_1_real_dp_direct_stream_file
+      procedure, private :: write_2_real_dp_direct_stream_file
+      procedure, private :: write_3_real_dp_direct_stream_file
+      procedure, private :: write_4_real_dp_direct_stream_file
 !
 !     complex double precision write
 !
-      procedure :: write_1_complex_dp_direct_stream_file
-      procedure :: write_2_complex_dp_direct_stream_file
-      procedure :: write_3_complex_dp_direct_stream_file
-      procedure :: write_4_complex_dp_direct_stream_file
+      procedure, private :: write_1_complex_dp_direct_stream_file
+      procedure, private :: write_2_complex_dp_direct_stream_file
+      procedure, private :: write_3_complex_dp_direct_stream_file
+      procedure, private :: write_4_complex_dp_direct_stream_file
 !
 !     Write generic
 !
-      generic :: write_ => write_1_real_dp_direct_stream_file,    &
-                           write_2_real_dp_direct_stream_file,    &
-                           write_3_real_dp_direct_stream_file,    &
-                           write_4_real_dp_direct_stream_file,    &
-                           write_1_complex_dp_direct_stream_file, &
-                           write_2_complex_dp_direct_stream_file, &
-                           write_3_complex_dp_direct_stream_file, &
-                           write_4_complex_dp_direct_stream_file
+      generic, public :: write_ => write_1_real_dp_direct_stream_file,    &
+                                   write_2_real_dp_direct_stream_file,    &
+                                   write_3_real_dp_direct_stream_file,    &
+                                   write_4_real_dp_direct_stream_file,    &
+                                   write_1_complex_dp_direct_stream_file, &
+                                   write_2_complex_dp_direct_stream_file, &
+                                   write_3_complex_dp_direct_stream_file, &
+                                   write_4_complex_dp_direct_stream_file
 !
 !     Specialized write routines
 !
-      procedure :: write_range               => write_range_direct_stream_file
-      procedure :: write_compound_batch_full => write_compound_batch_full_direct_stream_file
+      procedure, public :: write_range &
+                        => write_range_direct_stream_file
+      procedure, public :: write_compound_batch_full &
+                        => write_compound_batch_full_direct_stream_file
 !
-      procedure :: get_n_records             => get_n_records_direct_stream_file
+      procedure, public :: get_n_records &
+                        => get_n_records_direct_stream_file
+!
+      procedure, private :: check_records_to_be_accessed
 !
    end type direct_stream_file
 !
@@ -121,56 +128,48 @@ module direct_stream_file_class
 contains
 !
 !
-   function new_direct_stream_file(name_, rec_dim, w_size, status_) result(the_file)
+   function new_direct_stream_file(name_, record_dim, word_size, status_) result(this)
 !!
-!!    Direct file constructer
-!!    Writen by Rolf H. Myhre, May 2019
+!!    new direct stream file
+!!    Written by Rolf H. Myhre, May 2019
 !!
-!!    rec_dim is number of words in each record
-!!    w_size (optional) is the size of each word, default is double precision
-!!    record length is rec_dim*w_size
+!!    record_dim is number of words in each record
+!!    word_size (optional) is the size of each word, default is double precision
+!!    record length is record_dim*word_size
 !!
       implicit none
 !
-      type(direct_stream_file) :: the_file
+      type(direct_stream_file) :: this
 !
       character(len=*), intent(in)           :: name_
-      integer, intent(in)                    :: rec_dim
+      integer, intent(in)                    :: record_dim
 !
-      integer, intent(in), optional          :: w_size
+      integer, intent(in), optional          :: word_size
       character(len=*), intent(in), optional :: status_
 !
-      if (present(w_size)) then
-         if (w_size .gt. 0) then
-            the_file%word_size = w_size
-         else
+      call this%initialize(name_, status_)
+!
+      this%word_size = dp
+      if (present(word_size)) then
+         if (word_size <= 0) then
             call output%error_msg("Word size less than one for file (a0)", &
-                                  chars=[trim(name_)])
+                                  chars=[this%get_name()])
          endif
-      else
-         the_file%word_size = dp
+         this%word_size = word_size
       endif
 !
-      call the_file%set_name(name_)
-!
-      if (rec_dim .lt. 1) then
+      if (record_dim .lt. 1) then
          call output%error_msg("Record dimension less than one for file (a0)", &
-                               chars=[trim(name_)])
+                               chars=[this%get_name()])
       endif
 !
-      if (present(status_)) then
-         call the_file%set_status(status_)
-      else
-         call the_file%set_status('unknown')
-      endif
-!
-      the_file%record_dim = rec_dim
-      the_file%record_length = rec_dim*the_file%word_size
+      this%record_dim = record_dim
+      this%record_length = record_dim * this%word_size
 !
    end function new_direct_stream_file
 !
 !
-   subroutine read_1_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_1_real_dp_direct_stream_file(this, array, first_rec, last_rec)
 !!
 !!    read 1 real dp
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -184,38 +183,26 @@ contains
 !!    Calculates position to read in the underlying stream file based on
 !!    first_rec and record_length
 !!
-!!    Calculates number of bytes to read based on first_rec, last_rec and the_file%record_length
+!!    Calculates number of bytes to read based on first_rec, last_rec and this%record_length
 !!
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      real(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(out) :: array
+      real(dp), dimension((last_rec - first_rec + 1)*this%record_dim), intent(out) :: array
 !
       integer :: position_, read_length, records
 !
       records = last_rec - first_rec + 1
+      read_length = this%record_dim * records
+      position_ = (first_rec - 1) * this%record_length + 1
 !
-      if (first_rec .ge. 1) then
-         position_ = (first_rec-1)*the_file%record_length + 1
-      else
-         call output%error_msg('Record (i0) less than 1 for read in file (a0)', &
-                               chars=[the_file%get_name()], ints=[first_rec])
-      endif
+      call this%check_records_to_be_accessed(first_rec, last_rec, "read")
 !
-      if (records .ge. 1) then
-         read_length = the_file%record_dim*records
-      else
-         call output%error_msg('Last record (i0) less than first record (i0) &
-                               &for read in file (a0)', &
-                               chars=[trim(the_file%get_name())], &
-                               ints=[last_rec, first_rec])
-      endif
-!
-      call the_file%read_1_real_dp_abstract_stream(array, read_length, position_)
+      call this%read_1_real_dp_abstract_stream(array, read_length, position_)
 !
    end subroutine read_1_real_dp_direct_stream_file
 !
@@ -225,41 +212,41 @@ contains
 !!
 !! Written by Rolf H. Myhre, Mar 2020
 !
-   subroutine read_2_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_2_real_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       real(dp), dimension(:,:), intent(out) :: array
 !
-      call the_file%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
 !
    end subroutine read_2_real_dp_direct_stream_file
 !
-   subroutine read_3_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_3_real_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       real(dp), dimension(:,:,:), intent(out) :: array
 !
-      call the_file%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
 !
    end subroutine read_3_real_dp_direct_stream_file
 !
-   subroutine read_4_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_4_real_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       real(dp), dimension(:,:,:,:), intent(out) :: array
 !
-      call the_file%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%read_1_real_dp_direct_stream_file(array, first_rec, last_rec)
 !
    end subroutine read_4_real_dp_direct_stream_file
 !
 !
-   subroutine read_1_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_1_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
 !!
 !!    read direct stream
 !!    Written by Rolf H. Myhre, Feb. 2020
@@ -275,38 +262,26 @@ contains
 !!    Calculates position to read in the underlying stream file based on
 !!    first_rec and record_length
 !!
-!!    Calculates number of bytes to read based on first_rec, last_rec and the_file%record_length
+!!    Calculates number of bytes to read based on first_rec, last_rec and this%record_length
 !!
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      complex(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(out) :: array
+      complex(dp), dimension((last_rec - first_rec + 1)*this%record_dim), intent(out) :: array
 !
       integer :: position_, read_length, records
 !
       records = last_rec - first_rec + 1
+      read_length = this%record_dim*records
+      position_ = (first_rec - 1) * this%record_length + 1
 !
-      if (first_rec .ge. 1) then
-         position_ = (first_rec-1)*the_file%record_length + 1
-      else
-         call output%error_msg('Record (i0) less than 1 for read in file (a0)', &
-                               chars=[the_file%get_name()], ints=[first_rec])
-      endif
+      call this%check_records_to_be_accessed(first_rec, last_rec, "read")
 !
-      if (records .ge. 1) then
-         read_length = the_file%record_dim*records
-      else
-         call output%error_msg('Last record (i0) less than first record (i0) &
-                               &for read in file (a0)', &
-                               chars=[trim(the_file%get_name())], &
-                               ints=[last_rec, first_rec])
-      endif
-!
-      call the_file%read_1_complex_dp_abstract_stream(array, read_length, position_)
+      call this%read_1_complex_dp_abstract_stream(array, read_length, position_)
 !
    end subroutine read_1_complex_dp_direct_stream_file
 !
@@ -316,41 +291,41 @@ contains
 !!
 !! Written by Rolf H. Myhre, Mar 2020
 !
-   subroutine read_2_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_2_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       complex(dp), dimension(:,:), intent(out) :: array
 !
-      call the_file%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
 !
    end subroutine read_2_complex_dp_direct_stream_file
 !
-   subroutine read_3_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_3_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       complex(dp), dimension(:,:,:), intent(out) :: array
 !
-      call the_file%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
 !
    end subroutine read_3_complex_dp_direct_stream_file
 !
-   subroutine read_4_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine read_4_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       complex(dp), dimension(:,:,:,:), intent(out) :: array
 !
-      call the_file%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%read_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
 !
    end subroutine read_4_complex_dp_direct_stream_file
 !
 !
-   subroutine read_range_direct_stream_file(the_file, array, z_range)
+   subroutine read_range_direct_stream_file(this, array, z_range)
 !!
 !!    read interval direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -367,18 +342,18 @@ contains
 !
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       class(range_), intent(in) :: z_range
 !
       real(dp), dimension(z_range%length) :: array
 !
-      call the_file%read_1_real_dp_direct_stream_file(array, z_range%first, z_range%get_last())
+      call this%read_1_real_dp_direct_stream_file(array, z_range%first, z_range%get_last())
 !
    end subroutine read_range_direct_stream_file
 !
 !
-   subroutine read_compound_full_batch_direct_stream_file(the_file, array, dim_y, z_range)
+   subroutine read_compound_full_batch_direct_stream_file(this, array, dim_y, z_range)
 !!
 !!    read compound full batch direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -396,21 +371,21 @@ contains
 !
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       class(range_), intent(in) :: z_range
       integer, intent(in) :: dim_y
 !
       real(dp), dimension(1) :: array
 !
-      call the_file%read_1_real_dp_direct_stream_file(array, &
+      call this%read_1_real_dp_direct_stream_file(array, &
                            (z_range%first-1)*dim_y + 1, &
                             z_range%get_last()*dim_y)
 !
    end subroutine read_compound_full_batch_direct_stream_file
 !
 !
-   subroutine write_1_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_1_real_dp_direct_stream_file(this, array, first_rec, last_rec)
 !!
 !!    write 1 real dp
 !!    Written by Rolf H. Myhre, Mar. 2020
@@ -424,37 +399,26 @@ contains
 !!    Calculates position to write in the underlying stream file based on
 !!    first_rec and record_length
 !!
-!!    Calculates number of bytes to write based on first_rec, last_rec and the_file%record_length
+!!    Calculates number of bytes to write based on first_rec, last_rec and this%record_length
 !!
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      real(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(in) :: array
+      real(dp), dimension((last_rec - first_rec + 1)*this%record_dim), intent(in) :: array
 !
       integer :: position_, write_length, records
 !
       records = last_rec - first_rec + 1
+      write_length = this%record_dim*records
+      position_ = (first_rec - 1) * this%record_length + 1
 !
-      if (first_rec .ge. 1) then
-         position_ = (first_rec-1)*the_file%record_length + 1
-      else
-         call output%error_msg('Record (i0) less than 1 for write in file (a0)', &
-                               chars=[the_file%get_name()], ints=[first_rec])
-      endif
+      call this%check_records_to_be_accessed(first_rec, last_rec, "write")
 !
-      if (records .ge. 1) then
-         write_length = the_file%record_dim*records
-      else
-         call output%error_msg('Last record (i0) less than first record (i0) &
-                               &for read in file (a0)', &
-                               chars=[the_file%get_name()], ints=[last_rec, first_rec])
-      endif
-!
-      call the_file%write_1_real_dp_abstract_stream(array, write_length, position_)
+      call this%write_1_real_dp_abstract_stream(array, write_length, position_)
 !
    end subroutine write_1_real_dp_direct_stream_file
 !
@@ -464,38 +428,38 @@ contains
 !!
 !! Written by Rolf H. Myhre, Mar 2020
 !
-   subroutine write_2_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_2_real_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       real(dp), dimension(:,:), intent(in) :: array
 !
-      call the_file%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
    end subroutine write_2_real_dp_direct_stream_file
 !
-   subroutine write_3_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_3_real_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       real(dp), dimension(:,:,:), intent(in) :: array
 !
-      call the_file%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
    end subroutine write_3_real_dp_direct_stream_file
 !
-   subroutine write_4_real_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_4_real_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       real(dp), dimension(:,:,:,:), intent(in) :: array
 !
-      call the_file%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%write_1_real_dp_direct_stream_file(array, first_rec, last_rec)
    end subroutine write_4_real_dp_direct_stream_file
 !
 !
-   subroutine write_1_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_1_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
 !!
 !!    write 1 complex dp
 !!    Written by Rolf H. Myhre, Mar. 2020
@@ -509,37 +473,26 @@ contains
 !!    Calculates position to write in the underlying stream file based on
 !!    first_rec and record_length
 !!
-!!    Calculates number of bytes to write based on first_rec, last_rec and the_file%record_length
+!!    Calculates number of bytes to write based on first_rec, last_rec and this%record_length
 !!
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       integer, intent(in) :: first_rec
       integer, intent(in) :: last_rec
 !
-      complex(dp), dimension((last_rec - first_rec + 1)*the_file%record_dim), intent(in) :: array
+      complex(dp), dimension((last_rec - first_rec + 1)*this%record_dim), intent(in) :: array
 !
       integer :: position_, write_length, records
 !
       records = last_rec - first_rec + 1
+      write_length = this%record_dim*records
+      position_ = (first_rec - 1) * this%record_length + 1
 !
-      if (first_rec .ge. 1) then
-         position_ = (first_rec-1)*the_file%record_length + 1
-      else
-         call output%error_msg('Record (i0) less than 1 for write in file (a0)', &
-                               chars=[the_file%get_name()], ints=[first_rec])
-      endif
+      call this%check_records_to_be_accessed(first_rec, last_rec, "write")
 !
-      if (records .ge. 1) then
-         write_length = the_file%record_dim*records
-      else
-         call output%error_msg('Last record (i0) less than first record (i0) &
-                               &for read in file (a0)', &
-                               chars=[the_file%get_name()], ints=[last_rec, first_rec])
-      endif
-!
-      call the_file%write_1_complex_dp_abstract_stream(array, write_length, position_)
+      call this%write_1_complex_dp_abstract_stream(array, write_length, position_)
 !
    end subroutine write_1_complex_dp_direct_stream_file
 !
@@ -549,38 +502,38 @@ contains
 !!
 !! Written by Rolf H. Myhre, Mar 2020
 !
-   subroutine write_2_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_2_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       complex(dp), dimension(:,:), intent(in) :: array
 !
-      call the_file%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
    end subroutine write_2_complex_dp_direct_stream_file
 !
-   subroutine write_3_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_3_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       complex(dp), dimension(:,:,:), intent(in) :: array
 !
-      call the_file%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
    end subroutine write_3_complex_dp_direct_stream_file
 !
-   subroutine write_4_complex_dp_direct_stream_file(the_file, array, first_rec, last_rec)
+   subroutine write_4_complex_dp_direct_stream_file(this, array, first_rec, last_rec)
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
       integer, intent(in) :: first_rec, last_rec
       complex(dp), dimension(:,:,:,:), intent(in) :: array
 !
-      call the_file%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
+      call this%write_1_complex_dp_direct_stream_file(array, first_rec, last_rec)
    end subroutine write_4_complex_dp_direct_stream_file
 !
 !
-   subroutine write_range_direct_stream_file(the_file, array, z_range)
+   subroutine write_range_direct_stream_file(this, array, z_range)
 !!
 !!    write interval direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -597,19 +550,19 @@ contains
 !
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       class(range_), intent(in) :: z_range
 !
       real(dp), dimension(1) :: array
 !
-      call the_file%write_1_real_dp_direct_stream_file(array, z_range%first, &
+      call this%write_1_real_dp_direct_stream_file(array, z_range%first, &
                                                               z_range%get_last())
 !
    end subroutine write_range_direct_stream_file
 !
 !
-   subroutine write_compound_batch_full_direct_stream_file(the_file, array, batch_y, dim_z)
+   subroutine write_compound_batch_full_direct_stream_file(this, array, batch_y, dim_z)
 !!
 !!    write compound batch full direct stream
 !!    Written by Rolf H. Myhre and Alexander C. Paul, Feb. 2020
@@ -627,24 +580,24 @@ contains
 !
       implicit none
 !
-      class(direct_stream_file), intent(in) :: the_file
+      class(direct_stream_file), intent(in) :: this
 !
       class(batching_index), intent(in) :: batch_y
       integer, intent(in) :: dim_z
 !
-      real(dp),dimension(the_file%record_dim*batch_y%max_length, dim_z) :: array
+      real(dp),dimension(this%record_dim*batch_y%max_length, dim_z) :: array
 !
       integer :: z
 !
 !     Check if we can do a single continuous write, else we have to loop
       if (batch_y%length .eq. batch_y%index_dimension) then
 !
-         call the_file%write_1_real_dp_direct_stream_file(array, 1, batch_y%index_dimension*dim_z)
+         call this%write_1_real_dp_direct_stream_file(array, 1, batch_y%index_dimension*dim_z)
 !
       else
          do z = 1, dim_z
 !
-            call the_file%write_1_real_dp_direct_stream_file(array(:, z), &
+            call this%write_1_real_dp_direct_stream_file(array(:, z), &
                                   batch_y%index_dimension*(z-1) + batch_y%first, &
                                   batch_y%index_dimension*(z-1) + batch_y%get_last())
          enddo
@@ -653,37 +606,70 @@ contains
    end subroutine write_compound_batch_full_direct_stream_file
 !
 !
-   function get_n_records_direct_stream_file(the_file) result(n_records)
+   function get_n_records_direct_stream_file(this) result(n_records)
 !!
-!!    Get number of records 
+!!    Get number of records
 !!    Written by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Returns the number of records on the file.
 !!
-      implicit none 
+      implicit none
 !
-      class(direct_stream_file) :: the_file
+      class(direct_stream_file) :: this
 !
       integer :: n_records
 !
-      integer :: file_size 
+      integer :: file_size
 !
-      file_size = the_file%get_file_size()
+      file_size = this%get_file_size()
 !
-      if (file_size .eq. -1) then 
+      if (file_size .eq. -1) then
 !
 !        File size is -1 if get_file_size is not able to determine the size.
 !        Assume that the number of records is zero in this case.
 !
-         n_records = 0 
+         n_records = 0
 !
       else
 !
-         n_records = file_size/the_file%record_length
+         n_records = file_size/this%record_length
 !
-      endif 
+      endif
 !
    end function get_n_records_direct_stream_file
+!
+!
+   subroutine check_records_to_be_accessed(this, first_record, last_record, task)
+!!
+!!    Check records to be accessed
+!!    Written by Alexander C. Paul, 2022
+!!
+!!    Sanity checks for first and last record when reading or writing
+!!
+      implicit none
+!
+      class(direct_stream_file), intent(in) :: this
+!
+      integer, intent(in) :: first_record, last_record
+      character(len=*), intent(in) :: task
+!
+      if (first_record < 1) then
+         call output%error_msg('First record (i0) less than 1 for write in file ' // &
+                              this%get_name(), chars=[task], ints=[first_record])
+      endif
+!
+      if (last_record < 1) then
+         call output%error_msg('Last record (i0) less than 1 for (a0)) in file' // &
+                              this%get_name(), chars=[task], ints=[last_record])
+      endif
+!
+      if (last_record < first_record) then
+         call output%error_msg('Last record (i0) less than first record (i0) &
+                               &for (a0) in file ' // this%get_name(), &
+                               chars=[task], ints=[last_record, first_record])
+      endif
+!
+   end subroutine check_records_to_be_accessed
 !
 !
 end module direct_stream_file_class

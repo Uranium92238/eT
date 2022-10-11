@@ -49,7 +49,6 @@ module mlcc2_class
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
-   use sequential_file_class, only: sequential_file
    use direct_stream_file_class, only: direct_stream_file
    use amplitude_file_storer_class, only: amplitude_file_storer
 !
@@ -91,8 +90,8 @@ module mlcc2_class
 !
       logical :: restart_orbitals
 !
-      type(sequential_file) :: jacobian_a1_intermediate_vv
-      type(sequential_file) :: jacobian_a1_intermediate_oo
+      type(stream_file) :: jacobian_a1_intermediate_vv
+      type(stream_file) :: jacobian_a1_intermediate_oo
 !
       type(stream_file) :: orbital_coefficients_mlcc_file
       type(stream_file) :: orbital_energies_mlcc_file

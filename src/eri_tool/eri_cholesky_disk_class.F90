@@ -29,7 +29,7 @@ module eri_cholesky_disk_class
 !
    use parameters
 !
-   use global_out,                  only : output
+   use global_out,                  only: output
    use direct_stream_file_class,    only: direct_stream_file
    use range_class,                 only: range_
    use memory_manager_class,        only: mem
@@ -116,7 +116,7 @@ contains
       integer,                      intent(in) :: n_ranges, n_J
       integer, dimension(n_ranges), intent(in) :: range_lengths
 !
-      character (len=4) :: block_number
+      character (len=60) :: filename
 !
       integer :: i
 !
@@ -129,9 +129,8 @@ contains
 !
       do i = 1, this%n_blocks
 !
-         write(block_number, '(i4.4)') i
-         this%file_(i) = direct_stream_file('cholesky_'//trim(this%name_)//'_block_'//block_number,&
-                                            this%n_J, w_size=dp)
+         write(filename, '(3a, i4.4)') 'cholesky_', trim(this%name_), '_block_', i
+         this%file_(i) = direct_stream_file(trim(filename), this%n_J, word_size=dp)
       enddo
 !
    end subroutine initialize_eri_cholesky_disk
@@ -269,7 +268,7 @@ contains
 !
       type(range_) :: range_r, range_s
 !
-      call this%file_(block_)%open_('write')
+      call this%file_(block_)%open_()
 !
       call this%get_ranges_from_block(block_, range_r, range_s)
 !
@@ -324,7 +323,7 @@ contains
       integer :: first_record, last_record, q
       integer :: p_reduced_first, q_reduced_first, p_reduced_last, q_reduced_last, q_reduced
 !
-      call this%file_(block_)%open_('read')
+      call this%file_(block_)%open_()
 !
       call this%get_ranges_from_block(block_, range_r, range_s)
 !

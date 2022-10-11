@@ -45,7 +45,8 @@ module complex_fft_class
 !
    use memory_manager_class, only: mem
    use global_out, only : output
-   use sequential_file_class, only : sequential_file
+   use formatted_read_file_class, only : formatted_read_file
+   use output_file_class, only: output_file
 !
    implicit none
 !
@@ -58,7 +59,8 @@ module complex_fft_class
 !
       real(dp) :: ti, tf, h
 !
-      type(sequential_file) :: time_series_file, angular_frequency_series_file
+      type(formatted_read_file) :: time_series_file
+      type(output_file) :: angular_frequency_series_file
 !
    contains
 !
@@ -109,11 +111,9 @@ contains
 !
       call solver%read_settings()
 !
-      solver%time_series_file = sequential_file('eT.' // trim(solver%file_name) // '.out', &
-                                                'formatted')
-      solver%angular_frequency_series_file = sequential_file('eT.complex_fft.'                    &
-                                                             // trim(solver%file_name) // '.out', &
-                                                             'formatted')
+      solver%time_series_file = formatted_read_file('eT.' // trim(solver%file_name) // '.out')
+      solver%angular_frequency_series_file = output_file('eT.complex_fft.' // &
+                                                         trim(solver%file_name) // '.out')
 !
    end function new_complex_fft
 !
@@ -126,8 +126,6 @@ contains
 !!    Do the complex fast Fourier transform (complex FFT) of the time series to get an angular
 !!    frequency spectrum.
 !!
-      use iso_fortran_env, only: iostat_end
-!
       implicit none
 !
       class(complex_fft) :: solver
@@ -142,7 +140,7 @@ contains
       real(dp), dimension(:), allocatable :: angular_frequency_values, work_save_array, &
                                              work_array, row_to_read, row_to_write
 !
-      call solver%time_series_file%open_('read', 'rewind')
+      call solver%time_series_file%open_('rewind')
 !
 !     Get number of unused lines before the start of the time series, stop reading if
 !     reaching end of file
@@ -156,7 +154,7 @@ contains
 !
 !        Reached initial time of time series, or end of file
 !
-         if ((t .ge. solver%ti) .or. (io .eq. iostat_end)) then
+         if ((t .ge. solver%ti) .or. is_iostat_end(io)) then
             n_complex_fft_lines = 1
             exit
 !
@@ -169,39 +167,33 @@ contains
 !
       enddo
 !
-!     Get number of lines after the start and before the end of the time series, stop reading if
-!     reaching end of file
+!     Get number of lines after the start and before the end of the time series,
+!     stop reading if reaching end of file
 !
       do
 !
          call solver%time_series_file%read_(t, io_stat=io)
 !
-!        Reached initial time of time series, or end of file
+!        Reached final time of time series, or end of file
 !
-         if ((t .gt. solver%tf) .or. (io .eq. iostat_end)) then
+         if ((t .gt. solver%tf) .or. (is_iostat_end(io))) then
             exit
-!
          elseif (io .ne. 0) then
             call output%error_msg('complex FFT file reading failed.')
-!
          endif
 !
          n_complex_fft_lines = n_complex_fft_lines + 1
 !
       enddo
 !
-!
-      call solver%time_series_file%rewind_
+      call solver%time_series_file%rewind_()
+      call solver%time_series_file%skip(n_unused_lines)
 !
 !     Read time series from file
 !
       call mem%alloc(fft_x_vector, n_complex_fft_lines)
       call mem%alloc(fft_y_vector, n_complex_fft_lines)
       call mem%alloc(fft_z_vector, n_complex_fft_lines)
-!
-      do i = 1, n_unused_lines
-         call solver%time_series_file%read_(t)
-      enddo
 !
       call mem%alloc(row_to_read, 7)
 !
@@ -274,7 +266,7 @@ contains
 !
 !     Write angular frequency series to file
 !
-      call solver%angular_frequency_series_file%open_('write', 'rewind')
+      call solver%angular_frequency_series_file%open_('rewind')
 !
       call mem%alloc(row_to_write, 7)
 !
@@ -285,12 +277,13 @@ contains
 !
          if (angular_frequency_values(i) .lt. sampling_angular_frequency/two) then
 !
-            row_to_write = (/ angular_frequency_values(i),                  &
-                             real(fft_x_vector(i)), aimag(fft_x_vector(i)), &
-                             real(fft_y_vector(i)), aimag(fft_y_vector(i)), &
-                             real(fft_z_vector(i)), aimag(fft_z_vector(i))  /)
+            row_to_write = [angular_frequency_values(i),                   &
+                            real(fft_x_vector(i)), aimag(fft_x_vector(i)), &
+                            real(fft_y_vector(i)), aimag(fft_y_vector(i)), &
+                            real(fft_z_vector(i)), aimag(fft_z_vector(i))  ]
 !
-            call solver%angular_frequency_series_file%write_(row_to_write, 7)
+            call solver%angular_frequency_series_file%printf('m', '(f21.16)  6(e25.16)', &
+                                                             reals=row_to_write, ll=200)
 !
          endif
 !

@@ -652,7 +652,7 @@ contains
 !
       if (density_file%exists()) then
 !
-         call density_file%open_('read')
+         call density_file%open_()
          call density_file%read_(density, wf%n_mo**2)
 !
          file_read = .true.

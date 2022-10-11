@@ -20,8 +20,8 @@
 module output_file_class
 !
 !!
-!!    Output file class module
-!!    Written by Rolf H. Myhre, May 2019
+!! Output file class module
+!! Written by Rolf H. Myhre and Alexander C. Paul, 2019-2022
 !!
 !
    use kinds
@@ -38,8 +38,6 @@ module output_file_class
 !
    contains
 !
-      procedure, public :: open_                   => open_output_file
-!
       procedure, public :: error_msg               => error_msg_output_file
       procedure, public :: warning_msg             => warning_msg_output_file
       procedure, public :: check_for_warnings      => check_for_warnings_output_file
@@ -55,7 +53,6 @@ module output_file_class
       procedure, public :: set_global_print_level  => set_global_print_level_output_file
       procedure, public :: set_local_print_level   => set_local_print_level_output_file
       procedure, public :: reset_local_print_level => reset_local_print_level_output_file
-      procedure, public :: check_print_level       => check_print_level_output_file
 !
       procedure, public :: mute   => mute_output_file
       procedure, public :: unmute => unmute_output_file
@@ -63,6 +60,10 @@ module output_file_class
       procedure, public :: initialize => initialize_output_file
 !
       procedure, private :: should_print => should_print_output_file
+!
+!     Generic write routines without formatstring
+!
+      procedure, public :: write_ => write_r_1
 !
    end type output_file
 !
@@ -75,55 +76,56 @@ module output_file_class
 contains
 !
 !
-   function new_output_file(name_) result(the_file)
+   function new_output_file(name_) result(this)
 !!
 !!    Output file constructer
-!!    Writen by Rolf H. Myhre May 2019
+!!    Written by Rolf H. Myhre May 2019
 !!
 !!    Output file is a formatted and sequantial file.
 !!    Routine sets these, and sets the file name
 !!
       implicit none
 !
-      type(output_file) :: the_file
+      type(output_file) :: this
 !
       character(len=*), intent(in) :: name_
 !
-      call the_file%initialize(name_)
+      call this%initialize(name_)
 !
    end function new_output_file
 !
 !
-   subroutine initialize_output_file(the_file, name_)
+   subroutine initialize_output_file(this, name_)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad, Sep 2021
 !!
       implicit none
 !
-      class(output_file), intent(inout) :: the_file
+      class(output_file), intent(inout) :: this
 !
       character(len=*), intent(in) :: name_
 !
-      the_file%name_ = name_
+      this%name_ = trim(name_)
 !
-      the_file%access_ = 'sequential'
-      the_file%format_ = 'formatted'
-      the_file%action_ = 'write'
+      this%access_ = 'sequential'
+      this%format_ = 'formatted'
+      this%action_ = 'write'
+      this%status_ = 'unknown'
 !
-      the_file%global_print_level='normal'
-      the_file%local_print_level='normal'
-      the_file%is_mute = .false.
+      this%global_print_level = 'normal'
+      this%local_print_level = 'normal'
+      this%is_mute = .false.
 !
-      the_file%is_open = .false.
-      the_file%unit_ = -1
+      this%is_open = .false.
+      this%unit_ = -1
 !
-      the_file%warning_counter = 0
+      this%warning_counter = 0
 !
    end subroutine initialize_output_file
 !
 !
-   subroutine set_global_print_level_output_file(the_file, print_level)
+   subroutine set_global_print_level_output_file(this, print_level)
 !!
 !!    Set the global print level
 !!    Written by Rolf H. Myhre, May 2019
@@ -132,169 +134,106 @@ contains
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
       character(len=*), intent(in) :: print_level
 !
       if (trim(print_level) .eq. 'normal') then
-         the_file%global_print_level = 'normal'
-         the_file%local_print_level  = 'normal'
+         this%global_print_level = 'normal'
+         this%local_print_level  = 'normal'
 !
       elseif (trim(print_level) .eq. 'minimal') then
-         the_file%global_print_level = 'minimal'
-         the_file%local_print_level  = 'minimal'
+         this%global_print_level = 'minimal'
+         this%local_print_level  = 'minimal'
 !
       elseif (trim(print_level) .eq. 'verbose') then
-         the_file%global_print_level = 'verbose'
-         the_file%local_print_level  = 'verbose'
+         this%global_print_level = 'verbose'
+         this%local_print_level  = 'verbose'
 !
       elseif (trim(print_level) .eq. 'debug') then
-         the_file%global_print_level = 'debug'
-         the_file%local_print_level  = 'debug'
+         this%global_print_level = 'debug'
+         this%local_print_level  = 'debug'
 !
       else
-         print *, 'Error: Print level not normal, minimal, verbose or debug'
-         stop
+         error stop 'Print level not minimal, normal, verbose or debug'
       endif
 !
    end subroutine set_global_print_level_output_file
 !
 !
-   subroutine set_local_print_level_output_file(the_file, print_level)
+   subroutine set_local_print_level_output_file(this, print_level)
 !!
 !!    Set the local print level
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
       character(len=*), intent(in) :: print_level
 !
       if (trim(print_level) .eq. 'normal') then
-         the_file%local_print_level='normal'
+         this%local_print_level='normal'
 !
       elseif (trim(print_level) .eq. 'minimal') then
-         the_file%local_print_level='minimal'
+         this%local_print_level='minimal'
 !
       elseif (trim(print_level) .eq. 'verbose') then
-         the_file%local_print_level='verbose'
+         this%local_print_level='verbose'
 !
       elseif (trim(print_level) .eq. 'debug') then
-         the_file%local_print_level='debug'
+         this%local_print_level='debug'
 !
       else
-         print *, 'Error: Print level not normal, minimal, verbose or debug'
-         stop
+         error stop 'Print level not normal, minimal, verbose or debug'
       endif
 !
    end subroutine set_local_print_level_output_file
 !
 !
-   subroutine reset_local_print_level_output_file(the_file)
+   subroutine reset_local_print_level_output_file(this)
 !!
 !!    Set the local print level to global
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
-      the_file%local_print_level = the_file%global_print_level
+      this%local_print_level = this%global_print_level
 !
    end subroutine reset_local_print_level_output_file
 !
 !
-   subroutine check_print_level_output_file(the_file)
-!!
-!!    Check if local and global print level is the same
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(output_file) :: the_file
-!
-      if (the_file%local_print_level .ne. the_file%global_print_level) then
-         print *, 'Warning: global and local print levels are not the same'
-      endif
-!
-   end subroutine check_print_level_output_file
-!
-!
-   subroutine mute_output_file(the_file)
+   subroutine mute_output_file(this)
 !!
 !!    Set the file to mute
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
-      the_file%is_mute = .true.
+      this%is_mute = .true.
 !
    end subroutine mute_output_file
 !
 !
-   subroutine unmute_output_file(the_file)
+   subroutine unmute_output_file(this)
 !!
 !!    Set the file to unmute
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
-      the_file%is_mute = .false.
+      this%is_mute = .false.
 !
    end subroutine unmute_output_file
 !
 !
-   subroutine open_output_file(the_file, position_)
-!!
-!!    Open the output file
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(output_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-      character(len=*), optional, intent(in) :: position_
-      character(len=20)    :: pos
-!
-!
-      if(present(position_)) then
-         pos = trim(position_)
-      else
-         pos = 'rewind'
-      endif
-!
-      if (the_file%is_open) then
-!
-         print *, trim(the_file%name_)//' is already open'
-         stop
-!
-      endif
-!
-      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
-           action='write', status='unknown', form=the_file%format_, position=pos, &
-           iostat=io_error, iomsg=io_msg)
-!
-      if (io_error /= 0) then
-!
-         print *, 'Error: could not open eT output file '//trim(the_file%name_)//&
-                             &'. Error message: '//trim(io_msg)
-         stop
-!
-      endif
-!
-      the_file%is_open = .true.
-!
-   end subroutine open_output_file
-!
-!
-   subroutine error_msg_output_file(the_file, error_specs, &
+   subroutine error_msg_output_file(this, error_specs, &
                                     reals, complexs, ints, chars, logs, fs, ffs, ll, padd)
 !!
 !!    Error message
@@ -336,7 +275,7 @@ contains
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
       character(len=*) :: error_specs
 !
@@ -373,20 +312,21 @@ contains
 !
 !     Option advance from format_print shall always be true for errors
 !
-      call the_file%format_print('Error: ' // trim(error_specs),     &
+      call this%format_print('Error: ' // trim(error_specs),     &
                                  reals, complexs, ints, chars, logs, &
                                  fs = f_string, ffs = ff_string,     &
                                  ll = ll, padd = padd,               &
                                  adv = .true.)
 !
-      call the_file%flush_()
+      call this%flush_()
 !
+!     Cannot be an error stop because of the unit tests
       stop "Something went wrong, check the .out file"
 !
    end subroutine error_msg_output_file
 !
 !
-   subroutine warning_msg_output_file(the_file, warning_specs, &
+   subroutine warning_msg_output_file(this, warning_specs, &
                                       reals, complexs, ints, chars, logs, fs, ffs, ll, padd)
 !!
 !!    Warning message
@@ -428,7 +368,7 @@ contains
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
       character(len=*) :: warning_specs
 !
@@ -447,7 +387,7 @@ contains
       character(len=20) :: ff_string
       character(len=20) :: f_string
 !
-      the_file%warning_counter = the_file%warning_counter + 1
+      this%warning_counter = this%warning_counter + 1
 !
 !     Default format: New line with t3 - Warning message aligned after the colon
 !
@@ -467,47 +407,47 @@ contains
 !
 !     Option advance from format_print shall always be true for warnings
 !
-      call the_file%format_print('Warning: ' // trim(warning_specs), &
+      call this%format_print('Warning: ' // trim(warning_specs), &
                                  reals, complexs, ints, chars, logs, &
                                  fs = f_string, ffs = ff_string,     &
                                  ll = ll, padd = padd,               &
                                  adv = .true.)
 !
-      call the_file%flush_()
+      call this%flush_()
 !
    end subroutine warning_msg_output_file
 !
 !
-   subroutine check_for_warnings_output_file(the_file)
+   subroutine check_for_warnings_output_file(this)
 !!
 !!    Check for warnings
 !!    Written by Alexander C. Paul, Nov 2019
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      class(output_file) :: this
 !
-      if (the_file%warning_counter .eq. 1) then
+      if (this%warning_counter == 1) then
 !
-         call the_file%printf('m', ':: There was 1 warning during the execution of eT. ::', &
+         call this%printf('m', ':: There was 1 warning during the execution of eT. ::', &
                               fs='(/t3,a)')
 !
-      else if(the_file%warning_counter .gt. 1) then
+      else if(this%warning_counter > 1) then
 !
-         call the_file%printf('m', ':: There were (i0) warnings during the execution of eT. ::', &
-                              ints=[the_file%warning_counter], fs='(/t3,a)')
+         call this%printf('m', ':: There were (i0) warnings during the execution of eT. ::', &
+                              ints=[this%warning_counter], fs='(/t3,a)')
 !
-      else if(the_file%warning_counter .lt. 0) then
+      else if(this%warning_counter < 0) then
 !
-         call the_file%error_msg('Negative number of warning messages.' // &
-                                 'Something went horribly wrong.')
+         call this%error_msg('Negative number of warning messages.' // &
+                             'Something went horribly wrong.')
 !
       end if
 !
    end subroutine check_for_warnings_output_file
 !
 !
-   subroutine printf_output_file(the_file, pl, string, &
+   subroutine printf_output_file(this, pl, string, &
                                  reals, complexs, ints, chars, logs, &
                                  fs, ffs, ll, padd, adv)
 !!
@@ -568,7 +508,7 @@ contains
 !!
       implicit none
 !
-      class(output_file), intent(in) :: the_file
+      class(output_file), intent(in) :: this
 !
 !     Data to print
       character(len=*), intent(in)                          :: string
@@ -587,18 +527,14 @@ contains
 !
       logical, intent(in), optional :: adv
 !
-      if (the_file%is_mute) then !File is muted, make a quiet return
+      if (this%is_mute) return
 !
-         return
+      if (this%should_print(pl)) then
 !
-      endif
-!
-      if (the_file%should_print(pl)) then
-!
-         call the_file%preformat_print(string, reals, complexs, ints, chars, logs, &
+         call this%preformat_print(string, reals, complexs, ints, chars, logs, &
                                        fs, ffs, ll, padd, adv)
 !
-         call the_file%flush_()
+         call this%flush_()
 !
       endif
 
@@ -606,7 +542,7 @@ contains
    end subroutine printf_output_file
 !
 !
-   function should_print_output_file(the_file, print_level) result(should_print)
+   function should_print_output_file(this, print_level) result(should_print)
 !!
 !!    Should print
 !!
@@ -616,7 +552,7 @@ contains
 !!
       implicit none
 !
-      class(output_file), intent(in) :: the_file
+      class(output_file), intent(in) :: this
 !
       character(len=*), intent(in)   :: print_level
 !
@@ -634,7 +570,7 @@ contains
 !     Print if print_level is normal and local print level not minimal
       elseif ((trim(print_level) .eq. 'normal') .or. (trim(print_level) .eq. 'n' )) then
 !
-         if (the_file%local_print_level .ne. 'minimal') then
+         if (this%local_print_level .ne. 'minimal') then
             should_print = .true.
          endif
 !
@@ -642,8 +578,8 @@ contains
 !     Print if print_level is verbose and local print level is verbose or debug
       elseif ((trim(print_level) .eq. 'verbose') .or. (trim(print_level) .eq. 'v' )) then
 !
-         if ((the_file%local_print_level .eq. 'verbose') .or. &
-             (the_file%local_print_level .eq. 'debug')) then
+         if ((this%local_print_level .eq. 'verbose') .or. &
+             (this%local_print_level .eq. 'debug')) then
             should_print = .true.
          endif
 !
@@ -651,14 +587,14 @@ contains
 !     Print if print_level is debug and local print level is debug
       elseif (trim(print_level) .eq. 'debug') then
 !
-         if (the_file%local_print_level .eq. 'debug') then
+         if (this%local_print_level .eq. 'debug') then
             should_print = .true.
          endif
 !
 !
       else
 !
-         print *, 'Error: '//trim(print_level)// 'is not an acceptable print level'
+         print '(3a)', "Error: ", trim(print_level), " is not an acceptable print level"
          error stop
 !
       endif
@@ -667,7 +603,7 @@ contains
    end function should_print_output_file
 !
 !
-   subroutine print_matrix_output_file(the_file, pl, name_, matrix, dim_1, dim_2, fs, columns)
+   subroutine print_matrix_output_file(this, pl, name_, matrix, dim_1, dim_2, fs, columns)
 !!
 !!    Print matrix
 !!
@@ -684,7 +620,7 @@ contains
 !!
       implicit none
 !
-      class(output_file), intent(in) :: the_file
+      class(output_file), intent(in) :: this
 !
       character(len=*), intent(in)                    :: pl
 !
@@ -698,19 +634,13 @@ contains
       character(len=*), optional, intent(in)          :: fs
       integer, intent(in), optional                   :: columns
 !
+      if (this%is_mute) return
 !
-      if (the_file%is_mute) then !File is muted, make a quiet return
+      if (this%should_print(pl)) then
 !
-         return
+         call this%format_print_matrix(name_, matrix, dim_1, dim_2, fs, columns)
 !
-      endif
-!
-!
-      if (the_file%should_print(pl)) then
-!
-         call the_file%format_print_matrix(name_, matrix, dim_1, dim_2, fs, columns)
-!
-         call the_file%flush_()
+         call this%flush_()
 !
       endif
 
@@ -718,7 +648,7 @@ contains
    end subroutine print_matrix_output_file
 !
 !
-   subroutine print_separator_output_file(the_file, pl, n, symbol, fs)
+   subroutine print_separator_output_file(this, pl, n, symbol, fs)
 !!
 !!    Print separator
 !!
@@ -732,7 +662,7 @@ contains
 !!
       implicit none
 !
-      class(output_file), intent(in)         :: the_file
+      class(output_file), intent(in)         :: this
 !
       character(len=*), intent(in)           :: pl
 !
@@ -742,18 +672,13 @@ contains
 !
       character(len=*), optional, intent(in) :: fs
 !
-      if (the_file%is_mute) then !File is muted, make a quiet return
+      if (this%is_mute) return
 !
-         return
+      if (this%should_print(pl)) then
 !
-      endif
+         call this%format_print_separator(n, symbol, fs)
 !
-!
-      if (the_file%should_print(pl)) then
-!
-         call the_file%format_print_separator(n, symbol, fs)
-!
-         call the_file%flush_()
+         call this%flush_()
 !
       endif
 
@@ -761,7 +686,7 @@ contains
    end subroutine print_separator_output_file
 !
 !
-   subroutine print_vector_output_file(the_file, pl, name_, dim_, vector, fs, columns, transpose_)
+   subroutine print_vector_output_file(this, pl, name_, dim_, vector, fs, columns, transpose_)
 !!
 !!    Print vector
 !!    Written by Tor S. Haugland, Oct 2019
@@ -781,7 +706,7 @@ contains
 !!
       implicit none
 !
-      class(output_file),        intent(in)           :: the_file
+      class(output_file),        intent(in)           :: this
       character(len=*),          intent(in)           :: pl
       character(len=*),          intent(in)           :: name_
       integer,                   intent(in)           :: dim_
@@ -791,18 +716,13 @@ contains
       integer,                   intent(in), optional :: columns
       logical,                   intent(in), optional :: transpose_
 !
-      if (the_file%is_mute) then !File is muted, make a quiet return
+      if (this%is_mute) return
 !
-         return
+      if (this%should_print(pl)) then
 !
-      endif
+         call this%format_print_vector(name_, dim_, vector, fs, columns, transpose_)
 !
-!
-      if (the_file%should_print(pl)) then
-!
-         call the_file%format_print_vector(name_, dim_, vector, fs, columns, transpose_)
-!
-         call the_file%flush_()
+         call this%flush_()
 !
       endif
 
@@ -810,22 +730,22 @@ contains
    end subroutine print_vector_output_file
 !
 !
-   subroutine newline_output_file(the_file, pl)
+   subroutine newline_output_file(this, pl)
 !!
 !!    Newline
 !!    Written by Sarai D. Folkestad, 2021
 !!
       implicit none
 
-      class(output_file), intent(inout) :: the_file
+      class(output_file), intent(inout) :: this
       character(len=*),   intent(in)    :: pl
 !
-      call the_file%printf(pl, '')
+      call this%printf(pl, '')
 !
    end subroutine newline_output_file
 !
 !
-   subroutine print_table_output_file(the_file, top_left_corner, row_labels, column_labels, &
+   subroutine print_table_output_file(this, top_left_corner, row_labels, column_labels, &
                                       data_, n_rows, n_columns)
 !!
 !!    Print table
@@ -835,7 +755,7 @@ contains
 !!
       implicit none
 !
-      class(output_file), intent(inout) :: the_file
+      class(output_file), intent(inout) :: this
 !
       integer, intent(in) :: n_rows, n_columns
 !
@@ -868,10 +788,10 @@ contains
 !
          write(line,'(a,1x,i0,a)') top_left_corner, n_to_print, '(a18)'
 !
-         call the_file%printf('m', trim(line), fs='(/t6,a)', ll=95, &
+         call this%printf('m', trim(line), fs='(/t6,a)', ll=95, &
                             chars=[column_labels(first : last)])
 !
-         call the_file%print_separator('m', ll,'-', fs='(t6,a)')
+         call this%print_separator('m', ll,'-', fs='(t6,a)')
 !
 !        Print rows for the subsets
 !
@@ -879,18 +799,41 @@ contains
 !
             write(line,'(a5,1x,i0,a)') row_labels(row), n_to_print, '(f18.10)'
 !
-            call the_file%printf('m', trim(line), fs='(t6,a)', ll=95, &
+            call this%printf('m', trim(line), fs='(t6,a)', ll=95, &
                                reals=[data_(row, first : last)])
 !
          end do
 !
-         call the_file%print_separator('m', ll,'-', fs='(t6,a)')
+         call this%print_separator('m', ll,'-', fs='(t6,a)')
 !
          n_printed = n_printed + n_to_print
 !
       end do
 !
    end subroutine print_table_output_file
+!
+!
+   subroutine write_r_1(this, array, n)
+!!
+!!    Write, real(dp) 1 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+!!    Uses default format, for user-defined format see printf
+!!
+      implicit none
+!
+      class(output_file), intent(inout) :: this
+!
+      integer, intent(in)                :: n
+      real(dp), dimension(n), intent(in) :: array
+!
+      integer :: io_status
+      character(len=100) :: io_message
+!
+      write(this%unit_, *, iostat=io_status, iomsg=io_message) array
+      call this%check_io_status(io_status, io_message, task="write")
+!
+   end subroutine write_r_1
 !
 !
 end module output_file_class

@@ -170,7 +170,7 @@ contains
 !
       call mem%batch_setup(batch_d, req_0, req_d, 'jacobian_cc3_t3_a2')
 !
-      call wf%X_abid%open_('read')
+      call wf%X_abid%open_()
 !
       call mem%alloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%max_length)
 !
@@ -205,7 +205,7 @@ contains
 !
 !     :: X_ajil term ::
 !
-      call wf%X_ajil%open_('read')
+      call wf%X_ajil%open_()
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !

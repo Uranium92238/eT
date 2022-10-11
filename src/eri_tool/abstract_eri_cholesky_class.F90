@@ -429,7 +429,7 @@ contains
 !
       if (.not. all_in_mem) then
          temp_file = direct_stream_file('temp_file', this%n_J, dp, 'new')
-         call temp_file%open_('readwrite')
+         call temp_file%open_()
       endif
 !
 !     Construct intermediate vectors L''_J_rq = sum_s L_J_rs T_qs

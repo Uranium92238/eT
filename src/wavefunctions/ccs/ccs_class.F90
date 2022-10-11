@@ -1509,7 +1509,7 @@ contains
       use reordering, only: symmetric_sum, packin
       use direct_stream_file_class, only: direct_stream_file
       use array_utilities, only: scale_diagonal
-      use sequential_file_class, only: sequential_file
+      use stream_file_class, only: stream_file
 !
       implicit none
 !
@@ -1537,14 +1537,14 @@ contains
 !
       real(dp) :: ddot, R_norm, R_s_norm_sq, R_d_norm_sq
 !
-      type(sequential_file) :: file_temp_1, file_temp_2
+      type(stream_file) :: file_temp_1, file_temp_2
 !
 !     Initialize temporary files
 !
-      file_temp_1 = sequential_file('approximate_doubles_temp_1')
-      file_temp_2 = sequential_file('approximate_doubles_temp_2')
+      file_temp_1 = stream_file('approximate_doubles_temp_1')
+      file_temp_2 = stream_file('approximate_doubles_temp_2')
 !
-      call file_temp_1%open_('readwrite', 'rewind')
+      call file_temp_1%open_('rewind')
 !
       call mem%alloc(L_Jkj, wf%eri_t1%n_J, wf%n_o, wf%n_o)
       call wf%L_mo%get(L_Jkj, 1, wf%n_o, 1, wf%n_o)
@@ -1751,7 +1751,7 @@ contains
 !     Prepare files
 !
       call file_temp_1%rewind_()
-      call file_temp_2%open_('readwrite', 'rewind')
+      call file_temp_2%open_('rewind')
 !
 !     ::  Add term 2, store R_aibj in file_temp_2, and calculate norm of doubles part
 !
@@ -1976,7 +1976,7 @@ contains
 !
       call file_temp_1%close_('delete')
       call file_temp_2%rewind_()
-      call file_%open_('write')
+      call file_%open_()
 !
 !     :: Normalization
 !

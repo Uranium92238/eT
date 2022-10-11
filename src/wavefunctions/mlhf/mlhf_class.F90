@@ -386,7 +386,7 @@ contains
 !
       call wf%construct_ao_density()
 !
-      call wf%mlhf_file%open_('write', 'rewind')
+      call wf%mlhf_file%open_('rewind')
       call wf%mlhf_file%write_(wf%n_o)
       call wf%mlhf_file%write_(wf%n_v)
       call wf%mlhf_file%write_(wf%inactive_energy)
@@ -1368,7 +1368,7 @@ contains
       call wf%destruct_orbital_coefficients()
       call wf%destruct_orbital_energies()
 !
-      call wf%orbital_file%open_('read', 'rewind')
+      call wf%orbital_file%open_('rewind')
       call wf%orbital_file%read_(n, (i64) + 1)
       wf%n_mo = int(n)
       call wf%orbital_file%close_('keep')
@@ -1394,7 +1394,7 @@ contains
       call wf%initialize_G_De_mo()
       call wf%initialize_G_De_imo()
 !
-      call wf%mlhf_file%open_('read', 'rewind')
+      call wf%mlhf_file%open_('rewind')
       call wf%mlhf_file%read_(wf%n_o)
       call wf%mlhf_file%read_(wf%n_v)
       call wf%mlhf_file%read_(wf%inactive_energy)

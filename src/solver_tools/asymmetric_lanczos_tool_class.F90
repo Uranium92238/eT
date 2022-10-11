@@ -214,7 +214,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      call lanczos%p_file%open_('read')
+      call lanczos%p_file%open_()
 !
       call lanczos%p_file%read_(p, n, n)
       call lanczos%p_file%close_()
@@ -241,7 +241,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      call lanczos%q_file%open_('read')
+      call lanczos%q_file%open_()
 !
       call lanczos%q_file%read_(q, n, n)
       call lanczos%q_file%close_()
@@ -562,7 +562,7 @@ contains
 !
       class(asymmetric_lanczos_tool), intent(inout) :: lanczos
 !
-      call lanczos%T_file%open_('write', 'rewind')
+      call lanczos%T_file%open_('rewind')
 !
       call lanczos%T_file%write_(lanczos%chain_length)
       call lanczos%T_file%write_(lanczos%alpha_, lanczos%chain_length)
@@ -590,7 +590,7 @@ contains
 !
       call output%printf('m', 'Restarting in the asymmetric Lanczos solver:', fs='(/t6,a)')
 !
-      call lanczos%T_file%open_('read', 'rewind')
+      call lanczos%T_file%open_('rewind')
 !
       call lanczos%T_file%read_(chain_length)
       call output%printf('m', 'Found restart with chain length (i0)', &
@@ -737,7 +737,7 @@ contains
 !
       real(dp), dimension(lanczos%n_parameters), intent(in) :: p
 !
-      call lanczos%p_file%open_('write')
+      call lanczos%p_file%open_()
 !
       call lanczos%p_file%write_(p, n, n)
 !
@@ -761,7 +761,7 @@ contains
 !
       real(dp), dimension(lanczos%n_parameters), intent(in) :: q
 !
-      call lanczos%q_file%open_('write')
+      call lanczos%q_file%open_()
 !
       call lanczos%q_file%write_(q, n, n)
 !

@@ -21,7 +21,7 @@ module abstract_eri_tool_class
 !
 !!
 !! Abstract ERI tool class
-!! Writtan by Sarai D. Folkestad, Sep 2021
+!! Written by Sarai D. Folkestad, Sep 2021
 !!
 !! Interface definition for the ERI tools
 !!
