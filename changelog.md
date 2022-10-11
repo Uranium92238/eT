@@ -13,8 +13,8 @@
 
 ### Structure
 - Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
-- Made all unformatted files stream files and removed unformatted sequential. eT-program/eT!1118
-- Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118
+- Made all unformatted files stream files and removed unformatted sequential. eT-program/eT!1118, eT-program/eT!1132
+- Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
 - Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
 
 # eT v1.8.7

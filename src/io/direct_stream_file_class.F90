@@ -151,14 +151,14 @@ contains
 !
       this%word_size = dp
       if (present(word_size)) then
-         if (word_size <= 0) then
+         if (word_size < 1) then
             call output%error_msg("Word size less than one for file (a0)", &
                                   chars=[this%get_name()])
          endif
          this%word_size = word_size
       endif
 !
-      if (record_dim .lt. 1) then
+      if (record_dim < 1) then
          call output%error_msg("Record dimension less than one for file (a0)", &
                                chars=[this%get_name()])
       endif

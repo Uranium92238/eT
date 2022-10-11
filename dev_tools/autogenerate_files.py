@@ -368,10 +368,43 @@ def complexify_from_set(line, real_set):
     return line
 
 
-def complexify_line(line, parameter_list, continuation_mem_batch_setup):
+def replace_optional_parameter(line, parameter_regex, replace_string: str):
+    """
+    Check line for optional parameter (parameter_regex) in a routine call
+    and replace if it is found.
+    If the line is continued and we did not find the parameter
+    we return check_next_line = True.
+    If it is not found, but we find the closing parathesis of
+    the routine call we add the optional parameter.
+    """
+    check_next_line = True
+
+    # check for parameter_regex and replace if found
+    (line, n_substitutions) = subn(parameter_regex, replace_string, line)
+
+    if n_substitutions > 0:
+        check_next_line = False
+        return line, check_next_line
+
+    # if we did not replace anything check for closing paranthesis of routine call
+    (line, n_substitutions) = subn(r"\)\s*\n", f", {replace_string})\n", line)
+
+    if n_substitutions > 0:
+        check_next_line = False
+        return line, check_next_line
+
+    return line, check_next_line
+
+
+def complexify_line(line, parameter_list, check_next_line_for_parameter):
     """
     Check line for strings that have to be replaced for
     complexification and replace them
+
+    check_next_line_for_parameter:
+    If True we check for element_size or word_size in the line.
+    This is used to update these optional keywords in batch_setup
+    and the constructor of direct_stream_file.
     """
 
     # Explicit translations of routine names
@@ -432,35 +465,26 @@ def complexify_line(line, parameter_list, continuation_mem_batch_setup):
     if r"w_size\s*=\s*dp":
         line = sub(r"\b" + r"w_size\s*=\s*dp" + r"\b", "w_size=2*dp", line)
 
-    # Correct element size in batch_setup
-    # in case of complex double precision
-
-    if "mem%batch_setup" in line or continuation_mem_batch_setup:
-
-        continuation_mem_batch_setup = True
-
-        (line, n_substitutions) = subn(
-            r"element_size\s*=\s*dp", ", element_size=2*dp)\n", line
+    # Correct element size in batch_setup in case of complex double precision
+    if f"mem%batch_setup" in line or check_next_line_for_parameter:
+        line, check_next_line_for_parameter = replace_optional_parameter(
+            line, r"element_size\s*=\s*dp", "element_size=2*dp"
         )
+        return line, check_next_line_for_parameter
 
-        if n_substitutions > 0:
-            continuation_mem_batch_setup = False
-            return line, continuation_mem_batch_setup
-
-        (line, n_substitutions) = subn(r"\)\s*\n", ", element_size=2*dp)\n", line)
-
-        if n_substitutions > 0:
-            continuation_mem_batch_setup = False
-            return line, continuation_mem_batch_setup
-
-        return line, continuation_mem_batch_setup
+    # Adapt the word_size for complex direct stream files
+    if f"= direct_stream_file(" in line or check_next_line_for_parameter:
+        line, check_next_line_for_parameter = replace_optional_parameter(
+            line, r"word_size\s*=\s*dp", "word_size=2*dp"
+        )
+        return line, check_next_line_for_parameter
 
     # Change complexifiable submodules to complex version
     for module in complexifiable_modules:
         if module in line:
             line = sub(r"\b" + module + r"\b", module.rpartition("_r")[0] + "_c", line)
 
-    return line, continuation_mem_batch_setup
+    return line, check_next_line_for_parameter
 
 
 def get_parameter_list(source_directory):
@@ -532,7 +556,7 @@ def autogenerate_complex_files(source_directory, parameter_list):
     wf_procedure_set = set()
 
     # set to true if mem%batch_setup continues on next line
-    continuation_mem_batch_setup = False
+    check_next_line_for_parameter = False
 
     for wf in wfs:
 
@@ -612,8 +636,8 @@ def autogenerate_complex_files(source_directory, parameter_list):
                         # Complexify variables, procedures and general complexification
                         line = complexify_from_set(line, variable_set)
                         line = complexify_from_set(line, procedure_set)
-                        line, continuation_mem_batch_setup = complexify_line(
-                            line, parameter_list, continuation_mem_batch_setup
+                        line, check_next_line_for_parameter = complexify_line(
+                            line, parameter_list, check_next_line_for_parameter
                         )
 
                     c_file.write(line)
@@ -628,7 +652,7 @@ def complexify_modules(src_dir, parameter_list):
     f_paths = set(src_dir.glob("**/*.F90"))
 
     # set to true if mem%batch_setup continues on next line
-    continuation_mem_batch_setup = False
+    check_next_line_for_parameter = False
 
     # Loop over all files and check if complexifiable
     for f_path in f_paths:
@@ -651,8 +675,8 @@ def complexify_modules(src_dir, parameter_list):
                 for line in lines:
 
                     if len(line.strip()) > 1:
-                        line, continuation_mem_batch_setup = complexify_line(
-                            line, parameter_list, continuation_mem_batch_setup
+                        line, check_next_line_for_parameter = complexify_line(
+                            line, parameter_list, check_next_line_for_parameter
                         )
                     c_file.write(line)
 
@@ -686,7 +710,7 @@ def complexify_classes(src_dir, parameter_list):
                 for line in lines:
 
                     if len(line.strip()) > 1:
-                        line, continuation_mem_batch_setup = complexify_line(
+                        line, check_next_line_for_parameter = complexify_line(
                             line, parameter_list, False
                         )
                     c_file.write(line)
