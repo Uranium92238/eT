@@ -40,6 +40,7 @@ module abstract_stream_class
 !
       procedure, public :: read_0_real_dp_abstract_stream
       procedure, public :: read_0_int_64_abstract_stream
+      procedure, public :: read_0_int_32_abstract_stream
 !
       procedure, public :: read_1_real_dp_abstract_stream
       procedure, public :: read_1_complex_dp_abstract_stream
@@ -204,6 +205,52 @@ contains
       call this%check_io_status(io_status, io_message, task='read', status_=status_)
 !
    end subroutine read_0_int_64_abstract_stream
+!
+!
+   subroutine read_0_int_32_abstract_stream(this, scalar, position_, status_)
+!!
+!!    read rank 0 int 32
+!!    Written by Rolf H. Myhre, Feb. 2020
+!!
+!!    Modified by Alexander C. Paul, Mar. 2020
+!!    Check if position_ is present
+!!
+!!    scalar: 32 bit integer
+!!
+!!    position_: optional integer, position to read from in file
+!!               positions counted in bytes, starting at 1
+!!               default: current file pointer position
+!!
+!!    status_: optional integer, returns iostat e.g. to check for end of file
+!!             on the outside
+!!
+      implicit none
+!
+      class(abstract_stream), intent(in) :: this
+!
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
+!
+      integer(i32), intent(out) :: scalar
+!
+      integer::             io_status = 1
+      character(len=100) :: io_message
+!
+      call this%error_if_closed(task='read')
+!
+      if(present(position_)) then
+!
+         read(this%unit_, pos=position_, iostat=io_status, iomsg=io_message) scalar
+!
+      else
+!
+         read(this%unit_, iostat=io_status, iomsg=io_message) scalar
+!
+      end if
+!
+      call this%check_io_status(io_status, io_message, task='read', status_=status_)
+!
+   end subroutine read_0_int_32_abstract_stream
 !
 !
    subroutine read_1_real_dp_abstract_stream(this, array, n, position_, status_)

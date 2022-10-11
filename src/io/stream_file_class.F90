@@ -52,6 +52,7 @@ module stream_file_class
 !
 !     32-bit integer read
 !
+      procedure, private :: read_0_int_32_stream_file
       procedure, private :: read_1_int_32_stream_file
       procedure, private :: read_2_int_32_stream_file
 !
@@ -75,6 +76,7 @@ module stream_file_class
                                   read_1_complex_dp_stream_file, &
                                   read_2_complex_dp_stream_file, &
                                   read_4_complex_dp_stream_file, &
+                                  read_0_int_32_stream_file,     &
                                   read_1_int_32_stream_file,     &
                                   read_2_int_32_stream_file,     &
                                   read_0_int_64_stream_file,     &
@@ -127,6 +129,7 @@ module stream_file_class
                                    write_1_complex_dp_stream_file, &
                                    write_2_complex_dp_stream_file, &
                                    write_4_complex_dp_stream_file, &
+                                   write_0_int_32_stream_file,     &
                                    write_1_int_32_stream_file,     &
                                    write_2_int_32_stream_file,     &
                                    write_0_int_64_stream_file,     &
@@ -370,6 +373,19 @@ contains
    end subroutine read_2_int_64_stream_file
 !
 !  32-bit integers
+!
+   subroutine read_0_int_32_stream_file(the_file, scalar, position_, status_)
+!
+      implicit none
+!
+      class(stream_file), intent(in) :: the_file
+      integer(i32), intent(out)      :: scalar
+      integer, intent(in), optional  :: position_
+      integer, intent(out), optional :: status_
+!
+      call the_file%read_0_int_32_abstract_stream(scalar, position_, status_)
+!
+   end subroutine read_0_int_32_stream_file
 !
    subroutine read_1_int_32_stream_file(the_file, array,  n, position_, status_)
 !
