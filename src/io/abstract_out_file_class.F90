@@ -20,9 +20,8 @@
 module abstract_out_file_class
 !
 !!
-!!    abstract out file class module
-!!    Written by Rolf H. Myhre, Sep 2019
-!!
+!! abstract out file class module
+!! Written by Rolf H. Myhre and Alexander C. Paul, 2019-2022
 !!
 !
    use kinds
@@ -35,9 +34,7 @@ module abstract_out_file_class
 !
    contains
 !
-      procedure :: open_                     => open_abstract_out_file
-      procedure :: close_                    => close_abstract_out_file
-      procedure :: flush_                    => flush_abstract_out_file
+      procedure, public :: flush_ => flush_abstract_out_file
 !
       procedure, public :: preformat_print         => preformat_print_abstract_out_file
 !
@@ -66,122 +63,39 @@ module abstract_out_file_class
       procedure, private :: modify_char_format_abstract_out_file
       procedure, private :: modify_blank_format_abstract_out_file
 !
-      generic :: modify_format => modify_real_format_abstract_out_file,    &
-                                  modify_complex_format_abstract_out_file, &
-                                  modify_int_format_abstract_out_file,     &
-                                  modify_log_format_abstract_out_file,     &
-                                  modify_char_format_abstract_out_file,    &
-                                  modify_blank_format_abstract_out_file
+      generic, private :: modify_format => modify_real_format_abstract_out_file,    &
+                                           modify_complex_format_abstract_out_file, &
+                                           modify_int_format_abstract_out_file,     &
+                                           modify_log_format_abstract_out_file,     &
+                                           modify_char_format_abstract_out_file,    &
+                                           modify_blank_format_abstract_out_file
+!
+      procedure, public :: io_error => io_error_abstract_out_file
 !
    end type abstract_out_file
 !
 contains
 !
 !
-   subroutine open_abstract_out_file(the_file, position_)
-!!
-!!    Open the abstract_out file
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(abstract_out_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-      character(len=*), optional, intent(in) :: position_
-      character(len=20)    :: pos
-!
-!
-      if(present(position_)) then
-         pos = trim(position_)
-      else
-         pos = 'rewind'
-      endif
-!
-      if (the_file%is_open) then
-!
-         print *, trim(the_file%name_)//' is already open'
-         stop
-!
-      endif
-!
-      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
-           action='write', status='unknown', form=the_file%format_, position=pos, &
-           iostat=io_error, iomsg=io_msg)
-!
-      if (io_error /= 0) then
-!
-         print *, 'Error: could not open eT abstract_out file '//trim(the_file%name_)//&
-                             &'. Error message: '//trim(io_msg)
-         stop
-!
-      endif
-!
-      the_file%is_open = .true.
-!
-   end subroutine open_abstract_out_file
-!
-!
-   subroutine close_abstract_out_file(the_file)
-!!
-!!    Close the output file
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(abstract_out_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      if (.not. the_file%is_open) then
-         print *, trim(the_file%name_)//' already closed'
-         stop
-      end if
-!
-      close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='keep')
-!
-      if (io_error.ne. 0) then
-!
-         print *, 'Error: could not close eT output file '//trim(the_file%name_)//&
-              &'error message: '//trim(io_msg)
-         stop
-!
-      endif
-!
-      the_file%is_open = .false.
-      the_file%unit_ = -1
-!
-   end subroutine close_abstract_out_file
-!
-!
-   subroutine flush_abstract_out_file(the_file)
+   subroutine flush_abstract_out_file(this)
 !!
 !!    Flush the output file
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(abstract_out_file) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
-      integer              :: io_error
-      character(len=100)   :: io_msg
+      integer :: io_status
+      character(len=100) :: io_msg
 !
-      flush(the_file%unit_, iostat=io_error, iomsg=io_msg)
-!
-      if (io_error /= 0) then
-!
-         print *, 'Error: could not flush eT output file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
-         stop
-!
-      endif
+      flush(this%unit_, iostat=io_status, iomsg=io_msg)
+      call this%check_io_status(io_status, io_msg, task="flush")
 !
    end subroutine flush_abstract_out_file
 !
 !
-   subroutine preformat_print_abstract_out_file(the_file, string, reals, complexs, ints, chars, logs, &
+   subroutine preformat_print_abstract_out_file(this, string, reals, complexs, ints, chars, logs, &
                                                 fs, ffs, ll, padd, adv)
 !!
 !!    Preformat print
@@ -226,7 +140,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
 !     Data to print
       character(len=*), intent(in)                          :: string
@@ -268,12 +182,12 @@ contains
          i = i + 1
 !
 !        Look for a format string with a number in front
-         if(the_file%is_format(string(i:))) then
-            if(the_file%is_number(string(i-1:i-1)) .or. string(i-1:i-1) .eq. "*") then
+         if(this%is_format(string(i:))) then
+            if(this%is_number(string(i-1:i-1)) .or. string(i-1:i-1) .eq. "*") then
 !
                format_start = i
 !
-               f_length = the_file%get_format_end(string(format_start:))
+               f_length = this%get_format_end(string(format_start:))
                format_end = format_start + f_length - 1
                fstring = string(format_start:format_end)
 !
@@ -292,7 +206,7 @@ contains
                      if(present(chars)) factor = size(chars)
                   endif
                else
-                  n_numbers = the_file%get_n_numbers(string(:format_start - 1))
+                  n_numbers = this%get_n_numbers(string(:format_start - 1))
                   read(string(i-n_numbers:i-1),*) factor
                endif
 !
@@ -300,7 +214,7 @@ contains
                if(format_start .gt. 2) then
 !
 !                 Figure out the number of escape characters "\"
-                  n_escapes = the_file%get_n_escapes(string(:format_start - n_numbers - 1))
+                  n_escapes = this%get_n_escapes(string(:format_start - n_numbers - 1))
                   print_end = format_start - n_numbers - n_escapes - 1
 !
                   write(pstring(print_position:),'(a)') string(printed+1 : print_end)
@@ -349,13 +263,13 @@ contains
 !
       enddo
 !
-      call the_file%format_print(pstring, reals, complexs, ints, chars, logs, &
+      call this%format_print(pstring, reals, complexs, ints, chars, logs, &
                                  fs, ffs, ll, padd, adv)
 !
    end subroutine preformat_print_abstract_out_file
 !
 !
-   subroutine format_print_abstract_out_file(the_file, string, reals, complexs, ints, chars, logs, &
+   subroutine format_print_abstract_out_file(this, string, reals, complexs, ints, chars, logs, &
                                              fs, ffs, ll, padd, adv)
 !!
 !!    Format print
@@ -396,7 +310,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
 !     Data to print
       character(len=*), intent(in)                          :: string
@@ -462,10 +376,10 @@ contains
          i = i + 1
 !
 !        Look for a format string
-         if(the_file%is_format(string(i:))) then
+         if(this%is_format(string(i:))) then
 !
             format_start = i
-            format_end = format_start + the_file%get_format_end(string(i:)) - 1
+            format_end = format_start + this%get_format_end(string(i:)) - 1
             fstring = string(format_start:format_end)
             ftype = fstring(2:2)
 !
@@ -473,7 +387,7 @@ contains
             if(format_start .gt. 1) then
 !
 !              Figure out the number of escape characters "\"
-               n_escapes = the_file%get_n_escapes(string(:format_start - 1))
+               n_escapes = this%get_n_escapes(string(:format_start - 1))
                print_end = format_start - n_escapes - 1
 !
                write(pstring(print_position:),'(a)') string(printed+1 : print_end)
@@ -499,7 +413,7 @@ contains
                   endif
 !
 !                 Modify fstring if f0 and get format length
-                  call the_file%modify_format(fstring, reals(real_count), format_length)
+                  call this%modify_format(fstring, reals(real_count), format_length)
 !
 !                 Copy format string to fstring and write the next real to pstring
                   write(pstring(print_position:),fstring) reals(real_count)
@@ -514,7 +428,7 @@ contains
                   endif
 !
 !                 Modify fstring if f0 and get format length
-                  call the_file%modify_format(fstring, complexs(complex_count), format_length)
+                  call this%modify_format(fstring, complexs(complex_count), format_length)
 !
 !                 Copy format string to fstring and write the next real to pstring
                   write(pstring(print_position:),fstring) real(complexs(complex_count)), &
@@ -530,7 +444,7 @@ contains
                   endif
 !
 !                 Modify fstring if i0
-                  call the_file%modify_format(fstring, ints(int_count), format_length)
+                  call this%modify_format(fstring, ints(int_count), format_length)
 !
                   write(pstring(print_position:),fstring) ints(int_count)
 !
@@ -545,7 +459,7 @@ contains
                   endif
 !
 !                 Modify fstring to a and figure out length if l0
-                  call the_file%modify_format(fstring, logs(log_count), format_length)
+                  call this%modify_format(fstring, logs(log_count), format_length)
 !
                   if(logs(log_count)) then
                      write(pstring(print_position:), fstring) 'True'
@@ -562,7 +476,7 @@ contains
                      stop
                   endif
 !
-                  call the_file%modify_format(fstring, chars(char_count), format_length)
+                  call this%modify_format(fstring, chars(char_count), format_length)
 !
                   if (format_length .gt. 0) then
                      write(pstring(print_position:), fstring) trim(chars(char_count))
@@ -571,7 +485,7 @@ contains
 !              Is ( followed by x?
                elseif(ftype .eq. "x") then
 !
-                  call the_file%modify_format(fstring, format_length)
+                  call this%modify_format(fstring, format_length)
 !
                   write(pstring(print_position:), fstring)
 !
@@ -611,18 +525,18 @@ contains
       if(nchars .ne. char_count) error stop "Too many chars in format_print"
 !
 !
-      call the_file%long_string_print(pstring, length, fs, ffs, ll, padd, adv)
+      call this%long_string_print(pstring, length, fs, ffs, ll, padd, adv)
 !
    end subroutine format_print_abstract_out_file
 !
 !
-   subroutine long_string_print_abstract_out_file(the_file, string, length, fs, ffs, ll, padd, adv)
+   subroutine long_string_print_abstract_out_file(this, string, length, fs, ffs, ll, padd, adv)
 !!
 !!    Long string print
 !!    Written by Rolf H. Myhre, Nov 2018
 !!
 !!    Prints a character string, possibly dividing it up over several lines
-!!    based on ll, padd and format and prints them to the_file
+!!    based on ll, padd and format and prints them to this
 !!
 !!    string:  Character string to print
 !!
@@ -648,7 +562,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
       character(len=*), intent(in)           :: string
       integer, intent(in)                    :: length
@@ -669,7 +583,7 @@ contains
 !
 !     Just print a new line and return if empty
       if (length .eq. 0) then
-         write(the_file%unit_, *)
+         write(this%unit_, *)
          return
       endif
 !
@@ -689,7 +603,7 @@ contains
       if(present(fs)) then
          fstring = fs
       endif
-      line_length = length_with_tab - the_file%get_tab_length(fstring)
+      line_length = length_with_tab - this%get_tab_length(fstring)
 !
       if(line_length .le. 0) then
          print *, "Too many tabs or too short line length: ", line_length
@@ -701,7 +615,7 @@ contains
       if(present(ffs)) then
          ffstring = ffs
       endif
-      fline_length = length_with_tab - the_file%get_tab_length(ffstring)
+      fline_length = length_with_tab - this%get_tab_length(ffstring)
 !
       if(fline_length .le. 0) then
          print *, "Too many tabs or too short first line length: ", fline_length
@@ -774,7 +688,7 @@ contains
          endif
 !
 !        Write to file
-         write(the_file%unit_, f_s, advance=advancing) temp(1 : temp_length)
+         write(this%unit_, f_s, advance=advancing) temp(1 : temp_length)
 !
          f_s = fstring
          l_l = line_length
@@ -784,7 +698,7 @@ contains
    end subroutine long_string_print_abstract_out_file
 !
 !
-   pure function get_format_length_abstract_out_file(the_file, fstring) result(length)
+   pure function get_format_length_abstract_out_file(this, fstring) result(length)
 !
 !!    Get printed length of format
 !!    Written by Rolf H. Myhre, Sep 2019
@@ -795,7 +709,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
       character(len=*), intent(in)  :: fstring
 !
@@ -805,7 +719,7 @@ contains
       endchar = ")"
 !
 !     Look for "." if floating point format
-      if(any(fstring(2:2) .eq. the_file%float_formats)) then
+      if(any(fstring(2:2) .eq. this%float_formats)) then
          endchar = "."
       endif
 !
@@ -847,7 +761,7 @@ contains
    end function get_n_escapes_abstract_out_file
 !
 !
-   pure function get_n_numbers_abstract_out_file(the_file, string) result(n_numbers)
+   pure function get_n_numbers_abstract_out_file(this, string) result(n_numbers)
 !
 !!    Get n numbers
 !!    Written by Rolf H. Myhre, Nov 2020
@@ -857,7 +771,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
       character(len=*), intent(in)  :: string
 !
@@ -867,7 +781,7 @@ contains
       if (len(string) .le. 1) return
 !
       do i = len(string), 1, -1
-         if (the_file%is_number(string(i:i))) then
+         if (this%is_number(string(i:i))) then
             n_numbers = n_numbers + 1
          else
             return
@@ -900,7 +814,7 @@ contains
    end function get_format_end_abstract_out_file
 !
 !
-   pure function is_format_abstract_out_file(the_file, string) result(is_format)
+   pure function is_format_abstract_out_file(this, string) result(is_format)
 !
 !!    is format
 !!    Written by Rolf H. Myhre, Oct 2020
@@ -910,7 +824,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
       character(len=*), intent(in)   :: string
 !
@@ -927,19 +841,19 @@ contains
 !     and that the second is one of the formatting characters
 !     and that the third is a number
       if(string(1:1) .eq. "(") then
-         if (any(string(2:2) .eq. the_file%float_formats) .or. &
-             any(string(2:2) .eq. the_file%simple_formats)) then
-            if (the_file%is_number(string(3:3))) then
+         if (any(string(2:2) .eq. this%float_formats) .or. &
+             any(string(2:2) .eq. this%simple_formats)) then
+            if (this%is_number(string(3:3))) then
 !
                i = 4
 !
 !              Look for "." in float formats
-               if(any(string(2:2) .eq. the_file%float_formats)) then
+               if(any(string(2:2) .eq. this%float_formats)) then
 !
 !                 Check that there are only numbers until "."
                   do while (string(i:i) .ne. "." .and. i .lt. length-1 .and. i .lt. maxlength)
 !
-                     if (.not. the_file%is_number(string(i:i))) exit
+                     if (.not. this%is_number(string(i:i))) exit
                      i = i + 1
 !
                   enddo
@@ -957,7 +871,7 @@ contains
 !              Check that there are only numbers until )
                do while (string(i:i) .ne. ")" .and. i .lt. length .and. i .lt. maxlength)
 !
-                  if (.not. the_file%is_number(string(i:i))) exit
+                  if (.not. this%is_number(string(i:i))) exit
                   i = i + 1
 !
                enddo
@@ -977,7 +891,7 @@ contains
    end function is_format_abstract_out_file
 !
 !
-   function get_tab_length_abstract_out_file(the_file, fstring) result(length)
+   function get_tab_length_abstract_out_file(this, fstring) result(length)
 !
 !!    Get tab length
 !!    Written by Rolf H. Myhre, Sep 2019
@@ -987,7 +901,7 @@ contains
 !
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
       character(len=*), intent(in)  :: fstring
 !
@@ -1023,7 +937,7 @@ contains
 !
 !                 Count the numbers after the t
                   j = i
-                  do while (the_file%is_number(fstring(j+1:j+1)))
+                  do while (this%is_number(fstring(j+1:j+1)))
                      j = j + 1
                   enddo
 !
@@ -1081,14 +995,14 @@ contains
 !
       character(len=1), dimension(10)  :: zero_to_nine
 !
-      zero_to_nine=['0','1','2','3','4','5','6','7','8','9']
+      zero_to_nine = ['0','1','2','3','4','5','6','7','8','9']
 !
       it_is = any(check_char .eq. zero_to_nine)
 !
    end function is_number_abstract_out_file
 !
 !
-   pure subroutine modify_real_format_abstract_out_file(the_file, fstring, variable, format_length)
+   pure subroutine modify_real_format_abstract_out_file(this, fstring, variable, format_length)
 !
 !!    modify real format
 !!    Written by Rolf H. Myhre, Nov 2019
@@ -1097,7 +1011,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
       character(len=*), intent(inout)      :: fstring
       real(dp), intent(in)                 :: variable
       integer, intent(out)                 :: format_length
@@ -1128,12 +1042,12 @@ contains
 !
       endif
 !
-      format_length = the_file%get_format_length(fstring)
+      format_length = this%get_format_length(fstring)
 !
    end subroutine modify_real_format_abstract_out_file
 !
 !
-   pure subroutine modify_complex_format_abstract_out_file(the_file, fstring, variable, format_length)
+   pure subroutine modify_complex_format_abstract_out_file(this, fstring, variable, format_length)
 !
 !!    modify complex format
 !!    Written by Rolf H. Myhre, Nov 2019
@@ -1142,7 +1056,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
       character(len=*), intent(inout)      :: fstring
       complex(dp), intent(in)              :: variable
       integer, intent(out)                 :: format_length
@@ -1168,13 +1082,13 @@ contains
 !
       if(zero_format) tempstring = trim(fstring)
 !
-      call the_file%modify_format(fstring, real(variable), real_length)
+      call this%modify_format(fstring, real(variable), real_length)
       j = len_trim(fstring)
       format_length = real_length + 3
 !
       if (zero_format) then
 !
-         call the_file%modify_format(tempstring, abs(aimag(variable)), real_length)
+         call this%modify_format(tempstring, abs(aimag(variable)), real_length)
          k = len_trim(tempstring)
 !
          write(fstring(j:), '(a,a,a)') plusminus, tempstring(2:k-1), istring
@@ -1190,7 +1104,7 @@ contains
    end subroutine modify_complex_format_abstract_out_file
 !
 !
-   pure subroutine modify_int_format_abstract_out_file(the_file, fstring, variable, format_length)
+   pure subroutine modify_int_format_abstract_out_file(this, fstring, variable, format_length)
 !
 !!    modify float format
 !!    Written by Rolf H. Myhre, Nov 2019
@@ -1199,7 +1113,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
       character(len=*), intent(inout)      :: fstring
       integer, intent(in)                  :: variable
       integer, intent(out)                 :: format_length
@@ -1219,12 +1133,12 @@ contains
 !
       endif
 !
-      format_length = the_file%get_format_length(fstring)
+      format_length = this%get_format_length(fstring)
 !
    end subroutine modify_int_format_abstract_out_file
 !
 !
-   pure subroutine modify_log_format_abstract_out_file(the_file, fstring, variable, format_length)
+   pure subroutine modify_log_format_abstract_out_file(this, fstring, variable, format_length)
 !
 !!    modify log format
 !!    Written by Rolf H. Myhre, Nov 2019
@@ -1233,7 +1147,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
       character(len=*), intent(inout)      :: fstring
       logical, intent(in)                  :: variable
       integer, intent(out)                 :: format_length
@@ -1248,12 +1162,12 @@ contains
          fstring(2:2) = "a"
       endif
 !
-      format_length = the_file%get_format_length(fstring)
+      format_length = this%get_format_length(fstring)
 !
    end subroutine modify_log_format_abstract_out_file
 !
 !
-   pure subroutine modify_char_format_abstract_out_file(the_file, fstring, variable, format_length)
+   pure subroutine modify_char_format_abstract_out_file(this, fstring, variable, format_length)
 !
 !!    modify char format
 !!    Written by Rolf H. Myhre, Nov 2019
@@ -1262,14 +1176,14 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
       character(len=*), intent(inout)      :: fstring
       character(len=*), intent(in)         :: variable
       integer, intent(out)                 :: format_length
 !
       integer :: len_trimmed
 !
-      format_length = the_file%get_format_length(fstring)
+      format_length = this%get_format_length(fstring)
       len_trimmed = len_trim(variable)
 !
       if (fstring(3:3) .eq. "0" .or. len_trimmed .eq. format_length) then
@@ -1287,7 +1201,7 @@ contains
    end subroutine modify_char_format_abstract_out_file
 !
 !
-   pure subroutine modify_blank_format_abstract_out_file(the_file, fstring, format_length)
+   pure subroutine modify_blank_format_abstract_out_file(this, fstring, format_length)
 !
 !!    modify blank format
 !!    Written by Rolf H. Myhre, Nov 2019
@@ -1296,11 +1210,11 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
       character(len=*), intent(inout)      :: fstring
       integer, intent(out)                 :: format_length
 !
-      format_length = the_file%get_format_length(fstring)
+      format_length = this%get_format_length(fstring)
       if(format_length .eq. 0) then
          write(fstring, '(a3)') "(a)"
       else
@@ -1310,7 +1224,7 @@ contains
    end subroutine modify_blank_format_abstract_out_file
 !
 !
-   subroutine format_print_matrix_abstract_out_file(the_file, name_, matrix, &
+   subroutine format_print_matrix_abstract_out_file(this, name_, matrix, &
                                                     dim_1, dim_2, fs, columns)
 !!
 !!    Format print matrix
@@ -1329,7 +1243,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in)            :: the_file
+      class(abstract_out_file), intent(in)            :: this
 !
       character(len=*), intent(in)                    :: name_
 !
@@ -1376,7 +1290,7 @@ contains
 !
 !     Get various lengths
       name_length = len_trim(name_)
-      form_length = the_file%get_format_length(form_string)
+      form_length = this%get_format_length(form_string)
 !
       write(int_string, '(i0)') dim_1
       row_int_length = len_trim(int_string)
@@ -1392,7 +1306,7 @@ contains
 !
 !     Find format of first line and print name
       write(print_fs, '(a,i0,a)') '(/a', print_length, ')'
-      call the_file%format_print(name_, fs=print_fs)
+      call this%format_print(name_, fs=print_fs)
 !
 !     Set up string for column indices, assuming form_length .ge. col_int_length
       first_col_int_length = (row_int_length + 1) + form_length/2 + col_int_length/2 + 1
@@ -1407,7 +1321,7 @@ contains
       real_string = trim(row_index_format) // repeat(' '//trim(form_string), n_columns)
 !
 !     Print separator
-      call the_file%format_print_separator(line_length+1, '=')
+      call this%format_print_separator(line_length+1, '=')
 !
 !     Start iterating over number of prints
 !
@@ -1417,7 +1331,7 @@ contains
 !
 !        Some space between the prints
          if (i .ne. 1) then
-            call the_file%format_print('')
+            call this%format_print('')
          end if
 !
 !        Calculate number of columns if last print and not first print and set up format strings
@@ -1433,7 +1347,7 @@ contains
             ints_to_print(j) = columns_printed + j
          enddo
 !
-         call the_file%format_print(int_string, ints=ints_to_print(1:n_columns), ll=line_length)
+         call this%format_print(int_string, ints=ints_to_print(1:n_columns), ll=line_length)
 !
          do k = 1, dim_1
 !
@@ -1441,7 +1355,7 @@ contains
                reals_to_print(j) = matrix(k,j + columns_printed)
             enddo
 !
-            call the_file%format_print(real_string, ints=[k], &
+            call this%format_print(real_string, ints=[k], &
                                     reals=reals_to_print(1:n_columns), ll=line_length)
 !
          enddo
@@ -1452,7 +1366,7 @@ contains
       enddo
 !
 !     Print separator
-      call the_file%format_print_separator(line_length+1, '=')
+      call this%format_print_separator(line_length+1, '=')
 !
 !
       deallocate(ints_to_print)
@@ -1461,7 +1375,7 @@ contains
    end subroutine format_print_matrix_abstract_out_file
 !
 !
-   subroutine format_print_separator_abstract_out_file(the_file, n, symbol, fs)
+   subroutine format_print_separator_abstract_out_file(this, n, symbol, fs)
 !!
 !!    Format print separator
 !!
@@ -1473,7 +1387,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file), intent(in) :: the_file
+      class(abstract_out_file), intent(in) :: this
 !
       integer, intent(in) :: n
 !
@@ -1494,19 +1408,19 @@ contains
       endif
 !
       if (present(fs)) then
-         line_length = n+the_file%get_tab_length(fs)
+         line_length = n+this%get_tab_length(fs)
       else
          line_length = n + 2
       endif
 !
       separator_line = repeat(sym, n)
 !
-      call the_file%format_print(separator_line, ll=line_length, fs=fs, padd=0)
+      call this%format_print(separator_line, ll=line_length, fs=fs, padd=0)
 !
    end subroutine format_print_separator_abstract_out_file
 !
 !
-   subroutine format_print_vector_abstract_out_file(the_file, name_, dim_, vector, fs, columns, transpose_)
+   subroutine format_print_vector_abstract_out_file(this, name_, dim_, vector, fs, columns, transpose_)
 !!
 !!    Format print vector
 !!    Written by Tor S. Haugland, Oct 2019
@@ -1531,7 +1445,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_out_file),  intent(in)           :: the_file
+      class(abstract_out_file),  intent(in)           :: this
       character(len=*),          intent(in)           :: name_
       integer,                   intent(in)           :: dim_
       real(dp), dimension(dim_), intent(in)           :: vector
@@ -1570,7 +1484,7 @@ contains
 !
 !     Initialize formatting variables
 !
-      form_length = the_file%get_format_length(form_string)
+      form_length = this%get_format_length(form_string)
 !
       write(int_string, '(i0)') dim_
       int_length = len_trim(int_string)
@@ -1581,9 +1495,9 @@ contains
 !
 !     Print header
 !
-      call the_file%format_print(name_, fs='(/t3,a/)')
+      call this%format_print(name_, fs='(/t3,a/)')
 !
-      call the_file%format_print_separator(line_length, symbol='-')
+      call this%format_print_separator(line_length, symbol='-')
 !
 !     Print content
 !
@@ -1612,14 +1526,39 @@ contains
 !
          if (index_ > dim_) cycle
 !
-         call the_file%format_print( trim(index_format) // ' ' // trim(form_string), adv=adv, &
+         call this%format_print( trim(index_format) // ' ' // trim(form_string), adv=adv, &
                                     ints=[index_], reals=[vector(index_)])
 !
       enddo
 !
-      call the_file%format_print_separator(line_length, symbol='-')
+      call this%format_print_separator(line_length, symbol='-')
 !
    end subroutine format_print_vector_abstract_out_file
+!
+!
+   subroutine io_error_abstract_out_file(this, io_status, io_message, task)
+!!
+!!    print io error
+!!    Written by Alexander C. Paul, Sep 2022
+!!
+!!    task: string specifying which task is checked: open, close, read from, write to
+!!
+      implicit none
+!
+      class(abstract_out_file), intent(in) :: this
+!
+      integer, intent(in) :: io_status
+!
+      character(len=*), intent(in) :: io_message
+      character(len=*), intent(in) :: task
+!
+      print '(5a,i0,2a)',  'Failed to ', task, ' output file ', this%get_name(), &
+                           ', status is ', io_status, ' and error message is: ', &
+                           trim(io_message)
+!
+      error stop
+!
+   end subroutine io_error_abstract_out_file
 !
 !
 end module abstract_out_file_class

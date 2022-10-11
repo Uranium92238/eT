@@ -121,7 +121,7 @@ set(eT_fortran_sources
    src/io/abstract_stream_class.F90
    src/io/abstract_out_file_class.F90
    src/io/direct_stream_file_class.F90
-   src/io/sequential_file_class.F90
+   src/io/formatted_read_file_class.F90
    src/io/stream_file_class.F90
    src/io/input_file_class.F90
    src/io/section_class.F90

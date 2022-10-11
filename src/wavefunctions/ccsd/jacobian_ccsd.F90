@@ -390,7 +390,7 @@ contains
 !     Get intermediate X_lj_ai = sum_ck g_lj_kc t_kc_ai
 !
       call mem%alloc(X_ljai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call wf%jacobian_c2_intermediate_oovo_1%open_('read', 'rewind')
+      call wf%jacobian_c2_intermediate_oovo_1%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_1%read_(X_ljai, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_c2_intermediate_oovo_1%close_('keep')
 !
@@ -416,7 +416,7 @@ contains
 !     Get the intermediate X_kjbi = sum_lc g_kjlc t_lcbi
 !
       call mem%alloc(X_kjbi, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call wf%jacobian_c2_intermediate_oovo_2%open_('read', 'rewind')
+      call wf%jacobian_c2_intermediate_oovo_2%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_2%read_(X_kjbi, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_c2_intermediate_oovo_2%close_('keep')
 !
@@ -579,7 +579,7 @@ contains
 !     Get the intermediate Y_lj_ai = sum_kc L_ljkc t_ik^ac = sum_kc L_lj_ck t_ck_ai
 !
       call mem%alloc(Y_ljai, wf%n_o, wf%n_o, wf%n_v,wf%n_o)
-      call wf%jacobian_c2_intermediate_oovo_3%open_('read', 'rewind')
+      call wf%jacobian_c2_intermediate_oovo_3%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_3%read_(Y_ljai, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_c2_intermediate_oovo_3%close_('keep')
 !
@@ -678,7 +678,7 @@ contains
 !
       call mem%alloc(X_kijb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_d2_intermediate%open_('read','rewind')
+      call wf%jacobian_d2_intermediate%open_('rewind')
       call wf%jacobian_d2_intermediate%read_(X_kijb, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_d2_intermediate%close_('keep')
 !
@@ -1075,7 +1075,7 @@ contains
 !
       call mem%alloc(Y_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_e2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_e2_intermediate%open_('rewind')
       call wf%jacobian_e2_intermediate%read_(Y_bjck, (wf%n_v**2)*(wf%n_o**2))
       call wf%jacobian_e2_intermediate%close_('keep')
 !
@@ -1278,7 +1278,7 @@ contains
 !
       call mem%alloc(Y_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_g2_intermediate_vovo%open_('read', 'rewind')
+      call wf%jacobian_g2_intermediate_vovo%open_('rewind')
       call wf%jacobian_g2_intermediate_vovo%read_(Y_bjck, wf%n_t1**2)
       call wf%jacobian_g2_intermediate_vovo%close_('keep')
 !
@@ -1301,7 +1301,7 @@ contains
 !
       call mem%alloc(Y_bd, wf%n_v, wf%n_v)
 !
-      call wf%jacobian_a1_intermediate_vv%open_('read', 'rewind')
+      call wf%jacobian_a1_intermediate_vv%open_('rewind')
       call wf%jacobian_a1_intermediate_vv%read_(Y_bd, wf%n_v**2)
       call wf%jacobian_a1_intermediate_vv%close_('keep')
 !
@@ -1324,7 +1324,7 @@ contains
 !
       call mem%alloc(Y_jl, wf%n_o, wf%n_o)
 !
-      call wf%jacobian_a1_intermediate_oo%open_('read', 'rewind')
+      call wf%jacobian_a1_intermediate_oo%open_('rewind')
       call wf%jacobian_a1_intermediate_oo%read_(Y_jl, wf%n_o**2)
       call wf%jacobian_a1_intermediate_oo%close_('keep')
 !
@@ -1465,7 +1465,7 @@ contains
 !
       call mem%alloc(Y_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_h2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_h2_intermediate%open_('rewind')
       call wf%jacobian_h2_intermediate%read_(Y_ajkd, wf%n_t1**2)
       call wf%jacobian_h2_intermediate%close_('keep')
 !
@@ -1688,7 +1688,7 @@ contains
 !
       call mem%alloc(Y_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%jacobian_j2_intermediate_oooo%open_('read', 'rewind')
+      call wf%jacobian_j2_intermediate_oooo%open_('rewind')
 !
       call wf%jacobian_j2_intermediate_oooo%read_(Y_klij, wf%n_o**4)
 !
@@ -1892,8 +1892,8 @@ contains
                   X_ljai,            & ! X_lj_ai
                   (wf%n_o)**2)
 !
-      wf%jacobian_c2_intermediate_oovo_1 = sequential_file('jacobian_c2_intermediate_oovo_1_ccsd')
-      call wf%jacobian_c2_intermediate_oovo_1%open_('write', 'rewind')
+      wf%jacobian_c2_intermediate_oovo_1 = stream_file('jacobian_c2_intermediate_oovo_1_ccsd')
+      call wf%jacobian_c2_intermediate_oovo_1%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_1%write_(X_ljai, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_c2_intermediate_oovo_1%close_('keep')
 !
@@ -1928,8 +1928,8 @@ contains
       call mem%dealloc(t_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
       call mem%dealloc(g_kjlc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      wf%jacobian_c2_intermediate_oovo_2 = sequential_file('jacobian_c2_intermediate_oovo_2_ccsd')
-      call wf%jacobian_c2_intermediate_oovo_2%open_('write', 'rewind')
+      wf%jacobian_c2_intermediate_oovo_2 = stream_file('jacobian_c2_intermediate_oovo_2_ccsd')
+      call wf%jacobian_c2_intermediate_oovo_2%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_2%write_(X_kjbi, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_c2_intermediate_oovo_2%close_('keep')
 !
@@ -1967,8 +1967,8 @@ contains
       call mem%dealloc(L_ljkc, wf%N_o, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(t_kcai, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
-      wf%jacobian_c2_intermediate_oovo_3 = sequential_file('jacobian_c2_intermediate_oovo_3_ccsd')
-      call wf%jacobian_c2_intermediate_oovo_3%open_('write', 'rewind')
+      wf%jacobian_c2_intermediate_oovo_3 = stream_file('jacobian_c2_intermediate_oovo_3_ccsd')
+      call wf%jacobian_c2_intermediate_oovo_3%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_3%write_(Y_ljai, (wf%n_o)**3*(wf%n_v))
       call wf%jacobian_c2_intermediate_oovo_3%close_('keep')
 !
@@ -2087,8 +2087,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_d2_intermediate = sequential_file('jacobian_d2_intermediate_ccsd')
-      call wf%jacobian_d2_intermediate%open_('write', 'rewind')
+      wf%jacobian_d2_intermediate = stream_file('jacobian_d2_intermediate_ccsd')
+      call wf%jacobian_d2_intermediate%open_('rewind')
 !
       call wf%jacobian_d2_intermediate%write_(X_kijb_full, (wf%n_o)**3*(wf%n_v))
 !
@@ -2162,8 +2162,8 @@ contains
       call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      wf%jacobian_e2_intermediate = sequential_file('jacobian_e2_intermediate_ccsd')
-      call wf%jacobian_e2_intermediate%open_('write', 'rewind')
+      wf%jacobian_e2_intermediate = stream_file('jacobian_e2_intermediate_ccsd')
+      call wf%jacobian_e2_intermediate%open_('rewind')
 !
       call wf%jacobian_e2_intermediate%write_(Y_bjck, wf%n_t1**2)
 !
@@ -2259,8 +2259,8 @@ contains
       call mem%dealloc(t_bjdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      wf%jacobian_g2_intermediate_vovo = sequential_file('jacobian_g2_intermediate_vovo_ccsd')
-      call wf%jacobian_g2_intermediate_vovo%open_('write', 'rewind')
+      wf%jacobian_g2_intermediate_vovo = stream_file('jacobian_g2_intermediate_vovo_ccsd')
+      call wf%jacobian_g2_intermediate_vovo%open_('rewind')
 !
       call wf%jacobian_g2_intermediate_vovo%write_(Y_bjck, wf%n_t1**2)
 !
@@ -2333,8 +2333,8 @@ contains
       call mem%dealloc(g_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call mem%dealloc(t_ajcl, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      wf%jacobian_h2_intermediate = sequential_file('jacobian_h2_intermediate_ccsd')
-      call wf%jacobian_h2_intermediate%open_('write', 'rewind')
+      wf%jacobian_h2_intermediate = stream_file('jacobian_h2_intermediate_ccsd')
+      call wf%jacobian_h2_intermediate%open_('rewind')
 !
       call wf%jacobian_h2_intermediate%write_(Y_ajkd, wf%n_t1**2)
 !
@@ -2410,8 +2410,8 @@ contains
       call mem%dealloc(t_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
-      wf%jacobian_j2_intermediate_oooo = sequential_file('jacobian_j2_intermediate_oooo_ccsd')
-      call wf%jacobian_j2_intermediate_oooo%open_('write', 'rewind')
+      wf%jacobian_j2_intermediate_oooo = stream_file('jacobian_j2_intermediate_oooo_ccsd')
+      call wf%jacobian_j2_intermediate_oooo%open_('rewind')
 !
       call wf%jacobian_j2_intermediate_oooo%write_(Y_klij, wf%n_o**4)
 !

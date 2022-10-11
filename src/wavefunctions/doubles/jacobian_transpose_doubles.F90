@@ -108,7 +108,7 @@ contains
 !
       wf%jacobian_transpose_a1_intermediate_oo = &
                                           stream_file('jacobian_transpose_intermediate_a1_oo')
-      call wf%jacobian_transpose_a1_intermediate_oo%open_('write', 'rewind')
+      call wf%jacobian_transpose_a1_intermediate_oo%open_('rewind')
 !
       call wf%jacobian_transpose_a1_intermediate_oo%write_(Y_ik, wf%n_o**2)
 !
@@ -137,7 +137,7 @@ contains
 !
       wf%jacobian_transpose_a1_intermediate_vv = &
                                           stream_file('jacobian_transpose_intermediate_a1_vv')
-      call wf%jacobian_transpose_a1_intermediate_vv%open_('write', 'rewind')
+      call wf%jacobian_transpose_a1_intermediate_vv%open_('rewind')
 !
       call wf%jacobian_transpose_a1_intermediate_vv%write_(Y_ca, wf%n_v**2)
 !
@@ -265,7 +265,7 @@ contains
 !
       call mem%alloc(Y_ik, wf%n_o, wf%n_o)
 !
-      call wf%jacobian_transpose_a1_intermediate_oo%open_('read', 'rewind')
+      call wf%jacobian_transpose_a1_intermediate_oo%open_('rewind')
       call wf%jacobian_transpose_a1_intermediate_oo%read_(Y_ik, wf%n_o**2)
       call wf%jacobian_transpose_a1_intermediate_oo%close_()
 !
@@ -292,7 +292,7 @@ contains
 !
 !     Read Y_ca from file
 !
-      call wf%jacobian_transpose_a1_intermediate_vv%open_('read', 'rewind')
+      call wf%jacobian_transpose_a1_intermediate_vv%open_('rewind')
       call wf%jacobian_transpose_a1_intermediate_vv%read_(Y_ca, wf%n_v**2)
       call wf%jacobian_transpose_a1_intermediate_vv%close_()
 !

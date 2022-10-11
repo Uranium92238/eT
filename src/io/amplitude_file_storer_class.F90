@@ -47,11 +47,11 @@ module amplitude_file_storer_class
 !
    contains
 !
-      procedure :: save_ => save_amplitude_file_storer
-      procedure :: read_ => read_amplitude_file_storer
-      procedure :: get_filename => get_filename_amplitude_file_storer
-      procedure :: file_exists => file_exists_amplitude_file_storer
-      procedure :: delete_file => delete_file_amplitude_file_storer
+      procedure, public :: save_ => save_amplitude_file_storer
+      procedure, public :: read_ => read_amplitude_file_storer
+      procedure, public :: get_filename => get_filename_amplitude_file_storer
+      procedure, public :: file_exists => file_exists_amplitude_file_storer
+      procedure, public :: delete_file => delete_file_amplitude_file_storer
 !
    end type amplitude_file_storer
 !
@@ -116,7 +116,7 @@ contains
       local_energy = zero
       if (present(energy)) local_energy = energy
 !
-      call this%file_%open_('write', 'rewind')
+      call this%file_%open_('rewind')
 !
       call this%file_%write_(local_energy)
 !
@@ -154,7 +154,7 @@ contains
       integer(i64) :: n, elements_read, n_from_file
       integer :: i, iostat
 !
-      call this%file_%open_('read', 'rewind')
+      call this%file_%open_('rewind')
 !
       call this%file_%read_(energy)
 !
@@ -172,7 +172,8 @@ contains
          if (n_from_file .ne. n) then
             call output%error_msg('Wrong number of singles amplitudes in (a0). &
                                   &Expected (i0), found (i0)', &
-                                 chars=[this%file_%get_name()], ints=[int(n), int(n_from_file)])
+                                 chars=[this%file_%get_name()], &
+                                 ints=[int(n), int(n_from_file)])
          end if
 !
          call this%file_%read_(vector(elements_read+1:), int(n))

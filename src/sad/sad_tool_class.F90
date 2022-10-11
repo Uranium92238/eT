@@ -193,11 +193,12 @@ contains
 !!    Generate SAD for center
 !!    Written by Tor S. Haugland, Sep 2019
 !!
-      use sequential_file_class,    only: sequential_file
+      use stream_file_class,        only: stream_file
       use atomic_center_class,      only: atomic_center
       use uhf_class,                only: uhf
       use scf_solver_factory_class, only: scf_solver_factory
       use scf_solver_class,         only: scf_solver
+      use memory_manager_class,     only: mem
 !
       implicit none
 !
@@ -214,8 +215,10 @@ contains
       character(len=200)    :: alpha_file_name
       character(len=200)    :: beta_file_name
 !
-      type(sequential_file) :: alpha_density_file
-      type(sequential_file) :: beta_density_file
+      type(stream_file) :: alpha_sad_file, alpha_density_file
+      type(stream_file) :: beta_sad_file, beta_density_file
+!
+      real(dp), dimension(:,:), allocatable :: density
 !
       call output%mute()
 !
@@ -244,26 +247,41 @@ contains
                          adjustl(center%symbol) // ' using UHF/(a0)', &
                          chars=[center%basis], fs='(t6,a)')
 !
-!     Move density files to where ao_tool can use them,
-!     but first delete SAD if it already exists.
-!
       name_ = "sad_" // trim(center%get_identifier_string())
       alpha_file_name = trim(name_) // '_alpha'
       beta_file_name  = trim(name_) // '_beta'
 !
-      alpha_density_file = sequential_file(alpha_file_name)
-      if (alpha_density_file%exists()) call alpha_density_file%delete_()
+!     Delete old SAD files if present in scratch
 !
-      beta_density_file  = sequential_file(beta_file_name)
-      if (beta_density_file%exists())  call beta_density_file%delete_()
+      alpha_sad_file = stream_file(alpha_file_name)
+      if (alpha_sad_file%exists()) call alpha_sad_file%delete_()
 !
-      alpha_density_file = sequential_file('ao_density_a')
-      call alpha_density_file%copy(alpha_file_name)
+      beta_sad_file  = stream_file(beta_file_name)
+      if (beta_sad_file%exists())  call beta_sad_file%delete_()
+!
+!     Copy AO densities for given center to SAD files
+!
+      call mem%alloc(density, center%n_ao, center%n_ao)
+!
+      alpha_density_file = stream_file('ao_density_a')
+      call alpha_density_file%open_('rewind')
+      call alpha_density_file%read_(density, center%n_ao**2)
       call alpha_density_file%delete_()
 !
-      beta_density_file  = sequential_file('ao_density_b')
-      call beta_density_file%copy(beta_file_name)
+      call alpha_sad_file%open_('rewind')
+      call alpha_sad_file%write_(density, center%n_ao**2)
+      call alpha_sad_file%close_()
+!
+      beta_density_file = stream_file('ao_density_b')
+      call beta_density_file%open_('rewind')
+      call beta_density_file%read_(density, center%n_ao**2)
       call beta_density_file%delete_()
+!
+      call beta_sad_file%open_('rewind')
+      call beta_sad_file%write_(density, center%n_ao**2)
+      call beta_sad_file%close_()
+!
+      call mem%dealloc(density, center%n_ao, center%n_ao)
 !
    end subroutine generate_sad_for_center
 !

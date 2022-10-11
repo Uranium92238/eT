@@ -42,7 +42,7 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      call wf%orbital_file%open_('write')
+      call wf%orbital_file%open_()
       call wf%orbital_file%write_(int(wf%ao%n,kind=i64))
       call wf%orbital_file%write_(int(wf%n_mo,kind=i64))
       call wf%orbital_file%write_(wf%orbital_energies_a, wf%n_mo)
@@ -65,7 +65,7 @@ contains
       integer :: n_ao, n_mo
       integer(i64) :: n
 !
-      call wf%orbital_file%open_('read', 'rewind')
+      call wf%orbital_file%open_('rewind')
 !
       call wf%orbital_file%read_(n)
       n_ao = int(n)
@@ -97,23 +97,23 @@ contains
 !
       class(uhf) :: wf
 !
-      type(sequential_file) :: ao_density_file
-      type(sequential_file) :: ao_density_file_a
-      type(sequential_file) :: ao_density_file_b
+      type(stream_file) :: ao_density_file
+      type(stream_file) :: ao_density_file_a
+      type(stream_file) :: ao_density_file_b
 !
-      ao_density_file   = sequential_file('ao_density')
-      ao_density_file_a = sequential_file('ao_density_a')
-      ao_density_file_b = sequential_file('ao_density_b')
+      ao_density_file   = stream_file('ao_density')
+      ao_density_file_a = stream_file('ao_density_a')
+      ao_density_file_b = stream_file('ao_density_b')
 !
-      call ao_density_file%open_('write', 'rewind')
+      call ao_density_file%open_('rewind')
       call ao_density_file%write_(wf%ao_density, wf%ao%n*wf%ao%n)
       call ao_density_file%close_
 !
-      call ao_density_file_a%open_('write', 'rewind')
+      call ao_density_file_a%open_('rewind')
       call ao_density_file_a%write_(wf%ao_density_a, wf%ao%n*wf%ao%n)
       call ao_density_file_a%close_
 !
-      call ao_density_file_b%open_('write', 'rewind')
+      call ao_density_file_b%open_('rewind')
       call ao_density_file_b%write_(wf%ao_density_b, wf%ao%n*wf%ao%n)
       call ao_density_file_b%close_
 !

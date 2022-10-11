@@ -282,8 +282,8 @@ contains
 !
 !     Write X_ilck to file
 !
-      wf%jacobian_transpose_d1_intermediate = sequential_file('jacobian_transpose_d1_intermediate')
-      call wf%jacobian_transpose_d1_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_d1_intermediate = stream_file('jacobian_transpose_d1_intermediate')
+      call wf%jacobian_transpose_d1_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_d1_intermediate%write_(X_ilck, wf%n_o**3 * wf%n_v)
 !
@@ -337,7 +337,7 @@ contains
 !
       call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_transpose_d1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_d1_intermediate%open_('rewind')
       call wf%jacobian_transpose_d1_intermediate%read_(X_ilck, wf%n_o**3 * wf%n_v)
       call wf%jacobian_transpose_d1_intermediate%close_()
 !
@@ -463,8 +463,8 @@ contains
 !
 !     Write X_ilck to file
 !
-      wf%jacobian_transpose_e1_intermediate = sequential_file('jacobian_transpose_e1_intermediate')
-      call wf%jacobian_transpose_e1_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_e1_intermediate = stream_file('jacobian_transpose_e1_intermediate')
+      call wf%jacobian_transpose_e1_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_e1_intermediate%write_(X_ilck, wf%n_o**3 * wf%n_v)
 !
@@ -517,7 +517,7 @@ contains
 !
       call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_transpose_e1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_e1_intermediate%open_('rewind')
       call wf%jacobian_transpose_e1_intermediate%read_(X_ilck, wf%n_o**3 * wf%n_v)
       call wf%jacobian_transpose_e1_intermediate%close_()
 !
@@ -954,8 +954,8 @@ contains
 !
 !     Write X_kdli to file
 !
-      wf%jacobian_transpose_f1_intermediate = sequential_file('jacobian_transpose_f1_intermediate')
-      call wf%jacobian_transpose_f1_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_f1_intermediate = stream_file('jacobian_transpose_f1_intermediate')
+      call wf%jacobian_transpose_f1_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_f1_intermediate%write_(X_kdli, wf%n_o**3 * wf%n_v)
 !
@@ -1019,7 +1019,7 @@ contains
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%jacobian_transpose_f1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_f1_intermediate%open_('rewind')
       call wf%jacobian_transpose_f1_intermediate%read_(X_kdli, wf%n_o**3 * wf%n_v)
       call wf%jacobian_transpose_f1_intermediate%close_()
 !
@@ -1223,8 +1223,8 @@ contains
 !
 !     Save X_kdli to file
 !
-      wf%jacobian_transpose_g1_intermediate = sequential_file('jacobian_transpose_g1_intermediate')
-      call wf%jacobian_transpose_g1_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_g1_intermediate = stream_file('jacobian_transpose_g1_intermediate')
+      call wf%jacobian_transpose_g1_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_g1_intermediate%write_(X_kdli, wf%n_o**3 * wf%n_v)
 !
@@ -1283,7 +1283,7 @@ contains
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%jacobian_transpose_g1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_g1_intermediate%open_('rewind')
       call wf%jacobian_transpose_g1_intermediate%read_(X_kdli, wf%n_o**3 * wf%n_v)
       call wf%jacobian_transpose_g1_intermediate%close_()
 !
@@ -1901,8 +1901,8 @@ contains
 !
 !     Save X_ckbj to file
 !
-      wf%jacobian_transpose_d2_intermediate = sequential_file('jacobian_transpose_d2_intermediate')
-      call wf%jacobian_transpose_d2_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_d2_intermediate = stream_file('jacobian_transpose_d2_intermediate')
+      call wf%jacobian_transpose_d2_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_d2_intermediate%write_(X_ckbj, wf%n_o**2 * wf%n_v**2)
 !
@@ -1952,7 +1952,7 @@ contains
 !
       call mem%alloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_transpose_d2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_d2_intermediate%open_('rewind')
       call wf%jacobian_transpose_d2_intermediate%read_(X_ckbj, wf%n_o**2 * wf%n_v**2)
       call wf%jacobian_transpose_d2_intermediate%close_()
 !
@@ -2019,8 +2019,8 @@ contains
 !
       call mem%alloc(X_jl, wf%n_o, wf%n_o)
 !
-      wf%jacobian_transpose_e2_oo_intermediate = sequential_file('jacobian_transpose_e2_oo_intermediate')
-      call wf%jacobian_transpose_e2_oo_intermediate%open_('read', 'rewind')
+      wf%jacobian_transpose_e2_oo_intermediate = stream_file('jacobian_transpose_e2_oo_intermediate')
+      call wf%jacobian_transpose_e2_oo_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_e2_oo_intermediate%read_(X_jl, wf%n_o**2)
 !
@@ -2050,8 +2050,8 @@ contains
 !
       call mem%alloc(X_cb, wf%n_v, wf%n_v)
 !
-      wf%jacobian_transpose_e2_vv_intermediate = sequential_file('jacobian_transpose_e2_vv_intermediate')
-      call wf%jacobian_transpose_e2_vv_intermediate%open_('read', 'rewind')
+      wf%jacobian_transpose_e2_vv_intermediate = stream_file('jacobian_transpose_e2_vv_intermediate')
+      call wf%jacobian_transpose_e2_vv_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_e2_vv_intermediate%read_(X_cb, wf%n_v**2)
 !
@@ -2125,8 +2125,8 @@ contains
 !
 !     Write X_ckbi to file
 !
-      wf%jacobian_transpose_f2_intermediate = sequential_file('jacobian_transpose_f2_intermediate')
-      call wf%jacobian_transpose_f2_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_f2_intermediate = stream_file('jacobian_transpose_f2_intermediate')
+      call wf%jacobian_transpose_f2_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_f2_intermediate%write_(X_ckbi, wf%n_v**2 * wf%n_o**2)
 !
@@ -2258,7 +2258,7 @@ contains
 !
       call mem%alloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_transpose_f2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_f2_intermediate%open_('rewind')
       call wf%jacobian_transpose_f2_intermediate%read_(X_ckbi, wf%n_o**2 * wf%n_v**2)
       call wf%jacobian_transpose_f2_intermediate%close_()
 !
@@ -2396,8 +2396,8 @@ contains
       call mem%dealloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(g_dkbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      wf%jacobian_transpose_g2_intermediate = sequential_file('jacobian_transpose_g2_intermediate')
-      call wf%jacobian_transpose_g2_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_g2_intermediate = stream_file('jacobian_transpose_g2_intermediate')
+      call wf%jacobian_transpose_g2_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_g2_intermediate%write_(X_clbi, wf%n_v**2 * wf%n_o**2)
 !
@@ -2457,7 +2457,7 @@ contains
 !
       call mem%alloc(X_clbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%jacobian_transpose_g2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_g2_intermediate%open_('rewind')
       call wf%jacobian_transpose_g2_intermediate%read_(X_clbi, wf%n_v**2 * wf%n_o**2)
       call wf%jacobian_transpose_g2_intermediate%close_()
 !
@@ -2652,8 +2652,8 @@ contains
 !
 !     Write X_klij to file
 !
-      wf%jacobian_transpose_i2_intermediate = sequential_file('jacobian_transpose_i2_intermediate')
-      call wf%jacobian_transpose_i2_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_i2_intermediate = stream_file('jacobian_transpose_i2_intermediate')
+      call wf%jacobian_transpose_i2_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_i2_intermediate%write_(X_klij, wf%n_o**4)
 !
@@ -2776,7 +2776,7 @@ contains
 !                               = sum_cd t_kl_cd g_cd_ij
 !                               = sum_cd t_kl_cd g_ab_kl(cd,ij)
 !
-      call wf%jacobian_transpose_i2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_i2_intermediate%open_('rewind')
       call wf%jacobian_transpose_i2_intermediate%read_(X_klij, wf%n_o**4)
       call wf%jacobian_transpose_i2_intermediate%close_()
 !
@@ -2851,8 +2851,8 @@ contains
 !
 !     Write X_jl to file
 !
-      wf%jacobian_transpose_e2_oo_intermediate = sequential_file('jacobian_transpose_e2_oo_intermediate')
-      call wf%jacobian_transpose_e2_oo_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_e2_oo_intermediate = stream_file('jacobian_transpose_e2_oo_intermediate')
+      call wf%jacobian_transpose_e2_oo_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_e2_oo_intermediate%write_(X_jl, wf%n_o**2)
 !
@@ -2913,8 +2913,8 @@ contains
 !
 !     Write X_cb to file
 !
-      wf%jacobian_transpose_e2_vv_intermediate = sequential_file('jacobian_transpose_e2_vv_intermediate')
-      call wf%jacobian_transpose_e2_vv_intermediate%open_('write', 'rewind')
+      wf%jacobian_transpose_e2_vv_intermediate = stream_file('jacobian_transpose_e2_vv_intermediate')
+      call wf%jacobian_transpose_e2_vv_intermediate%open_('rewind')
 !
       call wf%jacobian_transpose_e2_vv_intermediate%write_(X_cb, wf%n_v**2)
 !

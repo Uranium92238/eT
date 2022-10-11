@@ -33,7 +33,7 @@ module timings_file_class
 !
       procedure, public :: print_banner => print_banner_timings_file
       procedure, public :: print_time => print_time_timings_file
-      procedure, private :: print_formated_task_name
+      procedure, private :: print_formatted_task_name
 !
    end type timings_file
 !
@@ -49,7 +49,7 @@ contains
    function new_timings_file(name_) result(the_file)
 !!
 !!    New
-!!    Writen by Rolf H. Myhre May 2019
+!!    Written by Rolf H. Myhre May 2019
 !!
       implicit none
 !
@@ -65,7 +65,7 @@ contains
    subroutine print_banner_timings_file(the_file)
 !!
 !!    Print banner
-!!    Writtan by Sarai D. Folkestad, Sep 2021
+!!    Written by Sarai D. Folkestad, Sep 2021
 !!
       implicit none
 !
@@ -84,7 +84,7 @@ contains
 !
    subroutine print_time_timings_file(the_file, wall, cpu, name_, pl)
 !!
-!!    Print times
+!!    Print time
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
       implicit none
@@ -95,7 +95,7 @@ contains
       character(len=*), intent(in) :: name_
       character(len=*), intent(in) :: pl
 !
-      call print_formated_task_name(the_file, name_, pl)
+      call print_formatted_task_name(the_file, name_, pl)
 !
       if (wall > 1.0d-8) then
 !
@@ -112,9 +112,9 @@ contains
    end subroutine print_time_timings_file
 !
 !
-   subroutine print_formated_task_name(the_file, name_, pl)
+   subroutine print_formatted_task_name(the_file, name_, pl)
 !!
-!!    Print fromated task name
+!!    Print formatted task name
 !!    Written by Sarai D. Folkestad, Sep 2021
 !!
 !!    Prints the timing description (name_)
@@ -164,7 +164,7 @@ contains
 !
       call the_file%printf(pl, format_string, adv=.false., chars=[trim(remaining_name)])
 !
-   end subroutine print_formated_task_name
+   end subroutine print_formatted_task_name
 !
 !
 end module timings_file_class

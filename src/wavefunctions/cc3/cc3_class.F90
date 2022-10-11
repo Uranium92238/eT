@@ -493,8 +493,8 @@ contains
       call mem%batch_setup(batch_k, req_0, req_1, 'save_tbar_intermediate_cc3')
       call mem%alloc(Y_ebck, wf%n_v**3, batch_k%max_length)
 !
-      call wf%Y_ebck_tbar%open_('write')
-      call wf%Y_ebck%open_('read')
+      call wf%Y_ebck_tbar%open_()
+      call wf%Y_ebck%open_()
 !
       do k_batch = 1, batch_k%num_batches
          call batch_k%determine_limits(k_batch)

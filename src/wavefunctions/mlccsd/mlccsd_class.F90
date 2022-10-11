@@ -53,7 +53,6 @@ module mlccsd_class
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
-   use sequential_file_class, only: sequential_file
    use batching_index_class, only: batching_index
    use amplitude_file_storer_class, only: amplitude_file_storer
 !
@@ -87,17 +86,17 @@ module mlccsd_class
 !
 !     Intermediates for Jacobian transformation
 !
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_1
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_2
-      type(sequential_file) :: jacobian_d2_intermediate
-      type(sequential_file) :: jacobian_e2_intermediate
-      type(sequential_file) :: jacobian_g2_intermediate_vovo
-      type(sequential_file) :: jacobian_g2_intermediate_vv
-      type(sequential_file) :: jacobian_g2_intermediate_oo
-      type(sequential_file) :: jacobian_h2_intermediate_vovo_1
-      type(sequential_file) :: jacobian_h2_intermediate_vovo_2
-      type(sequential_file) :: jacobian_j2_intermediate_oooo
-      type(sequential_file) :: jacobian_j2_intermediate_oovv
+      type(stream_file) :: jacobian_c2_intermediate_oovo_1
+      type(stream_file) :: jacobian_c2_intermediate_oovo_2
+      type(stream_file) :: jacobian_d2_intermediate
+      type(stream_file) :: jacobian_e2_intermediate
+      type(stream_file) :: jacobian_g2_intermediate_vovo
+      type(stream_file) :: jacobian_g2_intermediate_vv
+      type(stream_file) :: jacobian_g2_intermediate_oo
+      type(stream_file) :: jacobian_h2_intermediate_vovo_1
+      type(stream_file) :: jacobian_h2_intermediate_vovo_2
+      type(stream_file) :: jacobian_j2_intermediate_oooo
+      type(stream_file) :: jacobian_j2_intermediate_oovv
 !
    contains
 !

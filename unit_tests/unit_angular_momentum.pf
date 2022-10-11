@@ -444,7 +444,7 @@ contains
       integer :: l = 7
       integer :: length =  15
 
-      output = output_file('unit_testing.out')
+      output = output_file('unit_angular_momentum.out')
       call output%open_()
 
       factory = angular_momentum_factory(cartesian)

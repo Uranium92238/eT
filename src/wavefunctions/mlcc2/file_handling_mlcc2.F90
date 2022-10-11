@@ -47,7 +47,7 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      call wf%orbital_coefficients_mlcc_file%open_('write','rewind')
+      call wf%orbital_coefficients_mlcc_file%open_('rewind')
 !
       call wf%orbital_coefficients_mlcc_file%write_(wf%n_ccs_o)
       call wf%orbital_coefficients_mlcc_file%write_(wf%n_ccs_v)
@@ -59,7 +59,7 @@ contains
 !
 !     Print MLCC orbital energies to file
 !
-      call wf%orbital_energies_mlcc_file%open_('write', 'rewind')
+      call wf%orbital_energies_mlcc_file%open_('rewind')
       call wf%orbital_energies_mlcc_file%write_(wf%orbital_energies, wf%n_mo)
       call wf%orbital_energies_mlcc_file%close_('keep')
 !
@@ -80,7 +80,7 @@ contains
 !
       class(mlcc2), intent(inout) :: wf
 !
-      call wf%orbital_coefficients_mlcc_file%open_('read','rewind')
+      call wf%orbital_coefficients_mlcc_file%open_('rewind')
 !
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_o)
       call wf%orbital_coefficients_mlcc_file%read_(wf%n_ccs_v)
@@ -92,7 +92,7 @@ contains
 !
 !     Print MLCC orbital energies to file
 !
-      call wf%orbital_energies_mlcc_file%open_('read', 'rewind')
+      call wf%orbital_energies_mlcc_file%open_('rewind')
       call wf%orbital_energies_mlcc_file%read_(wf%orbital_energies, wf%n_mo)
       call wf%orbital_energies_mlcc_file%close_('keep')
 !

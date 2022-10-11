@@ -226,11 +226,11 @@ contains
 !!
 !!       n_frequencies:    k = 1, 2, ..., n_frequencies
 !!
-!!       solution_files:   Sequential file array to store the solutions X_k
+!!       solution_files:   Stream file array to store the solutions X_k
 !!
 !!       transformation:   Whether to use A or A^T ("right" or "left", respectively).
 !!
-      use sequential_file_class, only: sequential_file
+      use stream_file_class, only: stream_file
       use array_utilities, only: get_l2_norm
 !
       implicit none
@@ -245,7 +245,7 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      type(sequential_file), dimension(solver%davidson%n_solutions) :: solution_files
+      type(stream_file), dimension(solver%davidson%n_solutions) :: solution_files
 !
       logical :: converged_residual
 !
@@ -352,7 +352,7 @@ contains
 !
             call solver%davidson%construct_solution(solution, root)
 !
-            call solution_files(root)%open_('write', 'rewind')
+            call solution_files(root)%open_('rewind')
             call solution_files(root)%write_(solution, wf%n_es_amplitudes)
             call solution_files(root)%close_()
 !

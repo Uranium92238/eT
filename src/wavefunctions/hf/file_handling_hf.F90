@@ -42,7 +42,7 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
-      call wf%orbital_file%open_('write')
+      call wf%orbital_file%open_()
       call wf%orbital_file%write_(int(wf%ao%n, kind=i64))
       call wf%orbital_file%write_(int(wf%n_mo, kind=i64))
       call wf%orbital_file%write_(wf%orbital_energies, wf%n_mo)
@@ -64,7 +64,7 @@ contains
       integer :: n_ao, n_mo
       integer(i64) :: n
 !
-      call wf%orbital_file%open_('read', 'rewind')
+      call wf%orbital_file%open_('rewind')
 !
       call wf%orbital_file%read_(n)
       n_ao = int(n)
@@ -89,15 +89,14 @@ contains
 !!    Save the AO density based
 !!    on the current orbital coefficient matrix (or matrices).
 !!
-!
       implicit none
 !
       class(hf) :: wf
 !
-      type(sequential_file) :: ao_density_file
+      type(stream_file) :: ao_density_file
 !
-      ao_density_file = sequential_file('ao_density')
-      call ao_density_file%open_('write', 'rewind')
+      ao_density_file = stream_file('ao_density')
+      call ao_density_file%open_('rewind')
 !
       call ao_density_file%write_(wf%ao_density, wf%ao%n*wf%ao%n)
 !
@@ -125,7 +124,7 @@ contains
 !
       n = int(wf%n_o*wf%n_v, kind=i64)
 !
-      call wf%tdhf_files(I)%open_('write', 'rewind')
+      call wf%tdhf_files(I)%open_('rewind')
 !
       call wf%tdhf_files(I)%write_(energy)
       call wf%tdhf_files(I)%write_(n)
@@ -149,7 +148,7 @@ contains
       integer, intent(in) :: I
       integer(i64) :: n
 !
-      call wf%tdhf_files(I)%open_('read', 'rewind')
+      call wf%tdhf_files(I)%open_('rewind')
       call wf%tdhf_files(I)%read_(n, dp + 1)
 !
       if (int(n) /= wf%n_o*wf%n_v) &
@@ -174,7 +173,7 @@ contains
 !
       integer, intent(in) :: I
 !
-      call wf%tdhf_files(I)%open_('read', 'rewind')
+      call wf%tdhf_files(I)%open_('rewind')
 !
       call wf%tdhf_files(I)%read_(wf%tdhf_excitation_energies(I))
 !

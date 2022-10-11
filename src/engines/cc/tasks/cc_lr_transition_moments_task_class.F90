@@ -29,7 +29,7 @@ module cc_lr_transition_moments_task_class
    use cc_transition_moments_task_class, only: cc_transition_moments_task
    use memory_manager_class, only: mem
    use global_out, only: output
-   use sequential_file_class, only: sequential_file
+   use stream_file_class, only: stream_file
    use cc_eta_xi_calculator_class, only: cc_eta_xi_calculator
    use cc_lr_eta_xi_calculator_class, only: cc_lr_eta_xi_calculator
 !
@@ -42,7 +42,7 @@ module cc_lr_transition_moments_task_class
       real(dp), dimension(:,:), allocatable, private :: xiX
       real(dp), dimension(:,:), allocatable, private :: etaX
 !
-      type(sequential_file), dimension(:), allocatable :: M_vectors
+      type(stream_file), dimension(:), allocatable :: M_vectors
 !
       class(cc_eta_xi_calculator), allocatable, private :: eta_xi_calculator
 !
@@ -143,7 +143,7 @@ contains
 !
       do state = 1, wf%n_singlet_states
 !
-         call this%M_vectors(state)%open_('read', 'rewind')
+         call this%M_vectors(state)%open_('rewind')
          call this%M_vectors(state)%read_(M, wf%n_es_amplitudes)
          call this%M_vectors(state)%close_()
 !
@@ -241,7 +241,7 @@ contains
 !
          write(file_name, '(a, i3.3)') 'M_vector_state_', k
 !
-         this%M_vectors(k) = sequential_file(trim(file_name))
+         this%M_vectors(k) = stream_file(trim(file_name))
 !
       enddo
 !
@@ -255,7 +255,7 @@ contains
                                                       n_rhs=wf%n_singlet_states)
 !
       call M_vectors_solver%run(wf, minus_FR, -wf%right_excitation_energies, &
-                              this%M_vectors, 'left')
+                                this%M_vectors, 'left')
 !
       call M_vectors_solver%cleanup(wf)
 !

@@ -32,7 +32,6 @@ module uhf_class
    use global_out, only: output
    use global_in, only: input
 !
-   use sequential_file_class, only: sequential_file
    use stream_file_class, only: stream_file
    use output_file_class, only: output_file
 !

@@ -358,7 +358,7 @@ contains
 !
       plt_file = stream_file(trim(file_name))
 !
-      call plt_file%open_('write', 'rewind')
+      call plt_file%open_('rewind')
 !
 !     Write in the chimera format
 !

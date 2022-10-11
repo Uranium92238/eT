@@ -1018,7 +1018,7 @@ contains
          call wf%density_cc3_Y_vvvo_ov(density_ov, R_abij)
 !
          call mem%alloc(Yt_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call wf%Y_cmjk_tbar%open_('read')
+         call wf%Y_cmjk_tbar%open_()
          call wf%Y_cmjk_tbar%read_(Yt_clik, 1, wf%n_o)
          call wf%Y_cmjk_tbar%close_()
 !
@@ -2068,7 +2068,7 @@ contains
 !
       call mem%alloc(Y_vvvo, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-      call wf%Y_ebck_tbar%open_('read')
+      call wf%Y_ebck_tbar%open_()
 !
       do i_batch = 1, batch_i%num_batches
 !

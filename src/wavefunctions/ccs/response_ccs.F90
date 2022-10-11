@@ -893,7 +893,7 @@ contains
             write(file_name, '(a, i3.3, a)') 'dm_', state_l, '_000'
             left_file  = stream_file(trim(file_name))
 !
-            call left_file%open_('write')
+            call left_file%open_()
             call left_file%write_(LTDM, wf%n_mo**2)
             call left_file%close_('keep')
 !
@@ -945,7 +945,7 @@ contains
             write(file_name, '(a, i3.3, a, i3.3)') 'dm_', state_l, '_', state_r
             density_file = stream_file(trim(file_name))
 !
-            call density_file%open_('write')
+            call density_file%open_()
             call density_file%write_(density, wf%n_mo**2)
             call density_file%close_('keep')
 !

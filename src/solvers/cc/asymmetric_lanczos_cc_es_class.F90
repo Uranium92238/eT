@@ -542,8 +542,8 @@ contains
 !!    Print summary
 !!    Written by Sarai D. Folkestad and Torsha Moitra, Nov 2019
 !!
-      use output_file_class,              only: output_file
-      use array_utilities,                only: quicksort_with_index_ascending
+      use output_file_class, only: output_file
+      use array_utilities,   only: quicksort_with_index_ascending
 !
       implicit none
 !
@@ -636,7 +636,8 @@ contains
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-      call output%printf('m', 'For full spectrum see file: ' // spectrum_file%name_, fs='(t6,a)')
+      call output%printf('m', 'For full spectrum see file: (a0)', &
+                        chars=[spectrum_file%get_name()], fs='(t6,a)')
 !
       call mem%dealloc(index_list, this%chain_length)
 !

@@ -25,17 +25,17 @@ module cc_polarizability_task_class
 !!
 !
    use parameters
-   use global_out,                        only: output
-   use memory_manager_class,              only: mem
-   use ccs_class,                         only: ccs
-   use cc_task_class,                     only: cc_task
-   use sequential_file_class,             only: sequential_file
-   use cc_eta_xi_calculator_class,        only: cc_eta_xi_calculator
-   use cc_eom_eta_xi_calculator_class,    only: cc_eom_eta_xi_calculator
-   use cc_lr_eta_xi_calculator_class,     only: cc_lr_eta_xi_calculator
-   use cc_F_transformation_class,         only: cc_F_transformation
-   use cc_null_F_transformation_class,    only: cc_null_F_transformation
-   use cc_lr_F_transformation_class,      only: cc_lr_F_transformation
+   use global_out,                     only: output
+   use memory_manager_class,           only: mem
+   use ccs_class,                      only: ccs
+   use cc_task_class,                  only: cc_task
+   use stream_file_class,              only: stream_file
+   use cc_eta_xi_calculator_class,     only: cc_eta_xi_calculator
+   use cc_eom_eta_xi_calculator_class, only: cc_eom_eta_xi_calculator
+   use cc_lr_eta_xi_calculator_class,  only: cc_lr_eta_xi_calculator
+   use cc_F_transformation_class,      only: cc_F_transformation
+   use cc_null_F_transformation_class, only: cc_null_F_transformation
+   use cc_lr_F_transformation_class,   only: cc_lr_F_transformation
 !
    implicit none
 !
@@ -46,7 +46,7 @@ module cc_polarizability_task_class
       real(dp), dimension(:,:), allocatable, private :: xiX
       real(dp), dimension(:,:), allocatable, private :: etaX
 !
-      type(sequential_file), dimension(:,:,:), allocatable, private :: t_response_files
+      type(stream_file), dimension(:,:,:), allocatable, private :: t_response_files
 !
       integer, private :: n_frequencies = 0
       real(dp), dimension(:), allocatable, private :: frequencies
@@ -209,10 +209,10 @@ contains
          do freq = 1, this%n_frequencies
             do sign_ = 1, 2
 !
-               write(file_name, '(a, i3.3, a, i3.3, a, i3.3)') 'dipole_t_response_component_', &
-                                                      q, '_frequency_', freq, '_sign_', sign_
+               write(file_name, '(3(a, i3.3))') 'dipole_t_response_component_', &
+                                                q, '_frequency_', freq, '_sign_', sign_
 !
-               this%t_response_files(freq, q, sign_) = sequential_file(file_name)
+               this%t_response_files(freq, q, sign_) = stream_file(file_name)
 !
             enddo
          enddo
@@ -526,7 +526,7 @@ contains
 !
       do sign_ = 1, 2
 !
-         call this%t_response_files(freq, k, sign_)%open_('read', 'rewind')
+         call this%t_response_files(freq, k, sign_)%open_('rewind')
          call this%t_response_files(freq, k, sign_)%read_(t(:,sign_), wf%n_es_amplitudes)
          call this%t_response_files(freq, k, sign_)%close_()
 !
