@@ -1,3 +1,7 @@
+# eT v1.8.8
+### Bugfixes
+- Fixed bug where libint threw an error because of whitespace in the final lines of a basis set file by removing trailing whitespace from g94 files. eT-program/eT!1131
+
 # eT v1.8.7
 ### Bugfixes
 - Revert update of Libint library, as the eT compilation fails. eT-program/eT!1125
