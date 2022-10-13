@@ -1,6 +1,6 @@
 ! Recovered from: http://tyr0.chem.wsu.edu/~kipeters/basissets/optri1_basis.html
 ! Published in: K.E. Yousaf and K.A. Peterson, J. Chem. Phys. 129, 184108 (2008).
-! Li Be Na Mg: from EMSL Basis Set Exchange Library, J. Grant Hill and Kirk A. Peterson, Phys. Chem. Chem. Phys. 12, 10460 (2010)  
+! Li Be Na Mg: from EMSL Basis Set Exchange Library, J. Grant Hill and Kirk A. Peterson, Phys. Chem. Chem. Phys. 12, 10460 (2010)
 ! Auxiliary RI (OptRI) matched to the cc-pVnZ-F12 Basis Set
 ! This should be used within the CABS/CABS+ framework with the above orbital set
 ****
