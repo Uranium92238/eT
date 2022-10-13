@@ -17,6 +17,10 @@
 - Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
 - Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
 
+# eT v1.8.8
+### Bugfixes
+- Fixed bug where libint threw an error because of whitespace in the final lines of a basis set file by removing trailing whitespace from g94 files. eT-program/eT!1131
+
 # eT v1.8.7
 ### Bugfixes
 - Revert update of Libint library, as the eT compilation fails. eT-program/eT!1125
