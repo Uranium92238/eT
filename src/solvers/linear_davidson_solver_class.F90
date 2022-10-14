@@ -72,7 +72,8 @@ module linear_davidson_solver_class
 !
       class(transformation),         allocatable          :: transformer
       class(linear_equation_storage_tool),allocatable, private :: storer
-      class(linear_equation_start_vector_tool),           allocatable, private :: start_vector
+      logical, private :: override_default_start_vector
+      class(linear_equation_start_vector_tool), allocatable, private :: start_vector
       class(preconditioner_getter),       allocatable, private :: preconditioner
       class(rhs_linear_equation_tool),    allocatable, private :: rhs_getter
       class(linear_davidson_print_tool),  allocatable, private :: printer
@@ -100,7 +101,6 @@ contains
    function new_linear_davidson_solver(transformer,         &
                                        davidson,            &
                                        storer,              &
-                                       start_vector,        &
                                        preconditioner,      &
                                        rhs_getter,          &
                                        printer,             &
@@ -108,7 +108,8 @@ contains
                                        n_solutions,         &
                                        max_iterations,      &
                                        residual_threshold,  &
-                                       frequencies) result(this)
+                                       frequencies,         &
+                                       start_vector) result(this)
 !!
 !!    New general linear Davidson
 !!    Written by Sarai D. Folkestad, May 2021
@@ -120,19 +121,18 @@ contains
       class(transformation),              intent(in) :: transformer
       type(linear_davidson_tool),         intent(in) :: davidson
       class(linear_equation_storage_tool),intent(in) :: storer
-      class(linear_equation_start_vector_tool),          intent(in) :: start_vector
       class(preconditioner_getter),      intent(in) :: preconditioner
       class(rhs_linear_equation_tool),   intent(in) :: rhs_getter
       class(linear_davidson_print_tool), intent(in) :: printer
       integer,                           intent(in) :: max_iterations, n_solutions, n_rhs
       real(dp),                          intent(in) :: residual_threshold
       real(dp), dimension(n_solutions),  intent(in) :: frequencies
+      class(linear_equation_start_vector_tool), intent(in), optional :: start_vector
 !
 
       this%transformer         = transformer
       this%davidson            = davidson
       this%storer              = storer
-      this%start_vector        = start_vector
       this%preconditioner      = preconditioner
       this%rhs_getter          = rhs_getter
       this%printer             = printer
@@ -142,6 +142,13 @@ contains
       this%max_iterations      = max_iterations
       this%residual_threshold  = residual_threshold
       this%frequencies         = frequencies
+!
+      if (present(start_vector)) then 
+         this%start_vector = start_vector
+         this%override_default_start_vector = .true. 
+      else 
+         this%override_default_start_vector = .false.
+      endif 
 !
       this%total_timer = timings("Linear davidson solver total", pl='m')
       this%iteration_timer = timings("Linear davidson solver iteration", pl='m')
@@ -221,10 +228,20 @@ contains
       call this%preconditioner%get(c)
       call this%davidson%set_preconditioner(c)
 !
-      do trial = 1, this%n_solutions
-         call this%start_vector%get(c, trial)
-         call this%davidson%set_trial(c, trial)
-      end do
+      if (this%override_default_start_vector) then 
+!
+         do trial = 1, this%n_solutions
+!
+            call this%start_vector%get(c, trial)
+            call this%davidson%set_trial(c, trial)
+!
+         end do
+!
+      else 
+!
+         call this%davidson%set_trials_to_preconditioner_guess()
+!
+      endif 
 !
       call this%printer%print_settings(this%residual_threshold, this%max_iterations)
 !
