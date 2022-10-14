@@ -2436,6 +2436,8 @@ contains
 !!
 !!    Extened by Alexander C. Paul, Jan 2021
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(ao_tool), intent(in) :: ao
@@ -2448,7 +2450,7 @@ contains
 !
       integer :: I
 !
-      frozen = .false.
+      call set_logicals(frozen, last - first + 1, .false.)
 !
       n_frozen_ao = 0
 !

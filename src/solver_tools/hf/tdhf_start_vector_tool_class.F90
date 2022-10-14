@@ -24,7 +24,7 @@ module tdhf_start_vector_tool_class
 !!    Written by Sarai D. Folkestad, May 2021
 !!
 !
-   use kinds
+   use parameters
    use start_vector_tool_class, only: start_vector_tool
    use hf_class,                only: hf
 !
@@ -75,8 +75,6 @@ contains
 !!
 !!    Gets the I'th start vector for some purpose
 !!
-      use warning_suppressor, only: do_nothing
-!
       implicit none
 !
       class(tdhf_start_vector_tool), intent(in) :: this
@@ -84,7 +82,7 @@ contains
       integer, intent(in) :: I
       real(dp), intent(out) :: energy
 !
-      call do_nothing(energy)
+      energy = zero
       call this%wf%get_tdhf_start_vector(I, start_vector, this%restart)
 !
    end subroutine

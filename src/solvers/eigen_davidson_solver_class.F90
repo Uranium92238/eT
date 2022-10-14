@@ -164,11 +164,8 @@ contains
       call zero_array(omega, this%n_solutions)
       call zero_array_complex(new_omega, this%n_solutions)
 !
-      call mem%alloc(converged, this%n_solutions)
-      call mem%alloc(residual_lt_lindep, this%n_solutions)
-!
-      converged            = .false.
-      residual_lt_lindep   = .false.
+      call mem%alloc(converged, this%n_solutions, set_to=.false.)
+      call mem%alloc(residual_lt_lindep, this%n_solutions, set_to=.false.)
 !
       call mem%alloc(residual_norm, this%n_solutions)
       call mem%alloc(residual, this%davidson%n_parameters)

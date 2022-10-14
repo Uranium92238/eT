@@ -368,9 +368,7 @@ contains
 !
       call mem%alloc(prev_energies, this%n_singlet_states, set_zero=.true.)
       call mem%alloc(residual_norms, this%n_singlet_states, set_zero=.true.)
-!
-      call mem%alloc(converged, this%n_singlet_states)
-      converged = .false.
+      call mem%alloc(converged, this%n_singlet_states, set_to=.false.)
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !

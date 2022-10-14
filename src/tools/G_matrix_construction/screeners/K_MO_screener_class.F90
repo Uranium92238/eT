@@ -355,11 +355,8 @@ contains
 !     Compute the number of significant shell pairs given the current density
 !     and save their indices
 !
-      call mem%alloc(this%s1_is_sig, this%n_sh)
-      this%s1_is_sig = .false.
-!
-      call mem%alloc(this%sig_s1s2, this%n_sig_shp)
-      this%sig_s1s2 = 0
+      call mem%alloc(this%s1_is_sig, this%n_sh, set_to=.false.)
+      call mem%alloc(this%sig_s1s2, this%n_sig_shp, set_zero=.true.)
 !
       this%n_sig_s1s2 = 0
 !

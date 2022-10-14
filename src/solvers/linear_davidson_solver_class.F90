@@ -177,8 +177,7 @@ contains
 !
       call this%rhs_getter%get(rhs)
 !
-      call mem%alloc(converged, this%n_rhs)
-      converged = .false.
+      call mem%alloc(converged, this%n_rhs, set_to=.false.)
 !
       do n = 1, this%n_rhs
 !

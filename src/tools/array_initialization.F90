@@ -264,4 +264,29 @@ contains
    end subroutine copy_integer
 !
 !
+   subroutine set_logicals(x, n, value_)
+!!
+!!    Set logical
+!!    Written by Alexander C. Paul, Oct 2022
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      logical, dimension(n), intent(out) :: x
+      logical, intent(in) :: value_
+!
+      integer :: i
+!
+!$omp parallel do private(i) schedule(static)
+      do i = 1, n
+!
+         x(i) = value_
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine set_logicals
+!
+!
 end module array_initialization
