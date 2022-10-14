@@ -23,6 +23,7 @@ pystyle:
 code-quality:
   stage: code-quality
   image: python:latest
+  needs: []
   script:
     - git clone https://github.com/eirik-kjonstad/fortran-code-quality.git
     - cd fortran-code-quality
@@ -36,7 +37,7 @@ code-quality:
 
 gnu-build:
   stage: gnu
-  needs: []
+  dependencies: []
   script:
     - whoami
     - cmake --version
@@ -92,6 +93,7 @@ gnu-run:
 intel-build:
   stage: intel
   image: registry.gitlab.com/et-program/et/ubuntu-mkl-ifort-for-et
+  dependencies: []
   script:
     - git submodule init
     - git submodule update
@@ -125,6 +127,7 @@ intel-run:
 prepare-release:
   stage: release
   image: python:latest
+  dependencies: []
   script:
     - python3 dev_tools/export_release_info.py 
   artifacts:
