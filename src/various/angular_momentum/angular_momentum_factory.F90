@@ -87,6 +87,7 @@ contains
       use cartesian_g_angular_momentum_class
       use cartesian_h_angular_momentum_class
       use cartesian_i_angular_momentum_class
+      use spherical_p_angular_momentum_class
       use spherical_d_angular_momentum_class
       use spherical_f_angular_momentum_class
       use spherical_g_angular_momentum_class
@@ -132,7 +133,7 @@ contains
             case(0)
                angular_momentum = s_angular_momentum()
             case(1)
-               angular_momentum = cartesian_p_angular_momentum()
+               angular_momentum = spherical_p_angular_momentum()
             case(2)
                angular_momentum = spherical_d_angular_momentum()
             case(3)

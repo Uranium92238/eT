@@ -37,7 +37,6 @@ from warnings import warn
 
 dev_tools = Path("${CMAKE_SOURCE_DIR}") / "dev_tools"
 sys.path.append(str(dev_tools))
-from convert_v1_0_restart_files import convert_v1_0_files
 
 
 class PCMSetupError(Exception):
@@ -159,19 +158,6 @@ def input_parser():
     )
 
     parser.add_argument(
-        "-load-v1-0",
-        "--load-v1-0-restart-dir",
-        help=(
-            "Directory(ies) to get old v1.0 restart files, "
-            "convert them to current version and copy to scratch. "
-            "'None' disables loading for corresponding input file."
-        ),
-        type=str,
-        nargs="+",
-        default=[None],
-    )
-
-    parser.add_argument(
         "-nt",
         "--no-timing",
         help="Do not copy timing file from scratch",
@@ -265,11 +251,6 @@ def input_parser():
 
     if args.ignore_errorx:
         args.ignore_errors = args.ignore_errorx
-
-    if any(args.load_restart_dir) and any(args.load_v1_0_restart_dir):
-        raise Exception(
-            "--load-restart-dir and --load-v-1-0-restart-dir are mutually exclusive."
-        )
 
     return args
 
@@ -386,8 +367,8 @@ def make_paths(args):
     The path dictionary uses the path to the input file as key
     and a namedtuple of paths as value.
     The namedtuple entries are paths to the executable directory,
-    the output file, load directroy, v1.0 load directory, save directory,
-    and pcm input file. If they don't exist, the entries will be NoneType.
+    the output file, load directroy, save directory, and pcm input file.
+    If they don't exist, the entries will be NoneType.
     """
 
     # List files and maybe raise some warnings
@@ -397,9 +378,6 @@ def make_paths(args):
     if len(args.load_restart_dir) > len(args.input_file):
         warn("More load directories than input files, will ignore the excess.")
 
-    if len(args.load_v1_0_restart_dir) > len(args.input_file):
-        warn("More v1.0 directories than input files, will ignore the excess.")
-
     if len(args.binary_dir) > len(args.input_file):
         warn("More binary directories than input files, will ignore the excess.")
 
@@ -408,7 +386,6 @@ def make_paths(args):
 
     output_files = extend_list(args.output_file, args.input_file)
     load_dirs = extend_list(args.load_restart_dir, args.input_file)
-    load_v1_0_dirs = extend_list(args.load_v1_0_restart_dir, args.input_file)
     bin_dirs = extend_list(args.binary_dir, args.input_file)
     pcm_files = extend_list(args.pcm_input_file, args.input_file)
 
@@ -420,7 +397,7 @@ def make_paths(args):
 
     path_dict = {}
 
-    paths = namedtuple("paths", ["exe", "output", "load", "v1_0", "save", "pcm"])
+    paths = namedtuple("paths", ["exe", "output", "load", "save", "pcm"])
 
     for i, input_file in enumerate(args.input_file):
 
@@ -463,13 +440,6 @@ def make_paths(args):
         else:
             load_path = None
 
-        if load_v1_0_dirs[i]:
-            load_v1_0_path = Path(load_v1_0_dirs[i]).resolve()
-            if not load_v1_0_path.is_dir():
-                raise NotADirectoryError(str(load_v1_0_path))
-        else:
-            load_v1_0_path = None
-
         if pcm_files[i]:
             pcm_path = Path(pcm_files[i]).resolve()
             if not pcm_path.is_file():
@@ -482,7 +452,6 @@ def make_paths(args):
             output=out_path,
             save=save_path,
             load=load_path,
-            v1_0=load_v1_0_path,
             pcm=pcm_path,
         )
 
@@ -722,11 +691,6 @@ def launch_eT(
             if verbose:
                 print("\n" f"Loading restart files from {paths.load}")
             copy_restart_files(paths.load, scratch)
-
-        if paths.v1_0:
-            if verbose:
-                print("\n" f"Loading v1.0 restart files from {paths.v1_0}")
-            convert_v1_0_files(paths.v1_0, scratch, verbose)
 
         if paths.save:
             paths.save.mkdir(parents=True, exist_ok=True)

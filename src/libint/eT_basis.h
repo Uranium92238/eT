@@ -79,7 +79,7 @@ class eTBasis: public vector<BasisSet> {
       }
 
 
-      Shell& operator[] (int x) {
+      const Shell& operator[] (int x) {
          int n = 0;
          int ind = 0;
 

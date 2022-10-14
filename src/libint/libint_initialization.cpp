@@ -159,19 +159,7 @@ void export_geometry_and_basis_to_libint(const int nAtoms,
         }
 
         temporaryBasis = BasisSet(basisList[i], temporaryAtoms, true);
-
-        //Set pure (spherical) or cartesian
-        for(auto& shell: temporaryBasis) {
-            for(auto& contraction: shell.contr) {
-
-                if (cartesiansList[i] != 0) {
-                   if (contraction.l >= 2 ) contraction.pure=false ;
-                }
-                else {
-                   if (contraction.l >= 2 ) contraction.pure=true;
-                }
-            }
-        }
+        temporaryBasis.set_pure(not cartesiansList[i]);
 
         basis.add(temporaryBasis);
     }
