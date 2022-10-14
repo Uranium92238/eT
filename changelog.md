@@ -18,6 +18,7 @@
 - Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
 - Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
 - Removed most warnings from intel compilers. eT-program/eT!1128
+- Response equations in CC theory are now solved using general Davidson solver. eT-program/eT!1133
 
 ### CI
 - Updated version of `fortran-code-quality` to v1.3.0. eT-program/eT!1139

@@ -84,6 +84,8 @@ set(eT_fortran_sources
    src/engines/cc/tasks/cc_lr_transition_moments_task_class.F90
    src/engines/cc/tasks/fft_task_class.F90
 #
+   src/engines/cc/settings/cc_response_solver_settings_class.F90
+#
    src/engines/cc/calculators/cc_F_transformation_class.F90
    src/engines/cc/calculators/cc_null_F_transformation_class.F90
    src/engines/cc/calculators/cc_lr_F_transformation_class.F90
@@ -176,12 +178,14 @@ set(eT_fortran_sources
    src/solver_tools/davidson/linear_davidson_single_solution_print_tool_class.F90
    src/solver_tools/davidson/linear_davidson_multiple_solutions_print_tool_class.F90
 #
+   src/solver_tools/vector_getter_rhs_tool_class.F90
    src/solver_tools/cc/cc_multipliers_rhs_tool_class.F90
    src/solver_tools/cc/cc_es_eigen_davidson_print_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
    src/solver_tools/cc/cc_eigen_storage_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
    src/solver_tools/cc/cc_multipliers_start_vector_tool_class.F90
+   src/solver_tools/file_linear_equation_storage_tool_class.F90
    src/solver_tools/cc/cc_multipliers_linear_equation_storage_tool_class.F90
    src/solver_tools/cc/cc_jacobian_transformation_class.F90
    src/solver_tools/cc/folded_cc_jacobian_transformation_class.F90
@@ -245,7 +249,6 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_gs_class.F90
    src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
-   src/solvers/cc/davidson_cc_linear_equations_class.F90
    src/solvers/cc/nonlinear_davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90

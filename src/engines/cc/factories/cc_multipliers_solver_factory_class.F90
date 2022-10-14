@@ -217,7 +217,6 @@ contains
       solver = linear_davidson_solver(transformer        = transformer,             &
                                       davidson           = davidson,                &
                                       storer             = storer,                  &
-                                      start_vector       = start_vector,            &
                                       preconditioner     = preconditioner,          &
                                       rhs_getter         = rhs_getter,              &
                                       printer            = printer,                 &
@@ -225,7 +224,8 @@ contains
                                       n_solutions        = 1,                       &
                                       max_iterations     = this%max_iterations,     &
                                       residual_threshold = this%residual_threshold, &
-                                      frequencies        = frequencies)
+                                      frequencies        = frequencies,             &
+                                      start_vector       = start_vector)
 !
    end subroutine create_davidson
 !
