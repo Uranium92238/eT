@@ -2,6 +2,7 @@
 ### Features
 - Added total and iteration timers to solvers. eT-program/eT!1109
 - Added option to zero out arrays when allocating. eT-program/eT!1112
+- Added option to set logical arrays to true/false when allocating. eT-program/eT!1128
 
 ### Tests
 - Added checks for cube and auxiliary files to the time-dependent CC tests. eT-program/eT!1096
@@ -16,6 +17,7 @@
 - Made all unformatted files stream files and removed unformatted sequential. eT-program/eT!1118, eT-program/eT!1132
 - Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
 - Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
+- Removed most warnings from intel compilers. eT-program/eT!1128
 
 # eT v1.8.7
 ### Bugfixes

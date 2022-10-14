@@ -2298,6 +2298,8 @@ contains
 !!    degenerate:     optional array of logicals
 !!                    specifying which state is degenerate to "state"
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2318,7 +2320,7 @@ contains
 !
       n_degeneracy = 1
       state_found = .true.
-      degenerate = .false.
+      call set_logicals(degenerate, wf%n_singlet_states, .false.)
       degenerate(state) = .true.
 !
       do while (state_found)
@@ -2389,6 +2391,7 @@ contains
 !!    are equal up to a sign (and within the convergence threshold)
 !!
       use array_utilities, only: check_for_parallel_vectors
+      use array_initialization, only: set_logicals
 !
       implicit none
 !
@@ -2409,12 +2412,10 @@ contains
 !
       character(len=100) :: print_states
 !
-      parallel_states = .false.
+      call set_logicals(parallel_states, wf%n_singlet_states, .false.)
 !
       call mem%alloc(degenerate, wf%n_singlet_states)
-!
-      call mem%alloc(checked, wf%n_singlet_states)
-      checked = .false.
+      call mem%alloc(checked, wf%n_singlet_states, set_to=.false.)
 !
       do current_state = 1, wf%n_singlet_states
 !
@@ -2530,6 +2531,7 @@ contains
 !!
       use array_utilities, only: gram_schmidt_biorthonormalization
       use array_utilities, only: check_for_parallel_vectors
+      use array_initialization, only: set_logicals
 !
       implicit none
 !
@@ -2559,8 +2561,7 @@ contains
 !     Prepare logicals to keep track of which states have already been
 !     biorthonormalized and which states are degenerate to the current_state
 !
-      call mem%alloc(biorthonormalized, wf%n_singlet_states)
-      biorthonormalized = .false.
+      call mem%alloc(biorthonormalized, wf%n_singlet_states, set_to=.false.)
 !
       call mem%alloc(degenerate, wf%n_singlet_states)
 !
@@ -2573,7 +2574,7 @@ contains
          if (biorthonormalized(current_state)) cycle
 !
 !        Reset array indicating degenerate states
-         degenerate = .false.
+         call set_logicals(degenerate, wf%n_singlet_states, .false.)
 !
          if (abs(wf%left_excitation_energies(current_state) &
                - wf%right_excitation_energies(current_state)) .gt. 2*energy_threshold) then

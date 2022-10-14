@@ -114,7 +114,8 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
-      real(dp) :: expectation_value, ddot
+      real(dp) :: expectation_value
+      real(dp) :: ddot
 !
       expectation_value = ddot(wf%n_mo**2, A, 1, density, 1)
 !

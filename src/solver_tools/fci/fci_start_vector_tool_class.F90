@@ -24,7 +24,7 @@ module fci_start_vector_tool_class
 !! Written by Enrico Ronca, 2022
 !!
 !
-   use kinds
+   use parameters
    use start_vector_tool_class, only: start_vector_tool
    use fci_class,               only: fci
 !
@@ -75,8 +75,6 @@ contains
 !!
 !!    Gets the I'th start vector for some purpose
 !!
-      use warning_suppressor, only: do_nothing
-!
       implicit none
 !
       class(fci_start_vector_tool), intent(in) :: this
@@ -84,7 +82,7 @@ contains
       integer, intent(in) :: I
       real(dp), intent(out) :: energy
 !
-      call do_nothing(energy)
+      energy = zero
       call this%wf%get_fci_start_vector(I, start_vector, this%restart)
 !
    end subroutine

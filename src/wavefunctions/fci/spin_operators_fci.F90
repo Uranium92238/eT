@@ -182,8 +182,9 @@ contains
       class(fci), intent(in) :: wf
 !
       integer, intent(in) :: state
+      real(dp) :: s2
 !
-      real(dp) :: s2, sz_contribution, sm_sp_contribution
+      real(dp) :: sz_contribution, sm_sp_contribution
 !
       sm_sp_contribution = wf%sm_sp_expectation_value(wf%ci_coefficients(:,:,state))
 

@@ -1733,8 +1733,7 @@ contains
 !
       real(dp), dimension(n_rows, n_columns), intent(in) :: M
       real(dp), dimension(n_rows, n_extract), intent(out) :: M_extracted
-!
-      logical, dimension(n_columns) :: extract
+      logical, dimension(n_columns), intent(in) :: extract
 !
       integer :: counter, I
 !

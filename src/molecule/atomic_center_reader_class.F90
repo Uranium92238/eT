@@ -677,8 +677,7 @@ contains
 !
 !     Set the center indices for the different methods & the number of indices
 !
-      call mem%alloc(unclassified, this%n_centers)
-      unclassified = .true.
+      call mem%alloc(unclassified, this%n_centers, set_to=.true.)
 !
       first = 1
       center = 0

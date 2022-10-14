@@ -814,6 +814,8 @@ contains
 !!    The output significant_AOs is a logical array where
 !!    significant_AOs(I)==.true. if the Ith AO is in the minimal basis.
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(mlhf), intent(in) :: wf
@@ -824,7 +826,7 @@ contains
 !
       integer :: ao
 !
-      significant_AOs = .false.
+      call set_logicals(significant_AOs, wf%ao%n, .false.)
 !
 !$omp parallel do private(ao)
       do ao = 1, wf%ao%n

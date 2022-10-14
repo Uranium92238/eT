@@ -412,7 +412,7 @@ contains
 !!    Allocates a one dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -455,7 +455,7 @@ contains
 !!    Allocates a two dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -496,7 +496,7 @@ contains
 !!    Allocates a three dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -537,7 +537,7 @@ contains
 !!    Allocates a four dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -578,7 +578,7 @@ contains
 !!    Allocates a five dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -619,7 +619,7 @@ contains
 !!    Allocates a one dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -660,7 +660,7 @@ contains
 !!    Allocates a two dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -701,7 +701,7 @@ contains
 !!    Allocates a three dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -742,7 +742,7 @@ contains
 !!    Allocates a four dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -1089,7 +1089,7 @@ contains
 !!    Allocates a one dimensional integer array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -1130,7 +1130,7 @@ contains
 !!    Allocates a two dimensional integer array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -1171,7 +1171,7 @@ contains
 !!    Allocates a three dimensional integer array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: set array to zero
+!!    set_zero: optional initialize array to zero
 !!
       implicit none
 !
@@ -1306,7 +1306,7 @@ contains
    end subroutine dealloc_i_3_memory_manager
 !
 !
-   subroutine alloc_l_1_memory_manager(mem, array, M)
+   subroutine alloc_l_1_memory_manager(mem, array, M, set_to)
 !!
 !!    Alloc log (memory manager)
 !!    Written by Rolf H. Myhre, September 2019
@@ -1314,25 +1314,29 @@ contains
 !!    Allocates a one dimensional logical array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_to: optional, initialize array to the value of set_to
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(memory_manager) :: mem
 !
       logical, dimension(:), allocatable :: array
+      logical, intent(in), optional :: set_to
 !
       integer, intent(in) :: M ! Dimension of array
 !
       integer(i64) :: size_array ! Total size of array (M)
-      integer :: error = 0
-      integer :: log_size
+      integer :: error = 0, log_size
 !
       character(len=100) :: error_msg
 !
       size_array = M
 !
       allocate(array(M), stat=error, errmsg=error_msg)
+!
+      if (present(set_to)) call set_logicals(array, int(size_array), set_to)
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)
@@ -1381,7 +1385,7 @@ contains
    end subroutine dealloc_l_1_memory_manager
 !
 !
-   subroutine alloc_l_2_memory_manager(mem, array, M, N)
+   subroutine alloc_l_2_memory_manager(mem, array, M, N, set_to)
 !!
 !!    Alloc log (memory manager)
 !!    Written by Rolf H. Myhre, September 2019
@@ -1389,25 +1393,28 @@ contains
 !!    Allocates a two dimensional logical array and updates the available
 !!    memory accordingly.
 !!
-!!    set_zero: optional value the array should be initialized with
+!!    set_to: optional, initialize array to the value of set_to
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(memory_manager) :: mem
 !
       logical, dimension(:,:), allocatable :: array
+      logical, intent(in), optional :: set_to
 !
       integer, intent(in) :: M, N ! Dimension of array
 !
-      integer(i64) :: size_array ! Total size of array (M)
-      integer :: error = 0
-      integer :: log_size
+      integer(i64) :: size_array ! Total size of array (M*N)
+      integer :: error = 0, log_size
 !
       character(len=100) :: error_msg
 !
       size_array = M * N
 !
       allocate(array(M,N), stat=error, errmsg=error_msg)
+      if (present(set_to)) call set_logicals(array, int(size_array), set_to)
 !
       if (error .ne. 0) then
          call mem%print_allocation_error(size_array, error_msg)

@@ -777,6 +777,7 @@ contains
 !!    calculates the maximum value on the entire diagonal (max_diagonal).
 !!
       use array_utilities, only: is_significant
+      use array_initialization, only: set_logicals
 !
       implicit none
 !
@@ -803,7 +804,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: max_in_shp_diagonal
 !
-      sig_shp = .false.
+      call set_logicals(sig_shp, this%n_shp, .false.)
 !
       call mem%alloc(max_in_shp_diagonal, this%n_shp)
 !
@@ -868,6 +869,7 @@ contains
 !!    (construct_shp).
 !!
       use array_utilities, only: is_significant
+      use array_initialization, only: set_logicals
 !
       implicit none
 !
@@ -891,7 +893,7 @@ contains
 !
       real(dp), dimension(ao%max_sh_size**2) :: construct_test
 !
-      construct_shp = .false.
+      call set_logicals(construct_shp, this%n_shp, .false.)
 !
 !$omp parallel do &
 !$omp private(I, K, A, B, A_range, B_range, x, y, g_ABAB, g_ABAB_p, construct_test) &
@@ -969,6 +971,8 @@ contains
 !!    Divides the significant diagonal into batches and prepares for
 !!    partitioned decomposition
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(eri_cd) :: this
@@ -1017,7 +1021,7 @@ contains
 !
       batch_size = n_sig_aop/this%n_batches
 !
-      call mem%alloc(sig_shp_batch, (this%n_shp))
+      call mem%alloc(sig_shp_batch, this%n_shp)
 !
       batch_first = 1
       batch_last = batch_size
@@ -1026,7 +1030,7 @@ contains
 !
 !        Determine sig_shp_batch
 !
-         sig_shp_batch = .false.
+         call set_logicals(sig_shp_batch, this%n_shp, .false.)
 !
          shp = 0        ! Shell pair number
          xy_first = 1
@@ -1288,9 +1292,7 @@ contains
 !     Construct significant shell pair logical array,
 !     and count the number of significant AO and shell pairs
 !
-      call mem%alloc(sig_shp, this%n_shp)
-!
-      sig_shp = .false.
+      call mem%alloc(sig_shp, this%n_shp, set_to=.false.)
 !
       n_sig_shp = 0
       n_sig_aop = 0
@@ -2228,9 +2230,7 @@ contains
 !        Find new significant diagonals
 !
          n_new_sig_shp = 0
-         call mem%alloc(new_sig_shp, n_sig_shp)
-!
-         new_sig_shp = .false.
+         call mem%alloc(new_sig_shp, n_sig_shp, set_to=.false.)
 !
          sig_shp_counter = 0
 !
