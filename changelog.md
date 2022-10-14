@@ -21,6 +21,7 @@
 
 ### CI
 - Updated version of `fortran-code-quality` to v1.3.0. eT-program/eT!1139
+- CI now always runs python and fortran code-quality, but stops if one of these stages does not succeed. eT-program/eT!1140
 
 # eT v1.8.8
 ### Bugfixes
