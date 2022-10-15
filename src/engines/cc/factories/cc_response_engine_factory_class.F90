@@ -90,12 +90,14 @@ contains
 !!    Written by Alexander C. Paul, Feb 2022
 !!
       use cc_engine_class, only: cc_engine
+      use cc_lanczos_engine_class, only: cc_lanczos_engine
       use eom_transition_moment_engine_class, only: eom_transition_moment_engine
       use lr_transition_moment_engine_class, only: lr_transition_moment_engine
 !
       implicit none
 !
       class(cc_engine), allocatable :: response_engine
+      character(len=200) :: algorithm
 !
       if (input%is_keyword_present('lr', 'cc response')) then
 !
@@ -103,7 +105,14 @@ contains
 !
       else if (input%is_keyword_present('eom', 'cc response')) then
 !
-         allocate(eom_transition_moment_engine :: response_engine)
+         algorithm = ""
+         call input%get_keyword('algorithm', 'solver cc es', algorithm)
+!
+         if (trim(algorithm) == 'asymmetric lanczos') then
+            allocate(cc_lanczos_engine :: response_engine)
+         else
+            allocate(eom_transition_moment_engine :: response_engine)
+         end if
 !
       else
 !

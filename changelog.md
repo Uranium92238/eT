@@ -4,6 +4,15 @@
 - Added option to zero out arrays when allocating. eT-program/eT!1112
 - Added option to set logical arrays to true/false when allocating. eT-program/eT!1128
 
+### Structure
+- Added separate engine for Lanczos and removed `cc_es_eigen_davidson_print_tool`. eT-program/eT!1095
+- Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
+- Made all unformatted files stream files and removed unformatted sequential. eT-program/eT!1118, eT-program/eT!1132
+- Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
+- Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
+- Removed warnings from intel compilers. eT-program/eT!1128
+- Response equations in CC theory are now solved using general Davidson solver. eT-program/eT!1133
+
 ### Tests
 - Added checks for cube and auxiliary files to the time-dependent CC tests. eT-program/eT!1096
 - Removed for loop over the inputs in the test scripts. eT-program/eT!1098
@@ -11,14 +20,6 @@
 - Added unit test for z-matrix tool. eT-program/eT!1103
 - Added restart test for CCS and 3-level MLCCSD tests. eT-program/eT!1105
 - Simplified the use of keyword arguments in `filters.py`. eT-program/eT!1106
-
-### Structure
-- Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
-- Made all unformatted files stream files and removed unformatted sequential. eT-program/eT!1118, eT-program/eT!1132
-- Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
-- Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
-- Removed most warnings from intel compilers. eT-program/eT!1128
-- Response equations in CC theory are now solved using general Davidson solver. eT-program/eT!1133
 
 ### CI
 - Updated version of `fortran-code-quality` to v1.3.0. eT-program/eT!1139
@@ -28,6 +29,7 @@
 ### Bugfixes
 - Fixed bug where libint threw an error because of whitespace in the final lines of a basis set file by removing trailing whitespace from g94 files. eT-program/eT!1131
 
+>>>>>>> 6d5a14c30c9ce9e02657ccf7f2ecbd8bc14bb56d
 # eT v1.8.7
 ### Bugfixes
 - Revert update of Libint library, as the eT compilation fails. eT-program/eT!1125
@@ -37,7 +39,6 @@
 # eT v1.8.6
 ### Features
 - Update of Libint library that ships with eT to include higher angular momentum. eT-program/eT!1119
-
 
 # eT v1.8.5
 ### Bugfixes

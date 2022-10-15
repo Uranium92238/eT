@@ -102,6 +102,8 @@ contains
 !
       call this%solver%run()
 !
+      call wf%print_es_summary(this%transformation)
+!
       call this%solver%cleanup()
 !
       call this%end_timer()

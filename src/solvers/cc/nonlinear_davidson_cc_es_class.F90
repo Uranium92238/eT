@@ -458,8 +458,6 @@ contains
             call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
                                ints=[iteration], fs='(t3,a)')
 !
-            call this%print_summary(X)
-!
          endif
 !
          call this%wf%save_excited_state(X, 1, this%n_singlet_states, &

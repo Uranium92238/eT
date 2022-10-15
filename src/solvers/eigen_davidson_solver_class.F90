@@ -48,7 +48,7 @@ module eigen_davidson_solver_class
       class(eigen_davidson_tool), allocatable, private  :: davidson
 !
       class(convergence_tool),          allocatable, private :: convergence_checker
-      class(transformation),       allocatable, private :: transformer
+      class(transformation),            allocatable, private :: transformer
       class(eigen_storage_tool),        allocatable, private :: storer
       class(start_vector_tool),         allocatable, private :: start_vector
       class(preconditioner_getter),     allocatable, private :: preconditioner
@@ -79,7 +79,6 @@ contains
                                       storer,              &
                                       start_vector,        &
                                       preconditioner,      &
-                                      printer,             &
                                       projector,           &
                                       n_solutions,         &
                                       max_iterations) result(this)
@@ -98,7 +97,6 @@ contains
       class(start_vector_tool),         intent(in) :: start_vector
       class(preconditioner_getter),     intent(in) :: preconditioner
       class(abstract_projection_tool),  intent(in) :: projector
-      class(eigen_davidson_print_tool), intent(in) :: printer
       integer,                          intent(in) :: max_iterations, n_solutions
 !
 !
@@ -108,10 +106,14 @@ contains
       this%storer              = storer
       this%start_vector        = start_vector
       this%preconditioner      = preconditioner
-      this%printer             = printer
       this%projector           = projector
       this%n_solutions         = n_solutions
       this%max_iterations      = max_iterations
+!
+      this%printer = eigen_davidson_print_tool()
+!
+      call this%printer%print_banner()
+      call this%davidson%print_settings
 !
       this%total_timer = timings("Eigen davidson solver total", pl='m')
       this%iteration_timer = timings("Eigen davidson solver iteration", pl='m')

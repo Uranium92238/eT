@@ -42,7 +42,7 @@ module eigen_davidson_print_tool_class
                                 => print_settings_eigen_davidson_print_tool
 !
       procedure, public :: print_summary &
-                           => print_summary_eigen_davidson_print_tool
+                        => print_summary_eigen_davidson_print_tool
 !
    end type eigen_davidson_print_tool
 !
@@ -95,6 +95,7 @@ module eigen_davidson_print_tool_class
                          ints=[max_iterations], fs='(t6,a)')
 !
    end subroutine print_settings_eigen_davidson_print_tool
+!
 !
    subroutine print_iteration_eigen_davidson_print_tool(n_solutions,   &
                                                         omega,         &
