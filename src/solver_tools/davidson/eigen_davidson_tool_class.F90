@@ -201,8 +201,6 @@ contains
       davidson%dim_red      = 0
       davidson%n_new_trials = 0
 !
-      call davidson%print_settings()
-!
       davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
                                       davidson%n_parameters,                        &
                                       davidson%max_dim_red + davidson%n_solutions,  &

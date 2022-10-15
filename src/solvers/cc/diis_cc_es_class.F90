@@ -461,11 +461,7 @@ contains
 !
          enddo
 !
-         call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
-!
          call this%wf%set_excitation_energies(this%energies, this%transformation)
-!
-         call this%print_summary(X, X_order)
 !
          call mem%dealloc(X_order, this%n_singlet_states)
 !
@@ -567,6 +563,8 @@ contains
 !
       call davidson_solver%run()
       call davidson_solver%cleanup()
+!
+      call this%wf%print_es_summary(this%transformation)
 !
       call output%printf('m', 'Finished preconvergence! The DIIS solver will now restart&
                               & from the preconverged solutions.', ffs='(/t3,a)')

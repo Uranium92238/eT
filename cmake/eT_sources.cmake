@@ -66,6 +66,7 @@ set(eT_fortran_sources
    src/engines/cc/cc_polarizability_engine_class.F90
    src/engines/cc/lr_transition_moment_engine_class.F90
    src/engines/cc/eom_transition_moment_engine_class.F90
+   src/engines/cc/cc_lanczos_engine_class.F90
    #
    src/engines/cc/tasks/cc_task_class.F90
    src/engines/cc/tasks/eri_approximator_task_class.F90
@@ -79,6 +80,7 @@ set(eT_fortran_sources
    src/engines/cc/tasks/cc_visualization_task_class.F90
    src/engines/cc/tasks/cc_propagation_task_class.F90
    src/engines/cc/tasks/biorthonormalization_task_class.F90
+   src/engines/cc/tasks/cc_lanczos_task_class.F90
    src/engines/cc/tasks/cc_transition_moments_task_class.F90
    src/engines/cc/tasks/cc_eom_transition_moments_task_class.F90
    src/engines/cc/tasks/cc_lr_transition_moments_task_class.F90
@@ -180,7 +182,6 @@ set(eT_fortran_sources
 #
    src/solver_tools/vector_getter_rhs_tool_class.F90
    src/solver_tools/cc/cc_multipliers_rhs_tool_class.F90
-   src/solver_tools/cc/cc_es_eigen_davidson_print_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
    src/solver_tools/cc/cc_eigen_storage_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90

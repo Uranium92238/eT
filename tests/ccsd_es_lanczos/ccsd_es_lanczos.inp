@@ -1,10 +1,10 @@
 system
-   name: HFO He
+   name: H2O He
    charge: 0
 end system
 
 do
-   excited state
+   response
 end do
 
 memory
@@ -40,6 +40,11 @@ solver cc es
    chain length:           30
    lanczos normalization:  symmetric
 end solver cc es
+
+cc response
+   eom
+   transition moments
+end cc response
 
 geometry
 units: bohr

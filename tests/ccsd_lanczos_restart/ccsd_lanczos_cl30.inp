@@ -4,7 +4,7 @@ system
 end system
 
 do
-  excited state
+  response
 end do
 
 memory
@@ -37,9 +37,14 @@ solver cc multipliers
 end solver cc multipliers
 
 solver cc es
-   algorithm:          asymmetric lanczos
-   chain length:       30
+   algorithm:    asymmetric lanczos
+   chain length: 30
 end solver cc es
+
+cc response
+   eom
+   transition moments
+end cc response
 
 geometry
 basis: cc-pVDZ

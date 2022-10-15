@@ -4,7 +4,7 @@ system
 end system
 
 do
-  excited state
+  response
 end do
 
 memory
@@ -41,6 +41,11 @@ solver cc es
    chain length:       30
    core excitation:    {1}
 end solver cc es
+
+cc response
+   eom
+   transition moments
+end cc response
 
 geometry
 basis: cc-pVDZ

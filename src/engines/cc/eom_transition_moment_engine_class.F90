@@ -129,7 +129,7 @@ contains
       call this%allowed_cc_wfs%set('ccsd', allowed=.true.)
       call this%allowed_cc_wfs%set('cc3',  allowed=.true.)
 !
-end subroutine set_allowed_wfs_eom_transition_moment_engine
+   end subroutine set_allowed_wfs_eom_transition_moment_engine
 !
 !
 end module eom_transition_moment_engine_class

@@ -110,10 +110,8 @@ contains
 !!    Create
 !!    Written by Eirik F. Kjønstad, 2021
 !!
-      use cc_multipliers_task_class,           only: cc_multipliers_task
-      use asymmetric_lanczos_cc_es_class,      only: asymmetric_lanczos_cc_es
-      use diis_cc_es_class,                    only: diis_cc_es
-      use nonlinear_davidson_cc_es_class,      only: nonlinear_davidson_cc_es
+      use diis_cc_es_class,               only: diis_cc_es
+      use nonlinear_davidson_cc_es_class, only: nonlinear_davidson_cc_es
 !
       implicit none
 !
@@ -122,19 +120,6 @@ contains
       class(ccs), intent(inout) :: wf
 !
       class(abstract_solver), allocatable, intent(out) :: solver
-!
-      class(cc_multipliers_task), allocatable :: multipliers
-!
-      if (this%algorithm == 'asymmetric lanczos') then
-!
-         multipliers = cc_multipliers_task()
-         call multipliers%execute(wf)
-!
-         solver = asymmetric_lanczos_cc_es(wf)
-!
-         return
-!
-      end if
 !
       call this%read_settings()
       call wf%prepare_for_excited_states(this%n_states, this%es_type)
@@ -295,7 +280,6 @@ contains
 !
       use eigen_davidson_tool_class, only: eigen_davidson_tool
       use cc_eigen_storage_tool_class, only: cc_eigen_storage_tool
-      use cc_es_eigen_davidson_print_tool_class, only: cc_es_eigen_davidson_print_tool
       use cc_jacobian_preconditioner_getter_class, only: cc_jacobian_preconditioner_getter
       use cc_jacobian_transformation_class, only: cc_jacobian_transformation
 !
@@ -308,7 +292,6 @@ contains
       class(eigen_davidson_tool),               allocatable :: davidson
       class(cc_eigen_storage_tool),             allocatable :: storer
       class(cc_jacobian_transformation),        allocatable :: transformer
-      class(cc_es_eigen_davidson_print_tool),   allocatable :: printer
       class(cc_jacobian_preconditioner_getter), allocatable :: preconditioner
 !
       real(dp) :: lindep_threshold
@@ -329,9 +312,6 @@ contains
 !
       transformer = cc_jacobian_transformation(wf, trim(this%transformation), wf%n_es_amplitudes)
 !
-      printer = cc_es_eigen_davidson_print_tool(wf, trim(this%transformation))
-      call printer%print_banner()
-!
       lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
 !
       davidson = eigen_davidson_tool(name_             = 'cc_es_davidson',    &
@@ -347,7 +327,6 @@ contains
                                      storer              = storer,                   &
                                      start_vector        = this%start_vectors,       &
                                      preconditioner      = preconditioner,           &
-                                     printer             = printer,                  &
                                      projector           = this%projector,           &
                                      n_solutions         = this%n_states,            &
                                      max_iterations      = this%max_iterations)
