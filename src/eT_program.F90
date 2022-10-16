@@ -33,5 +33,6 @@ program eT_program
 !
    eT_instance = eT()
    call eT_instance%run()
+   deallocate(eT_instance)
 !
 end program eT_program
