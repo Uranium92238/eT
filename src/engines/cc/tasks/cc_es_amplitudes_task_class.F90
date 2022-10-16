@@ -24,25 +24,27 @@ module cc_es_amplitudes_task_class
 !! Written by Alexander C. Paul, Sarai D. Folkestad, and Eirik F. Kjønstad, 2022
 !!
 !
-   use ccs_class,                               only: ccs
-   use abstract_solver_class,                   only: abstract_solver
-   use cc_task_class,                           only: cc_task
-   use cc_es_amplitudes_solver_factory_class,   only: cc_es_amplitudes_solver_factory
+   use ccs_class,                                     only: ccs
+   use abstract_solver_class,                         only: abstract_solver
+   use cc_task_class,                                 only: cc_task
+   use cc_es_amplitudes_solver_factory_class,         only: cc_es_amplitudes_solver_factory
+   use cc_triplet_es_amplitudes_solver_factory_class, only: cc_triplet_es_amplitudes_solver_factory
 !
    implicit none
 !
    type, extends(cc_task) :: cc_es_amplitudes_task
 !
-      class(abstract_solver),                allocatable, private :: solver
-      type(cc_es_amplitudes_solver_factory), allocatable, private :: solver_factory
+      class(abstract_solver), allocatable, private :: solver
 !
-      character(len=200), private :: transformation
+      character(len=:), allocatable, private :: transformation, spin_symmetry
       logical, private :: restart
 !
    contains
 !
       procedure, public :: execute &
                         => execute_cc_es_amplitudes_task
+!
+      procedure, private :: create_solver
 !
    end type cc_es_amplitudes_task
 !
@@ -57,15 +59,14 @@ module cc_es_amplitudes_task_class
 contains
 !
 !
-   function new_cc_es_amplitudes_task(transformation, restart) result(this)
+   function new_cc_es_amplitudes_task(transformation, spin_symmetry, restart) result(this)
 !!
 !!    New
 !!    Written by Eirik F. Kjønstad, 2021
 !!
       implicit none
 !
-      character(len=*), intent(in) :: transformation
-!
+      character(len=*), intent(in) :: transformation, spin_symmetry
       logical, intent(in) :: restart
 !
       type(cc_es_amplitudes_task) :: this
@@ -73,6 +74,7 @@ contains
       this%name_ = 'Determining CC excited state amplitudes'
 !
       this%transformation = transformation
+      this%spin_symmetry = spin_symmetry
       this%restart = restart
 !
    end function new_cc_es_amplitudes_task
@@ -92,17 +94,13 @@ contains
       call this%print_header()
       call this%start_timer()
 !
-      this%solver_factory = cc_es_amplitudes_solver_factory(wf%name_,            &
-                                                            this%transformation, &
-                                                            this%restart)
-!
-      call this%solver_factory%create(wf, this%solver)
+      call this%create_solver(wf)
 !
       call wf%construct_fock(task='es')
 !
       call this%solver%run()
 !
-      call wf%print_es_summary(this%transformation)
+      call wf%print_es_summary(this%transformation, this%spin_symmetry)
 !
       call this%solver%cleanup()
 !
@@ -110,5 +108,36 @@ contains
 !
    end subroutine execute_cc_es_amplitudes_task
 !
+!
+   subroutine create_solver(this, wf)
+!!
+!!    Create solver
+!!    Written by Sarai D. Folkestad, 2022
+!!
+      implicit none
+!
+      class(cc_es_amplitudes_task), intent(inout) :: this
+!
+      class(ccs), intent(inout), target :: wf
+      type(cc_es_amplitudes_solver_factory),         allocatable :: solver_factory
+      type(cc_triplet_es_amplitudes_solver_factory), allocatable :: triplet_solver_factory
+!
+      if (trim(this%spin_symmetry) == 'singlet') then
+!
+         solver_factory = cc_es_amplitudes_solver_factory(wf%name_,            &
+                                                          this%transformation, &
+                                                          this%restart)
+         call solver_factory%create(wf, this%solver)
+!
+      else if (trim(this%spin_symmetry) == 'triplet') then
+!
+         triplet_solver_factory = cc_triplet_es_amplitudes_solver_factory(wf%name_,            &
+                                                                          this%transformation, &
+                                                                          this%restart)
+         call triplet_solver_factory%create(wf, this%solver)
+!
+      endif
+!
+   end subroutine create_solver
 !
 end module cc_es_amplitudes_task_class

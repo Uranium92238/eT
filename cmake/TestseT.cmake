@@ -16,10 +16,10 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-# 	Based on the cmake/DaltonTests.cmake file of the public
+#   Based on the cmake/DaltonTests.cmake file of the public
 #   Dalton program (LGPL v2.1)
 #
-# 	Copied and modified for eT by Rolf H. Myhre, Feb 2019
+#   Copied and modified for eT by Rolf H. Myhre, Feb 2019
 #
 macro(add_eT_runtest _name _labels)
 
@@ -38,10 +38,10 @@ endmacro()
 
 # Add a keyword for the length of the test:
 #
-# 	short < 30 seconds
-# 	medium > 30 seconds < 120 seconds
-# 	long > 120 seconds < 200 seconds
-# 	verylong > 200 seconds
+#   short < 30 seconds
+#   medium > 30 seconds < 120 seconds
+#   long > 120 seconds < 200 seconds
+#   verylong > 200 seconds
 #
 # NEVER comment out tests
 add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
@@ -149,6 +149,8 @@ add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;comple
 add_eT_runtest(ccs_right_lt_lindep                          "eT;short;ccs;es")
 add_eT_runtest(ccs_es_remove_core                           "eT;short;ccs;es")
 add_eT_runtest(ccs_right_ip_energies                        "eT;short;ccs;ip;right")
+add_eT_runtest(ccs_triplet_es                               "eT;short;ccs;triplet;es")
+add_eT_runtest(ccs_left_triplet_es                          "eT;short;ccs;triplet;es")
 add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;restart")
 add_eT_runtest(restart_ccs_right_from_left                  "eT;short;ccs;es;restart")
 add_eT_runtest(restart_ccs_gs_dipole                        "eT;short;ccs;gs;dipole;restart")
@@ -175,9 +177,7 @@ add_eT_runtest(cc2_left_cvs_es_energies                     "eT;short;cc2;es;lef
 add_eT_runtest(cc2_left_ip_energies                         "eT;short;cc2;es;left")
 add_eT_runtest(cc2_left_ip_diis                             "eT;short;cc2;es;left;diis")
 add_eT_runtest(cc2_oscillator_strength_eom                  "eT;short;cc2;eom")
-add_eT_runtest(cc2_oscillator_strength_lr                   "eT;short;cc2;lr")
 add_eT_runtest(cc2_eom_polarizability                       "eT;short;cc2;es;eom")
-add_eT_runtest(cc2_lr_polarizability                        "eT;short;cc2;es;lr")
 add_eT_runtest(cc2_frozen_hf_many_basis_sets                "eT;short;cc2;gs;frozen hf;many basis sets")
 add_eT_runtest(cc2_frozen_hf_ionization                     "eT;short;cc2;gs;frozen hf;ionization")
 add_eT_runtest(restart_cc2_es                               "eT;short;cc2;es;restart")
@@ -190,6 +190,9 @@ add_eT_runtest(cc2_lowmem_right_diis_w_davidson_preconv     "eT;short;lowmem-cc2
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
 add_eT_runtest(restart_cc2_lowmem_from_ccs                  "eT;short;lowmem-cc2;es;restart")
 add_eT_runtest(restart_cc2_v1.0                             "eT;short;cc2;es;restart;v1.0")
+add_eT_runtest(cc2_oscillator_strength_lr                   "eT;short;cc2;lr")
+add_eT_runtest(cc2_lr_polarizability                        "eT;short;cc2;es;lr")
+
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs;frozen hf")

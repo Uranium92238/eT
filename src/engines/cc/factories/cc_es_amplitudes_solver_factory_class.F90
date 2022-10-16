@@ -279,7 +279,7 @@ contains
       use eigen_davidson_solver_class, only: eigen_davidson_solver
 !
       use eigen_davidson_tool_class, only: eigen_davidson_tool
-      use cc_eigen_storage_tool_class, only: cc_eigen_storage_tool
+      use cc_es_storage_tool_class, only: cc_es_storage_tool
       use cc_jacobian_preconditioner_getter_class, only: cc_jacobian_preconditioner_getter
       use cc_jacobian_transformation_class, only: cc_jacobian_transformation
 !
@@ -290,7 +290,7 @@ contains
       class(abstract_solver), allocatable,    intent(out)   :: solver
 !
       class(eigen_davidson_tool),               allocatable :: davidson
-      class(cc_eigen_storage_tool),             allocatable :: storer
+      class(cc_es_storage_tool),                allocatable :: storer
       class(cc_jacobian_transformation),        allocatable :: transformer
       class(cc_jacobian_preconditioner_getter), allocatable :: preconditioner
 !
@@ -308,7 +308,7 @@ contains
       call input%get_keyword('max reduced dimension', 'solver cc es', max_dim_red)
 !
       preconditioner = cc_jacobian_preconditioner_getter(wf, wf%n_es_amplitudes)
-      storer = cc_eigen_storage_tool(wf, trim(this%transformation))
+      storer = cc_es_storage_tool(wf, trim(this%transformation))
 !
       transformer = cc_jacobian_transformation(wf, trim(this%transformation), wf%n_es_amplitudes)
 !

@@ -99,7 +99,6 @@ contains
       class(abstract_projection_tool),  intent(in) :: projector
       integer,                          intent(in) :: max_iterations, n_solutions
 !
-!
       this%davidson            = davidson
       this%transformer         = transformer
       this%convergence_checker = convergence_checker
@@ -159,7 +158,6 @@ contains
          call this%davidson%set_trial(c, trial)
 !
       enddo
-!
 !
       call this%printer%print_settings(this%n_solutions, this%max_iterations)
 !

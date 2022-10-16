@@ -99,6 +99,7 @@ set(eT_fortran_sources
    src/engines/cc/factories/cc_amplitudes_solver_factory_class.F90
    src/engines/cc/factories/cc_multipliers_solver_factory_class.F90
    src/engines/cc/factories/cc_es_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_triplet_es_amplitudes_solver_factory_class.F90
    src/engines/cc/factories/cc_propagator_factory_class.F90
    src/engines/cc/factories/cc_response_engine_factory_class.F90
 #
@@ -164,6 +165,7 @@ set(eT_fortran_sources
    src/solver_tools/linear_equation_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_manual_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_valence_start_vector_tool_class.F90
+   src/solver_tools/es_start_vectors/triplet_es_valence_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_cvs_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_ip_start_vector_tool_class.F90
    src/solver_tools/es_projectors/abstract_projection_tool_class.F90
@@ -183,11 +185,15 @@ set(eT_fortran_sources
    src/solver_tools/vector_getter_rhs_tool_class.F90
    src/solver_tools/cc/cc_multipliers_rhs_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
-   src/solver_tools/cc/cc_eigen_storage_tool_class.F90
+   src/solver_tools/cc/cc_es_storage_tool_class.F90
+   src/solver_tools/cc/cc_triplet_es_storage_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
+   src/solver_tools/cc/cc_triplet_jacobian_preconditioner_getter_class.F90
    src/solver_tools/cc/cc_multipliers_start_vector_tool_class.F90
    src/solver_tools/file_linear_equation_storage_tool_class.F90
    src/solver_tools/cc/cc_multipliers_linear_equation_storage_tool_class.F90
+
+   src/solver_tools/cc/cc_triplet_jacobian_transformation_class.F90
    src/solver_tools/cc/cc_jacobian_transformation_class.F90
    src/solver_tools/cc/folded_cc_jacobian_transformation_class.F90
 #
@@ -392,6 +398,8 @@ set(eT_fortran_sources
    src/wavefunctions/ccs/set_get_ccs.F90
    src/wavefunctions/ccs/file_handling_ccs.F90
    src/wavefunctions/ccs/t1_ccs.F90
+   src/wavefunctions/ccs/triplet_jacobian_ccs.F90
+   src/wavefunctions/ccs/triplet_jacobian_transpose_ccs.F90
    src/wavefunctions/ccs/complex_ccs.F90
    src/wavefunctions/ccs/generated_complex_files/t1_ccs_complex.F90
    src/wavefunctions/ccs/generated_complex_files/fock_ccs_complex.F90

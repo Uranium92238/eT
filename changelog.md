@@ -2,6 +2,7 @@
 ### Features
 - Added total and iteration timers to solvers. eT-program/eT!1109
 - Added option to zero out arrays when allocating. eT-program/eT!1112
+- CCS triplet excitation energies. eT-program/eT!1046
 - Added option to set logical arrays to true/false when allocating. eT-program/eT!1128
 
 ### Structure
@@ -29,7 +30,6 @@
 ### Bugfixes
 - Fixed bug where libint threw an error because of whitespace in the final lines of a basis set file by removing trailing whitespace from g94 files. eT-program/eT!1131
 
->>>>>>> 6d5a14c30c9ce9e02657ccf7f2ecbd8bc14bb56d
 # eT v1.8.7
 ### Bugfixes
 - Revert update of Libint library, as the eT compilation fails. eT-program/eT!1125
@@ -97,7 +97,6 @@
 # eT v1.7.2
 ### Bugfixes
 - Fixed bug in spin-multiplicities, where sum of squares was incorrectly assumed equal to square of sum. Happened only with -O0 flag. eT-program/eT!1072
-
 
 # eT v1.7.1
 ### Bugfixes

@@ -1206,7 +1206,7 @@ contains
       call cc_es_solver%run()
       call cc_es_solver%cleanup()
 !
-      call ccs_wf%print_es_summary(trim(transformation))
+      call ccs_wf%print_es_summary(trim(transformation), 'singlet')
 !
       call timer_es%turn_off()
 !

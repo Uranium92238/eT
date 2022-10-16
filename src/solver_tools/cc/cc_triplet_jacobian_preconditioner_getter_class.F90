@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module cc_jacobian_preconditioner_getter_class
+module cc_triplet_jacobian_preconditioner_getter_class
 !
 !!
-!!    Coupled Cluster jacobian preconditioner getter class module
+!!    CC triplet Jacobian preconditioner getter class module
 !!    Written by Regina Matveeva, Sept 2021
 !!
 !
@@ -30,27 +30,27 @@ module cc_jacobian_preconditioner_getter_class
 !
    implicit none
 !
-   type, extends(preconditioner_getter) :: cc_jacobian_preconditioner_getter
+   type, extends(preconditioner_getter) :: cc_triplet_jacobian_preconditioner_getter
 !
       class(ccs), pointer, private :: wf
 !
    contains
 !
-      procedure, public :: get => get_cc_jacobian_preconditioner_getter
+      procedure, public :: get => get_cc_triplet_jacobian_preconditioner_getter
 !
-   end type cc_jacobian_preconditioner_getter
+   end type cc_triplet_jacobian_preconditioner_getter
 !
 !
-   interface  cc_jacobian_preconditioner_getter
+   interface  cc_triplet_jacobian_preconditioner_getter
 !
-      procedure :: new_cc_jacobian_preconditioner_getter
+      procedure :: new_cc_triplet_jacobian_preconditioner_getter
 !
-   end interface  cc_jacobian_preconditioner_getter
+   end interface  cc_triplet_jacobian_preconditioner_getter
 !
 !
 contains
 !
-   function new_cc_jacobian_preconditioner_getter(wf, n_parameters) result(this)
+   function new_cc_triplet_jacobian_preconditioner_getter(wf) result(this)
 !!
 !!    New
 !!    Written by Sarai D. Folkestad, 2021
@@ -58,28 +58,27 @@ contains
       implicit none
 !
       class(ccs), intent(in), target :: wf
-      integer,    intent(in) :: n_parameters
-      type(cc_jacobian_preconditioner_getter) :: this
+      type(cc_triplet_jacobian_preconditioner_getter) :: this
 !
       this%wf => wf
-      this%n_parameters = n_parameters
+      this%n_parameters = wf%n_triplet_amplitudes
 !
-   end function new_cc_jacobian_preconditioner_getter
+   end function new_cc_triplet_jacobian_preconditioner_getter
 !
 !
-   subroutine get_cc_jacobian_preconditioner_getter(this, preconditioner)
+   subroutine get_cc_triplet_jacobian_preconditioner_getter(this, preconditioner)
 !!
 !!    Get
 !!    Written by Regina Matveeva, Sep 2021
 !!
       implicit none
 !
-      class(cc_jacobian_preconditioner_getter), intent(in) :: this
-      real(dp), dimension(this%n_parameters),   intent(out) :: preconditioner
+      class(cc_triplet_jacobian_preconditioner_getter), intent(in) :: this
+      real(dp), dimension(this%n_parameters), intent(out) :: preconditioner
 !
-      call this%wf%get_orbital_differences(preconditioner, this%n_parameters)
+      call this%wf%get_triplet_preconditioner(preconditioner)
 !
-   end subroutine get_cc_jacobian_preconditioner_getter
+   end subroutine get_cc_triplet_jacobian_preconditioner_getter
 !
 !
-end module cc_jacobian_preconditioner_getter_class
+end module cc_triplet_jacobian_preconditioner_getter_class

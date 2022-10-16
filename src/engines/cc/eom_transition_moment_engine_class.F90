@@ -91,11 +91,13 @@ contains
       call wf%save_tbar_intermediates()
 !
       this%excited_state_amplitudes = cc_es_amplitudes_task(transformation='right', &
+                                                            spin_symmetry='singlet', &
                                                             restart=restart)
 !
       call this%excited_state_amplitudes%execute(wf)
 !
       this%excited_state_amplitudes = cc_es_amplitudes_task(transformation='left', &
+                                                            spin_symmetry='singlet', &
                                                             restart=.true.)
 !
       call this%excited_state_amplitudes%execute(wf)

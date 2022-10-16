@@ -522,6 +522,7 @@ contains
                               'right eigenvectors',       &
                               'storage',                  &
                               'singlet states',           &
+                              'triplet states',           &
                               'diis dimension',           &
                               'max reduced dimension',    &
                               'davidson preconvergence',  &

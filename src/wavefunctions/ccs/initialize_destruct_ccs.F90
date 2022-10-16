@@ -368,6 +368,81 @@ contains
    end subroutine destruct_left_excitation_energies_ccs
 !
 !
+   module subroutine initialize_triplet_excitation_energies_ccs(wf)
+!!
+!!    Initialize triplet excitation energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%initialize_right_triplet_excitation_energies()
+      call wf%initialize_left_triplet_excitation_energies()
+!
+   end subroutine initialize_triplet_excitation_energies_ccs
+!
+!
+   module subroutine initialize_right_triplet_excitation_energies_ccs(wf)
+!!
+!!    Initialize right triplet excitation energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%right_triplet_excitation_energies)) &
+                  call mem%alloc(wf%right_triplet_excitation_energies, wf%n_triplet_states)
+!
+   end subroutine initialize_right_triplet_excitation_energies_ccs
+!
+!
+   module subroutine destruct_right_triplet_excitation_energies_ccs(wf)
+!!
+!!    Destruct right triplet excitation energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%right_triplet_excitation_energies)) &
+               call mem%dealloc(wf%right_triplet_excitation_energies, wf%n_triplet_states)
+!
+   end subroutine destruct_right_triplet_excitation_energies_ccs
+!
+!
+   module subroutine initialize_left_triplet_excitation_energies_ccs(wf)
+!!
+!!    Initialize left triplet excitation energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%left_triplet_excitation_energies)) &
+               call mem%alloc(wf%left_triplet_excitation_energies, wf%n_triplet_states)
+!
+   end subroutine initialize_left_triplet_excitation_energies_ccs
+!
+!
+   module subroutine destruct_left_triplet_excitation_energies_ccs(wf)
+!!
+!!    Destruct left triplet excitation energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%left_triplet_excitation_energies)) &
+         call mem%dealloc(wf%left_triplet_excitation_energies, wf%n_triplet_states)
+!
+   end subroutine destruct_left_triplet_excitation_energies_ccs
+!
+!
    module subroutine initialize_core_MOs_ccs(wf)
 !!
 !!    Initialize core MOs
