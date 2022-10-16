@@ -564,7 +564,7 @@ contains
       call davidson_solver%run()
       call davidson_solver%cleanup()
 !
-      call this%wf%print_es_summary(this%transformation)
+      call this%wf%print_es_summary(this%transformation, 'singlet')
 !
       call output%printf('m', 'Finished preconvergence! The DIIS solver will now restart&
                               & from the preconverged solutions.', ffs='(/t3,a)')

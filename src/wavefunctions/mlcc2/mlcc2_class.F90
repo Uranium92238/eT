@@ -1278,7 +1278,7 @@ contains
    end subroutine update_MO_fock_contributions_mlcc2
 !
 !
-   subroutine print_X1_diagnostics_mlcc2(wf, X, label)
+   subroutine print_X1_diagnostics_mlcc2(wf, X, n_amplitudes, label)
 !!
 !!    Print X1 diagnostics
 !!    Written by Sarai D. Folkestad, Nov 2019
@@ -1289,7 +1289,9 @@ contains
 !
       class(mlcc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+      integer, intent(in) :: n_amplitudes
+!
+      real(dp), dimension(n_amplitudes), intent(in) :: X
 !
       character(len=1), intent(in) :: label
 !
@@ -1299,7 +1301,7 @@ contains
 !
       integer :: a, i, ai, ai_full
 !
-      call wf%ccs%print_X1_diagnostics(X, label)
+      call wf%ccs%print_X1_diagnostics(X, n_amplitudes, label)
 !
       call mem%alloc(X_internal, wf%n_cc2_v*wf%n_cc2_o)
 !

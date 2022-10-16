@@ -56,7 +56,7 @@ contains
 !
    function new_es_ip_projection_tool(wf) result(tool)
 !!
-!!    New ES IP projection tool 
+!!    New
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
       implicit none 

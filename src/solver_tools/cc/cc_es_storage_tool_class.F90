@@ -17,11 +17,11 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module cc_eigen_storage_tool_class
+module cc_es_storage_tool_class
 !
 !!
-!!    CC eigen storage tool class module
-!!    Written by Sarai D. Folkestad, May 2021
+!!    CC es storage tool class module
+!!    Written by Sarai D. Folkestad, Feb 2022
 !!
 !
    use parameters
@@ -30,60 +30,59 @@ module cc_eigen_storage_tool_class
 !
    implicit none
 !
-   type, extends(eigen_storage_tool) :: cc_eigen_storage_tool
+   type, extends(eigen_storage_tool) :: cc_es_storage_tool
 !
       class(ccs), pointer, private :: wf
       character(len=200) :: side
 !
    contains
 !
-      procedure, public :: store => store_cc_eigen_storage_tool
+      procedure, public :: store => store_cc_es_storage_tool
 !
-   end type  cc_eigen_storage_tool
+   end type  cc_es_storage_tool
 !
-   interface  cc_eigen_storage_tool
+   interface  cc_es_storage_tool
 !
-      procedure :: new_cc_eigen_storage_tool
+      procedure :: new_cc_es_storage_tool
 !
-   end interface  cc_eigen_storage_tool
+   end interface  cc_es_storage_tool
 !
 contains
 !
-   function new_cc_eigen_storage_tool(wf, side) result(this)
+   function new_cc_es_storage_tool(wf, side) result(this)
 !!
 !!    New
-!!    Written by Sarai D. Folkestad, May 2021
+!!    Written by Sarai D. Folkestad, Feb 2022
 !!
       implicit none
 !
       class(ccs), intent(inout), target :: wf
       character(len=*), intent(in) :: side
-      type(cc_eigen_storage_tool) :: this
+      type(cc_es_storage_tool) :: this
 !
       this%wf => wf
+!
       this%n_parameters = wf%n_es_amplitudes
-      this%side = side
+      this%side         = side
 !
-   end function new_cc_eigen_storage_tool
+   end function new_cc_es_storage_tool
 !
-   subroutine store_cc_eigen_storage_tool(this, eigenvalue, eigenvector, I)
+   subroutine store_cc_es_storage_tool(this, eigenvalue, eigenvector, I)
 !!
 !!    Store
-!!    Written by Sarai D. Folkestad, May 2021
+!!    Written by Sarai D. Folkestad, Feb 2022
 !!
       implicit none
 !
-      class(cc_eigen_storage_tool),             intent(inout) :: this
+      class(cc_es_storage_tool),             intent(inout) :: this
       integer,                                  intent(in) :: I
       real(dp), dimension(this%n_parameters),   intent(in) :: eigenvector
       real(dp),                                 intent(in) :: eigenvalue
 !
       call this%wf%save_excited_state(eigenvector, I, I, this%side, [eigenvalue])
+      call this%wf%set_excitation_energy(eigenvalue, I, this%side)
 !
-      if (trim(this%side) == 'right') this%wf%right_excitation_energies(I) = eigenvalue
-      if (trim(this%side) == 'left') this%wf%left_excitation_energies(I) = eigenvalue
-!
-   end subroutine store_cc_eigen_storage_tool
+   end subroutine store_cc_es_storage_tool
 !
 !
-end module cc_eigen_storage_tool_class
+end module cc_es_storage_tool_class

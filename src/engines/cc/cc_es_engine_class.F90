@@ -42,13 +42,16 @@ module cc_es_engine_class
       type(cc_es_amplitudes_task), allocatable, private :: excited_state_amplitudes
       type(cc_visualization_task), allocatable, private :: visualization
 !
+      logical, dimension(2) :: do_side
+      logical, dimension(2) :: do_spin
+!
    contains
 !
       procedure, public :: ignite => ignite_cc_es_engine
       procedure, public :: set_allowed_wfs => set_allowed_wfs_cc_es_engine
 !
-      procedure, private, nopass :: do_right
-      procedure, private, nopass :: do_left
+      procedure, private :: determine_side
+      procedure, private :: determine_spin
 !
    end type cc_es_engine
 !
@@ -67,6 +70,11 @@ contains
 !
       logical :: restart
 !
+      integer :: side, spin
+!
+      character(len=10), dimension(2), parameter :: side_string = [character(len=10) :: 'right', 'left']
+      character(len=10), dimension(2), parameter :: spin_string = [character(len=10) :: 'singlet', 'triplet']
+!
       call this%set_allowed_wfs()
       call this%check_wavefunctions(wf)
 !
@@ -78,22 +86,26 @@ contains
       restart = input%is_keyword_present('restart', 'solver cc es') .or. &
                 input%is_keyword_present('restart', 'do')
 !
-      if (this%do_right()) then
+      call this%determine_side()
+      call this%determine_spin()
 !
-         this%excited_state_amplitudes = cc_es_amplitudes_task(transformation='right', &
-                                                               restart=restart)
-         call this%excited_state_amplitudes%execute(wf)
+      do side = 1, 2
 !
-      endif
+         if (.not. this%do_side(side)) cycle
 !
-      if (this%do_left()) then
+         if (side == 2 .and. this%do_side(1)) restart = .true.
 !
-         if (this%do_right()) restart = .true.
-         this%excited_state_amplitudes = cc_es_amplitudes_task(transformation='left', &
-                                                               restart=restart)
-         call this%excited_state_amplitudes%execute(wf)
+         do spin = 1, 2
 !
-      endif
+            if (.not. this%do_spin(spin)) cycle
+!
+            this%excited_state_amplitudes = cc_es_amplitudes_task(trim(side_string(side)), &
+                                                                  trim(spin_string(spin)), &
+                                                                  restart)
+            call this%excited_state_amplitudes%execute(wf)
+!
+         enddo
+      enddo
 !
       this%visualization = cc_visualization_task()
       call this%visualization%execute(wf)
@@ -101,39 +113,68 @@ contains
    end subroutine ignite_cc_es_engine
 !
 !
-   function do_right() result(do_)
+   subroutine determine_side(this)
 !!
-!!    Do right
-!!    Written by Sarai D. Folkestad, Jan 2022
+!!    Determine side
+!!    Written by Sarai D. Folkestad, Feb 2022
+!!
+!!    Determines the transformation
+!!
+!!    this%do_side(k)
+!!
+!!    k = 1 -> right
+!!    k = 2 -> left
 !!
       implicit none
 !
-      logical :: do_
+      class(cc_es_engine), intent(inout) :: this
 !
-      do_ = .false.
+!     Default is only right
+      this%do_side(1) = .true.
+      this%do_side(2) = .false.
 !
-      if (input%is_keyword_present('right eigenvectors', 'solver cc es')) then
-         do_ = .true.
-      else
-         if (.not. input%is_keyword_present('left eigenvectors', 'solver cc es')) do_ = .true.
+      if (input%is_keyword_present('left eigenvectors', 'solver cc es')) then
+         this%do_side(1) = .false.
+         this%do_side(2) = .true.
       endif
 !
-   end function do_right
+      if (input%is_keyword_present('right eigenvectors', 'solver cc es')) then
+         this%do_side(1) = .true.
+      endif
+!
+   end subroutine determine_side
 !
 !
-   function do_left() result(do_)
+   subroutine determine_spin(this)
 !!
-!!    Do left
-!!    Written by Sarai D. Folkestad, Jan 2022
+!!    Determine spin
+!!    Written by Sarai D. Folkestad, Feb 2022
+!!
+!!    Determines the spin symmetry to run
+!!
+!!    this%do_spin(k)
+!!
+!!    k = 1 -> singlet
+!!    k = 2 -> triplet
 !!
       implicit none
 !
-      logical :: do_
+      class(cc_es_engine), intent(inout) :: this
 !
-      do_ = input%is_keyword_present('left eigenvectors', 'solver cc es')
+!     Default is only singlet - This is needed as long as Lanczos is treated in the es engine
+      this%do_spin(1) = .true.
+      this%do_spin(2) = .false.
 !
-   end function do_left
+      if (input%is_keyword_present('triplet states', 'solver cc es')) then
+         this%do_spin(2) = .true.
+         this%do_spin(1) = .false.
+      endif
 !
+      if (input%is_keyword_present('singlet states', 'solver cc es')) then
+         this%do_spin(1) = .true.
+      endif
+!
+   end subroutine determine_spin
 !
    subroutine set_allowed_wfs_cc_es_engine(this)
 !!

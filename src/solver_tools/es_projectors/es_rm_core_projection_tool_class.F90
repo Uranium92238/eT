@@ -54,7 +54,7 @@ contains
 !
    function new_es_rm_core_projection_tool(wf) result(tool)
 !!
-!!    New es remove core projection tool 
+!!    New
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2021
 !!
       implicit none 

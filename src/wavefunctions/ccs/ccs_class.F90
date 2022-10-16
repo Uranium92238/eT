@@ -28,25 +28,25 @@ module ccs_class
 !
    use wavefunction_class, only: wavefunction
 !
-   use global_in, only: input
-   use global_out, only: output
-   use timings_class, only: timings
-   use memory_manager_class, only: mem
+   use global_in,             only: input
+   use global_out,            only: output
+   use timings_class,         only: timings
+   use memory_manager_class,  only: mem
 !
-   use stream_file_class, only: stream_file
+   use stream_file_class,           only: stream_file
    use amplitude_file_storer_class, only: amplitude_file_storer
 !
    use range_class, only: range_
 !
-   use abstract_eri_cholesky_class, only: abstract_eri_cholesky
-   use abstract_eri_cholesky_c_class, only: abstract_eri_cholesky_c
-   use eri_adapter_class, only: eri_adapter
-   use eri_adapter_c_class, only: eri_adapter_c
+   use abstract_eri_cholesky_class,    only: abstract_eri_cholesky
+   use abstract_eri_cholesky_c_class,  only: abstract_eri_cholesky_c
+   use eri_adapter_class,              only: eri_adapter
+   use eri_adapter_c_class,            only: eri_adapter_c
 !
 !  Need these here to avoid intel segfault
-   use eri_memory_tool_c_class, only: eri_memory_tool_c
-   use eri_tool_c_class, only: eri_tool_c
-   use eri_cholesky_disk_c_class, only: eri_cholesky_disk_c
+   use eri_memory_tool_c_class,     only: eri_memory_tool_c
+   use eri_tool_c_class,            only: eri_tool_c
+   use eri_cholesky_disk_c_class,   only: eri_cholesky_disk_c
    use eri_cholesky_memory_c_class, only: eri_cholesky_memory_c
 !
    use array_utilities, only: zdot
@@ -62,9 +62,11 @@ module ccs_class
 !
       integer :: n_gs_amplitudes
       integer :: n_es_amplitudes
+      integer :: n_triplet_amplitudes
       integer :: n_t1
 !
       integer :: n_singlet_states
+      integer :: n_triplet_states
       integer :: n_bath_orbitals
 !
       integer :: n_core_MOs
@@ -72,10 +74,15 @@ module ccs_class
 !
       real(dp), dimension(:), allocatable :: left_excitation_energies
       real(dp), dimension(:), allocatable :: right_excitation_energies
+      real(dp), dimension(:), allocatable :: left_triplet_excitation_energies
+      real(dp), dimension(:), allocatable :: right_triplet_excitation_energies
 !
       logical :: bath_orbital
 !
       logical :: need_g_abcd
+!
+      type(amplitude_file_storer), dimension(:), allocatable :: triplet_l_storers
+      type(amplitude_file_storer), dimension(:), allocatable :: triplet_r_storers
 !
       type(amplitude_file_storer) :: t_storer, tbar_storer
       type(amplitude_file_storer), dimension(:), allocatable :: l_storers
@@ -191,6 +198,7 @@ module ccs_class
                 => destruct_density_intermediates_ccs
 !
       procedure :: initialize_excitation_energies                => initialize_excitation_energies_ccs
+      procedure :: initialize_triplet_excitation_energies        => initialize_triplet_excitation_energies_ccs
 !
       procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
       procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
@@ -198,8 +206,15 @@ module ccs_class
       procedure :: initialize_left_excitation_energies           => initialize_left_excitation_energies_ccs
       procedure :: destruct_left_excitation_energies             => destruct_left_excitation_energies_ccs
 !
+      procedure :: initialize_right_triplet_excitation_energies  => initialize_right_triplet_excitation_energies_ccs
+      procedure :: destruct_right_triplet_excitation_energies    => destruct_right_triplet_excitation_energies_ccs
+!
+      procedure :: initialize_left_triplet_excitation_energies   => initialize_left_triplet_excitation_energies_ccs
+      procedure :: destruct_left_triplet_excitation_energies     => destruct_left_triplet_excitation_energies_ccs
+!
       procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs
       procedure :: destruct_core_MOs                             => destruct_core_MOs_ccs
+!
 !
 !     Read settings
 !
@@ -212,28 +227,48 @@ module ccs_class
 !
       procedure :: initialize_ground_state_files &
                 => initialize_ground_state_files_ccs
+!
       procedure :: initialize_excited_state_files &
                 => initialize_excited_state_files_ccs
+!
       procedure :: save_amplitudes &
                 => save_amplitudes_ccs
+!
       procedure :: read_amplitudes &
                 => read_amplitudes_ccs
+!
       procedure :: save_multipliers &
                 => save_multipliers_ccs
+!
       procedure :: read_multipliers &
                 => read_multipliers_ccs
+!
       procedure :: save_excited_state &
                 => save_excited_state_ccs
+!
       procedure :: read_excited_state &
                 => read_excited_state_ccs
+!
       procedure :: check_and_get_restart_vector &
                 => check_and_get_restart_vector_ccs
+!
       procedure :: get_restart_vector &
                 => get_restart_vector_ccs
+!
       procedure :: save_tbar_intermediates &
                 => save_tbar_intermediates_ccs
+!
       procedure :: get_density_for_plotting &
                 => get_density_for_plotting_ccs
+!
+      procedure :: save_triplet_excited_state &
+                => save_triplet_excited_state_ccs
+!
+      procedure :: read_triplet_excited_state &
+                => read_triplet_excited_state_ccs
+!
+      procedure :: initialize_triplet_excited_state_files &
+                => initialize_triplet_excited_state_files_ccs
 !
 !     Print summaries
 !
@@ -263,6 +298,8 @@ module ccs_class
       procedure :: get_gs_amplitude_block_sizes &
                 => get_amplitude_block_sizes_ccs
       procedure :: get_es_amplitude_block_sizes &
+                => get_amplitude_block_sizes_ccs
+      procedure :: get_triplet_es_amplitude_block_sizes &
                 => get_amplitude_block_sizes_ccs
 !
 !     Procedures related to the Fock matrix
@@ -321,11 +358,16 @@ module ccs_class
 !     Procedures related to the Jacobian transformation
 !
       procedure :: prepare_for_excited_states
+      procedure :: prepare_for_triplet_excited_states
 !
       procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
+      procedure :: construct_triplet_jacobian_transform          => construct_triplet_jacobian_transform_ccs
 !
       procedure :: prepare_for_Jacobians                 &
                 => prepare_for_Jacobians_ccs
+!
+      procedure :: prepare_for_triplet_jacobians         &
+                => prepare_for_triplet_jacobians_ccs
 !
       procedure :: prepare_for_approximate_Jacobians     &
                 => prepare_for_approximate_Jacobians_ccs
@@ -519,6 +561,20 @@ module ccs_class
       procedure, private :: cholesky_factory
       procedure, private :: cholesky_factory_complex
 !
+      procedure :: prepare_for_triplet_jacobian => prepare_for_triplet_jacobian_ccs
+      procedure :: triplet_jacobian_transformation => triplet_jacobian_transformation_ccs
+      procedure :: triplet_jacobian_s_s_a => triplet_jacobian_s_s_a_ccs
+      procedure :: triplet_jacobian_transpose_s_s_a => triplet_jacobian_transpose_s_s_a_ccs
+!
+      procedure :: prepare_for_triplet_jacobian_transpose => prepare_for_triplet_jacobian_transpose_ccs
+      procedure :: triplet_jacobian_transpose_transformation => triplet_jacobian_transpose_transformation_ccs
+!
+      procedure :: set_excitation_energy => set_excitation_energy_ccs
+      procedure :: set_triplet_excitation_energy => set_triplet_excitation_energy_ccs
+!
+      procedure :: get_triplet_preconditioner => get_triplet_preconditioner_ccs
+!
+      procedure :: print_es_vectors_and_energies_summary
 !
    end type ccs
 !
@@ -538,6 +594,8 @@ module ccs_class
       include "oei_ccs_interface.F90"
       include "t1_ccs_interface.F90"
       include "fock_ccs_interface.F90"
+      include "triplet_jacobian_ccs_interface.F90"
+      include "triplet_jacobian_transpose_ccs_interface.F90"
 !
       include "complex_ccs_interface.F90"
 !
@@ -575,6 +633,7 @@ contains
       wf%n_t1            = wf%n_o*wf%n_v
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1
+      wf%n_triplet_amplitudes = wf%n_t1
       wf%need_g_abcd     = .false.
 !
       call wf%initialize_fock()
@@ -736,6 +795,8 @@ contains
       call wf%destruct_multipliers()
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
+      call wf%destruct_right_triplet_excitation_energies()
+      call wf%destruct_left_triplet_excitation_energies()
       call wf%destruct_mo_fock_frozen()
       call wf%destruct_fock()
       call wf%destruct_orbital_coefficients()
@@ -941,9 +1002,82 @@ contains
    end subroutine prepare_for_excited_states
 !
 !
-   subroutine prepare_for_Jacobians_ccs(wf, r_or_l)
+   subroutine prepare_for_triplet_excited_states(wf, n_states)
 !!
-!!    Approximate Jacobian transform
+!!    Prepare for triplet excited states
+!!    Written by Alexander C. Paul, May 2022
+!!
+!!    Set number of excited states and read es settings
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      integer, intent(in) :: n_states
+!
+      wf%n_triplet_states = n_states
+!
+      call wf%initialize_triplet_excited_state_files()
+      call wf%initialize_triplet_excitation_energies()
+!
+   end subroutine prepare_for_triplet_excited_states
+!
+!
+   subroutine construct_triplet_jacobian_transform_ccs(wf, r_or_l, X, R)
+!!
+!!    Construct triplet Jacobian transform
+!!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+!!    Modified by Rolf H. Myhre, Oct 2019
+!!
+!!    Constructs R = AX or R = A^T X
+!!
+!!    Removed calculation of residual, this is now done in the solver
+!!
+!!    Wrapper for Jacobian transformations
+!!
+!!    r_or_l: string that should be 'left' or 'right',
+!!            determines if Jacobian or Jacobian transpose is called
+!!
+!!    X: On input contains the vector to transform,
+!!
+!!    R: On output contains the transformed vector
+!!
+!!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
+!!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
+!!
+      use warning_suppressor
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      real(dp), dimension(wf%n_triplet_amplitudes), intent(in)  :: X
+      real(dp), dimension(wf%n_triplet_amplitudes), intent(out) :: R
+!
+!
+!     Compute the transformed matrix
+      if (r_or_l .eq. "right") then
+!
+         call wf%triplet_jacobian_transformation(X, R) ! X <- AX
+!
+      elseif (r_or_l .eq. 'left') then
+!
+         call wf%triplet_jacobian_transpose_transformation(X, R) ! X <- XA
+!
+      else
+!
+         call output%error_msg('Neither left nor right in construct_Jacobian_transform')
+!
+      endif
+!
+   end subroutine construct_triplet_jacobian_transform_ccs
+!
+!
+   subroutine prepare_for_jacobians_ccs(wf, r_or_l)
+!!
+!!    Prepare for Jacobians
 !!    Written by Eirik F. Kjønstad, Mar 2021
 !!
 !!    Wrapper for preparations to left and right Jacobian transformations.
@@ -977,6 +1111,45 @@ contains
       end if
 !
    end subroutine prepare_for_Jacobians_ccs
+!
+!
+   subroutine prepare_for_triplet_jacobians_ccs(wf, r_or_l)
+!!
+!!    Prepare for triplet Jacobians
+!!    Written by Eirik F. Kjønstad, Mar 2021
+!!
+!!    Wrapper for preparations to left and right Jacobian transformations.
+!!
+!!    r_or_l: 'left', 'right', or 'both'
+!!            (prepares for A^T, A, or both A^T and A)
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+      if (r_or_l == 'right') then
+!
+         call wf%prepare_for_triplet_jacobian()
+!
+      else if (r_or_l == 'left') then
+!
+         call wf%prepare_for_triplet_jacobian_transpose()
+!
+      else if (r_or_l == 'both') then
+!
+         call wf%prepare_for_triplet_jacobian()
+         call wf%prepare_for_triplet_jacobian_transpose()
+!
+      else
+!
+         call output%error_msg('"r_or_l" with value (a0) not recognized in &
+                               &prepare_for_triplet_jacobians_ccs.', chars=[r_or_l])
+!
+      end if
+!
+   end subroutine prepare_for_triplet_jacobians_ccs
 !
 !
    subroutine approximate_Jacobian_transform_ccs(wf, r_or_l, X, R, w)
@@ -2720,7 +2893,62 @@ contains
    end subroutine print_gs_summary_ccs
 !
 !
-   subroutine print_es_summary_ccs(wf, side, X_order)
+   subroutine print_es_summary_ccs(wf, side, spin_symmetry)
+!!
+!!    Print es summary
+!!    Written by Sarai Dery Folkestad, Oct 2022
+!!
+!
+      use string_utilities, only: convert_to_uppercase
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      character(len=*), intent(in) :: side, spin_symmetry
+!
+      character(len=1) :: label
+      integer :: n_states, n_amplitudes
+!
+      label = trim(adjustl(convert_to_uppercase(side(1:1))))
+!
+      if (trim(spin_symmetry) == 'singlet') then
+!
+         n_states     = wf%n_singlet_states
+         n_amplitudes = wf%n_es_amplitudes
+!
+         if (trim(side) == 'left') then
+!
+            call wf%print_es_vectors_and_energies_summary(wf%l_storers, n_states, n_amplitudes, label)
+!
+         else if (trim(side) == 'right') then
+!
+            call wf%print_es_vectors_and_energies_summary(wf%r_storers, n_states, n_amplitudes, label)
+!
+         end if
+!
+      elseif (trim(spin_symmetry) == 'triplet') then
+!
+         n_states     = wf%n_triplet_states
+         n_amplitudes = wf%n_triplet_amplitudes
+!
+         if (trim(side) == 'left') then
+!
+            call wf%print_es_vectors_and_energies_summary(wf%triplet_l_storers, n_states, &
+                                                       n_amplitudes, label)
+!
+         else if (trim(side) == 'right') then
+!
+            call wf%print_es_vectors_and_energies_summary(wf%triplet_r_storers, n_states, &
+                                                       n_amplitudes, label)
+!
+         end if
+!
+      endif
+!
+   end subroutine print_es_summary_ccs
+!
+!
+   subroutine print_es_vectors_and_energies_summary(wf, amplitude_storer, n_states, n_amplitudes, label)
 !!
 !!    Print es summary
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -2731,64 +2959,38 @@ contains
       implicit none
 !
       class(ccs), intent(inout) :: wf
-      character(len=*), intent(in) :: side
 !
-      integer, dimension(wf%n_singlet_states), optional, intent(in) :: X_order
+      integer, intent(in) :: n_states, n_amplitudes
+      type(amplitude_file_storer), dimension(n_states), intent(inout) :: amplitude_storer
+      character(len=1), intent(in) :: label
 !
       integer :: I
 !
-      integer, dimension(:), allocatable :: X_order_local
       real(dp), dimension(:,:), allocatable :: X
       real(dp), dimension(:), allocatable :: energies
 !
-      integer :: state_index
+      call mem%alloc(X, n_amplitudes, n_states)
+      call mem%alloc(energies, n_states)
 !
-      character(len=1) :: label ! R or L, depending on whether left or right transformation
+      do I = 1, n_states
 !
-!     Set up list that gives ordering of energies from low to high
+         call amplitude_storer(I)%read_(X(:,I), energies(I))
 !
-      call mem%alloc(X_order_local, wf%n_singlet_states)
-!
-      if (present(X_order)) then
-!
-         X_order_local = X_order
-!
-      else
-!
-         do I = 1, wf%n_singlet_states
-!
-            X_order_local(I) = I
-!
-         enddo
-!
-      endif
-!
-!
-      call mem%alloc(X, wf%n_es_amplitudes, wf%n_singlet_states)
-      call mem%alloc(energies, wf%n_singlet_states)
-      call wf%read_excited_state(X, 1, wf%n_singlet_states, side, energies)
-!
-!     Print excited state vectors
-!
-      label = trim(adjustl(convert_to_uppercase(side(1:1))))
+      end do
 !
       call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
 !
-      do I = 1, wf%n_singlet_states
-!
-         state_index = X_order_local(I)
+      do I = 1, n_states
 !
          call output%printf('n', 'Electronic state nr. (i0)', ints=[I], fs='(/t6,a)')
 !
          call output%printf('n', 'Energy (Hartree):             (f19.12)', &
-                            reals=[energies(state_index)], fs='(/t6,a)')
+                            reals=[energies(I)], fs='(/t6,a)')
 !
-         call wf%print_X1_diagnostics(X(:,state_index), label)
-         call wf%print_dominant_x_amplitudes(X(1, state_index), label)
+         call wf%print_X1_diagnostics(X(:,I), n_amplitudes, label)
+         call wf%print_dominant_x_amplitudes(X(1, I), label)
 !
       enddo
-!
-      call mem%dealloc(X_order_local, wf%n_singlet_states)
 !
       call output%printf('m', '- '//trim(convert_to_uppercase(wf%name_))//' excitation energies:', fs='(/t3,a)')
 !
@@ -2797,7 +2999,7 @@ contains
       call output%printf('m', ' State                (Hartree)             (eV)', fs='(t6,a)')
       call output%print_separator('m', 63, '-', fs='(t6,a)')
 !
-      do I = 1, wf%n_singlet_states
+      do I = 1, n_states
 !
          call output%printf('m', '(i4)             (f19.12)   (f19.12)',   &
                                ints=[I], reals=[energies(I),               &
@@ -2811,13 +3013,13 @@ contains
                          reals=[Hartree_to_eV], fs='(t6,a)')
 !
 
-      call mem%dealloc(X, wf%n_es_amplitudes, wf%n_singlet_states)
-      call mem%dealloc(energies, wf%n_singlet_states)
+      call mem%dealloc(X, n_amplitudes, n_states)
+      call mem%dealloc(energies, n_states)
 !
-   end subroutine print_es_summary_ccs
+   end subroutine print_es_vectors_and_energies_summary
 !
 !
-   subroutine print_X1_diagnostics_ccs(wf, X, label)
+   subroutine print_X1_diagnostics_ccs(wf, X, n_amplitudes, label)
 !!
 !!    Get X1 diagnostics
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -2829,13 +3031,14 @@ contains
       class(ccs), intent(in) :: wf
 !
       character(len=1), intent(in) :: label
+      integer, intent(in) :: n_amplitudes
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+      real(dp), dimension(n_amplitudes), intent(in) :: X
 !
       real(dp) :: get_X1_diagnostics
 !
       get_X1_diagnostics = get_l2_norm(X(1:wf%n_t1),wf%n_t1)&
-                           /get_l2_norm(X(1:wf%n_es_amplitudes),wf%n_es_amplitudes)
+                           /get_l2_norm(X(1:n_amplitudes),n_amplitudes)
 !
       call output%printf('n', 'Fraction singles (|(a0)1|/|(a0)|):  (f19.12)', &
             reals=[get_X1_diagnostics], chars=[label, label], fs='(t6,a)')
@@ -3074,5 +3277,57 @@ contains
                          fs='(/t6,a)')
 !
    end subroutine cholesky_factory_complex
+!
+!
+   subroutine set_excitation_energy_ccs(wf, energy, I, side)
+!!
+!!    Save excitation energy
+!!    Written by Sarai D. Folkestad, 2022
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      real(dp), intent(in) :: energy
+      integer, intent(in) :: I
+      character(len=*), intent(in) :: side
+!
+      if (side == 'left') wf%left_excitation_energies(I) = energy
+      if (side == 'right') wf%right_excitation_energies(I) = energy
+!
+   end subroutine set_excitation_energy_ccs
+!
+!
+   subroutine set_triplet_excitation_energy_ccs(wf, energy, I, side)
+!!
+!!    Save triplet excitation energies
+!!    Written by Sarai D. Folkestad, 2022
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+      real(dp), intent(in) :: energy
+      integer, intent(in) :: I
+      character(len=*), intent(in) :: side
+!
+      if (side == 'left') wf%left_triplet_excitation_energies(I) = energy
+      if (side == 'right') wf%right_triplet_excitation_energies(I) = energy
+!
+   end subroutine set_triplet_excitation_energy_ccs
+!
+!
+   subroutine get_triplet_preconditioner_ccs(wf, preconditioner)
+!!
+!!    Get triplet preconditioner
+!!    Written by Sarai D. Folkestad, 2022
+!!
+      implicit none
+
+      class(ccs), intent(in) :: wf
+      real(dp), dimension(wf%n_triplet_amplitudes), intent(inout) :: preconditioner
+!
+      call wf%get_orbital_differences(preconditioner, wf%n_t1)
+!
+   end subroutine get_triplet_preconditioner_ccs
+!
 !
 end module ccs_class
