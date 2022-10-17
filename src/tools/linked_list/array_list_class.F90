@@ -730,6 +730,7 @@ contains
 !           Deallocate array
 !           
             call nth_pointer%destruct()
+            deallocate(nth_pointer)
 
          endif
 !

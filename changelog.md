@@ -22,6 +22,9 @@
 - Added restart test for CCS and 3-level MLCCSD tests. eT-program/eT!1105
 - Simplified the use of keyword arguments in `filters.py`. eT-program/eT!1106
 
+### Bugfixes
+- Removed memory leaks in linked list class and main program. eT-program/eT!1139
+
 ### CI
 - Updated version of `fortran-code-quality` to v1.3.0. eT-program/eT!1139
 - CI now always runs python and fortran code-quality, but stops if one of these stages does not succeed. eT-program/eT!1140
