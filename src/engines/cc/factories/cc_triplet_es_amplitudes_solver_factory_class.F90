@@ -156,12 +156,10 @@ contains
       use transformation_class,                             only: transformation
       use convergence_tool_class,                           only: convergence_tool
       use start_vector_tool_class,                          only: start_vector_tool
-      use cc_es_storage_tool_class,                         only: cc_es_storage_tool
       use eigen_storage_tool_class,                         only: eigen_storage_tool
       use null_projection_tool_class,                       only: null_projection_tool
       use preconditioner_getter_class,                      only: preconditioner_getter
       use abstract_projection_tool_class,                   only: abstract_projection_tool
-      use eigen_davidson_print_tool_class,                  only: eigen_davidson_print_tool
       use cc_triplet_es_storage_tool_class,                 only: cc_triplet_es_storage_tool
       use cc_triplet_jacobian_transformation_class,         only: cc_triplet_jacobian_transformation
       use triplet_es_valence_start_vector_tool_class,       only: triplet_es_valence_start_vector_tool
@@ -177,7 +175,6 @@ contains
       class(eigen_davidson_tool),         allocatable :: davidson
       class(eigen_storage_tool),          allocatable :: storer
       class(transformation),              allocatable :: transformer
-      class(eigen_davidson_print_tool),   allocatable :: printer
       class(preconditioner_getter),       allocatable :: preconditioner
       class(convergence_tool),            allocatable :: convergence_checker
       class(start_vector_tool),           allocatable :: start_vectors
