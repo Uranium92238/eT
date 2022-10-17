@@ -1,3 +1,7 @@
+# eT v1.8.10
+### Features
+- Reverted eT-program/eT!1127: Fixed eT interface to libint. eT-program/eT!1146
+
 # eT v1.8.9
 ### Features
 - Fixed eT interface to libint. eT-program/eT!1127
