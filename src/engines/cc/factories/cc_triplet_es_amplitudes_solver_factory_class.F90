@@ -76,7 +76,8 @@ contains
       logical, intent(in) :: restart
       character(len=200)  :: algorithm
 !
-      if (method .ne. 'ccs') call output%error_msg('Triplets not implemented for '// method)
+      if (method .ne. 'ccs' .and. method .ne. 'cc2') &
+          call output%error_msg('Triplets not implemented for '// method)
 !
       this%transformation = trim(transformation)
       this%restart = restart

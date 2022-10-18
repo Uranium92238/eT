@@ -25,7 +25,7 @@ submodule (ccs_class) triplet_jacobian_transpose_ccs
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix
 !!
-!!    ρ_i = A * c_i,
+!!    sigma_i = A^T * c_i,
 !!
 !!    where
 !!
@@ -69,7 +69,7 @@ contains
 !!
 !!    In particular,
 !!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!!       sigma_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
 !!
       use array_initialization, only: zero_array
 !
@@ -93,8 +93,6 @@ contains
       call timer%turn_off()
 !
    end subroutine triplet_jacobian_transpose_transformation_ccs
-!
-!
 !
 !
    module subroutine triplet_jacobian_transpose_s_s_a_ccs(wf, sigma_ai, c_bj)

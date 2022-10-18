@@ -27,7 +27,7 @@ f = get_cc_es_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-inp = 'ccs_triplet_es.inp'
+inp = 'cc2_triplet_left_es.inp'
 # the run function runs the code and filters the outputs
 ierr += run(options,
             configure,
