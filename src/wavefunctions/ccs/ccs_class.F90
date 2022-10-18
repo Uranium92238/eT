@@ -2434,21 +2434,11 @@ contains
 !!    MO preparations
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
-!!    Routine which initializes the MO integral tool,
-!!    MO transforms the Cholesky vectors, and does other
-!!    preparations related to modifications of the MOs,
-!!    such as frozen core, change of basis from canonical
-!!    orbitals and shifting of bath orbitals (not implemented).
-!!
-!!    This routine is not overwritten for
-!!    descendants of standard CC-type (e.g., CCSD, CC2, CC3)
-!!    but will be so for MLCC methods.
-!!
       use warning_suppressor, only: do_nothing
 !
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       call do_nothing(wf)
 !

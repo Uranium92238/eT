@@ -441,9 +441,11 @@ contains
 !!    If there is a CC2 space, we must construct the transformation matrix which transforms
 !!    between the MLCCSD basis and the basis where s amplitudes are constructed.
 !!
+      use global_in, only: input
+!
       implicit none
 !
-      class(mlccsd) :: wf
+      class(mlccsd), intent(inout) :: wf
 !
       logical :: has_restart_files
 !
@@ -474,6 +476,10 @@ contains
 !
       call wf%print_orbital_space()
       call wf%check_orbital_space()
+!
+      if (input%is_keyword_present('print orbitals', 'system')) then
+         call wf%write_orbitals(trim(wf%name_))
+      end if
 !
    end subroutine mo_preparations_mlccsd
 !
