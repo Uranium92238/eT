@@ -3,7 +3,7 @@ system
     charge: 0
 end system
 
-do 
+do
    excited state
 end do
 
@@ -37,7 +37,7 @@ end solver cc es
 
 visualization
     file format: cube
-    plot cntos
+    plot cntos: {1}
     nto threshold: 1.0d-1
     grid spacing: 0.2
     grid buffer: 1.0
