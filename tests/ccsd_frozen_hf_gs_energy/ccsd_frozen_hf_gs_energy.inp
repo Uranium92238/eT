@@ -1,6 +1,7 @@
 system
    name: Formamide
    charge: 0
+   print orbitals
 end system
 
 do
@@ -35,6 +36,12 @@ frozen orbitals
    hf
 end frozen orbitals
 
+visualization
+    file format: cube
+    plot cc orbitals: [6,7]
+    grid spacing: 0.2
+    grid buffer: 1.0
+end visualization
 
 active atoms
    selection type: range

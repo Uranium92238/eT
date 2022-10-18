@@ -1035,9 +1035,11 @@ contains
 !!    MO preparations
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+      use global_in, only: input
+!
       implicit none
 !
-      class(mlcc2) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
       logical :: has_restart_files
 !
@@ -1066,6 +1068,10 @@ contains
 !
       call wf%print_orbital_space()
       call wf%check_orbital_space()
+!
+      if (input%is_keyword_present('print orbitals', 'system')) then
+         call wf%write_orbitals(trim(wf%name_))
+      end if
 !
    end subroutine mo_preparations_mlcc2
 !

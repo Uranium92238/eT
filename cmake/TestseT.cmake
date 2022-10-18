@@ -328,6 +328,7 @@ add_eT_runtest(mlccsd_cnto_es                               "eT;short;mlccsd;es;
 add_eT_runtest(mlccsd_pao_es                                "eT;short;mlccsd;es;pao")
 add_eT_runtest(mlccsd_pao_full_cvs                          "eT;short;mlccsd;es;pao")
 add_eT_runtest(mlccsd_pao_cvs                               "eT;short;mlccsd;es;pao")
+add_eT_runtest(plot_orbitals_mlccsd_cnto_es                 "eT;short;mlccsd;es;cnto;visualization")
 add_eT_runtest(mlccsd_pao_3_levels_cvs_frozen_hf            "eT;short;mlccsd;es;cvs;pao;3-levels")
 add_eT_runtest(mlccsd_cholesky_3_levels_cvs_frozen_hf       "eT;short;mlccsd;es;cvs;cholesky;3-levels")
 add_eT_runtest(mlccsd_cholesky_cc2                          "eT;short;mlccsd;es;cholesky")

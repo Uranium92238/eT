@@ -1,0 +1,71 @@
+system
+   name: H2O-NH3
+   charge: 0
+   print orbitals
+end system
+
+do
+   excited state
+end do
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver scf
+   algorithm:          scf-diis
+   gradient threshold: 1.0d-11
+end solver scf
+
+frozen orbitals
+   core
+   hf
+end frozen orbitals
+
+active atoms
+   selection type: range
+   ccsd: [5,7]
+end active atoms
+
+method
+   hf
+   mlccsd
+end method
+
+solver cc gs
+   omega threshold:  1.0d-11
+end solver cc gs
+
+solver cc es
+   singlet states:     1
+   residual threshold: 1.0d-11
+end solver cc es
+
+mlcc
+   levels: ccs, ccsd
+   ccsd orbitals: cnto
+   cnto occupied ccsd: 2
+   cnto states: {1}
+end mlcc
+
+visualization
+    file format: cube
+    plot cc orbitals: {1,2}
+    grid spacing: 0.2
+    grid buffer: 1.0
+end visualization
+
+geometry
+basis: 6-31G
+N       3.605107      -1.159736       1.853888
+H       4.354463      -0.851984       1.260305
+H       2.896940      -0.439046       1.848747
+H       4.022885      -1.256067       2.755356
+O       1.588976      -3.168429       6.601626
+H       1.311925      -3.235590       5.652615
+H       2.350015      -2.567450       6.566592
+end geometry

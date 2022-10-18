@@ -616,6 +616,7 @@ contains
                         'n',             &
                         'name',                 &
                         'cartesian gaussians',  &
+                        'print orbitals',       &
                         'pure gaussians',       &
                         'charge',               &
                         'multiplicity']
@@ -651,6 +652,7 @@ contains
                                'grid min',                  &
                                'grid max',                  &
                                'plot cc density',           &
+                               'plot cc orbitals',          &
                                'plot es densities',         &
                                'plot hf orbitals',          &
                                'plot hf density',           &

@@ -35,7 +35,7 @@ module cc_visualization_task_class
    type, extends(cc_task) :: cc_visualization_task
 !
       logical, private  :: plot_gs_density, plot_mn_densities, plot_es_densities
-      logical, private  :: plot_ntos, plot_cntos
+      logical, private  :: plot_ntos, plot_cntos, plot_mos
 !
       real(dp), private :: nto_threshold
 !
@@ -54,6 +54,7 @@ module cc_visualization_task_class
       procedure, private :: set_states_to_plot
       procedure, private :: visualize_ntos
       procedure, private :: plot_orbitals
+      procedure, private :: visualize_molecular_orbitals
       procedure, private :: visualize_ground_state_density
       procedure, private :: visualize_transition_densities
       procedure, private :: visualize_excited_state_densities
@@ -83,6 +84,8 @@ contains
       type(cc_visualization_task) :: this
 !
       this%name_ = 'Plotting orbitals and/or CC densities'
+!
+      this%plot_mos = input%is_keyword_present('plot cc orbitals', 'visualization')
 !
       this%plot_gs_density = input%is_keyword_present('plot cc density', 'visualization')
 !
@@ -126,7 +129,7 @@ contains
       logical :: plot_anything
       character(len=4) :: tag
 !
-      plot_anything = any([this%plot_gs_density, this%plot_mn_densities, &
+      plot_anything = any([this%plot_mos, this%plot_gs_density, this%plot_mn_densities, &
                            this%plot_es_densities, this%plot_ntos, this%plot_cntos])
 !
 !
@@ -139,6 +142,8 @@ contains
 !
       this%visualizer = visualization(wf%ao)
       call this%visualizer%initialize(wf%ao)
+!
+      call this%visualize_molecular_orbitals(wf)
 !
       call this%visualize_ground_state_density(wf)
 !
@@ -161,6 +166,57 @@ contains
       call this%end_timer()
 !
    end subroutine execute_cc_visualization_task
+!
+!
+   subroutine visualize_molecular_orbitals(this, wf)
+!!
+!!    Visualize molecular orbitals
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, 2019-2022
+!!
+      use global_in, only: input
+!
+      implicit none
+!
+      class(cc_visualization_task), intent(inout) :: this
+      class(ccs), intent(in) :: wf
+!
+      integer :: i, n_orbitals_to_plot
+!
+      integer, dimension(:), allocatable :: orbitals_to_plot
+!
+      real(dp), dimension(:,:), allocatable :: coefficients
+!
+      character(len=200), dimension(:), allocatable :: orbital_file_tags
+!
+      if (.not. this%plot_mos) return
+!
+      n_orbitals_to_plot = input%get_n_elements_for_keyword('plot cc orbitals', 'visualization')
+!
+      call mem%alloc(orbitals_to_plot, n_orbitals_to_plot)
+      call input%get_array_for_keyword('plot cc orbitals', 'visualization', &
+                                        n_orbitals_to_plot, orbitals_to_plot)
+!
+      call mem%alloc(coefficients, wf%ao%n, n_orbitals_to_plot)
+      allocate(orbital_file_tags(n_orbitals_to_plot))
+!
+      do i = 1, n_orbitals_to_plot
+!
+         call dcopy(wf%ao%n, wf%orbital_coefficients(1, orbitals_to_plot(i)), 1, &
+                    coefficients(1, i), 1)
+!
+         write(orbital_file_tags(i), '(a, i4.4)') 'CC_MO_', orbitals_to_plot(i)
+!
+      enddo
+!
+      call mem%dealloc(orbitals_to_plot, n_orbitals_to_plot)
+!
+      call this%visualizer%plot_orbitals(wf%ao, coefficients, &
+                                         n_orbitals_to_plot, orbital_file_tags)
+!
+      call mem%dealloc(coefficients, wf%ao%n, n_orbitals_to_plot)
+      deallocate(orbital_file_tags)
+!
+   end subroutine visualize_molecular_orbitals
 !
 !
    subroutine visualize_ground_state_density(this, wf)

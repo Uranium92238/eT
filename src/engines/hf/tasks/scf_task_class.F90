@@ -127,15 +127,18 @@ contains
 !
          this%restart = wf%is_restart_possible()
 !
-      end if 
+      end if
 !
       this%skip_scf = input%is_keyword_present('skip', 'solver scf')
 !
       this%write_mo_info = input%is_keyword_present('print orbitals', 'solver scf')
+      if (input%is_keyword_present('print orbitals', 'system')) then
+         this%write_mo_info = .true.
+      end if
+!
       this%write_molden_file = input%is_keyword_present('write molden', 'solver scf')
 !
    end subroutine read_settings
 !
 !
 end module scf_task_class
-   

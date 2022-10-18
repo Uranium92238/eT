@@ -32,7 +32,7 @@ module hf_class
    use global_out, only: output
    use global_in,  only: input
 !
-   use output_file_class, only : output_file
+   use output_file_class, only: output_file
    use stream_file_class, only: stream_file
 !
    use timings_class, only: timings
@@ -86,7 +86,6 @@ module hf_class
       logical :: cumulative_fock
 !
       integer :: packed_gradient_dimension
-      type(output_file) :: mo_information_file
 !
       logical :: coulomb_exchange_separated
 !
@@ -156,9 +155,7 @@ module hf_class
 !     MO orbital related routines
 !
       procedure :: initialize_orbitals                         => initialize_orbitals_hf
-      procedure :: print_orbitals_and_energies                 => print_orbitals_and_energies_hf
-      procedure :: write_orbital_info                           => write_orbital_info_hf
-      procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
+      procedure :: write_orbital_info                          => write_orbital_info_hf
 !
 !     Class variable initialize and destruct routines
 !
@@ -447,90 +444,19 @@ contains
       implicit none
 !
       class(hf), intent(inout) :: wf
+      type(output_file) :: mo_file
 !
-      wf%mo_information_file = output_file('eT.mo_information.out')
-      call wf%mo_information_file%open_('rewind')
+      mo_file = output_file('eT.mo_information.out')
+      call mo_file%open_('rewind')
 !
-      call wf%print_orbitals_and_energies(wf%orbital_energies,     &
+      call wf%write_orbitals_and_energies(mo_file,  &
+                                          wf%orbital_energies, &
                                           wf%orbital_coefficients, &
                                           '- Molecular orbital')
 !
-      call wf%mo_information_file%close_()
+      call mo_file%close_()
 !
    end subroutine write_orbital_info_hf
-!
-!
-   subroutine print_orbitals_and_energies_hf(wf, mo_energies, mo_coefficients, prefix)
-!!
-!!    Print orbitals and energies
-!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
-!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
-!!    Modified by ALexander C. Paul prints MO energies to file as well, Oct 2020
-!!
-!!    Prints the orbital energies and the orbitals with atom & orbital information given.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo), intent(in) :: mo_energies
-      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: mo_coefficients
-!
-      character(len=*), intent(in) :: prefix
-      character(len=200) :: header
-!
-      write(header, '(a,a)') trim(prefix), ' energies'
-!
-      call wf%mo_information_file%print_vector('m', header, wf%n_mo, mo_energies, &
-                                               fs='(f20.12)', columns=3)
-!
-      write(header, '(a,a)') trim(prefix), ' coefficients'
-      call wf%mo_information_file%printf('m', header, fs='(//t3,a)')
-!
-      call wf%print_orbitals_from_coefficients(mo_coefficients)
-!
-   end subroutine print_orbitals_and_energies_hf
-!
-!
-   subroutine print_orbitals_from_coefficients_hf(wf, orbital_coefficients)
-!!
-!!    Print orbitals from coefficients
-!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
-!!
-!!    Modified by Alexander C. Paul, Dec 2019. Printing of l and m_l.
-!!    Modified by Eirik F. Kjønstad, Sep 2020. Printing now delegated to AO tool.
-!!
-!!    Prints the orbitals from coefficients with atom & orbital information given.
-!!
-!!       orbital_coefficients: (n_ao, n_mo) array containing orbital coefficients
-!!       the_file:             output file where the coefficients are to be printed
-!!
-      implicit none
-!
-      class(hf),                             intent(in) :: wf
-      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: orbital_coefficients
-!
-      integer, parameter :: n_entries = 5
-!
-      integer :: mo_offset, first_mo, last_mo
-!
-!     Print at most n_entries (5) MOs at a time
-!
-      do mo_offset = 1, wf%n_mo, n_entries
-!
-         first_mo = mo_offset
-         last_mo  = min(mo_offset + n_entries - 1, wf%n_mo)
-!
-!        Print the current set of MO vectors
-!
-         call wf%ao%print_ao_vectors(C        = orbital_coefficients(:, first_mo : last_mo),&
-                                     out_file = wf%mo_information_file,                     &
-                                     m        = last_mo - first_mo + 1,                     &
-                                     offset   = first_mo - 1)
-!
-      enddo
-!
-   end subroutine print_orbitals_from_coefficients_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)

@@ -1,5 +1,7 @@
 # eT v1.9.0
 ### Features
+- Added printing of orbital coefficients when orbitals are frozen or transformed to the MLCC basis. eT-program/eT!1102
+- Added ploting of orbitals from CC wave functions. eT-program/eT!1102
 - Added total and iteration timers to solvers. eT-program/eT!1109
 - Added option to zero out arrays when allocating. eT-program/eT!1112
 - CCS triplet excitation energies. eT-program/eT!1046
