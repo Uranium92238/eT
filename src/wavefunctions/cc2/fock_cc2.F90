@@ -78,6 +78,7 @@ contains
 !
          elseif (trim(task) == 'es') then
 !
+            call wf%construct_fock_ia_t1(h, F_eff)
             call wf%construct_fock_ai_t1(h, F_eff)
             call wf%construct_fock_ab_t1(h, F_eff)
             call wf%construct_fock_ij_t1(h, F_eff)

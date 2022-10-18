@@ -55,7 +55,6 @@ module eigen_davidson_solver_class
       class(eigen_davidson_print_tool), allocatable, private :: printer
       class(abstract_projection_tool),  allocatable, private :: projector
 !
-!
    contains
 !
       procedure, public :: run => run_eigen_davidson_solver

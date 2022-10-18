@@ -413,7 +413,9 @@ set(eT_fortran_sources
    src/wavefunctions/doubles/doubles_class.F90
    src/wavefunctions/doubles/omega_doubles.F90
    src/wavefunctions/doubles/jacobian_doubles.F90
+   src/wavefunctions/doubles/triplet_jacobian_doubles.F90
    src/wavefunctions/doubles/jacobian_transpose_doubles.F90
+   src/wavefunctions/doubles/triplet_jacobian_transpose_doubles.F90
    src/wavefunctions/doubles/file_handling_doubles.F90
    src/wavefunctions/doubles/initialize_destruct_doubles.F90
    src/wavefunctions/doubles/mean_value_doubles.F90
@@ -429,7 +431,9 @@ set(eT_fortran_sources
    src/wavefunctions/cc2/mean_value_cc2.F90
    src/wavefunctions/cc2/omega_cc2.F90
    src/wavefunctions/cc2/jacobian_cc2.F90
+   src/wavefunctions/cc2/triplet_jacobian_cc2.F90
    src/wavefunctions/cc2/jacobian_transpose_cc2.F90
+   src/wavefunctions/cc2/triplet_jacobian_transpose_cc2.F90
    src/wavefunctions/cc2/multiplier_equation_cc2.F90
    src/wavefunctions/cc2/initialize_destruct_cc2.F90
    src/wavefunctions/cc2/fock_cc2.F90

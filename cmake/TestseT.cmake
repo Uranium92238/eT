@@ -165,6 +165,8 @@ add_eT_runtest(cc2_gs_energy_batched_cd                     "eT;short;cc2;gs;pcd
 add_eT_runtest(cc2_dipole                                   "eT;short;cc2;gs;dipole")
 add_eT_runtest(cc2_frozen_core                              "eT;short;cc2;gs;es;frozen core")
 add_eT_runtest(cc2_right_es_energies                        "eT;short;cc2;es;right")
+add_eT_runtest(cc2_triplet_es                               "eT;short;cc2;es;right;triplet")
+add_eT_runtest(cc2_triplet_left_es                          "eT;short;cc2;es;left;triplet")
 add_eT_runtest(cc2_right_es_energies_diis                   "eT;short;cc2;es;right;diis")
 add_eT_runtest(cc2_right_cvs_es_energies                    "eT;short;cc2;es;right;cvs")
 add_eT_runtest(cc2_right_cvs_es_energies_manual_guess       "eT;short;cc2;es;right;cvs")
