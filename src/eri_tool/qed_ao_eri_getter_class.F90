@@ -78,9 +78,6 @@ contains
 !!    Get ERI
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2020
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(qed_ao_eri_getter) :: this

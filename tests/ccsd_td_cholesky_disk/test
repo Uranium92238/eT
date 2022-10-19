@@ -13,7 +13,7 @@ from runtest import version_info, cli, run
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_td_filter
+from filters import get_td_filter, get_file_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -22,16 +22,22 @@ assert version_info.major == 2
 threshold = 1.0e-8
 
 f = get_td_filter(threshold)
+g = get_file_filter(threshold)
+filters = {
+    'out' : f,
+    'cc_propagation_dipole_moment.out' : g,
+    'cc_propagation_energy.out' : g,
+    }
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_td_cholesky_disk.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_td_cholesky_disk.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters=filters)
 
 sys.exit(ierr)

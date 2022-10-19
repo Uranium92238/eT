@@ -27,10 +27,10 @@ module input_file_class
    use kinds
    use section_class, only : section
    use string_utilities
-   use abstract_file_class, only: abstract_file
+   use formatted_read_file_class, only: formatted_read_file
    use global_out, only: output
 !
-   type, extends(abstract_file) :: input_file
+   type, extends(formatted_read_file) :: input_file
 !
       type(section), allocatable, private :: sections(:)
 !
@@ -48,9 +48,6 @@ module input_file_class
       character(len=200), dimension(:), allocatable, private :: mm_geometry
 !
    contains
-!
-      procedure :: open_                                                => open_input_file
-      procedure :: close_                                               => close_input_file
 !
       procedure :: read_and_process_input &
                 => read_and_process_input_input_file
@@ -218,6 +215,7 @@ contains
 !
       this%access_ = 'sequential'
       this%format_ = 'formatted'
+      this%status_ = 'unknown'
       this%action_ = 'read'
 !
 !     Set method section
@@ -524,6 +522,7 @@ contains
                               'right eigenvectors',       &
                               'storage',                  &
                               'singlet states',           &
+                              'triplet states',           &
                               'diis dimension',           &
                               'max reduced dimension',    &
                               'davidson preconvergence',  &
@@ -614,8 +613,10 @@ contains
       system%name_    = 'system'
       system%required = .true.
       system%keywords = [character(len=30) ::   &
+                        'n',             &
                         'name',                 &
                         'cartesian gaussians',  &
+                        'print orbitals',       &
                         'pure gaussians',       &
                         'charge',               &
                         'multiplicity']
@@ -651,6 +652,7 @@ contains
                                'grid min',                  &
                                'grid max',                  &
                                'plot cc density',           &
+                               'plot cc orbitals',          &
                                'plot es densities',         &
                                'plot hf orbitals',          &
                                'plot hf density',           &
@@ -702,68 +704,6 @@ contains
       this%unit_ = -1
 !
    end function new_input_file
-!
-!
-   subroutine open_input_file(this)
-!!
-!!    Open input file
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(input_file) :: this
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      if (this%is_open) then
-!
-         call output%error_msg(trim(this%name_)//' is already open')
-!
-      endif
-!
-      open(newunit=this%unit_, file=this%name_, access=this%access_, &
-           action='read', status='unknown', form=this%format_, iostat=io_error, iomsg=io_msg)
-!
-      if (io_error .ne. 0) then
-!
-         call output%error_msg('could not open eT input file '//trim(this%name_)//&
-                              &'error message: '//trim(io_msg))
-      endif
-!
-      this%is_open = .true.
-!
-   end subroutine open_input_file
-!
-!
-   subroutine close_input_file(this)
-!!
-!!    Close input file
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(input_file) :: this
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      if (.not. this%is_open) then
-         call output%error_msg(trim(this%name_)//' already closed')
-      end if
-!
-      close(this%unit_, iostat=io_error, iomsg=io_msg, status='keep')
-!
-      if (io_error .ne. 0) then
-!
-         call output%error_msg('could not close eT input file '//trim(this%name_)//&
-                              &'error message: '//trim(io_msg))
-      endif
-!
-      this%is_open = .false.
-      this%unit_ = -1
-!
-   end subroutine close_input_file
 !
 !
    subroutine read_and_process_input_input_file(this)

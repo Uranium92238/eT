@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -78,7 +78,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:46:21 UTC +02:00
+  Calculation start:2022-10-19 10:29:50 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -170,15 +170,15 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7487E-09
+     8           -78.843851693528     0.2137E-05     0.7488E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4547E-12
-    11           -78.843851693631     0.5634E-08     0.2842E-13
-    12           -78.843851693631     0.1415E-08     0.5684E-13
+    10           -78.843851693631     0.2637E-07     0.4974E-12
+    11           -78.843851693631     0.5634E-08     0.4263E-13
+    12           -78.843851693631     0.1415E-08     0.1279E-12
     13           -78.843851693631     0.6806E-09     0.7105E-13
-    14           -78.843851693631     0.1491E-09     0.4263E-13
+    14           -78.843851693631     0.1491E-09     0.2842E-13
     15           -78.843851693631     0.2501E-10     0.7105E-13
-    16           -78.843851693631     0.5169E-11     0.4263E-13
+    16           -78.843851693631     0.5167E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -268,8 +268,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.19816
-     Total cpu time (sec):               0.40078
+     Total wall time (sec):              0.49600
+     Total cpu time (sec):               0.23401
 
 
   Determining CC cluster amplitudes
@@ -307,13 +307,13 @@
     5           -79.085769937826     0.3615E-04     0.1352E-05
     6           -79.085769725742     0.6004E-05     0.2121E-06
     7           -79.085769729164     0.2063E-05     0.3422E-08
-    8           -79.085769729229     0.3646E-06     0.6527E-10
+    8           -79.085769729229     0.3646E-06     0.6526E-10
     9           -79.085769729230     0.3393E-07     0.9095E-12
    10           -79.085769729553     0.4633E-08     0.3225E-09
    11           -79.085769729585     0.9303E-09     0.3266E-10
    12           -79.085769729575     0.2416E-09     0.1073E-10
    13           -79.085769729575     0.4926E-10     0.4547E-12
-   14           -79.085769729576     0.6368E-11     0.3979E-12
+   14           -79.085769729576     0.6370E-11     0.3979E-12
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -341,8 +341,8 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.05932
-     Total cpu time (sec):               0.11662
+     Total wall time (sec):              0.26300
+     Total cpu time (sec):               0.11251
 
 
   Determining CC excited state amplitudes
@@ -351,9 +351,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -512,7 +512,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441336       0.4185E-08
+     1      0.245983441335       0.4185E-08
      2      0.354257073627       0.2066E-05
      3      0.312493137695       0.2513E-06
   -----------------------------------------------
@@ -557,7 +557,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1815E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072913       0.9035E-09
      3      0.312493140828       0.4575E-09
   -----------------------------------------------
@@ -566,33 +566,31 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1815E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072917       0.1016E-09
-     3      0.312493140823       0.7885E-10
+     3      0.312493140823       0.7909E-10
   -----------------------------------------------
 
   Iteration:                 21
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1815E-11
+     1      0.245983441338       0.1814E-11
      2      0.354257072916       0.1861E-10
-     3      0.312493140824       0.2034E-11
+     3      0.312493140824       0.2362E-11
   -----------------------------------------------
 
   Iteration:                 22
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.245983441338       0.1815E-11
-     2      0.354257072916       0.4676E-11
-     3      0.312493140824       0.2034E-11
+     1      0.245983441338       0.1814E-11
+     2      0.354257072916       0.4675E-11
+     3      0.312493140824       0.2362E-11
   -----------------------------------------------
   Convergence criterion met in 22 iterations!
 
   - Resorting roots according to excitation energy.
-
-  - Stored converged states to file.
 
   - Excitation vector amplitudes:
 
@@ -619,7 +617,7 @@
 
      Electronic state nr. 2
 
-     Energy (Hartree):                  0.354257072916
+     Energy (Hartree):                  0.312493140824
      Fraction singles (|R1|/|R|):       1.000000000000
 
      Largest single amplitudes:
@@ -627,7 +625,7 @@
         a       i         R(a,i)
      -----------------------------------
         2      6        0.983888959785
-        3      6        0.161510332236
+        3      6        0.161510332237
         7      6       -0.071460933883
        14      6        0.021752345804
         2      3       -0.011826768100
@@ -640,7 +638,7 @@
 
      Electronic state nr. 3
 
-     Energy (Hartree):                  0.312493140824
+     Energy (Hartree):                  0.354257072916
      Fraction singles (|R1|/|R|):       1.000000000000
 
      Largest single amplitudes:
@@ -659,7 +657,7 @@
        10      5        0.013280743593
      ------------------------------------
 
-     - Electronic excitation energies:
+  - LOW MEMORY CC2 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -673,15 +671,15 @@
 
   - Finished solving the LOW MEMORY CC2 excited state equations (right)
 
-     Total wall time (sec):              0.64631
-     Total cpu time (sec):               1.29618
+     Total wall time (sec):              1.44900
+     Total cpu time (sec):               0.79622
 
-  Peak memory usage during the execution of eT: 10.699752 MB
+  Peak memory usage during the execution of eT: 10.667888 MB
 
-  Total wall time in eT (sec):              1.44750
-  Total cpu time in eT (sec):               2.84237
+  Total wall time in eT (sec):              2.86100
+  Total cpu time in eT (sec):               1.72090
 
-  Calculation end:2022-06-30 08:46:22 UTC +02:00
+  Calculation end:2022-10-19 10:29:53 UTC -07:00
 
   - Implementation references:
 

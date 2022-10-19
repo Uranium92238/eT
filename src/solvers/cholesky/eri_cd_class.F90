@@ -64,7 +64,7 @@ module eri_cd_class
    use global_out, only: output
    use memory_manager_class, only: mem
    use range_class, only: range_
-   use sequential_file_class, only: sequential_file
+   use stream_file_class, only: stream_file
    use cholesky_array_list_class, only: cholesky_array_list
    use ao_tool_class, only: ao_tool
    use timings_class, only: timings
@@ -100,11 +100,11 @@ module eri_cd_class
 !
       logical, private :: one_center
 !
-      type(sequential_file), private :: diagonal_info_cauchy_schwarz
-      type(sequential_file), private :: Q
-      type(sequential_file), private :: Q_inverse
-      type(sequential_file), private :: diagonal_info_target
-      type(sequential_file), private :: cholesky_basis_file
+      type(stream_file), private :: diagonal_info_cauchy_schwarz
+      type(stream_file), private :: Q
+      type(stream_file), private :: Q_inverse
+      type(stream_file), private :: diagonal_info_target
+      type(stream_file), private :: cholesky_basis_file
 !
       integer, private :: n_cholesky
       integer, private :: n_shp_in_basis
@@ -213,13 +213,13 @@ contains
 !
 !     Initialize files
 !
-      this%diagonal_info_cauchy_schwarz = sequential_file('cauchy_schwarz_diagonal_eri')
+      this%diagonal_info_cauchy_schwarz = stream_file('cauchy_schwarz_diagonal_eri')
 !
-      this%Q = sequential_file('Q_eri')
-      this%Q_inverse = sequential_file('Q_inverse_eri')
+      this%Q = stream_file('Q_eri')
+      this%Q_inverse = stream_file('Q_inverse_eri')
 !
-      this%diagonal_info_target = sequential_file('target_diagonal_eri')
-      this%cholesky_basis_file = sequential_file('basis_shell_info')
+      this%diagonal_info_target = stream_file('target_diagonal_eri')
+      this%cholesky_basis_file = stream_file('basis_shell_info')
 !
       call this%print_banner()
       call this%print_settings()
@@ -492,7 +492,7 @@ contains
 !
       real(dp), dimension(n_sig_aop), intent(in) :: screening_vector_reduced
 !
-      call this%diagonal_info_target%open_('write', 'rewind')
+      call this%diagonal_info_target%open_('rewind')
 !
       call this%diagonal_info_target%write_(n_sig_shp)
       call this%diagonal_info_target%write_(n_sig_aop)
@@ -524,7 +524,7 @@ contains
 !
       logical, dimension(n_construct_shp), intent(in) :: construct_shp
 !
-      call this%diagonal_info_cauchy_schwarz%open_('write', 'rewind')
+      call this%diagonal_info_cauchy_schwarz%open_('rewind')
 !
       call this%diagonal_info_cauchy_schwarz%write_(n_construct_shp)
       call this%diagonal_info_cauchy_schwarz%write_(n_construct_aop)
@@ -777,6 +777,7 @@ contains
 !!    calculates the maximum value on the entire diagonal (max_diagonal).
 !!
       use array_utilities, only: is_significant
+      use array_initialization, only: set_logicals
 !
       implicit none
 !
@@ -803,7 +804,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: max_in_shp_diagonal
 !
-      sig_shp = .false.
+      call set_logicals(sig_shp, this%n_shp, .false.)
 !
       call mem%alloc(max_in_shp_diagonal, this%n_shp)
 !
@@ -868,6 +869,7 @@ contains
 !!    (construct_shp).
 !!
       use array_utilities, only: is_significant
+      use array_initialization, only: set_logicals
 !
       implicit none
 !
@@ -891,7 +893,7 @@ contains
 !
       real(dp), dimension(ao%max_sh_size**2) :: construct_test
 !
-      construct_shp = .false.
+      call set_logicals(construct_shp, this%n_shp, .false.)
 !
 !$omp parallel do &
 !$omp private(I, K, A, B, A_range, B_range, x, y, g_ABAB, g_ABAB_p, construct_test) &
@@ -969,6 +971,8 @@ contains
 !!    Divides the significant diagonal into batches and prepares for
 !!    partitioned decomposition
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(eri_cd) :: this
@@ -985,7 +989,7 @@ contains
 !
       type(range_) :: A_range, B_range
 !
-      type(sequential_file) :: batch_file
+      type(stream_file) :: batch_file
 !
       integer :: A, B, batch, batch_first, batch_last, batch_size, current_batch_size
       integer :: xy_first, xy_last
@@ -998,7 +1002,7 @@ contains
 !        2. sig_shp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call this%diagonal_info_target%open_('read', 'rewind')
+      call this%diagonal_info_target%open_('rewind')
 !
       call this%diagonal_info_target%read_(n_sig_shp)
       call this%diagonal_info_target%read_(n_sig_aop)
@@ -1017,7 +1021,7 @@ contains
 !
       batch_size = n_sig_aop/this%n_batches
 !
-      call mem%alloc(sig_shp_batch, (this%n_shp))
+      call mem%alloc(sig_shp_batch, this%n_shp)
 !
       batch_first = 1
       batch_last = batch_size
@@ -1026,7 +1030,7 @@ contains
 !
 !        Determine sig_shp_batch
 !
-         sig_shp_batch = .false.
+         call set_logicals(sig_shp_batch, this%n_shp, .false.)
 !
          shp = 0        ! Shell pair number
          xy_first = 1
@@ -1082,9 +1086,9 @@ contains
 !        4. Screening vector
 !
          write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
-         batch_file = sequential_file(trim(temp_name))
+         batch_file = stream_file(trim(temp_name))
 !
-         call batch_file%open_('write', 'rewind')
+         call batch_file%open_('rewind')
 !
          call output%printf('n', 'Significant AO and shell pairs in batch (i0):', &
                             ints=[batch], fs='(/t6,a)')
@@ -1146,7 +1150,7 @@ contains
       integer :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
       integer :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_shp_old, n_shp_in_basis_offset
 !
-      type(sequential_file) :: batch_file
+      type(stream_file) :: batch_file
 !
       integer, dimension(:), allocatable :: alpha, beta, alpha_beta, sorted_alpha, sorted_beta, sorted_alpha_beta
       integer, dimension(:), allocatable :: index_alpha_beta, alpha_beta_offset, alpha_beta_offset_old
@@ -1197,15 +1201,15 @@ contains
 !           3. cholesky_basis
 
          write(temp_name, '(a11, i4.4)') 'basis_info_', batch
-         batch_file = sequential_file(trim(temp_name))
+         batch_file = stream_file(trim(temp_name))
 !
-         call batch_file%open_('read', 'rewind')
+         call batch_file%open_('rewind')
 !
          call mem%alloc(basis_shell_info, n_shp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
 !
-         call batch_file%read_blank()
-         call batch_file%read_(basis_shell_info, n_shp_in_basis_batches(batch)*4)
+         call batch_file%read_(basis_shell_info, n_shp_in_basis_batches(batch)*4, &
+                               position_=int_size+1) ! skip number of shps in basis
          call batch_file%read_(cholesky_basis, n_cholesky_batches(batch)*3)
 !
          call batch_file%close_()
@@ -1288,9 +1292,7 @@ contains
 !     Construct significant shell pair logical array,
 !     and count the number of significant AO and shell pairs
 !
-      call mem%alloc(sig_shp, this%n_shp)
-!
-      sig_shp = .false.
+      call mem%alloc(sig_shp, this%n_shp, set_to=.false.)
 !
       n_sig_shp = 0
       n_sig_aop = 0
@@ -1326,7 +1328,7 @@ contains
       D = zero
       call mem%alloc(screening_vector, n_sig_aop)
 !
-      call this%diagonal_info_target%open_('read', 'rewind')
+      call this%diagonal_info_target%open_('rewind')
 !
       call this%diagonal_info_target%read_(n_sig_shp_old)
       call this%diagonal_info_target%read_(n_sig_aop_old)
@@ -1454,7 +1456,7 @@ contains
       call output%printf('n', 'Significant AO pairs:    (i17)', ints=[n_sig_aop], fs='(t9, a)')
 !
 !
-      call this%diagonal_info_target%open_('write', 'rewind')
+      call this%diagonal_info_target%open_('rewind')
 !
       call this%diagonal_info_target%write_(n_sig_shp)
       call this%diagonal_info_target%write_(n_sig_aop)
@@ -1489,8 +1491,8 @@ contains
 !
       integer, dimension(:), allocatable :: n_cholesky_batches, n_shp_in_basis_batches
 !
-      type(sequential_file) :: batch_file_diag
-      type(sequential_file) :: batch_file_basis
+      type(stream_file) :: batch_file_diag
+      type(stream_file) :: batch_file_basis
 !
       character(len=100) :: temp_name
 !
@@ -1509,10 +1511,10 @@ contains
          call output%printf('n', 'Batch (i0):', ints=[batch], fs='(/t3,a)')
 !
          write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
-         batch_file_diag = sequential_file(trim(temp_name))
+         batch_file_diag = stream_file(trim(temp_name))
 
          write(temp_name, '(a11, i4.4)')'basis_info_', batch
-         batch_file_basis = sequential_file(trim(temp_name))
+         batch_file_basis = stream_file(trim(temp_name))
 !
          call this%determine_cholesky_basis_standard(ao, batch_file_diag, batch_file_basis)
 !
@@ -1549,8 +1551,8 @@ contains
 !
       class(ao_tool), intent(in) :: ao
 !
-      type(sequential_file), intent(inout) :: diagonal_info
-      type(sequential_file), intent(inout) :: basis_info
+      type(stream_file), intent(inout) :: diagonal_info
+      type(stream_file), intent(inout) :: basis_info
 !
 !     Local variables
 !
@@ -1684,7 +1686,7 @@ contains
 !        2. sig_shp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call diagonal_info%open_('read','rewind')
+      call diagonal_info%open_('rewind')
 !
       call diagonal_info%read_(n_sig_shp)
       call diagonal_info%read_(n_sig_aop)
@@ -2228,9 +2230,7 @@ contains
 !        Find new significant diagonals
 !
          n_new_sig_shp = 0
-         call mem%alloc(new_sig_shp, n_sig_shp)
-!
-         new_sig_shp = .false.
+         call mem%alloc(new_sig_shp, n_sig_shp, set_to=.false.)
 !
          sig_shp_counter = 0
 !
@@ -2512,7 +2512,7 @@ contains
 !        2. basis_shell_info
 !        3. cholesky_basis
 !
-      call basis_info%open_('write','rewind')
+      call basis_info%open_('rewind')
 !
       call basis_info%write_(n_shp_in_basis)
 !
@@ -2609,7 +2609,7 @@ contains
 !
 !     Read basis_shell_data
 !
-      call this%cholesky_basis_file%open_('read','rewind')
+      call this%cholesky_basis_file%open_('rewind')
 !
       call this%cholesky_basis_file%read_(n_shp_in_basis)
 !
@@ -2763,7 +2763,7 @@ contains
 !
 !        1. Cholesky factor Q, S = QQ^T
 !
-      call this%Q%open_('write', 'rewind')
+      call this%Q%open_('rewind')
 !
       do i = 1,n_vectors
          call this%Q%write_(integrals_auxiliary(1:n_vectors, i), n_vectors)
@@ -2896,7 +2896,7 @@ contains
 !        2. basis_shell_info
 !        3. cholesky_basis
 !
-      call this%cholesky_basis_file%open_('write')
+      call this%cholesky_basis_file%open_()
 !
       call this%cholesky_basis_file%write_(n_shp_in_basis)
       call this%cholesky_basis_file%write_(basis_shell_info, 4*n_shp_in_basis)
@@ -2936,7 +2936,7 @@ contains
 !
 !     Read Cholesky vectors of auxiliary basis overlap
 !
-      call this%Q%open_('read', 'rewind')
+      call this%Q%open_('rewind')
 !
       call mem%alloc(cholesky_inverse, this%n_cholesky, this%n_cholesky)
 !
@@ -2960,7 +2960,7 @@ contains
 !        1. n_cholesky: Number of elements of the basis
 !        2. cholesky_inverse (n_cholesky, n_cholesky)
 !
-      call this%Q_inverse%open_('write', 'rewind')
+      call this%Q_inverse%open_('rewind')
 !
 !     Write out columns, but only the parts that are not rubbish left over from dpstrf
 !
@@ -3145,7 +3145,7 @@ contains
 !!
 !!    Passes the Cholesky vectors to the integrals (eri_tool)
 !!
-      use array_utilities, only: zero_array, transpose_
+      use array_utilities, only: transpose_
       use abstract_eri_cholesky_class, only: abstract_eri_cholesky
       use batching_index_class, only: batching_index
       use reordering, only: sort_123_to_213, sort_123_to_312
@@ -3208,7 +3208,7 @@ contains
 !
       call mem%alloc(construct_shp, this%n_shp)
 !
-      call this%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
+      call this%diagonal_info_cauchy_schwarz%open_('rewind')
 !
       call this%diagonal_info_cauchy_schwarz%read_(n_construct_shp)
       call this%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
@@ -3218,10 +3218,9 @@ contains
 !
 !     Read inverse of cholesky vectors of auxiliary overlap, Q^-1
 !
-      call this%Q_inverse%open_('read', 'rewind')
+      call this%Q_inverse%open_('rewind')
 !
-      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky)
-      call zero_array(aux_chol_inverse, this%n_cholesky**2)
+      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky, set_zero=.true.)
 !
       do I = 1, this%n_cholesky
 !
@@ -3240,7 +3239,7 @@ contains
 !
 !     Read Cholesky basis information
 !
-      call this%cholesky_basis_file%open_('read','rewind')
+      call this%cholesky_basis_file%open_('rewind')
       call this%cholesky_basis_file%read_(n_shp_in_basis)
 !
       call mem%alloc(basis_shell_info, n_shp_in_basis, 4)
@@ -3302,8 +3301,7 @@ contains
 !
          do K_shp = 1, n_shp_in_basis
 !
-            call mem%alloc(g_wxK, n_ao, n_ao, basis_shell_info(K_shp,4))
-            call zero_array(g_wxK, n_ao**2*basis_shell_info(K_shp,4))
+            call mem%alloc(g_wxK, n_ao, n_ao, basis_shell_info(K_shp,4), set_zero=.true.)
 !
             C = basis_shell_info(K_shp, 1)
             D = basis_shell_info(K_shp, 2)
@@ -3485,7 +3483,7 @@ contains
 !!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
 !!
 !
-      use array_utilities, only: zero_array, transpose_, get_abs_max
+      use array_utilities, only: transpose_, get_abs_max
       use batching_index_class, only: batching_index
 !
       implicit none
@@ -3540,7 +3538,7 @@ contains
 !
       call mem%alloc(construct_shp, this%n_shp)
 !
-      call this%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
+      call this%diagonal_info_cauchy_schwarz%open_('rewind')
 !
       call this%diagonal_info_cauchy_schwarz%read_(n_construct_shp)
       call this%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
@@ -3550,10 +3548,9 @@ contains
 !
 !     Read inverse of cholesky vectors of auxiliary overlap, Q^-1
 !
-      call this%Q_inverse%open_('read', 'rewind')
+      call this%Q_inverse%open_('rewind')
 !
-      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky)
-      call zero_array(aux_chol_inverse, this%n_cholesky**2)
+      call mem%alloc(aux_chol_inverse, this%n_cholesky, this%n_cholesky, set_zero=.true.)
 !
       do I = 1, this%n_cholesky
 !
@@ -3572,7 +3569,7 @@ contains
 !
 !     Read Cholesky basis information
 !
-      call this%cholesky_basis_file%open_('read','rewind')
+      call this%cholesky_basis_file%open_('rewind')
       call this%cholesky_basis_file%read_(n_shp_in_basis)
 !
       call mem%alloc(basis_shell_info, n_shp_in_basis, 4)
@@ -3695,8 +3692,7 @@ contains
 !
          call batch_J%determine_limits(current_J_batch)
 !
-         call mem%alloc(L_wxJ, n_construct_aop, batch_J%length)
-         call zero_array(L_wxJ, n_construct_aop*batch_J%length)
+         call mem%alloc(L_wxJ, n_construct_aop, batch_J%length, set_zero=.true.)
 !
          do K_shp = 1, n_shp_in_basis
 !

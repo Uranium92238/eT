@@ -72,10 +72,8 @@ module abstract_cc_es_class
 !
       real(dp), dimension(:), allocatable :: energies
 !
-      type(timings) :: timer
-!
       class(convergence_tool), allocatable         :: convergence_checker
-      class(start_vector_tool), allocatable     :: start_vectors
+      class(start_vector_tool), allocatable        :: start_vectors
       class(abstract_projection_tool), allocatable :: projector
       class(precondition_tool), allocatable        :: preconditioner
 !
@@ -87,7 +85,6 @@ module abstract_cc_es_class
       procedure :: print_es_settings                => print_es_settings_abstract_cc_es
 !
       procedure :: cleanup                          => cleanup_abstract_cc_es
-      procedure :: print_summary                    => print_summary_abstract_cc_es
 !
       procedure :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
 !
@@ -189,119 +186,18 @@ contains
 !
       call this%destruct_energies()
 !
-      call this%timer%turn_off()
+      call this%total_timer%turn_off()
 !
       call output%printf('m', '- Finished solving the ' //  &
                         trim(convert_to_uppercase(this%wf%name_)) // ' excited state &
                         &equations ('// trim(this%transformation) //')', fs='(/t3,a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_abstract_cc_es
-!
-!
-   subroutine print_summary_abstract_cc_es(this, X, X_order)
-!!
-!!    Print summary
-!!    Written by Eirik F. Kjønstad, Dec 2018
-!!    Modified by Eirik F. Kjønstad, Mar 2020
-!!
-!!    Prints summary of excited states. Lists the dominant amplitudes and
-!!    the energies, along with fraction of singles.
-!!
-!!    X:         array with excited states stored in the columns
-!!
-!!    X_order:   optional index list giving the ordering of states from low
-!!               to high energy. Default is to assume that X is already
-!!               ordered from low to high energies.
-!!
-!!    Warning: it is assumed on entry that the energies are already ordered according
-!!             to energy. It is just the states that are not necessarily ordered.
-!!
-!!    Eirik F. Kjønstad, Mar 2020: added X_order to avoid duplicate copy of states
-!!                                 in DIIS solver.
-!!
-      use string_utilities, only: convert_to_uppercase
-!
-      implicit none
-!
-      class(abstract_cc_es), intent(in) :: this
-!
-      real(dp), dimension(this%wf%n_es_amplitudes, this%n_singlet_states), intent(in) :: X
-!
-      integer, dimension(this%n_singlet_states), optional, intent(in) :: X_order
-!
-      integer, dimension(:), allocatable :: X_order_local
-!
-      integer :: state, state_index
-!
-      character(len=1) :: label ! R or L, depending on whether left or right transformation
-!
-!     Set up list that gives ordering of energies from low to high
-!
-      call mem%alloc(X_order_local, this%n_singlet_states)
-!
-      if (present(X_order)) then
-!
-         X_order_local = X_order
-!
-      else
-!
-         do state = 1, this%n_singlet_states
-!
-            X_order_local(state) = state
-!
-         enddo
-!
-      endif
-!
-!     Print excited state vectors
-!
-      label = trim(adjustl(convert_to_uppercase(this%transformation(1:1))))
-!
-      call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
-!
-      do state = 1, this%n_singlet_states
-!
-         state_index = X_order_local(state)
-!
-         call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
-!
-         call output%printf('n', 'Energy (Hartree):             (f19.12)', &
-                            reals=[this%energies(state_index)], fs='(/t6,a)')
-!
-         call this%wf%print_X1_diagnostics(X(:,state_index), label)
-         call this%wf%print_dominant_x_amplitudes(X(1, state_index), label)
-!
-      enddo
-!
-      call mem%dealloc(X_order_local, this%n_singlet_states)
-!
-!     Print excited state energies
-!
-      call output%printf('m', '- Electronic excitation energies:', fs='(/t6,a)')
-!
-      call output%printf('m', 'Excitation energy', fs='(/t39,a)')
-      call output%print_separator('m', 42, '-', fs='(t27,a)')
-      call output%printf('m', ' State                (Hartree)             (eV)', fs='(t6,a)')
-      call output%print_separator('m', 63, '-', fs='(t6,a)')
-!
-      do state = 1, this%n_singlet_states
-!
-         call output%printf('m', '(i4)             (f19.12)   (f19.12)',         &
-                            ints=[state], reals=[this%energies(state),   &
-                            this%energies(state)*Hartree_to_eV], fs='(t6,a)')
-!
-      enddo
-!
-      call output%print_separator('m', 63, '-', fs='(t6,a)')
-      call output%printf('m', 'eV/Hartree (CODATA 2014): (f11.8)', &
-                         reals=[Hartree_to_eV], fs='(t6,a)')
-!
-   end subroutine print_summary_abstract_cc_es
 !
 !
    subroutine prepare_wf_for_excited_state_abstract_cc_es(this)

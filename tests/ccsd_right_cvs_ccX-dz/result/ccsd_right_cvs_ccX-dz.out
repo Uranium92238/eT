@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -82,7 +82,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:46:45 UTC +02:00
+  Calculation start:2022-10-19 10:29:49 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -168,18 +168,18 @@
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
      1           -75.966704581796     0.9113E-01     0.7597E+02
-     2           -75.996757998030     0.7949E-01     0.3005E-01
+     2           -75.996757998031     0.7949E-01     0.3005E-01
      3           -76.019231407633     0.4696E-02     0.2247E-01
      4           -76.019519353155     0.2456E-02     0.2879E-03
      5           -76.019560577025     0.5565E-03     0.4122E-04
      6           -76.019563451275     0.1389E-03     0.2874E-05
      7           -76.019563586037     0.6809E-05     0.1348E-06
      8           -76.019563586607     0.1285E-05     0.5702E-09
-     9           -76.019563586622     0.1141E-06     0.1435E-10
-    10           -76.019563586622     0.2389E-07     0.3553E-12
-    11           -76.019563586622     0.7408E-08     0.1563E-12
-    12           -76.019563586622     0.1750E-08     0.1137E-12
-    13           -76.019563586622     0.6453E-09     0.5684E-13
+     9           -76.019563586622     0.1141E-06     0.1441E-10
+    10           -76.019563586622     0.2389E-07     0.5969E-12
+    11           -76.019563586622     0.7408E-08     0.7105E-13
+    12           -76.019563586622     0.1750E-08     0.4263E-13
+    13           -76.019563586622     0.6453E-09     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -260,7 +260,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9171E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.4154E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.3529E-14
 
   - Settings for integral handling:
 
@@ -269,8 +269,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.75023
-     Total cpu time (sec):               1.50154
+     Total wall time (sec):              0.81700
+     Total cpu time (sec):               0.54220
 
 
   Determining CC cluster amplitudes
@@ -328,7 +328,7 @@
         a       i         t(a,i)
      -----------------------------------
         3      5       -0.020776504006
-        1      4       -0.011535504150
+        1      4       -0.011535504151
        16      3        0.009138432592
        13      4        0.008314839103
         4      4        0.007432336653
@@ -357,12 +357,14 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              2.16434
-     Total cpu time (sec):               4.32398
+     Total wall time (sec):              1.20800
+     Total cpu time (sec):               0.97921
 
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -377,8 +379,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
 
   - Davidson solver settings
 
@@ -559,16 +559,16 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 19.655593090826      534.855931046511
+        1                 19.655593090826      534.855931046509
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  Peak memory usage during the execution of eT: 105.272928 MB
+  Peak memory usage during the execution of eT: 105.261836 MB
 
-  Total wall time in eT (sec):              5.66590
-  Total cpu time in eT (sec):              11.29217
+  Total wall time in eT (sec):              4.66400
+  Total cpu time in eT (sec):               3.66946
 
-  Calculation end:2022-06-30 08:46:51 UTC +02:00
+  Calculation end:2022-10-19 10:29:53 UTC -07:00
 
   - Implementation references:
 

@@ -49,7 +49,6 @@ module mlcc2_class
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
-   use sequential_file_class, only: sequential_file
    use direct_stream_file_class, only: direct_stream_file
    use amplitude_file_storer_class, only: amplitude_file_storer
 !
@@ -91,8 +90,8 @@ module mlcc2_class
 !
       logical :: restart_orbitals
 !
-      type(sequential_file) :: jacobian_a1_intermediate_vv
-      type(sequential_file) :: jacobian_a1_intermediate_oo
+      type(stream_file) :: jacobian_a1_intermediate_vv
+      type(stream_file) :: jacobian_a1_intermediate_oo
 !
       type(stream_file) :: orbital_coefficients_mlcc_file
       type(stream_file) :: orbital_energies_mlcc_file
@@ -526,7 +525,7 @@ contains
 !!    and constructed.
 !!
       use reordering, only: squareup, add_1432_to_1234
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -735,7 +734,7 @@ contains
 !!
 !!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: symmetric_sum, add_2143_to_1234, add_2341_to_1234
 !
       implicit none
@@ -752,8 +751,7 @@ contains
 !
 !     Construct t2bar
 !
-      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-      call zero_array(t2bar, (wf%n_cc2_v**2)*(wf%n_cc2_o)**2)
+      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, set_zero=.true.)
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
@@ -893,7 +891,6 @@ contains
 !!    Construct t2bar
 !!    Written by Sarai D. Folkestad, May, 2019
 !!
-      use array_utilities, only: zero_array
       use reordering, only: symmetric_sum, add_2143_to_1234
       use reordering, only: add_2341_to_1234, packin
 !
@@ -905,8 +902,7 @@ contains
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
-      call zero_array(t2bar, (wf%n_cc2_v**2)*(wf%n_cc2_o**2))
+      call mem%alloc(t2bar, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o, set_zero=.true.)
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
@@ -962,8 +958,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -1041,9 +1035,11 @@ contains
 !!    MO preparations
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+      use global_in, only: input
+!
       implicit none
 !
-      class(mlcc2) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
       logical :: has_restart_files
 !
@@ -1073,6 +1069,10 @@ contains
       call wf%print_orbital_space()
       call wf%check_orbital_space()
 !
+      if (input%is_keyword_present('print orbitals', 'system')) then
+         call wf%write_orbitals(trim(wf%name_))
+      end if
+!
    end subroutine mo_preparations_mlcc2
 !
 !
@@ -1095,7 +1095,7 @@ contains
 !!    and once after occupied-occupied and virtual-virtual
 !!    Fock matrices are block diagonalized.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1284,7 +1284,7 @@ contains
    end subroutine update_MO_fock_contributions_mlcc2
 !
 !
-   subroutine print_X1_diagnostics_mlcc2(wf, X, label)
+   subroutine print_X1_diagnostics_mlcc2(wf, X, n_amplitudes, label)
 !!
 !!    Print X1 diagnostics
 !!    Written by Sarai D. Folkestad, Nov 2019
@@ -1295,7 +1295,9 @@ contains
 !
       class(mlcc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+      integer, intent(in) :: n_amplitudes
+!
+      real(dp), dimension(n_amplitudes), intent(in) :: X
 !
       character(len=1), intent(in) :: label
 !
@@ -1305,7 +1307,7 @@ contains
 !
       integer :: a, i, ai, ai_full
 !
-      call wf%ccs%print_X1_diagnostics(X, label)
+      call wf%ccs%print_X1_diagnostics(X, n_amplitudes, label)
 !
       call mem%alloc(X_internal, wf%n_cc2_v*wf%n_cc2_o)
 !

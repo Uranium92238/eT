@@ -103,7 +103,8 @@ contains
 !!    NB: Terms where mu == nu are separated out in construct_es_density
 !!        and construct_right_transition_density
 !!
-      use array_utilities, only: add_to_subblock, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: add_to_subblock
 !
       implicit none
 !
@@ -206,7 +207,8 @@ contains
 !!
 !!       sum_mu,nu L_mu < mu| E_pq |nu > R_nu
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: construct_covariant_1324
       use reordering, only: sort_1234_to_3412, sort_12_to_21
@@ -384,7 +386,7 @@ contains
 !!    Also construct the intermediate Z_bcjk needed for the ov-block
 !!          Z_bcjk = sum{ai} tbar^abc_ijk R^a_i
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
       use reordering, only: squareup_and_sort_1234_to_1324, symmetrize_12_and_34
       use reordering, only: construct_contravariant_t3
       use reordering, only: add_21_to_12, add_2134_to_1234
@@ -512,10 +514,8 @@ contains
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       if (es_to_es) then ! Intermediate only for es transition densities
-         call mem%alloc(Yt_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call zero_array(Yt_clik, wf%n_v*wf%n_o**3)
-         call mem%alloc(YR_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call zero_array(YR_clik, wf%n_v*wf%n_o**3)
+         call mem%alloc(Yt_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o, set_zero=.true.)
+         call mem%alloc(YR_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o, set_zero=.true.)
       end if
 !
       batch_i = batching_index(wf%n_o)
@@ -548,11 +548,9 @@ contains
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(tbar_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%alloc(density_ai, wf%n_v, wf%n_o)
-      call zero_array(density_ai, wf%n_t1)
+      call mem%alloc(density_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
-      call mem%alloc(Z_bcjk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(Z_bcjk, wf%n_t1**2)
+      call mem%alloc(Z_bcjk, wf%n_v, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
@@ -1020,7 +1018,7 @@ contains
          call wf%density_cc3_Y_vvvo_ov(density_ov, R_abij)
 !
          call mem%alloc(Yt_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call wf%Y_cmjk_tbar%open_('read')
+         call wf%Y_cmjk_tbar%open_()
          call wf%Y_cmjk_tbar%read_(Yt_clik, 1, wf%n_o)
          call wf%Y_cmjk_tbar%close_()
 !
@@ -1084,7 +1082,6 @@ contains
       use omp_lib
       use reordering, only: squareup_and_sort_1234_to_2413
       use reordering, only: construct_contravariant_t3
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -1199,8 +1196,7 @@ contains
       n_threads = 1
 !
 !$    n_threads = omp_get_max_threads()
-      call mem%alloc(density_oo_thread, wf%n_o, wf%n_o, n_threads)
-      call zero_array(density_oo_thread, wf%n_o**2*n_threads)
+      call mem%alloc(density_oo_thread, wf%n_o, wf%n_o, n_threads, set_zero=.true.)
 !
 !     Set up arrays for amplitudes
       call mem%alloc(t_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
@@ -1641,7 +1637,6 @@ contains
 !!        is used in this routine.
 !!
       use reordering, only: construct_contravariant_t3, add_21_to_12
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -1690,8 +1685,7 @@ contains
       timer = timings('Density CC3 mu nu T3', pl='v')
       call timer%turn_on
 !
-      call mem%alloc(density_ai, wf%n_v, wf%n_o)
-      call zero_array(density_ai, wf%n_t1)
+      call mem%alloc(density_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
       batch_i = batching_index(wf%n_o)
       batch_j = batching_index(wf%n_o)
@@ -2074,7 +2068,7 @@ contains
 !
       call mem%alloc(Y_vvvo, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
 !
-      call wf%Y_ebck_tbar%open_('read')
+      call wf%Y_ebck_tbar%open_()
 !
       do i_batch = 1, batch_i%num_batches
 !

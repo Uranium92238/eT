@@ -237,11 +237,6 @@ module reordering
                    symmetrize_and_add_4_to_packed
    end interface symmetrize_and_add_to_packed
 !
-   interface squareup_anti
-      procedure :: squareup_anti, &
-                   squareup_anti_complex
-   end interface squareup_anti
-!
    interface squareup
       procedure :: squareup_real, &
                    squareup_complex, &
@@ -4705,7 +4700,7 @@ contains
 !!    Construct:
 !!       t_pqr = 4t_pqr - 2t_qpr - 2t_rqp - 2t_prq + t_qrp + t_rpq
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -4723,6 +4718,55 @@ contains
       call add_213_to_123(-one, u, t, dim_, dim_, dim_)
 !
    end subroutine construct_contravariant_t3
+!
+!
+   subroutine antisymmetric_sum(x, dim_)
+!!
+!!    Anti-symmetric sum
+!!    Written by Eirik F. Kjønstad, Dec 2017
+!!
+!!    Performs the action
+!!
+!!       x(p,q) = x(p,q) - x(q,p)
+!!
+!!    without making a separate copy of x.
+!!
+!!    Note: the effect is equal to the routine "add_21_to_12" with scalar = -1,
+!!          where a second copy of x is not needed.
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(inout) :: x
+!
+      integer :: p, q
+!
+!     Overwrite the lower triangular part of the matrix
+!
+!$omp parallel do private(p, q)
+      do q = 1, dim_
+         do p = q, dim_
+!
+            x(p,q) = x(p,q) - x(q,p)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Copy the lower triangular part to the upper triangular part
+!
+!$omp parallel do private(p, q)
+      do p = 1, dim_
+         do q = p + 1, dim_
+!
+            x(p,q) = -x(q,p)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine antisymmetric_sum
 !
 !
 end module reordering

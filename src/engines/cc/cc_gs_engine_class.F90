@@ -30,12 +30,14 @@ module cc_gs_engine_class
    use cc_amplitudes_task_class,    only: cc_amplitudes_task
    use eri_approximator_task_class, only: eri_approximator_task
    use cc_wavefunctions_class,      only: cc_wavefunctions
+   use cc_visualization_task_class, only: cc_visualization_task
 !
    implicit none
 !
    type, extends(cc_engine) :: cc_gs_engine
 !
       type(cc_amplitudes_task), allocatable, private :: ground_state_amplitudes
+      type(cc_visualization_task), allocatable, private :: visualization
       type(eri_approximator_task), private :: eri_approximator
 !
    contains
@@ -65,6 +67,9 @@ contains
 !
       this%ground_state_amplitudes = cc_amplitudes_task()
       call this%ground_state_amplitudes%execute(wf)
+!
+      this%visualization = cc_visualization_task()
+      call this%visualization%execute(wf)
 !
    end subroutine ignite_cc_gs_engine
 !

@@ -182,29 +182,15 @@ contains
 !!    Written by Torsha Moitra, Sarai D. Folkestad
 !!    and Sonia Coriani, Sep-Nov 2019
 !!
-!!    Allocates arrays (alpha_, beta_, gamma_)
-!!    and initializes files.
-!!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(asymmetric_lanczos_tool), intent(inout) :: lanczos
 !
-      call mem%alloc(lanczos%alpha_, lanczos%chain_length)
-      call zero_array(lanczos%alpha_, lanczos%chain_length)
+      call mem%alloc(lanczos%alpha_, lanczos%chain_length, set_zero=.true.)
+      call mem%alloc(lanczos%beta_, lanczos%chain_length-1, set_zero=.true.)
+      call mem%alloc(lanczos%gamma_, lanczos%chain_length-1, set_zero=.true.)
 !
-      call mem%alloc(lanczos%beta_, lanczos%chain_length-1)
-      call zero_array(lanczos%beta_, lanczos%chain_length-1)
-!
-      call mem%alloc(lanczos%gamma_, lanczos%chain_length-1)
-      call zero_array(lanczos%gamma_, lanczos%chain_length-1)
-!
-      if (lanczos%restart) then
-!
-         call lanczos%read_T()
-!
-      endif
+      if (lanczos%restart) call lanczos%read_T()
 !
    end subroutine initialize_asymmetric_lanczos_tool
 !
@@ -228,7 +214,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      call lanczos%p_file%open_('read')
+      call lanczos%p_file%open_()
 !
       call lanczos%p_file%read_(p, n, n)
       call lanczos%p_file%close_()
@@ -255,7 +241,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      call lanczos%q_file%open_('read')
+      call lanczos%q_file%open_()
 !
       call lanczos%q_file%read_(q, n, n)
       call lanczos%q_file%close_()
@@ -293,7 +279,7 @@ contains
       lanczos%alpha_(i) = ddot(lanczos%n_parameters, p, 1, Aq, 1)
 !
       call mem%dealloc(p, lanczos%n_parameters)
-!    
+!
    end subroutine calculate_alpha
 !
 !
@@ -311,7 +297,7 @@ contains
 !!
 !!    "Aq" : The linear transform of q_i by some matrix A
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -365,7 +351,7 @@ contains
 !!
 !!    "pA" : The linear transform of p_i by some matrix A^T
 !
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -500,8 +486,6 @@ contains
 !!    "eigenvalues_Im" : On exit contains the imaginary part
 !!                       of the eigenvalues of T
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(asymmetric_lanczos_tool), intent(inout) :: lanczos
@@ -518,9 +502,7 @@ contains
 !
       call lanczos%save_T()
 !
-      call mem%alloc(T, lanczos%chain_length, lanczos%chain_length)
-!
-      call zero_array(T, lanczos%chain_length**2)
+      call mem%alloc(T, lanczos%chain_length, lanczos%chain_length, set_zero=.true.)
 !
       T(1,1) = lanczos%alpha_(1)
 !
@@ -580,7 +562,7 @@ contains
 !
       class(asymmetric_lanczos_tool), intent(inout) :: lanczos
 !
-      call lanczos%T_file%open_('write', 'rewind')
+      call lanczos%T_file%open_('rewind')
 !
       call lanczos%T_file%write_(lanczos%chain_length)
       call lanczos%T_file%write_(lanczos%alpha_, lanczos%chain_length)
@@ -608,7 +590,7 @@ contains
 !
       call output%printf('m', 'Restarting in the asymmetric Lanczos solver:', fs='(/t6,a)')
 !
-      call lanczos%T_file%open_('read', 'rewind')
+      call lanczos%T_file%open_('rewind')
 !
       call lanczos%T_file%read_(chain_length)
       call output%printf('m', 'Found restart with chain length (i0)', &
@@ -680,16 +662,16 @@ contains
 
          do j = 1, i
 !
-!           biorthogonalize against previous 
+!           biorthogonalize against previous
 !
             call lanczos%get_p(p_j, j)
             call lanczos%get_q(q_j, j)
 
-            overlap = ddot(lanczos%n_parameters, p_j, 1, q, 1) 
-            call daxpy(lanczos%n_parameters, -overlap, q_j, 1, q, 1)   
-   
+            overlap = ddot(lanczos%n_parameters, p_j, 1, q, 1)
+            call daxpy(lanczos%n_parameters, -overlap, q_j, 1, q, 1)
+
             overlap = ddot(lanczos%n_parameters, p, 1, q_j, 1)
-            call daxpy(lanczos%n_parameters, -overlap, p_j, 1, p, 1) 
+            call daxpy(lanczos%n_parameters, -overlap, p_j, 1, p, 1)
 !
          enddo
 
@@ -707,12 +689,12 @@ contains
 !
             overlap = ddot(lanczos%n_parameters, p, 1, q, 1)
             factor= one/abs(overlap)
-            call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1) 
+            call dscal(lanczos%n_parameters, sign(factor,overlap), p, 1)
 !
-         else 
+         else
 !
             call output%error_msg('could not recognize biorthonormalization procedure in asymmetric &
-               &Lanczos tool.')      
+               &Lanczos tool.')
 !
          endif
 !
@@ -755,7 +737,7 @@ contains
 !
       real(dp), dimension(lanczos%n_parameters), intent(in) :: p
 !
-      call lanczos%p_file%open_('write')
+      call lanczos%p_file%open_()
 !
       call lanczos%p_file%write_(p, n, n)
 !
@@ -779,7 +761,7 @@ contains
 !
       real(dp), dimension(lanczos%n_parameters), intent(in) :: q
 !
-      call lanczos%q_file%open_('write')
+      call lanczos%q_file%open_()
 !
       call lanczos%q_file%write_(q, n, n)
 !

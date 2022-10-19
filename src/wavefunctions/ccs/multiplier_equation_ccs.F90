@@ -27,7 +27,7 @@ submodule (ccs_class) multiplier_equation_ccs
 !!       t-bar^T A + eta = 0,
 !!
 !!    where t-bar is the multiplier vector, and
-!! 
+!!
 !!       A_mu,nu = < mu |exp(-T) [H, τ_nu] exp(T) | R >
 !!       eta_mu  = < R |exp(-T) [H, τ_mu] exp(T) | R >.
 !!
@@ -140,39 +140,6 @@ contains
       call wf%get_multipliers(c)
 
    end subroutine get_initial_cc_multipliers_ccs
-!
-!
-   module subroutine print_banner_davidson_cc_multipliers_ccs(wf)
-!!
-!!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Modified by Regina Matveeva, Sep 2021
-!!    Adapted the routine from the davidson_cc_mulripliers_solver
-!!
-!
-      use warning_suppressor, only: do_nothing
-!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      character(len=100) :: name_ = 'Davidson coupled cluster multipliers solver'
-!
-      character(len=500) :: description
-!
-      description = 'A Davidson solver that solves the multiplier equation: t-bar^T A = -η. This linear &
-                    &equation is solved in a reduced space. A description of the algorithm can be &
-                    &found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
-!
-      call do_nothing(wf)
-!
-      call output%printf('m', ' - ' // trim(name_), fs='(/t3,a)')
-      call output%print_separator('m', len(trim(name_)) + 6, '-')
-!
-      call output%printf('n', description, ffs='(/t3,a)', fs='(t3,a)')
-!
-   end subroutine print_banner_davidson_cc_multipliers_ccs
 !
 !
    module subroutine cc_multipliers_summary_ccs(wf)

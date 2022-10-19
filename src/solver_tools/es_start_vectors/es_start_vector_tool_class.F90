@@ -24,18 +24,18 @@ module es_start_vector_tool_class
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
 !!    Sets start vectors with ones at particular excitations given by "indices".
-!!    These depend on the calculation (valence/CVS/IP) and are set accordingly in 
-!!    the constructors of the descendants. 
+!!    These depend on the calculation (valence/CVS/IP) and are set accordingly in
+!!    the constructors of the descendants.
 !!
 !!    A solver can request the nth start start_vector R as follows:
 !!
 !!       call start_vector_this%get(R, n).
 !!
-!!    Initialization depends on the constructor; see descendants. 
+!!    Initialization depends on the constructor; see descendants.
 !!
 !
    use parameters
-   use array_utilities, only: zero_array
+   use array_initialization, only: zero_array
    use start_vector_tool_class, only: start_vector_tool
    use ccs_class, only: ccs
 !
@@ -56,7 +56,7 @@ module es_start_vector_tool_class
    end type es_start_vector_tool
 !
 !
-contains 
+contains
 !
 !
    subroutine get_es_start_vector_tool(this, start_vector, I, energy)
@@ -72,7 +72,7 @@ contains
 !!
       use array_utilities, only: get_l2_norm
 !
-      implicit none 
+      implicit none
 !
       class(es_start_vector_tool), intent(in) :: this
       real(dp), dimension(this%n_parameters), intent(out) :: start_vector
@@ -98,7 +98,7 @@ contains
 !
             norm_ = get_l2_norm(start_vector, this%n_parameters)
             call dscal(this%n_parameters, one/norm_, start_vector, 1)
-!               
+!
          else
 !
             energy = zero

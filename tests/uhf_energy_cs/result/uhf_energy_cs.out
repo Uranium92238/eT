@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -63,7 +63,7 @@
      end solver scf
 
 
-  Calculation start:2022-06-30 08:45:19 UTC +02:00
+  Calculation start:2022-10-19 10:29:50 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -114,7 +114,7 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:             -7530.568190922048
+     Energy of initial guess:             -7530.568190922047
      Number of electrons in guess:           55.000000000000
 
   - Screening and integral thresholds:
@@ -144,16 +144,16 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1         -7530.542527047885     0.4281E-01     0.7531E+04
-     2         -7530.543242039055     0.1751E-02     0.7150E-03
-     3         -7530.543343909521     0.6922E-03     0.1019E-03
-     4         -7530.543363599996     0.6722E-04     0.1969E-04
-     5         -7530.543363805165     0.7224E-05     0.2052E-06
-     6         -7530.543363806802     0.3314E-05     0.1637E-08
-     7         -7530.543363807133     0.2769E-06     0.3311E-09
-     8         -7530.543363807135     0.1487E-07     0.2728E-11
-     9         -7530.543363807136     0.2639E-09     0.9095E-12
-    10         -7530.543363807137     0.4195E-10     0.9095E-12
+     1         -7530.542527047883     0.4281E-01     0.7531E+04
+     2         -7530.543242039048     0.1751E-02     0.7150E-03
+     3         -7530.543343909516     0.6922E-03     0.1019E-03
+     4         -7530.543363599998     0.6722E-04     0.1969E-04
+     5         -7530.543363805162     0.7224E-05     0.2052E-06
+     6         -7530.543363806803     0.3314E-05     0.1641E-08
+     7         -7530.543363807130     0.2769E-06     0.3274E-09
+     8         -7530.543363807134     0.1487E-07     0.3638E-11
+     9         -7530.543363807134     0.2640E-09     0.0000E+00
+    10         -7530.543363807134     0.4199E-10     0.9095E-12
   ---------------------------------------------------------------
   Convergence criterion met in 10 iterations!
 
@@ -162,8 +162,8 @@
      HOMO-LUMO gap (alpha):          0.289543124727
      HOMO-LUMO gap (beta):           0.696523627897
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:          -7530.543363807137
-     Total energy:               -7530.543363807137
+     Electronic energy:          -7530.543363807134
+     Total energy:               -7530.543363807134
 
   - UHF wavefunction spin expectation values:
 
@@ -172,12 +172,12 @@
      S^2:                  0.75022793
      Spin contamination:   0.00022793
 
-  Peak memory usage during the execution of eT: 492.200 KB
+  Peak memory usage during the execution of eT: 489.380 KB
 
-  Total wall time in eT (sec):              3.45012
-  Total cpu time in eT (sec):               6.86726
+  Total wall time in eT (sec):              4.31100
+  Total cpu time in eT (sec):               3.03384
 
-  Calculation end:2022-06-30 08:45:23 UTC +02:00
+  Calculation end:2022-10-19 10:29:54 UTC -07:00
 
   - Implementation references:
 

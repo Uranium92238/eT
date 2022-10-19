@@ -214,7 +214,6 @@ contains
 !
 !     Active
 !
-!
       call cd_tool_o%restricted_decomposition(C, wf%n_cc2_o, n_active_aos, first_ao)
       call wf%set_orbital_coefficients(C(:,1:wf%n_cc2_o), wf%n_cc2_o, 1)
 !
@@ -268,7 +267,8 @@ contains
 !!    Note that after this routine, the Fock matrix in wf
 !!    corresponds to the old basis but the MOs are updated.
 !!
-      use array_utilities, only : block_diagonalize_symmetric, zero_array
+      use array_utilities, only: block_diagonalize_symmetric
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -492,7 +492,7 @@ contains
 !!    Transform orbital coefficients to CNTO
 !!    basis.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -553,8 +553,8 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
-      call wf%T_cnto_o_file%open_('read', 'rewind')
-      call wf%T_cnto_v_file%open_('read', 'rewind')
+      call wf%T_cnto_o_file%open_('rewind')
+      call wf%T_cnto_v_file%open_('rewind')
 !
       call wf%T_cnto_o_file%read_(T_o, wf%n_o**2)
       call wf%T_cnto_v_file%read_(T_v, wf%n_v**2)
@@ -580,8 +580,8 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: T_v
 !
-      call wf%T_cnto_o_file%open_('write', 'rewind')
-      call wf%T_cnto_v_file%open_('write', 'rewind')
+      call wf%T_cnto_o_file%open_('rewind')
+      call wf%T_cnto_v_file%open_('rewind')
 !
       call wf%T_cnto_o_file%write_(T_o, wf%n_o**2)
       call wf%T_cnto_v_file%write_(T_v, wf%n_v**2)
@@ -741,7 +741,7 @@ contains
 !
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
 !
-      call wf%T_nto_o_file%open_('read', 'rewind')
+      call wf%T_nto_o_file%open_('rewind')
 !
       call wf%T_nto_o_file%read_(T_o, wf%n_o**2)
 !
@@ -764,7 +764,7 @@ contains
 !
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
 !
-      call wf%T_nto_o_file%open_('write', 'rewind')
+      call wf%T_nto_o_file%open_('rewind')
 !
       call wf%T_nto_o_file%write_(T_o, wf%n_o**2)
 !
@@ -852,7 +852,7 @@ contains
 !!
 !!    Construct occupiued NTOs, leave canonical virtuals
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1206,6 +1206,8 @@ contains
       call cc_es_solver%run()
       call cc_es_solver%cleanup()
 !
+      call ccs_wf%print_es_summary(trim(transformation), 'singlet')
+!
       call timer_es%turn_off()
 !
 !     Transfer information to mlcc wavefunction
@@ -1328,7 +1330,7 @@ contains
                   wf%n_mo)
 !
       do i = 1, wf%n_mo
-         if (abs(I2(i,i) - 1.0d0) .gt. 1.0d-6) then
+         if (abs(I2(i,i) - one) .gt. 1.0d-6) then
             call output%error_msg(trim(wf%name_)//' orbitals are not normal')
          endif
       enddo
@@ -1336,7 +1338,7 @@ contains
       do i = 1, wf%n_mo
          do j = 1, i-1
             if (abs(I2(i,j)) .gt. 1.0d-6) then
-            call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
+               call output%error_msg(trim(wf%name_)//' orbitals are not orthogonal')
             endif
          enddo
       enddo
@@ -1384,7 +1386,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: R_ibja, R_kdlc
 !
-      call doubles_file%open_('read')
+      call doubles_file%open_()
 !
       req0 = 0
 !

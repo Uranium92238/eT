@@ -16,9 +16,7 @@ from runtest_config import configure
 assert version_info.major == 2
 
 # construct filter(s)
-#
 # cannot check transition dipole moment as the states can change in every run
-#
 f = [
     get_filter(from_string='State                (Hartree)             (eV)',
                num_lines=6,
@@ -34,11 +32,11 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_cvs_eom_degeneracy.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_cvs_eom_degeneracy.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

@@ -26,7 +26,7 @@ module atomic_center_class
 !
    use parameters
    use global_out, only : output
-   use sequential_file_class, only: sequential_file
+   use formatted_read_file_class, only: formatted_read_file
    use shell_class, only : shell
    use memory_manager_class, only: mem
 !
@@ -355,6 +355,8 @@ contains
 !!    electrons are smeared out to ensure that the density is spherically symmetric (as required
 !!    for a rotationally invariant SAD guess).
 !!
+      use stream_file_class, only: stream_file
+!
       implicit none
 !
       class(atomic_center), intent(in) :: center
@@ -364,8 +366,8 @@ contains
       real(dp), dimension(:,:), allocatable :: temporary
       character(len=100)                    :: alpha_fname, beta_fname, name_
 !
-      type(sequential_file), allocatable :: alpha_D_file
-      type(sequential_file), allocatable :: beta_D_file
+      type(stream_file), allocatable :: alpha_D_file
+      type(stream_file), allocatable :: beta_D_file
 !
       atomic_D = zero
 !
@@ -374,11 +376,11 @@ contains
       alpha_fname = trim(name_) // '_alpha'
       beta_fname  = trim(name_) // '_beta'
 !
-      alpha_D_file = sequential_file(trim(alpha_fname))
-      beta_D_file  = sequential_file(trim(beta_fname))
+      alpha_D_file = stream_file(trim(alpha_fname))
+      beta_D_file  = stream_file(trim(beta_fname))
 !
-      call alpha_D_file%open_('read', 'rewind')
-      call beta_D_file%open_( 'read', 'rewind')
+      call alpha_D_file%open_('rewind')
+      call beta_D_file%open_('rewind')
 !
       call mem%alloc(temporary, center%n_ao, center%n_ao)
 !
@@ -442,7 +444,7 @@ contains
       character(len=200) :: libint_path
       character(len=200) :: filename
 !
-      type(sequential_file), allocatable :: basis_file
+      type(formatted_read_file), allocatable :: basis_file
 !
       integer :: sh
 !
@@ -467,9 +469,9 @@ contains
 !
       filename = trim(libint_path) // '/' // trim(basis) // '.g94'
 !
-      basis_file = sequential_file(trim(filename), 'formatted')
+      basis_file = formatted_read_file(trim(filename))
 !
-      call basis_file%open_('read', 'rewind')
+      call basis_file%open_('rewind')
 !
       call center%read_shell_basis_info(basis_file, sh)
 !
@@ -483,9 +485,9 @@ contains
 !
          filename = trim(libint_path) // '/' // trim(basis) // '.g94'
 !
-         basis_file = sequential_file(trim(filename), 'formatted')
+         basis_file = formatted_read_file(trim(filename))
 !
-         call basis_file%open_('read', 'rewind')
+         call basis_file%open_('rewind')
 !
          call center%read_shell_basis_info(basis_file, sh)
 !
@@ -522,7 +524,7 @@ contains
 !
       class(atomic_center), intent(inout) :: center
 !
-      type(sequential_file), intent(in) :: basis_file
+      type(formatted_read_file), intent(in) :: basis_file
 !
       integer, intent(inout) :: sh
 !

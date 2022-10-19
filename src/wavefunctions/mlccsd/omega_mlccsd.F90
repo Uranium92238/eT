@@ -45,7 +45,8 @@ contains
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wf
 !!
-      use array_utilities, only : scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup, packin
 !
       implicit none
@@ -86,8 +87,7 @@ contains
 !
 !     Construct doubles contributions
 !
-      call mem%alloc(omega_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-      call zero_array(omega_aibj, (wf%n_ccsd_v**2)*(wf%n_ccsd_o**2))
+      call mem%alloc(omega_aibj, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o, set_zero=.true.)
 !
       call wf%omega_ccsd_a2(omega_aibj)
       call wf%omega_ccsd_b2(omega_aibj, x_aibj)
@@ -765,7 +765,6 @@ contains
 !!    c, k, d, l are CCSD + CC2 indices
 !!
       use reordering, only: sort_1234_to_2341, sort_1234_to_3241, symmetric_sum
-      use array_utilities, only: zero_array
 !
       implicit none
 
@@ -896,8 +895,7 @@ contains
 !     Allocate a holder for - 1/2 * sum_ck u_jk^bc g_acki,
 !     constructed in batches over the a index below
 !
-      call mem%alloc(omega2_aibj,  wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-      call zero_array(omega2_aibj, (wf%n_ccsd_o**2)*(wf%n_ccsd_v**2))
+      call mem%alloc(omega2_aibj,  wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o, set_zero=.true.)
 !
 !     Constructing g_kiac
 !
@@ -1100,7 +1098,7 @@ contains
 !!    c, d, k, l are CC2 + CCSD indices
 !!
       use reordering, only: add_1432_to_1234, symmetric_sum
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

@@ -214,6 +214,32 @@ module doubles_class
 !
       procedure :: F_x_mu_transformation => F_x_mu_transformation_doubles
 !
+      procedure :: triplet_jacobian_d_s_a => triplet_jacobian_d_s_a_doubles
+      procedure :: triplet_jacobian_d_s_a_1 => triplet_jacobian_d_s_a_1_doubles
+      procedure :: triplet_jacobian_d_s_a_2 => triplet_jacobian_d_s_a_2_doubles
+!
+      procedure :: triplet_jacobian_s_s_b => triplet_jacobian_s_s_b_doubles
+!
+      procedure :: triplet_jacobian_s_d_a => triplet_jacobian_s_d_a_doubles
+      procedure :: triplet_jacobian_s_d_b => triplet_jacobian_s_d_b_doubles
+      procedure :: triplet_jacobian_s_d_c => triplet_jacobian_s_d_c_doubles
+!
+      procedure :: packin_triplet_d
+      procedure :: packout_triplet_d
+!
+      procedure :: get_triplet_preconditioner => get_triplet_preconditioner_doubles
+!
+      procedure :: triplet_jacobian_transpose_s_s_b => triplet_jacobian_transpose_s_s_b_doubles
+      procedure :: triplet_jacobian_transpose_d_s_a => triplet_jacobian_transpose_d_s_a_doubles
+      procedure :: triplet_jacobian_transpose_s_d_a => triplet_jacobian_transpose_s_d_a_doubles
+      procedure :: triplet_jacobian_transpose_s_d_b => triplet_jacobian_transpose_s_d_b_doubles
+      procedure :: triplet_jacobian_transpose_s_d_c => triplet_jacobian_transpose_s_d_c_doubles
+!
+      procedure :: get_es_amplitude_block_sizes &
+                => get_es_amplitude_block_sizes_doubles
+      procedure :: get_triplet_es_amplitude_block_sizes &
+                => get_triplet_amplitude_block_sizes_doubles
+!
    end type doubles
 !
    interface
@@ -227,6 +253,8 @@ module doubles_class
       include "response_doubles_interface.F90"
       include "complex_doubles_interface.F90"
       include "F_doubles_interface.F90"
+      include "triplet_jacobian_doubles_interface.F90"
+      include "triplet_jacobian_transpose_doubles_interface.F90"
 !
       include "generated_complex_files/initialize_destruct_doubles_complex_interface.F90"
       include "generated_complex_files/jacobian_transpose_doubles_complex_interface.F90"
@@ -261,8 +289,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(doubles), intent(inout) :: wf
@@ -307,7 +333,7 @@ contains
 !!    Written by Sarai D. Folkestad, 2021
 !!
 !
-      use array_utilities, only: constant_array
+      use array_initialization, only: constant_array
 !
       implicit none
 !
@@ -356,8 +382,6 @@ contains
 !!    for an IP calculation (valence).
 !!
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(doubles), intent(in) :: wf
@@ -586,6 +610,63 @@ contains
    end subroutine get_multipliers_doubles
 !
 !
+   subroutine get_triplet_preconditioner_doubles(wf, preconditioner)
+!!
+!!    Get triplet preconditioner
+!!    Written by Sarai D. Folkestad, Feb 2022
+!!
+      implicit none
+
+      class(doubles), intent(in) :: wf
+      real(dp), dimension(wf%n_triplet_amplitudes), intent(inout) :: preconditioner
+!
+      real(dp), dimension(:,:,:,:), allocatable :: orbital_differences_aibj
+!
+      integer :: i, j, a, b
+!
+      call wf%get_orbital_differences(preconditioner(1:wf%n_t1), wf%n_t1)
+!
+      call mem%alloc(orbital_differences_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!$omp parallel do private(a, i, b, j)
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  orbital_differences_aibj(a, i, b, j) = wf%orbital_energies(a + wf%n_o) &
+                                                       + wf%orbital_energies(b + wf%n_o) &
+                                                       - wf%orbital_energies(i) &
+                                                       - wf%orbital_energies(j)
+
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call wf%packin_triplet_d(preconditioner, orbital_differences_aibj, orbital_differences_aibj)
+!
+      call mem%dealloc(orbital_differences_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine get_triplet_preconditioner_doubles
+!
+!
+   subroutine get_es_amplitude_block_sizes_doubles(wf, amplitude_block_sizes)
+!!
+!!    Get amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1, wf%n_t2]
+!
+   end subroutine get_es_amplitude_block_sizes_doubles
+!
+!
    subroutine get_multipliers_doubles_complex(wf, multipliers)
 !!
 !!    Get multipliers complex
@@ -594,13 +675,30 @@ contains
       implicit none
 !
       class(doubles), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_es_amplitudes) :: multipliers
 !
       call zcopy(wf%n_t1, wf%t1bar_complex, 1, multipliers, 1)
       call zcopy(wf%n_t2, wf%t2bar_complex, 1, multipliers(wf%n_t1 + 1:), 1)
 !
    end subroutine get_multipliers_doubles_complex
+!
+!
+   subroutine get_triplet_amplitude_block_sizes_doubles(wf, amplitude_block_sizes)
+!!
+!!    Get amplitude block sizes
+!!    Written by Alexander C. Paul, June 2022
+!!
+      implicit none
+!
+      class(doubles), intent(in) :: wf
+!
+      integer, dimension(:), allocatable, intent(out) :: amplitude_block_sizes
+!
+      amplitude_block_sizes = [wf%n_t1, &
+                               wf%n_t1*(wf%n_t1-1)/2, &
+                               (wf%n_o*(wf%n_o-1)/2)*(wf%n_v*(wf%n_v-1)/2)]
+!
+   end subroutine get_triplet_amplitude_block_sizes_doubles
 !
 !
 end module doubles_class

@@ -105,6 +105,12 @@ module cc2_class
       procedure :: initialize &
                 => initialize_cc2
 !
+      procedure :: triplet_jacobian_d_d_a => triplet_jacobian_d_d_a_cc2
+      procedure :: prepare_for_triplet_jacobian => prepare_for_triplet_jacobian_cc2
+      procedure :: triplet_jacobian_transformation => triplet_jacobian_transformation_cc2
+      procedure :: prepare_for_triplet_jacobian_transpose => prepare_for_triplet_jacobian_transpose_cc2
+      procedure :: triplet_jacobian_transpose_transformation => triplet_jacobian_transpose_transformation_cc2
+!
    end type cc2
 !
    interface
@@ -113,7 +119,9 @@ module cc2_class
       include "omega_cc2_interface.F90"
       include "multiplier_equation_cc2_interface.F90"
       include "jacobian_cc2_interface.F90"
+      include "triplet_jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
+      include "triplet_jacobian_transpose_cc2_interface.F90"
       include "mean_value_cc2_interface.F90"
       include "fock_cc2_interface.F90"
 !
@@ -148,6 +156,9 @@ contains
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
       wf%need_g_abcd     = .false.
+
+      wf%n_triplet_amplitudes = wf%n_t1 +  wf%n_t1*(wf%n_t1-1)/2 &
+                              + (wf%n_o*(wf%n_o-1)/2)*(wf%n_v*(wf%n_v-1)/2)
 !
       call wf%initialize_fock()
 !
@@ -218,7 +229,6 @@ contains
 !!    Construct t2bar
 !!    Written by Sarai D. Folkestad, May, 2019
 !!
-      use array_utilities, only: zero_array
       use reordering, only: symmetric_sum, add_2143_to_1234
       use reordering, only: add_2341_to_1234, packin
 !
@@ -230,8 +240,7 @@ contains
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(t2bar, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !

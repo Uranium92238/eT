@@ -70,6 +70,11 @@ contains
 !
       if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
 !
+      if (input%is_keyword_present('print orbitals', 'system') .and. &
+         (wf%frozen_core .or. wf%frozen_hf_mos)) then
+         call wf%write_orbitals("nonfrozen")
+      end if
+!
    end subroutine prepare_mos_hf
 !
 !
@@ -475,7 +480,8 @@ contains
 !!    and mixing of virtual orbitals, respectively.
 !!
 !
-      use array_utilities, only: block_diagonalize_symmetric, zero_array
+      use array_utilities, only: block_diagonalize_symmetric
+      use array_initialization, only:  zero_array
 !
       implicit none
 !

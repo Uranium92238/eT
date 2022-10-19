@@ -27,7 +27,6 @@ module array_utilities
 !
    use parameters
    use global_out, only : output
-   use memory_manager_class, only : mem
 !
    implicit none
 !
@@ -121,110 +120,6 @@ contains
                  k, A(1, n2+off), k, beta, C, n+off)
 !
    end subroutine dsfrk_c
-!
-   subroutine zero_array(x, n)
-!!
-!!    Zero array
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Sets the array x of length n to zero.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n), intent(out) :: x
-!
-      integer :: I
-!
-!$omp parallel do private(I) schedule(static)
-      do I = 1, n
-!
-         x(I) = zero
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine zero_array
-!
-!
-   subroutine zero_array_complex(X, n)
-!!
-!!    Zero array
-!!    Written by Eirik F. Kjønstad, 2018
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      complex(dp), dimension(n), intent(out) :: X
-!
-      integer :: I
-!
-!$omp parallel do private(I) schedule(static)
-      do I = 1, n
-!
-         X(I) = zero_complex
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine zero_array_complex
-!
-!
-   subroutine zero_array_int(x, n)
-!!
-!!    Zero array int
-!!    Written by Eirik F. Kjønstad, 2020
-!!
-!!    Sets the integer array x of length n to zero.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      integer, dimension(n), intent(out) :: x
-!
-      integer :: I
-!
-!$omp parallel do private(I) schedule(static)
-      do I = 1, n
-!
-         x(I) = 0
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine zero_array_int
-!
-!
-   subroutine identity_array(x, n)
-!!
-!!    Identity array
-!!    Written by Ida-Marie Hoyvik, Oct 2019
-!!
-!!    Sets the array x of dimension nxn to be the identity matrix.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n,n), intent(out) :: x
-!
-      integer :: i
-!
-      call zero_array(x,n**2)
-!
-!$omp parallel do private(i) schedule(static)
-      do i = 1, n
-!
-         x(i,i) = one
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine identity_array
 !
 !
    pure function is_significant(x, n, threshold, screening) result(is_significant_)
@@ -468,6 +363,8 @@ contains
 !!
 !!    n_vectors:                       Number of Cholesky vectors
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: dim_
@@ -656,6 +553,8 @@ contains
 !!    left (optional): if true, transpose the left factor, A (standard);
 !!    if false, tranpose the right factor, B.
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: n
@@ -750,6 +649,8 @@ contains
 !!
 !!    Based on sandwich_real by Eirik F. Kjønstad, 2018
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: n
@@ -837,6 +738,8 @@ contains
 !!
 !!       Xr = A^T X A
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: m, n
@@ -891,6 +794,8 @@ contains
 !!
 !!       Xr = A X A^T
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: m, n
@@ -947,6 +852,8 @@ contains
 !!    Modified by Andreas S. Skeidsvoll, Jul 2020
 !!    To be used with real A and complex X matrices.
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: m, n
@@ -999,6 +906,8 @@ contains
 !!
 !!       X <- A X A^T
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: m
@@ -1111,69 +1020,6 @@ contains
 !$omp end parallel do
 !
    end subroutine transpose_
-!
-!
-   subroutine copy_and_scale(alpha, X, Y, n)
-!!
-!!    Copy and scale
-!!    Written by Sarai D. Folkestad, May 2019
-!!
-!!    Sets Y as:
-!!
-!!       Y = alpha*X
-!!
-!!    X and Y are vectors of length n, and alpha is a real number.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n), intent(out) :: Y
-      real(dp), dimension(n), intent(in) :: X
-!
-      real(dp), intent(in) :: alpha
-!
-      integer :: i
-!
-!$omp parallel do private(i)
-      do i = 1, n
-!
-         Y(i) = alpha*X(i)
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine copy_and_scale
-!
-!
-   subroutine copy_and_scale_complex(alpha, X, Y, n)
-!!
-!!    Copy and scale
-!!    Written by Sarai D. Folkestad, May 2019
-!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
-!!
-!!    Y = alpha*X
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      complex(dp), dimension(n), intent(out) :: Y
-      complex(dp), dimension(n), intent(in) :: X
-!
-      complex(dp), intent(in) :: alpha
-!
-      integer :: i
-!
-!$omp parallel do private(i)
-      do i = 1, n
-!
-         Y(i) = alpha*X(i)
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine copy_and_scale_complex
 !
 !
    subroutine get_n_lowest(n, size, vec, sorted_short_vec, index_list)
@@ -1772,6 +1618,8 @@ contains
 !!
 !!    Wrapper for dsygv (LAPACK)
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: dim_
@@ -1885,8 +1733,7 @@ contains
 !
       real(dp), dimension(n_rows, n_columns), intent(in) :: M
       real(dp), dimension(n_rows, n_extract), intent(out) :: M_extracted
-!
-      logical, dimension(n_columns) :: extract
+      logical, dimension(n_columns), intent(in) :: extract
 !
       integer :: counter, I
 !
@@ -2316,6 +2163,8 @@ contains
 !!    such that the largest element of the eigenvectors are positive.
 !!
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: n_total, n_blocks
@@ -2601,6 +2450,8 @@ contains
 !!    This is a wrapper using the block_diagonalization routine
 !!    which in turn uses the lapack dsyeev routine
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: dim_
@@ -2625,34 +2476,6 @@ contains
    end subroutine diagonalize_symmetric
 !
 !
-   subroutine constant_array(x, n, const)
-!!
-!!    Constant array
-!!    Written by Sarai D. Folkestad, 2021
-!!
-!!    Sets the array x of length n to const.
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n), intent(out) :: x
-!
-      real(dp), intent(in) :: const
-!
-      integer :: I
-!
-!$omp parallel do private(I) schedule(static)
-      do I = 1, n
-!
-         x(I) = const
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine constant_array
-!
-!
    subroutine generalized_diagonalization_symmetric(A, S, dim_, e)
 !!
 !!    Generalized diagonalization symmetric matrix
@@ -2665,6 +2488,8 @@ contains
 !!    On exit the vectors (X) are stored in A
 !!    On exit S is overwritten
 !!
+      use memory_manager_class, only: mem
+!
       implicit none
 !
       integer, intent(in) :: dim_
@@ -2697,43 +2522,6 @@ contains
       if (info .ne. 0) call output%error_msg('in generalized diagonalization (array_utilities.F90)')
 !
    end subroutine generalized_diagonalization_symmetric
-!
-!
-   subroutine copy_integer(X, Y, n, alpha)
-!!
-!!    Copy integer
-!!    Written by Alexander C. Paul, Feb 2021
-!!
-!!    Sets Y as:
-!!
-!!       Y = X
-!!
-!!    X and Y are vectors of length n
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      integer, dimension(n), intent(out) :: Y
-      integer, dimension(n), intent(in) :: X
-!
-      integer, optional, intent(in) :: alpha
-      integer :: alpha_
-!
-      integer :: i
-!
-      alpha_ = 1
-      if (present(alpha)) alpha_ = alpha
-!
-!$omp parallel do private(i)
-         do i = 1, n
-!
-            Y(i) = alpha_*X(i)
-!
-         enddo
-!$omp end parallel do
-!
-   end subroutine copy_integer
 !
 !
    subroutine add_to_subblock(scalar, x, y, p_range, q_range)
@@ -2784,6 +2572,9 @@ contains
 !!
 !!    In S-1, diagonals with singular values (S) below tau*max(S) are set to zero.
 !!
+      use memory_manager_class, only: mem
+      use array_initialization, only: zero_array, copy_and_scale
+!
       implicit none
 !
       integer, intent(in) :: m, n

@@ -32,7 +32,7 @@ module nto_tool_class
    use parameters
    use global_out,           only: output
    use memory_manager_class, only: mem
-   use array_utilities,      only: zero_array, diagonalize_symmetric
+   use array_utilities,      only: diagonalize_symmetric
    use stream_file_class,    only: stream_file
 !
    implicit none
@@ -156,11 +156,8 @@ contains
       call mem%alloc(this%eigenvalues_o, this%n_o)
       call mem%alloc(this%eigenvalues_v, this%n_v)
 !
-      call mem%alloc(this%M, this%n_o, this%n_o)
-      call mem%alloc(this%N, this%n_v, this%n_v)
-!
-      call zero_array(this%M, this%n_o**2)
-      call zero_array(this%N, this%n_v**2)
+      call mem%alloc(this%M, this%n_o, this%n_o, set_zero=.true.)
+      call mem%alloc(this%N, this%n_v, this%n_v, set_zero=.true.)
 !
       this%n_states = 0
 !
@@ -186,14 +183,14 @@ contains
 !
       if (files_found) then
 !
-         call this%M_file%open_('read', 'rewind')
+         call this%M_file%open_('rewind')
 !
          call this%M_file%read_(this%n_states)
          call this%M_file%read_(this%M, this%n_o**2)
 !
          call this%M_file%close_()
 !
-         call this%N_file%open_('read', 'rewind')
+         call this%N_file%open_('rewind')
 !
          call this%N_file%read_(n_states)
 !
@@ -223,14 +220,14 @@ contains
 !
       class(nto_tool), intent(inout) :: this
 !
-      call this%M_file%open_('write', 'rewind')
+      call this%M_file%open_('rewind')
 !
       call this%M_file%write_(this%n_states)
       call this%M_file%write_(this%M, this%n_o**2)
 !
       call this%M_file%close_()
 !
-      call this%N_file%open_('write', 'rewind')
+      call this%N_file%open_('rewind')
 !
       call this%N_file%write_(this%n_states)
       call this%N_file%write_(this%N, this%n_v**2)
@@ -248,7 +245,7 @@ contains
 !!    Add the contribution of an excited state X to M and N
 !!
 !
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -420,6 +417,8 @@ contains
 !!    Transform orbitals
 !!    Written by Sarai D. Folkestad and Alexander C. Paul, May 2021
 !!
+      use array_initialization, only: zero_array
+!
       implicit none
 !
       class(nto_tool), intent(inout) :: this

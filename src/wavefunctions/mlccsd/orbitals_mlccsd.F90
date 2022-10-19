@@ -906,6 +906,8 @@ contains
       call cc_es_solver%run()
       call cc_es_solver%cleanup()
 !
+      call cc2_wf%print_es_summary(trim(transformation), 'singlet')
+!
       call timer_es%turn_off()
 !
 !     Transfer information to mlcc wavefunction
@@ -988,7 +990,7 @@ contains
 !!    Construct orbitals cc2
 !!    Written by Sarai D. Folkestad
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

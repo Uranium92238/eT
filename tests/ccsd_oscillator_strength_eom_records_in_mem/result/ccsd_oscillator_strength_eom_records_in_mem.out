@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -84,7 +84,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:47:17 UTC +02:00
+  Calculation start:2022-10-19 10:29:20 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -176,16 +176,16 @@
      6          -177.480195433667     0.8262E-04     0.1353E-05
      7          -177.480195516708     0.2289E-04     0.8304E-07
      8          -177.480195527015     0.4801E-05     0.1031E-07
-     9          -177.480195527843     0.1045E-05     0.8287E-09
-    10          -177.480195527874     0.2388E-06     0.3087E-10
-    11          -177.480195527875     0.5236E-07     0.9095E-12
+     9          -177.480195527843     0.1045E-05     0.8288E-09
+    10          -177.480195527874     0.2388E-06     0.3072E-10
+    11          -177.480195527875     0.5236E-07     0.8811E-12
     12          -177.480195527875     0.9618E-08     0.1705E-12
-    13          -177.480195527875     0.4310E-08     0.1137E-12
-    14          -177.480195527875     0.1983E-08     0.1705E-12
+    13          -177.480195527875     0.4310E-08     0.8527E-13
+    14          -177.480195527875     0.1983E-08     0.0000E+00
     15          -177.480195527875     0.6772E-09     0.2842E-13
-    16          -177.480195527875     0.1634E-09     0.2842E-13
-    17          -177.480195527875     0.4727E-10     0.2842E-13
-    18          -177.480195527875     0.8072E-11     0.5684E-13
+    16          -177.480195527875     0.1634E-09     0.1137E-12
+    17          -177.480195527875     0.4727E-10     0.2558E-12
+    18          -177.480195527875     0.8075E-11     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 18 iterations!
 
@@ -266,7 +266,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.2440E-14
 
   - Settings for integral handling:
 
@@ -275,8 +275,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.94457
-     Total cpu time (sec):               1.80779
+     Total wall time (sec):              0.89000
+     Total cpu time (sec):               0.68872
 
 
   Determining CC cluster amplitudes
@@ -324,17 +324,17 @@
    16          -177.895980298866     0.8897E-08     0.3515E-09
    17          -177.895980298711     0.2774E-08     0.1558E-09
    18          -177.895980298609     0.8305E-09     0.1012E-09
-   19          -177.895980298572     0.3203E-09     0.3786E-10
+   19          -177.895980298571     0.3203E-09     0.3786E-10
    20          -177.895980298567     0.1026E-09     0.4292E-11
-   21          -177.895980298568     0.3742E-10     0.8527E-12
-   22          -177.895980298569     0.1594E-10     0.1336E-11
-   23          -177.895980298570     0.9386E-11     0.1137E-12
+   21          -177.895980298568     0.3742E-10     0.8242E-12
+   22          -177.895980298569     0.1594E-10     0.1364E-11
+   23          -177.895980298569     0.9386E-11     0.1137E-12
   ---------------------------------------------------------------
   Convergence criterion met in 23 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -177.895980298570
+     Final ground state energy (a.u.):  -177.895980298569
 
      Correlation energy (a.u.):           -0.415784770694
 
@@ -372,8 +372,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.59810
-     Total cpu time (sec):               3.19013
+     Total wall time (sec):              1.22800
+     Total cpu time (sec):               1.03908
 
 
   Determining CC multipliers
@@ -415,7 +415,7 @@
     18               0.1691E-09
     19               0.4902E-10
     20               0.1407E-10
-    21               0.4175E-11
+    21               0.4176E-11
   -------------------------------
   Convergence criterion met in 21 iterations!
 
@@ -456,6 +456,8 @@
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): memory
+     Storage (cc_es_davidson_transforms): memory
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -470,8 +472,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
 
   - Davidson solver settings
 
@@ -643,7 +643,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001063    0.000000000000     0.1318E-08   0.3810E-11
+     1   0.204566001063    0.000000000000     0.1318E-08   0.3811E-11
   -------------------------------------------------------------------------
 
   Iteration:                 22
@@ -651,7 +651,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001064    0.000000000000     0.3588E-09   0.1790E-11
+     1   0.204566001064    0.000000000000     0.3588E-09   0.1791E-11
   -------------------------------------------------------------------------
 
   Iteration:                 23
@@ -667,7 +667,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2675E-10   0.1432E-12
+     1   0.204566001066    0.000000000000     0.2675E-10   0.1434E-12
   -------------------------------------------------------------------------
 
   Iteration:                 25
@@ -675,7 +675,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.7214E-11   0.7030E-13
+     1   0.204566001066    0.000000000000     0.7214E-11   0.7036E-13
   -------------------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -731,6 +731,8 @@
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): memory
+     Storage (cc_es_davidson_transforms): memory
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -745,8 +747,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): memory
-     Storage (cc_es_davidson_transforms): memory
      Restarting left vector 1 from file r_001.
 
   - Davidson solver settings
@@ -783,7 +783,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204560038933    0.000000000000     0.3278E-02   0.1689E-03
+     1   0.204560038934    0.000000000000     0.3278E-02   0.1689E-03
   -------------------------------------------------------------------------
 
   Iteration:                  5
@@ -911,7 +911,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001070    0.000000000000     0.7446E-09   0.4992E-12
+     1   0.204566001070    0.000000000000     0.7446E-09   0.4986E-12
   -------------------------------------------------------------------------
 
   Iteration:                 21
@@ -919,7 +919,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2327E-09   0.3933E-11
+     1   0.204566001066    0.000000000000     0.2327E-09   0.3932E-11
   -------------------------------------------------------------------------
 
   Iteration:                 22
@@ -927,7 +927,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.8312E-10   0.8460E-12
+     1   0.204566001066    0.000000000000     0.8312E-10   0.8463E-12
   -------------------------------------------------------------------------
 
   Iteration:                 23
@@ -935,7 +935,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.2665E-10   0.1021E-13
+     1   0.204566001066    0.000000000000     0.2665E-10   0.9603E-14
   -------------------------------------------------------------------------
 
   Iteration:                 24
@@ -943,7 +943,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.204566001066    0.000000000000     0.7792E-11   0.8119E-13
+     1   0.204566001066    0.000000000000     0.7792E-11   0.8191E-13
   -------------------------------------------------------------------------
   Convergence criterion met in 24 iterations!
 
@@ -992,7 +992,7 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.204566001066        5.566524421566
+        1                  0.204566001066        5.566524421567
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
@@ -1025,12 +1025,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.002680333920
 
-  Peak memory usage during the execution of eT: 104.385344 MB
+  Peak memory usage during the execution of eT: 104.377728 MB
 
-  Total wall time in eT (sec):              7.50809
-  Total cpu time in eT (sec):              14.90653
+  Total wall time in eT (sec):              7.93600
+  Total cpu time in eT (sec):               6.92685
 
-  Calculation end:2022-06-30 08:47:24 UTC +02:00
+  Calculation end:2022-10-19 10:29:28 UTC -07:00
 
   - Implementation references:
 

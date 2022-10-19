@@ -29,6 +29,7 @@ module wavefunction_class
    use memory_manager_class,  only: mem
    use ao_tool_class,         only: ao_tool
    use environment_class,     only: environment
+   use output_file_class,     only: output_file
 !
    implicit none
 !
@@ -177,6 +178,13 @@ module wavefunction_class
                 => calculate_and_print_quadrupole_wavefunction
 !
       procedure(get_electronic_quadrupole), deferred :: get_electronic_quadrupole
+!
+      procedure :: write_orbitals &
+                => write_orbitals_wavefunction
+      procedure :: write_orbitals_and_energies &
+                => write_orbitals_and_energies_wavefunction
+      procedure :: write_orbital_coefficients &
+                => write_orbital_coefficients_wavefunction
 !
    end type wavefunction
 !
@@ -402,7 +410,7 @@ contains
 !!    For restricted space optional argument first_ao
 !!    may be used.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -552,7 +560,8 @@ contains
 !!    Added flip of orbitals.
 !!    Diagonalization using wrapper.
 !!
-      use array_utilities, only: copy_and_scale, diagonalize_symmetric
+      use array_utilities, only: diagonalize_symmetric
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -1204,6 +1213,109 @@ contains
       call output%print_table("Comp.", components, labels, quadrupole, 6, 3)
 !
    end subroutine calculate_and_print_quadrupole_wavefunction
+!
+!
+   subroutine write_orbitals_wavefunction(wf, prefix)
+!!
+!!    Write orbitals
+!!    Written by Alexander C. Paul, July 2022
+!!
+!!    prefix: string to identify which orbitals are printed
+!!            determines filename and print in the file
+!!
+      use output_file_class, only: output_file
+!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+      character(len=*), intent(in) :: prefix
+!
+      type(output_file) :: orbital_file
+      character(len=:), allocatable :: file_name
+!
+      file_name = "eT." // prefix // "_mo_information.out"
+!
+      orbital_file = output_file(file_name)
+      call orbital_file%open_('rewind')
+!
+      call wf%write_orbitals_and_energies(orbital_file,  &
+                                          wf%orbital_energies,     &
+                                          wf%orbital_coefficients, &
+                                          prefix // ' molecular orbital')
+!
+      call orbital_file%close_()
+!
+   end subroutine write_orbitals_wavefunction
+!
+!
+   subroutine write_orbitals_and_energies_wavefunction(wf, mo_file, mo_energies, &
+                                                       mo_coefficients, prefix)
+!!
+!!    Wirte orbitals and energies
+!!    Written by Eirik F. Kjønstad, Tor S. Haugland, Alexander C. Paul, 2019-2020
+!!
+!!    Note: mo_file is expected to be open already
+!!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+!
+      type(output_file), intent(inout) :: mo_file
+      real(dp), dimension(wf%n_mo), intent(in) :: mo_energies
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: mo_coefficients
+!
+      character(len=*), intent(in) :: prefix
+      character(len=200) :: header
+!
+      write(header, '(a,a)') trim(prefix), ' energies'
+!
+      call mo_file%print_vector('m', header, wf%n_mo, mo_energies, &
+                                 fs='(f20.12)', columns=3)
+!
+      write(header, '(a,a)') trim(prefix), ' coefficients'
+      call mo_file%printf('m', header, fs='(//t3,a)')
+!
+      call wf%write_orbital_coefficients(mo_file, mo_coefficients)
+!
+   end subroutine write_orbitals_and_energies_wavefunction
+!
+!
+   subroutine write_orbital_coefficients_wavefunction(wf, mo_file, orbital_coefficients)
+!!
+!!    Write orbital coefficients
+!!    Written by Eirik F. Kjønstad, Tor S. Haugland, Alexander C. Paul, 2019-2020
+!!
+!!    Prints the orbitals from coefficients with atom & orbital information given.
+!!
+!!    Note: mo_file is expected to be open already
+!!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+      type(output_file), intent(inout) :: mo_file
+      real(dp), dimension(wf%ao%n, wf%n_mo), intent(in) :: orbital_coefficients
+!
+      integer, parameter :: n_entries = 5
+!
+      integer :: mo_offset, first_mo, last_mo
+!
+!     Print at most n_entries (5) MOs at a time
+!
+      do mo_offset = 1, wf%n_mo, n_entries
+!
+         first_mo = mo_offset
+         last_mo  = min(mo_offset + n_entries - 1, wf%n_mo)
+!
+!        Print the current set of MO vectors
+!
+         call wf%ao%print_ao_vectors(C        = orbital_coefficients(:, first_mo : last_mo),&
+                                     out_file = mo_file, &
+                                     m        = last_mo - first_mo + 1, &
+                                     offset   = first_mo - 1)
+!
+      enddo
+!
+   end subroutine write_orbital_coefficients_wavefunction
 !
 !
 end module wavefunction_class

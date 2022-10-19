@@ -21,17 +21,17 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-9
 f = get_hf_filter(threshold)
-f.extend(get_z_matrix_filter())
+f += get_z_matrix_filter()
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['hf_print_z_matrix.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'hf_print_z_matrix.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

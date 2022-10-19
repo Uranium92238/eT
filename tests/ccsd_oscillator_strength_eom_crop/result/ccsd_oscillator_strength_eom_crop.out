@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -88,7 +88,7 @@
      end method
 
 
-  Calculation start:2022-06-30 08:47:11 UTC +02:00
+  Calculation start:2022-10-19 10:29:08 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -177,20 +177,20 @@
      1          -177.452460025509     0.7565E-01     0.1775E+03
      2          -177.479057956534     0.1129E-01     0.2660E-01
      3          -177.480052448592     0.4142E-02     0.9945E-03
-     4          -177.480180104061     0.1387E-02     0.1277E-03
+     4          -177.480180104062     0.1387E-02     0.1277E-03
      5          -177.480194099926     0.4317E-03     0.1400E-04
-     6          -177.480195433217     0.7552E-04     0.1333E-05
+     6          -177.480195433218     0.7552E-04     0.1333E-05
      7          -177.480195516154     0.2127E-04     0.8294E-07
      8          -177.480195526844     0.4990E-05     0.1069E-07
-     9          -177.480195527826     0.1544E-05     0.9820E-09
-    10          -177.480195527872     0.5606E-06     0.4653E-10
-    11          -177.480195527875     0.1718E-06     0.2757E-11
-    12          -177.480195527875     0.2537E-07     0.2842E-12
-    13          -177.480195527875     0.9499E-08     0.0000E+00
+     9          -177.480195527826     0.1544E-05     0.9821E-09
+    10          -177.480195527872     0.5606E-06     0.4630E-10
+    11          -177.480195527875     0.1718E-06     0.2956E-11
+    12          -177.480195527875     0.2537E-07     0.0000E+00
+    13          -177.480195527875     0.9499E-08     0.5684E-13
     14          -177.480195527875     0.3900E-08     0.5684E-13
     15          -177.480195527875     0.1805E-08     0.1705E-12
-    16          -177.480195527875     0.4213E-09     0.1137E-12
-    17          -177.480195527875     0.9108E-10     0.1137E-12
+    16          -177.480195527875     0.4213E-09     0.8527E-13
+    17          -177.480195527875     0.9107E-10     0.8527E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -271,7 +271,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9471E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.1084E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.2440E-14
 
   - Settings for integral handling:
 
@@ -280,8 +280,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.86854
-     Total cpu time (sec):               1.73847
+     Total wall time (sec):              0.76700
+     Total cpu time (sec):               0.74069
 
 
   Determining CC cluster amplitudes
@@ -375,8 +375,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              1.45438
-     Total cpu time (sec):               2.90431
+     Total wall time (sec):              0.88500
+     Total cpu time (sec):               0.89812
 
 
   Determining CC multipliers
@@ -433,8 +433,8 @@
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.78793
-     Total cpu time (sec):               1.56786
+     Total wall time (sec):              1.00600
+     Total cpu time (sec):               0.99244
 
   - CC multipliers solver summary:
 
@@ -477,9 +477,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -686,7 +686,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.204566001090       0.3935E-09
-     2      0.321008275436       0.1492E-07
+     2      0.321008275437       0.1492E-07
   -----------------------------------------------
 
   Iteration:                 23
@@ -724,8 +724,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -738,7 +736,7 @@
         a       i         R(a,i)
      -----------------------------------
         1     10        0.960302407238
-        3     10        0.136219055683
+        3     10        0.136219055682
         2     10        0.045809047315
         1      7        0.045498210684
        13     10       -0.024180057795
@@ -802,21 +800,21 @@
         2      3       1      6        0.021902199631
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CCSD excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.204566001090        5.566524422226
-        2                  0.321008275570        8.735080102160
+        2                  0.321008275570        8.735080102161
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              2.11338
-     Total cpu time (sec):               4.23328
+     Total wall time (sec):              2.32600
+     Total cpu time (sec):               2.32893
 
 
   Determining CC excited state amplitudes
@@ -825,9 +823,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -1066,8 +1064,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -1144,21 +1140,21 @@
         1      6       7      8       -0.044652758861
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CCSD excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.204566001089        5.566524422209
+        1                  0.204566001089        5.566524422210
         2                  0.321008275574        8.735080102263
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              2.58509
-     Total cpu time (sec):               5.16501
+     Total wall time (sec):              2.64600
+     Total cpu time (sec):               2.35832
 
 
   Biorthonormalization of excited CC states
@@ -1193,7 +1189,7 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.321008275570
-     Excitation energy [eV]:            8.735080102160
+     Excitation energy [eV]:            8.735080102161
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
@@ -1206,12 +1202,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.158112693810
 
-  Peak memory usage during the execution of eT: 40.975328 MB
+  Peak memory usage during the execution of eT: 40.967392 MB
 
-  Total wall time in eT (sec):              9.43095
-  Total cpu time in eT (sec):              18.79958
+  Total wall time in eT (sec):              9.00100
+  Total cpu time in eT (sec):               8.95912
 
-  Calculation end:2022-06-30 08:47:20 UTC +02:00
+  Calculation end:2022-10-19 10:29:17 UTC -07:00
 
   - Implementation references:
 

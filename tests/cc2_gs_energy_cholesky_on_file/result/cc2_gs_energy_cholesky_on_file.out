@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -77,7 +77,7 @@
      end do
 
 
-  Calculation start:2022-06-30 08:45:53 UTC +02:00
+  Calculation start:2022-10-19 10:30:26 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -169,14 +169,14 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4121E-12
-    11           -78.843851693631     0.5634E-08     0.1421E-13
+    10           -78.843851693631     0.2637E-07     0.4690E-12
+    11           -78.843851693631     0.5634E-08     0.0000E+00
     12           -78.843851693631     0.1415E-08     0.5684E-13
     13           -78.843851693631     0.6806E-09     0.1421E-13
     14           -78.843851693631     0.1491E-09     0.1421E-13
-    15           -78.843851693631     0.2501E-10     0.4263E-13
+    15           -78.843851693631     0.2501E-10     0.7105E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -267,8 +267,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.18215
-     Total cpu time (sec):               0.36205
+     Total wall time (sec):              0.54900
+     Total cpu time (sec):               0.25353
 
 
   Determining CC cluster amplitudes
@@ -310,8 +310,8 @@
     9           -79.085769729230     0.3393E-07     0.9095E-12
    10           -79.085769729553     0.4633E-08     0.3225E-09
    11           -79.085769729586     0.9303E-09     0.3266E-10
-   12           -79.085769729575     0.2416E-09     0.1074E-10
-   13           -79.085769729575     0.4926E-10     0.4690E-12
+   12           -79.085769729575     0.2416E-09     0.1073E-10
+   13           -79.085769729575     0.4926E-10     0.4547E-12
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -339,15 +339,15 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.07816
-     Total cpu time (sec):               0.14816
+     Total wall time (sec):              0.08700
+     Total cpu time (sec):               0.09125
 
-  Peak memory usage during the execution of eT: 5.936328 MB
+  Peak memory usage during the execution of eT: 5.904464 MB
 
-  Total wall time in eT (sec):              0.74913
-  Total cpu time in eT (sec):               1.46118
+  Total wall time in eT (sec):              1.25500
+  Total cpu time in eT (sec):               0.89483
 
-  Calculation end:2022-06-30 08:45:54 UTC +02:00
+  Calculation end:2022-10-19 10:30:28 UTC -07:00
 
   - Implementation references:
 

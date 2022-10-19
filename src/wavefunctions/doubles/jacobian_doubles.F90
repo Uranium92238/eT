@@ -28,9 +28,9 @@ submodule (doubles_class) jacobian_doubles
 !!    ρ_i = A * c_i,
 !!
 !!    where
-!!   
+!!
 !!    A_μ,ν = < μ |exp(-T) [H, τ_ν] exp(T) | R >.
-!!  
+!!
 !!
 !
    implicit none
@@ -72,7 +72,8 @@ contains
 !!    and c_aibj = rho_aibj.
 !!
       use reordering, only: squareup, symmetrize_and_add_to_packed
-      use array_utilities, only: zero_array, scale_diagonal
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
 !
       implicit none
 !
@@ -84,7 +85,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
-      type(timings), allocatable :: timer 
+      type(timings), allocatable :: timer
 !
       timer = timings('Jacobian doubles transformation', pl='normal')
       call timer%turn_on()
@@ -114,8 +115,7 @@ contains
 !
 !     Contributions to transformed doubles
 !
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(rho_aibj, wf%n_t1**2)
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%jacobian_doubles_a2(rho_aibj, c(1 : wf%n_t1))
       call wf%jacobian_doubles_b2(rho_aibj, c_aibj)
@@ -151,7 +151,6 @@ contains
 !!
 !!    which are wavefunction variables
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_2341_to_1234, squareup
 !
       implicit none
@@ -175,9 +174,7 @@ contains
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ovov', g_ldkc)
 !
-      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call zero_array(L_dlck, (wf%n_v**2)*(wf%n_o**2))
+      call mem%alloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
       call add_2143_to_1234(two, g_ldkc, L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_ldkc, L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -204,7 +201,7 @@ contains
                   wf%n_v)
 !
       wf%jacobian_a1_intermediate_vv = stream_file('jacobian_a1_intermediate_vv_doubles')
-      call wf%jacobian_a1_intermediate_vv%open_('write', 'rewind')
+      call wf%jacobian_a1_intermediate_vv%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_vv%write_(Y_bd, wf%n_v**2)
 !
@@ -236,7 +233,7 @@ contains
       call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       wf%jacobian_a1_intermediate_oo = stream_file('jacobian_a1_intermediate_oo_doubles')
-      call wf%jacobian_a1_intermediate_oo%open_('write', 'rewind')
+      call wf%jacobian_a1_intermediate_oo%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_oo%write_(Y_jl, wf%n_o**2)
 !
@@ -392,7 +389,7 @@ contains
 !
       call mem%alloc(Y_ac, wf%n_v, wf%n_v)
 !
-      call wf%jacobian_a1_intermediate_vv%open_('read', 'rewind')
+      call wf%jacobian_a1_intermediate_vv%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_vv%read_(Y_ac, wf%n_v**2)
 !
@@ -417,7 +414,7 @@ contains
 !
       call mem%alloc(Y_il, wf%n_o, wf%n_o)
 !
-      call wf%jacobian_a1_intermediate_oo%open_('read', 'rewind')
+      call wf%jacobian_a1_intermediate_oo%open_('rewind')
 !
       call wf%jacobian_a1_intermediate_oo%read_(Y_il, wf%n_o**2)
 !
@@ -451,7 +448,6 @@ contains
 !!    rho_ai^B1 = sum_bj F_jb (2*c_aibj - c_ajbi)
 !!              = sum_bj F_jb v_aijb
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1243_to_1234, add_1342_to_1234
 !
       implicit none
@@ -474,8 +470,7 @@ contains
 !
 !     and do the matrix multiplication with F_jb
 !
-      call mem%alloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call zero_array(v_aijb, wf%n_t1**2)
+      call mem%alloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v, set_zero=.true.)
 !
       call add_1243_to_1234(two, c_aibj, v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call add_1342_to_1234(-one, c_aibj, v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -507,7 +502,6 @@ contains
 !!    rho_ai^C1 = - sum_bjk L_jikb c_ajbk
 !!              = - sum_bjk (2*g_jikb - g_kijb) c_ajbk
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_1432_to_1234, add_3412_to_1234
 !
       implicit none
@@ -534,8 +528,7 @@ contains
       call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call wf%eri_t1%get('ooov', g_jikb)
 !
-      call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(L_jbki, (wf%n_o**3)*wf%n_v)
+      call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
       call add_1432_to_1234(two, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call add_3412_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -571,7 +564,7 @@ contains
 !!
       use batching_index_class, only: batching_index
       use reordering, only: sort_1234_to_1432, add_1432_to_1234
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !

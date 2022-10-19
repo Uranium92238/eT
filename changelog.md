@@ -1,3 +1,38 @@
+# eT v1.9.0
+### Features
+- Added printing of orbital coefficients when orbitals are frozen or transformed to the MLCC basis. eT-program/eT!1102
+- Added ploting of orbitals from CC wave functions. eT-program/eT!1102
+- Added total and iteration timers to solvers. eT-program/eT!1109
+- Added option to zero out arrays when allocating. eT-program/eT!1112
+- Added option to to plot NTOs/CNTOs only for selected states. eT-program/eT!1126
+- CCS triplet excitation energies. eT-program/eT!1046
+- CC2 triplet excitation energies. eT-program/eT!1049
+- Added option to set logical arrays to true/false when allocating. eT-program/eT!1128
+
+### Structure
+- Added separate engine for Lanczos and removed `cc_es_eigen_davidson_print_tool`. eT-program/eT!1095
+- Removed unused routines in CCS and MLCCSD. eT-program/eT!1105
+- Made all unformatted files stream files and removed unformatted sequential. eT-program/eT!1118, eT-program/eT!1132
+- Restructured I/O classes moving more functionality into `abstract_file_class`. eT-program/eT!1118, eT-program/eT!1132
+- Removed unused `abstract_hf_solver_class.F90`. eT-program/eT!1121
+- Removed warnings from intel compilers. eT-program/eT!1128
+- Response equations in CC theory are now solved using general Davidson solver. eT-program/eT!1133
+
+### Tests
+- Added checks for cube and auxiliary files to the time-dependent CC tests. eT-program/eT!1096
+- Removed for loop over the inputs in the test scripts. eT-program/eT!1098
+- Frozen HF tests with excitation energies and transition moments. eT-program/eT!1101
+- Added unit test for z-matrix tool. eT-program/eT!1103
+- Added restart test for CCS and 3-level MLCCSD tests. eT-program/eT!1105
+- Simplified the use of keyword arguments in `filters.py`. eT-program/eT!1106
+
+### Bugfixes
+- Removed memory leaks in linked list class and main program. eT-program/eT!1139
+
+### CI
+- Updated version of `fortran-code-quality` to v1.3.0. eT-program/eT!1139
+- CI now always runs python and fortran code-quality, but stops if one of these stages does not succeed. eT-program/eT!1140
+
 # eT v1.8.10
 ### Features
 - Reverted eT-program/eT!1127: Fixed eT interface to libint. eT-program/eT!1146
@@ -43,6 +78,7 @@
 # eT v1.8.0
 ### Features
 - Added calculation of FCI densities and dipole and quadrupole tests. eT-program/eT!1087
+- Frequency-dependent (and static) polarizabilities for HF. eT-program/eT!1054
 
 ### Structure
 - Changed routines in parameters.F90 to increase covarage. eT-program/eT!1068
@@ -60,9 +96,6 @@
 - Added factories for cc start vector and cc projection tools. eT-program/eT!1091
 - Added storers that know how to store amplitudes. eT-program/eT!1092 eT-program/eT!1094
 
-### Features
-- Frequency-dependent (and static) polarizabilities for HF. eT-program/eT!1054
-
 ### Optimization
 - Removed N^3 scaling from Fock construction visible for very large systems. eT-program/eT!870
 - Linear exchange algorithm added (similar to LinK). eT-program/eT!870
@@ -79,7 +112,6 @@
 # eT v1.7.2
 ### Bugfixes
 - Fixed bug in spin-multiplicities, where sum of squares was incorrectly assumed equal to square of sum. Happened only with -O0 flag. eT-program/eT!1072
-
 
 # eT v1.7.1
 ### Bugfixes

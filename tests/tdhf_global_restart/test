@@ -21,7 +21,7 @@ assert version_info.major == 2
 # construct filter(s)
 threshold = 1.0e-9
 n_states = 2
-f = get_tdhf_filter(n_states, threshold, convergence=True, restart=True)
+f = get_tdhf_filter(threshold, n_states, convergence=True, restart=True)
 
 # invoke the command line interface parser which returns options
 options = cli()

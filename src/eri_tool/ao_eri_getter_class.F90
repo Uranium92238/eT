@@ -74,9 +74,6 @@ contains
 !!
 !!    Wrapper for ao tool routine
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(ao_eri_getter) :: this

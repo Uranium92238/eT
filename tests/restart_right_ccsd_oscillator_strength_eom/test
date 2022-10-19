@@ -24,45 +24,24 @@ threshold = 1.0e-10
 convergence = True
 restart = True
 
-f = get_eom_filter(n_states, threshold, convergence, restart)
+f = get_eom_filter(n_states, threshold, convergence=convergence, restart=restart)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
+inp = 'ccsd_right_es.inp'
+# the run function runs the code with extra arguments
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-save .')
 
-#  Run ccsd calculation, filter and compare to reference
-#  - extra arguments -ks and --scratch to keep the scratch 
-#    after the first calculation
-#  - scratch will be in build/tests/test_name/scratch
-#  - If we don't provide the "filters" line, the first output file 
-#    would not be filtered and compared
-#  - We can also provide a second filter list e.g. g to check both 
-#    output files for different things
-#
-for inp in ['ccsd_right_es.inp']:
-    #
-    # the run function runs the code with extra arguments
-    # keep the scratch in the tests folder in build
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-save .')
-
-#
-#  Run CCSD restart calculation with the same filter list f
-#  We could also provide a different filter list g
-#
-for inp in ['restart_right_ccsd_oscillator_strength_eom.inp']:
-    #
-    # the run function runs the code and filters the outputs
-    # don't provide -ks to delete scratch after succesful run
-    #
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                extra_args='-load ./ccsd_right_es_restart_files',
-                filters={'out': f})
+inp = 'restart_right_ccsd_oscillator_strength_eom.inp'
+ierr += run(options,
+            configure,
+            input_files=inp,
+            extra_args='-load ./ccsd_right_es_restart_files',
+            filters={'out': f})
 
 sys.exit(ierr)

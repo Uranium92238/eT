@@ -13,53 +13,35 @@ module unit_memory
 
 contains
 !
-   @test
-   subroutine test_get_memory_as_character()
+   @test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
+   subroutine test_get_memory()
 
       implicit none
 
       type(memory_manager) :: this
-      integer(i64) :: mem_total
+      integer(i64) :: mem_avail
       character(len=17) :: mem_char, expected
 !
-      output = output_file('unit_testing.out')
+      real(dp), dimension(:,:), allocatable :: array
+!
+      output = output_file('unit_memory.out')
       call output%open_('append')
 !
-      mem_total = 2
-!
-      this = memory_manager(total=mem_total, &
+      this = memory_manager(total=2, &
                             units='gb')
 !
-      mem_char = this%get_memory_as_character(mem_total, all_digits=.true.)
+      mem_avail = this%get_available()
+!
+      mem_char = this%get_memory_as_character(mem_avail, all_digits=.true.)
 !
       expected = '     2000000000 B'
       @assertEqual(expected, mem_char)
 !
       mem_char = ''
-      mem_char = this%get_memory_as_character(mem_total)
+      mem_char = this%get_memory_as_character(mem_avail)
 !
-      expected = '      0.002000 TB'
+      expected = '      2.000000 GB'
       @assertEqual(expected, mem_char)
-!
-      call output%close_()
-!
-   end subroutine test_get_memory_as_character
-!
-!
-   @test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
-   subroutine test_print_available_and_leak()
-
-      implicit none
-
-      real(dp), dimension(:,:), allocatable :: array
-
-      type(memory_manager) :: this
-!
-      output = output_file('unit_testing.out')
-      call output%open_('append')
-!
-      this = memory_manager(total=2, &
-                            units='gb')
 !
       call this%alloc(array, 2, 2)
 !
@@ -70,7 +52,9 @@ contains
       call output%close_()
       @assertEqual(1, 1, message='intentionally broken test')
 !
-   end subroutine test_print_available_and_leak
+      call output%close_()
+!
+   end subroutine test_get_memory
 !
 !
 end module unit_memory

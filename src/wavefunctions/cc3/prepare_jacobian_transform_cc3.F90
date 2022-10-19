@@ -115,7 +115,7 @@ contains
 !!
       use reordering, only: squareup_and_sort_1234_to_1324, sort_1234_to_1342
       use reordering, only: construct_contravariant_t3
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -209,8 +209,7 @@ contains
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%alloc(X_alji, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call zero_array(X_alji, wf%n_v*wf%n_o**3)
+      call mem%alloc(X_alji, wf%n_v, wf%n_o, wf%n_o, wf%n_o, set_zero=.true.)
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
@@ -218,7 +217,7 @@ contains
          call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%alloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-         call mem%alloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%alloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, wf%n_o, set_zero=.true.)
 !
          if (wf%n_o .le. wf%n_v) then
             call mem%alloc(sorting, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
@@ -243,9 +242,9 @@ contains
          call mem%alloc(g_lbjc, wf%n_v, wf%n_v, wf%n_o, batch_i%max_length)
          call mem%alloc(g_lbkc, wf%n_v, wf%n_v, wf%n_o, batch_i%max_length)
 !
-         call mem%alloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
-         call mem%alloc(X_dbaj, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
-         call mem%alloc(X_dbak, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
+         call mem%alloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length, set_zero=.true.)
+         call mem%alloc(X_dbaj, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length, set_zero=.true.)
+         call mem%alloc(X_dbak, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length, set_zero=.true.)
 !
          if (wf%n_o .le. wf%n_v) then
             call mem%alloc(sorting, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
@@ -470,7 +469,7 @@ contains
       call mem%dealloc(X_alji, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       wf%X_ajil = direct_stream_file('X_ajil',wf%n_v*wf%n_o**2)
-      call wf%X_ajil%open_('write')
+      call wf%X_ajil%open_()
 !
       call wf%X_ajil%write_(X_ajil, 1, wf%n_o)
 !
@@ -610,7 +609,7 @@ contains
       call mem%batch_setup(batch_i, req_0, req_i, 'sort_x_to_abid_and_write_cc3')
 !
       wf%X_abid = direct_stream_file('X_abid',wf%n_v**2)
-      call wf%X_abid%open_('write')
+      call wf%X_abid%open_()
 !
       call mem%alloc(X_dbai, wf%n_v, wf%n_v, wf%n_v, batch_i%max_length)
       call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%max_length, wf%n_v)

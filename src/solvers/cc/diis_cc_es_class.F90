@@ -137,11 +137,12 @@ contains
       logical :: crop
       integer :: diis_dimension, state
 !
-      this%wf => wf 
+      this%wf => wf
 !
-      this%timer = timings(trim(convert_to_uppercase(this%wf%name_)) // &
-                     ' excited state (' // trim(transformation) //')')
-      call this%timer%turn_on()
+      this%iteration_timer = timings('DIIS CC ES solver iteration')
+      this%total_timer = timings('DIIS CC ES solver (' // &
+                                 trim(transformation) //')')
+      call this%total_timer%turn_on()
 !
 !     Set printables
 !
@@ -149,9 +150,9 @@ contains
       this%tag    = 'DIIS'
 !
       this%description1 = 'A DIIS solver that solves for the lowest eigenvalues and &
-                           & the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                           & problem is solved by DIIS extrapolation of residuals for each &
-                           & eigenvector until the convergence criteria are met.'
+                           &the eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                           &problem is solved by DIIS extrapolation of residuals for each &
+                           &eigenvector until the convergence criteria are met.'
 !
       this%description2 = 'More on the DIIS algorithm can be found in &
                            &P. Pulay, Chemical Physics Letters, 73(2), 393-398 (1980).'
@@ -283,9 +284,6 @@ contains
 !
       real(dp) :: ddot
 !
-      type(timings) :: iteration_time
-      character(len=30) :: timer_name
-!
 !     Prepare wavefunction for excited state, and possibly do Davidson preconvergence
 !
       call this%prepare_wf_for_excited_state()
@@ -316,9 +314,7 @@ contains
       prev_energies     = zero
       residual_norms    = zero
 !
-      call mem%alloc(converged, (this%n_singlet_states))
-!
-      converged = .false.
+      call mem%alloc(converged, this%n_singlet_states, set_to=.false.)
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
@@ -338,11 +334,9 @@ contains
 !
       do while (.not. all(converged) .and. (iteration .le. this%max_iterations))
 !
-         iteration = iteration + 1
+         call this%iteration_timer%turn_on()
 !
-         write(timer_name, '(a,i0)') 'DIIS: CC ES iteration ', iteration
-         iteration_time = timings(trim(timer_name), pl="n")
-         call iteration_time%turn_on()
+         iteration = iteration + 1
 !
          call output%printf('n', 'Iteration: (i18)', ints=[iteration], fs='(/t3,a)')
 !
@@ -424,8 +418,8 @@ contains
 !
          call output%print_separator('n', 47, '-')
 !
-         call iteration_time%turn_off()
-         call iteration_time%reset()
+         call this%iteration_timer%turn_off()
+         call this%iteration_timer%reset()
 !
       enddo
 !
@@ -467,11 +461,7 @@ contains
 !
          enddo
 !
-         call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
-!
          call this%wf%set_excitation_energies(this%energies, this%transformation)
-!
-         call this%print_summary(X, X_order)
 !
          call mem%dealloc(X_order, this%n_singlet_states)
 !
@@ -573,6 +563,8 @@ contains
 !
       call davidson_solver%run()
       call davidson_solver%cleanup()
+!
+      call this%wf%print_es_summary(this%transformation, 'singlet')
 !
       call output%printf('m', 'Finished preconvergence! The DIIS solver will now restart&
                               & from the preconverged solutions.', ffs='(/t3,a)')

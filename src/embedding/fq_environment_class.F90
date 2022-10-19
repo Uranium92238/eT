@@ -28,7 +28,7 @@ module fq_environment_class
 !
    use parameters
 !
-   use global_in,             only: input 
+   use global_in,             only: input
    use global_out,            only: output
    use memory_manager_class,  only: mem
 !
@@ -53,7 +53,7 @@ module fq_environment_class
                 => initialize_fq_environment
 !
       procedure :: update &
-                => update_fq_environment 
+                => update_fq_environment
 !
       procedure :: get_energy &
                 => get_energy_fq_environment
@@ -61,7 +61,7 @@ module fq_environment_class
       procedure :: print_energy &
                 => print_energy_fq_environment
 !
-      procedure :: print_description & 
+      procedure :: print_description &
                 => print_description_fq_environment
 !
 !     Private class routines
@@ -108,12 +108,12 @@ contains
 !
    pure function new_fq_environment() result(embedding)
 !!
-!!    New fq_environment 
+!!    New fq_environment
 !!    Written by Sarai D. Folkestad, 2020
 !!
-      implicit none 
+      implicit none
 !
-      type(fq_environment) :: embedding 
+      type(fq_environment) :: embedding
 !
       embedding%type_       = 'FQ'
       embedding%n_charges   = 0
@@ -154,7 +154,7 @@ contains
       embedding%n_charges = input%get_n_mm_atoms()
       embedding%n_molecules = input%get_n_mm_molecules()
 !
-!     Read geometry 
+!     Read geometry
 !
       call mem%alloc(n_charges_in_molecule, embedding%n_molecules)
       call mem%alloc(coordinates, 3, embedding%n_charges)
@@ -225,14 +225,11 @@ contains
 !!    where J is the Ohno kernel together with
 !!    the charge constraints (see construct_D).
 !!
-!!    The equation is solved through inversion 
+!!    The equation is solved through inversion
 !!    J^-1 is stored as the J
 !!
 !!    See C. Cappelli, Int. J. Quantum Chem., 116(21), 1532-1542, (2016).
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(fq_environment), intent(inout)         :: embedding
@@ -277,15 +274,14 @@ contains
 !
       n_variables = embedding%n_charges + embedding%n_molecules
 !
-      call mem%alloc(rhs, n_variables)
-      call zero_array(rhs, n_variables)
+      call mem%alloc(rhs, n_variables, set_zero=.true.)
 !
 !     rhs = - (potential + electronegativity)
 !
       atom_offset = 0
 !
-      do I = 1, embedding%n_molecules 
-         do p = 1, embedding%molecules(I)%n_atoms 
+      do I = 1, embedding%n_molecules
+         do p = 1, embedding%molecules(I)%n_atoms
 !
             atom_offset = atom_offset + 1
 !
@@ -317,7 +313,7 @@ contains
 !
       atom_offset = 1
 !
-      do I = 1, embedding%n_molecules  
+      do I = 1, embedding%n_molecules
 !
          n_atoms = embedding%molecules(I)%n_atoms
 !
@@ -344,7 +340,7 @@ contains
 !!    Get energy
 !!    Written by Sarai D. Folkestad
 !!
-!!    Based on QM/MM and PCM routines written by Tommaso Giovannini 
+!!    Based on QM/MM and PCM routines written by Tommaso Giovannini
 !!
 !!    1. MM-MM interaction
 !!
@@ -352,7 +348,7 @@ contains
 !!
 !!    2. Nuclei-MM interaction:
 !!
-!!       1/2 sum_i sum_I q_i Q_I/|r_i - R_I| 
+!!       1/2 sum_i sum_I q_i Q_I/|r_i - R_I|
 !!
 !!       Q_I : MM charge
 !!       q_i : QM nuclear charge
@@ -361,7 +357,7 @@ contains
 !!       r_i : QM nuclei position
 !!
 !!       Factor 1/2 due to cancelations of MM-MM interaction terms.
-!!       See eq. (5), C. Cappelli, Int. J. Quantum Chem., 116(21), 1532-1542, (2016) 
+!!       See eq. (5), C. Cappelli, Int. J. Quantum Chem., 116(21), 1532-1542, (2016)
 !!       and insert the linear equation for the FQs
 !!
 !!       electrostatic energy = Tr(vD) + sum_i sum_I q_i Q_I/|r_i - R_I|
@@ -384,7 +380,7 @@ contains
 !
       embedding_energy = embedding%get_mm_mm_energy()
 !
-!     2. 1/2 sum_i sum_I q_i Q_I/|r_i - R_I| 
+!     2. 1/2 sum_i sum_I q_i Q_I/|r_i - R_I|
 !
       embedding_energy = embedding_energy + half*E_nuc_mm
 !
@@ -408,17 +404,17 @@ contains
       TrvD = ddot((ao%n)**2, ao%v, 1, density, 1)
       E_nuc_mm = embedding%get_nuclei_mm_energy(ao)
 !
-!     Electrostatic energy: 
+!     Electrostatic energy:
 !     Tr(vD) + sum_i sum_I q_i Q_I/|r_i - R_I|
 !
-      electrostatic_energy = E_nuc_mm + TrvD  
+      electrostatic_energy = E_nuc_mm + TrvD
 !
-!     SCF energy: 
+!     SCF energy:
 !     1/2 Tr(vD) + 1/2 sum_i sum_I q_i Q_I/|r_i - R_I| + 1/2 sum_i q_i chi_i
 !
       scf_energy = half*electrostatic_energy &
-                  + embedding%get_mm_mm_energy()  
-!  
+                  + embedding%get_mm_mm_energy()
+!
       call output%printf('m', '- Summary of QM/MM energetics:', fs='(/t3,a)')
       call output%printf('m', 'a.u.             eV     kcal/mol', fs='(t42,a)')
 !
@@ -430,7 +426,7 @@ contains
                                 scf_energy*Hartree_to_eV, &
                                 scf_energy*Hartree_to_kcalmol], fs='(t6,a)')
 !
-!     Electrostatic energy: 
+!     Electrostatic energy:
 !     Tr(vD) + sum_i sum_I q_i Q_I/|r_i - R_I|
 !
       call output%printf('m', 'QM/MM Electrostatic Energy:(f19.12)(f12.5) (f9.3)', &
@@ -449,10 +445,10 @@ contains
 !!    Sets electronegativity and hardness
 !!
       implicit none
-!  
+!
       class(fq_environment), intent(inout) :: embedding
 !
-      integer, intent(in) :: n_charges 
+      integer, intent(in) :: n_charges
 !
       real(dp), dimension(n_charges), intent(in) :: chi
       real(dp), dimension(n_charges), intent(in) :: eta
@@ -491,7 +487,7 @@ contains
 !!
 !!       eta_pq = 1/2(eta_p + eta_q)
 !!
-!!    and 
+!!    and
 !!
 !!       R_pq = |R_p - R_q|
 !!
@@ -500,7 +496,7 @@ contains
 !!    are built into J.
 !!
 !
-      use array_utilities, only: zero_array, invert_in_place
+      use array_utilities, only: invert_in_place
 !
       implicit none
 !
@@ -516,15 +512,13 @@ contains
 !     Allocate and construct ohno kernel
 !
       call mem%alloc(embedding%D, &
-                     (embedding%n_charges + embedding%n_molecules), &
-                     (embedding%n_charges + embedding%n_molecules))
-!
-      call zero_array(embedding%D, &
-                     (embedding%n_charges + embedding%n_molecules)**2)
+                     embedding%n_charges + embedding%n_molecules, &
+                     embedding%n_charges + embedding%n_molecules, &
+                     set_zero=.true.)
 !
       atom_p = 0
 !
-      do I = 1, embedding%n_molecules 
+      do I = 1, embedding%n_molecules
          do p = 1, embedding%molecules(I)%n_atoms
 !
             atom_p = atom_p + 1
@@ -532,7 +526,7 @@ contains
 !
             atom_q = 0
 !
-            do J = 1, embedding%n_molecules 
+            do J = 1, embedding%n_molecules
                do q = 1, embedding%molecules(J)%n_atoms
 !
                   atom_q = atom_q + 1
@@ -541,7 +535,7 @@ contains
 !
                   R_pq = sqrt((R_p(1) - R_q(1))**2 + (R_p(2) - R_q(2))**2 + (R_p(3) - R_q(3))**2)
                   R_pq = R_pq*angstrom_to_bohr
-!  
+!
                   eta_pq = half*(embedding%molecules(I)%get_eta_i(p) &
                                + embedding%molecules(J)%get_eta_i(q))
 !
@@ -556,21 +550,21 @@ contains
                   endif
 !
                enddo
-!        
+!
             enddo
 !
          enddo
 !
       enddo
 !
-!     Add the charge contraints 
+!     Add the charge contraints
 !
       atom_p = 0
 !
-      do I = 1, embedding%n_molecules 
+      do I = 1, embedding%n_molecules
          do p = 1, embedding%molecules(I)%n_atoms
 !
-            atom_p = atom_p + 1 
+            atom_p = atom_p + 1
 !
             embedding%D(atom_p, I + embedding%n_charges) = one
             embedding%D(I + embedding%n_charges, atom_p) = one
@@ -579,16 +573,16 @@ contains
       enddo
 !
       call invert_in_place(embedding%D,  &
-                  embedding%n_charges + embedding%n_molecules) 
+                  embedding%n_charges + embedding%n_molecules)
 !
    end subroutine construct_D_fq_environment
 !
 !
    pure function get_q_dot_chi_fq_environment(embedding) result(q_dot_chi)
 !!
-!!    Get q dot chi 
+!!    Get q dot chi
 !!    Written by Sarai D. Folkestad, Sep 2020
-!! 
+!!
 !!    Compute and returns sum_I q_I chi_I
 !!
       implicit none
@@ -600,8 +594,8 @@ contains
 !
       q_dot_chi = zero
 !
-      do I = 1, embedding%n_molecules 
-         do p = 1, embedding%molecules(I)%n_atoms 
+      do I = 1, embedding%n_molecules
+         do p = 1, embedding%molecules(I)%n_atoms
 !
             q_dot_chi = q_dot_chi + embedding%molecules(I)%get_q_i(p) * &
             embedding%molecules(I)%get_chi_i(p)
@@ -612,12 +606,12 @@ contains
    end function get_q_dot_chi_fq_environment
 !
 !
-   pure function get_mm_mm_energy_fq_environment(embedding) result(E) 
+   pure function get_mm_mm_energy_fq_environment(embedding) result(E)
 !!
 !!    Get MM energy contribution
 !!    Written by Sarai D. Folkestad
 !!
-!!    Returns the MM-MM interaction energy 
+!!    Returns the MM-MM interaction energy
 !!
 !!       E = 1/2 sum_I q_I chi_I
 !!
@@ -635,7 +629,7 @@ contains
 !!
 !!    Print description
 !!    Written by Tommaso Giovannini, April 2019
-!!    
+!!
       implicit none
 !
       class(fq_environment), intent(in) :: embedding
@@ -667,9 +661,9 @@ contains
       call output%printf('n', 'For further details, see:',  fs='(/t6,a)')
       call output%printf('n', 'T.Giovannini, F.Egidi, C.Cappelli, Chem. Soc. Rev., 2020, 49, 5664-5677',  fs='(t6,a/)')
 !
-      if(input%requested_cc_calculation()) then 
-         call output%printf('n', 'CC calculation: zero-order approximation',  fs='(t6,a)') 
-         call output%printf('n', 'FQ charges only affect MOs and Fock',  fs='(t6,a/)') 
+      if(input%requested_cc_calculation()) then
+         call output%printf('n', 'CC calculation: zero-order approximation',  fs='(t6,a)')
+         call output%printf('n', 'FQ charges only affect MOs and Fock',  fs='(t6,a/)')
       endif
 !
       call embedding%print_geometry('angstrom')
@@ -685,14 +679,14 @@ contains
 !!
 !!    Prints the MM geometry
 !!
-      implicit none 
+      implicit none
 
       class(fq_environment), intent(in) :: embedding
-!      
+!
       character(len=*), intent(in) :: units
 !
       integer :: m, a, line_length
-!  
+!
       real(dp) :: conversion_factor
 !
       real(dp), dimension(3) :: r
@@ -730,18 +724,18 @@ contains
                            embedding%molecules(m)%get_eta_i(a)], fs='(t6,a)')
          enddo
       enddo
-!     
+!
       call output%print_separator(pl='m', symbol='=', n=line_length, fs='(t6,a)')
 !
    end subroutine print_geometry_fq_environment
 !
 !
-   function get_nuclei_mm_energy_fq_environment(embedding, ao) result(E) 
+   function get_nuclei_mm_energy_fq_environment(embedding, ao) result(E)
 !!
 !!    Get MM energy contribution
 !!    Written by Sarai D. Folkestad
 !!
-!!    Returns the nuclei-MM interaction energy 
+!!    Returns the nuclei-MM interaction energy
 !!
 !!       E = sum_i sum_I q_i Q_I/|r_i - R_I|
 !!
@@ -770,13 +764,13 @@ contains
 !!    Get potential at mm points
 !!    Written by Sarai D. Folkestad
 !!
-!!    Returns the potential at the mm charges from the 
+!!    Returns the potential at the mm charges from the
 !!    nuclei
 !!
 !!      potential(I) = sum_J Q_J/|R_J - r_I|
 !!
 !!    where Q_J and R_J are the charge and position of the QM nuclei
-!!    and r_I is an MM point 
+!!    and r_I is an MM point
 !!
       implicit none
 !
@@ -801,16 +795,16 @@ contains
 !
    subroutine get_point_charges_fq_environment(embedding, pc)
 !!
-!!    Get point charges 
+!!    Get point charges
 !!    Written by Sarai D.Folkestad, 2020
 !!
-      implicit none 
+      implicit none
 !
       class(fq_environment), intent(in) :: embedding
 !
       type(point_charges), intent(out)  :: pc
 !
-      integer                           :: m, a, I 
+      integer                           :: m, a, I
 !
       pc = point_charges(embedding%n_charges)
       call pc%initialize()
@@ -818,7 +812,7 @@ contains
       I = 0
 !
       do m = 1, embedding%n_molecules
-         do a = 1, embedding%molecules(m)%n_atoms 
+         do a = 1, embedding%molecules(m)%n_atoms
 !
             I = I + 1
 !
@@ -836,17 +830,17 @@ contains
 !!    Get positions
 !!    Written by Sarai D.Folkestad, 2020
 !!
-      implicit none 
+      implicit none
 !
       class(fq_environment),                       intent(in)  :: embedding
       real(dp), dimension(3, embedding%n_charges), intent(out) :: r
 !
-      integer                                               :: m, a, I 
+      integer                                               :: m, a, I
 !
       I = 0
 !
       do m = 1, embedding%n_molecules
-         do a = 1, embedding%molecules(m)%n_atoms 
+         do a = 1, embedding%molecules(m)%n_atoms
 !
             I = I + 1
 !
@@ -867,7 +861,7 @@ contains
 !
       type(fq_environment) :: embedding
 !
-      if (allocated(embedding%D)) then 
+      if (allocated(embedding%D)) then
 !
          call mem%dealloc(embedding%D, &
                          (embedding%n_charges + embedding%n_molecules), &

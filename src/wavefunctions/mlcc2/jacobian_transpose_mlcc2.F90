@@ -55,7 +55,7 @@ contains
 !!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
 !!    vector).
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: squareup, symmetric_sum, packin
 !
       implicit none
@@ -518,7 +518,6 @@ contains
 !!          c : unrestricted
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
       use reordering, only: add_4123_to_1234, add_1432_to_1234, add_2143_to_1234
 !
       implicit none
@@ -582,8 +581,7 @@ contains
       call wf%eri_t1%get('ooov', g_ikjb, first_o, last_o, 1, wf%n_o, &
                                              first_o, last_o, first_v, last_v)
 !
-      call mem%alloc(L_kibj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
-      call zero_array(L_kibj, wf%n_o*(n_cc2_o**2)*n_cc2_v)
+      call mem%alloc(L_kibj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o, set_zero=.true.)
 !
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
       call add_4123_to_1234(-one, g_ikjb, L_kibj, wf%n_o, n_cc2_o, n_cc2_v, n_cc2_o)
@@ -611,8 +609,7 @@ contains
 !
 !        c : unrestricted
 !
-      call mem%alloc(sigma_iajb, n_cc2_o, n_cc2_v, n_cc2_o, n_cc2_v)
-      call zero_array(sigma_iajb, (n_cc2_o**2)*(n_cc2_v**2))
+      call mem%alloc(sigma_iajb, n_cc2_o, n_cc2_v, n_cc2_o, n_cc2_v, set_zero=.true.)
 !
       req0 = (n_cc2_v)*(n_cc2_o)*(wf%eri_t1%n_j)
       req1 = max((n_cc2_v)*(wf%eri_t1%n_j) + (n_cc2_o)*(n_cc2_v)**2, 2*(n_cc2_o)*(n_cc2_v)**2)

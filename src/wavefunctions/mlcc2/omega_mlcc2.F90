@@ -43,7 +43,7 @@ contains
 !!    Directs the construction of the omega vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -180,7 +180,7 @@ contains
                      one,                              &
                      L_aJb,                            &
                      batch_a%length,                   &
-                     X_Jbi,                            & 
+                     X_Jbi,                            &
                      wf%eri_t1%n_J*n_cc2_v,            &
                      one,                              &
                      omega(batch_a%first,first_cc2_o), &

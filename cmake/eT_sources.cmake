@@ -66,6 +66,7 @@ set(eT_fortran_sources
    src/engines/cc/cc_polarizability_engine_class.F90
    src/engines/cc/lr_transition_moment_engine_class.F90
    src/engines/cc/eom_transition_moment_engine_class.F90
+   src/engines/cc/cc_lanczos_engine_class.F90
    #
    src/engines/cc/tasks/cc_task_class.F90
    src/engines/cc/tasks/eri_approximator_task_class.F90
@@ -79,10 +80,13 @@ set(eT_fortran_sources
    src/engines/cc/tasks/cc_visualization_task_class.F90
    src/engines/cc/tasks/cc_propagation_task_class.F90
    src/engines/cc/tasks/biorthonormalization_task_class.F90
+   src/engines/cc/tasks/cc_lanczos_task_class.F90
    src/engines/cc/tasks/cc_transition_moments_task_class.F90
    src/engines/cc/tasks/cc_eom_transition_moments_task_class.F90
    src/engines/cc/tasks/cc_lr_transition_moments_task_class.F90
    src/engines/cc/tasks/fft_task_class.F90
+#
+   src/engines/cc/settings/cc_response_solver_settings_class.F90
 #
    src/engines/cc/calculators/cc_F_transformation_class.F90
    src/engines/cc/calculators/cc_null_F_transformation_class.F90
@@ -95,6 +99,7 @@ set(eT_fortran_sources
    src/engines/cc/factories/cc_amplitudes_solver_factory_class.F90
    src/engines/cc/factories/cc_multipliers_solver_factory_class.F90
    src/engines/cc/factories/cc_es_amplitudes_solver_factory_class.F90
+   src/engines/cc/factories/cc_triplet_es_amplitudes_solver_factory_class.F90
    src/engines/cc/factories/cc_propagator_factory_class.F90
    src/engines/cc/factories/cc_response_engine_factory_class.F90
 #
@@ -121,7 +126,7 @@ set(eT_fortran_sources
    src/io/abstract_stream_class.F90
    src/io/abstract_out_file_class.F90
    src/io/direct_stream_file_class.F90
-   src/io/sequential_file_class.F90
+   src/io/formatted_read_file_class.F90
    src/io/stream_file_class.F90
    src/io/input_file_class.F90
    src/io/section_class.F90
@@ -160,6 +165,7 @@ set(eT_fortran_sources
    src/solver_tools/linear_equation_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_manual_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_valence_start_vector_tool_class.F90
+   src/solver_tools/es_start_vectors/triplet_es_valence_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_cvs_start_vector_tool_class.F90
    src/solver_tools/es_start_vectors/es_ip_start_vector_tool_class.F90
    src/solver_tools/es_projectors/abstract_projection_tool_class.F90
@@ -176,13 +182,18 @@ set(eT_fortran_sources
    src/solver_tools/davidson/linear_davidson_single_solution_print_tool_class.F90
    src/solver_tools/davidson/linear_davidson_multiple_solutions_print_tool_class.F90
 #
+   src/solver_tools/vector_getter_rhs_tool_class.F90
    src/solver_tools/cc/cc_multipliers_rhs_tool_class.F90
-   src/solver_tools/cc/cc_es_eigen_davidson_print_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
-   src/solver_tools/cc/cc_eigen_storage_tool_class.F90
+   src/solver_tools/cc/cc_es_storage_tool_class.F90
+   src/solver_tools/cc/cc_triplet_es_storage_tool_class.F90
    src/solver_tools/cc/cc_jacobian_preconditioner_getter_class.F90
+   src/solver_tools/cc/cc_triplet_jacobian_preconditioner_getter_class.F90
    src/solver_tools/cc/cc_multipliers_start_vector_tool_class.F90
+   src/solver_tools/file_linear_equation_storage_tool_class.F90
    src/solver_tools/cc/cc_multipliers_linear_equation_storage_tool_class.F90
+
+   src/solver_tools/cc/cc_triplet_jacobian_transformation_class.F90
    src/solver_tools/cc/cc_jacobian_transformation_class.F90
    src/solver_tools/cc/folded_cc_jacobian_transformation_class.F90
 #
@@ -245,7 +256,6 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_gs_class.F90
    src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
-   src/solvers/cc/davidson_cc_linear_equations_class.F90
    src/solvers/cc/nonlinear_davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
@@ -290,6 +300,7 @@ set(eT_fortran_sources
    src/tools/rectangular_full_packed_utilities_r.F90
    src/tools/generated_tools/rectangular_full_packed_utilities_c.F90
    src/tools/timings_class.F90
+   src/tools/array_initialization.F90
    src/tools/array_utilities.F90
    src/tools/packed_array_utilities_r.F90
    src/tools/generated_tools/packed_array_utilities_c.F90
@@ -306,7 +317,6 @@ set(eT_fortran_sources
    src/tools/record_storer_class.F90
    src/tools/string_utilities.F90
    src/tools/visualization_class.F90
-   src/tools/task_list_class.F90
    src/tools/z_matrix_tool_class.F90
    src/tools/electrostatics/point_charges_class.F90
    src/tools/electrostatics/point_charge_class.F90
@@ -388,6 +398,8 @@ set(eT_fortran_sources
    src/wavefunctions/ccs/set_get_ccs.F90
    src/wavefunctions/ccs/file_handling_ccs.F90
    src/wavefunctions/ccs/t1_ccs.F90
+   src/wavefunctions/ccs/triplet_jacobian_ccs.F90
+   src/wavefunctions/ccs/triplet_jacobian_transpose_ccs.F90
    src/wavefunctions/ccs/complex_ccs.F90
    src/wavefunctions/ccs/generated_complex_files/t1_ccs_complex.F90
    src/wavefunctions/ccs/generated_complex_files/fock_ccs_complex.F90
@@ -401,7 +413,9 @@ set(eT_fortran_sources
    src/wavefunctions/doubles/doubles_class.F90
    src/wavefunctions/doubles/omega_doubles.F90
    src/wavefunctions/doubles/jacobian_doubles.F90
+   src/wavefunctions/doubles/triplet_jacobian_doubles.F90
    src/wavefunctions/doubles/jacobian_transpose_doubles.F90
+   src/wavefunctions/doubles/triplet_jacobian_transpose_doubles.F90
    src/wavefunctions/doubles/file_handling_doubles.F90
    src/wavefunctions/doubles/initialize_destruct_doubles.F90
    src/wavefunctions/doubles/mean_value_doubles.F90
@@ -417,7 +431,9 @@ set(eT_fortran_sources
    src/wavefunctions/cc2/mean_value_cc2.F90
    src/wavefunctions/cc2/omega_cc2.F90
    src/wavefunctions/cc2/jacobian_cc2.F90
+   src/wavefunctions/cc2/triplet_jacobian_cc2.F90
    src/wavefunctions/cc2/jacobian_transpose_cc2.F90
+   src/wavefunctions/cc2/triplet_jacobian_transpose_cc2.F90
    src/wavefunctions/cc2/multiplier_equation_cc2.F90
    src/wavefunctions/cc2/initialize_destruct_cc2.F90
    src/wavefunctions/cc2/fock_cc2.F90

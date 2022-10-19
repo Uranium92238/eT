@@ -85,8 +85,6 @@ module diis_cc_multipliers_class
 !
       logical :: restart
 !
-      type(timings) :: timer
-!
       class(amplitude_updater), allocatable :: tbar_updater
 !
       class(precondition_tool), allocatable :: preconditioner
@@ -139,8 +137,9 @@ contains
       logical :: records_in_memory, crop
       integer :: diis_dimension
 !
-      this%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
-      call this%timer%turn_on()
+      this%iteration_timer = timings('DIIS CC multipliers solver iteration')
+      this%total_timer = timings('DIIS CC multipliers solver')
+      call this%total_timer%turn_on()
 !
 !     Print solver banner
 !
@@ -242,6 +241,8 @@ contains
 !
       do while (.not. converged_residual .and. iteration .le. this%max_iterations)
 !
+         call this%iteration_timer%turn_on()
+!
 !        Construct the multiplier equations
 !
          call this%wf%construct_multiplier_equation(residual)
@@ -276,6 +277,9 @@ contains
 !
          iteration = iteration + 1
 !
+         call this%iteration_timer%turn_off()
+         call this%iteration_timer%reset()
+!
       enddo
 !
       if (.not. converged_residual) then
@@ -307,15 +311,15 @@ contains
       call this%preconditioner%destruct_precondition_vector()
       call this%wf%save_multipliers()
 !
-      call this%timer%turn_off()
+      call this%total_timer%turn_off()
 !
       call output%printf('n', '- Finished solving the ' // trim(this%wf%name_) // &
                          ' multipliers equations', fs='(/t3, a)')
 !
       call output%printf('n', 'Total wall time (sec): (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('n', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_diis_cc_multipliers
 !

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -78,7 +78,7 @@
      end cc mean value
 
 
-  Calculation start:2022-06-30 08:45:50 UTC +02:00
+  Calculation start:2022-10-19 10:30:33 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -164,11 +164,11 @@
      1           -74.889701962821     0.1071E+00     0.7489E+02
      2           -74.940474931397     0.1469E-01     0.5077E-01
      3           -74.942054999957     0.2353E-02     0.1580E-02
-     4           -74.942080036553     0.5610E-04     0.2504E-04
+     4           -74.942080036554     0.5610E-04     0.2504E-04
      5           -74.942080053363     0.1780E-04     0.1681E-07
      6           -74.942080057695     0.2053E-06     0.4333E-08
-     7           -74.942080057696     0.9667E-09     0.3695E-12
-     8           -74.942080057696     0.7866E-12     0.1421E-13
+     7           -74.942080057696     0.9667E-09     0.3553E-12
+     8           -74.942080057696     0.7784E-12     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 8 iterations!
 
@@ -245,8 +245,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.3206E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.5000E-16
+     Maximal difference between approximate and actual diagonal:              0.2342E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1216E-15
 
   - Settings for integral handling:
 
@@ -255,8 +255,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00623
-     Total cpu time (sec):               0.00623
+     Total wall time (sec):              0.02500
+     Total cpu time (sec):               0.01771
 
 
   Determining CC cluster amplitudes
@@ -286,7 +286,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -74.942080057696     0.1206E-11     0.7494E+02
+    1           -74.942080057696     0.1192E-11     0.7494E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -314,8 +314,8 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00109
-     Total cpu time (sec):               0.01110
+     Total wall time (sec):              0.00400
+     Total cpu time (sec):               0.00209
 
 
   Determining CC multipliers
@@ -346,14 +346,14 @@
 
   Iteration    Norm residual
   ----------------------------
-    1          0.2412E-11
+    1          0.2384E-11
   ----------------------------
   Convergence criterion met in 1 iterations!
 
   - Finished solving the ccs multipliers equations
 
-     Total wall time (sec):              0.00047
-     Total cpu time (sec):               0.00047
+     Total wall time (sec):              0.00200
+     Total cpu time (sec):               0.00101
 
   - CC multipliers solver summary:
 
@@ -384,18 +384,18 @@
 
      Comp.         Electronic           Nuclear             Total
      ------------------------------------------------------------
-     x          -0.0000000000      0.0000000000     -0.0000000000
+     x           0.0000000000      0.0000000000      0.0000000000
      y          -1.3314004055      2.8653998030      1.5339993975
-     z           0.0000000000      0.0000000000      0.0000000000
+     z          -0.0000000000      0.0000000000     -0.0000000000
      ------------------------------------------------------------
      Norm of the total dipole moment: 1.5339994
 
-  Peak memory usage during the execution of eT: 62.416 KB
+  Peak memory usage during the execution of eT: 59.812 KB
 
-  Total wall time in eT (sec):              0.06801
-  Total cpu time in eT (sec):               0.09586
+  Total wall time in eT (sec):              0.08200
+  Total cpu time in eT (sec):               0.07034
 
-  Calculation end:2022-06-30 08:45:50 UTC +02:00
+  Calculation end:2022-10-19 10:30:33 UTC -07:00
 
   - Implementation references:
 

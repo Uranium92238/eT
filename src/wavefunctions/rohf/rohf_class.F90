@@ -58,7 +58,7 @@ module rohf_class
 !
    end interface rohf
 !
-contains 
+contains
 !
 !
    function new_rohf() result(wf)
@@ -161,7 +161,7 @@ contains
 !!    NOTE: the off-diagonal blocks of R are assumed zero, since the
 !!    CUHF equations have been solved prior to the call to this routine
 !!
-      use array_utilities, only: symmetric_sandwich, symmetric_sandwich_right_transposition, zero_array
+      use array_utilities, only: symmetric_sandwich, symmetric_sandwich_right_transposition
       use array_utilities, only: generalized_diagonalization_symmetric
       implicit none
 !
@@ -190,8 +190,7 @@ contains
                               C_no_basis, &
                               wf%ao%n, wf%n_mo)
 !
-      call mem%alloc(R, wf%n_mo, wf%n_mo)
-      call zero_array(R, wf%n_mo**2)
+      call mem%alloc(R, wf%n_mo, wf%n_mo, set_zero=.true.)
 !
       do i = 1, wf%n_mo
          do j = 1, wf%n_mo

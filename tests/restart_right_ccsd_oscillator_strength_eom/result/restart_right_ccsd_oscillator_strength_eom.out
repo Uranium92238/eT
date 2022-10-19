@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -83,7 +83,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:48:24 UTC +02:00
+  Calculation start:2022-10-19 10:29:48 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -160,7 +160,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843676337127     0.4877E-11     0.7884E+02
+     1           -78.843676337127     0.4869E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -168,7 +168,7 @@
 
      HOMO-LUMO gap:                  0.645839120077
      Nuclear repulsion energy:      12.163673938821
-     Electronic energy:            -91.007350275947
+     Electronic energy:            -91.007350275948
      Total energy:                 -78.843676337127
 
 
@@ -250,8 +250,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.25190
-     Total cpu time (sec):               0.50188
+     Total wall time (sec):              0.19300
+     Total cpu time (sec):               0.23215
 
 
   Determining CC cluster amplitudes
@@ -283,7 +283,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -79.100220193412     0.7823E-11     0.7910E+02
+    1           -79.100220193412     0.7822E-11     0.7910E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -327,8 +327,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.01626
-     Total cpu time (sec):               0.03626
+     Total wall time (sec):              0.02600
+     Total cpu time (sec):               0.01817
 
 
   Determining CC multipliers
@@ -410,6 +410,8 @@
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -424,8 +426,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
      Restarting right vector 1 from file r_001.
 
   - Davidson solver settings
@@ -494,6 +494,8 @@
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -508,8 +510,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
      Restarting left vector 1 from file r_001.
 
   - Davidson solver settings
@@ -650,7 +650,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982163    0.000000000000     0.1747E-07   0.1324E-09
+     1   0.247312982163    0.000000000000     0.1747E-07   0.1325E-09
   -------------------------------------------------------------------------
 
   Iteration:                 18
@@ -682,7 +682,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982161    0.000000000000     0.8717E-09   0.3272E-12
+     1   0.247312982161    0.000000000000     0.8717E-09   0.3276E-12
   -------------------------------------------------------------------------
 
   Iteration:                 22
@@ -706,7 +706,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.4613E-10   0.5234E-12
+     1   0.247312982155    0.000000000000     0.4613E-10   0.5239E-12
   -------------------------------------------------------------------------
 
   Iteration:                 25
@@ -714,7 +714,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.1904E-10   0.1507E-12
+     1   0.247312982155    0.000000000000     0.1904E-10   0.1510E-12
   -------------------------------------------------------------------------
 
   Iteration:                 26
@@ -722,7 +722,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.247312982155    0.000000000000     0.7036E-11   0.1300E-12
+     1   0.247312982155    0.000000000000     0.7036E-11   0.1308E-12
   -------------------------------------------------------------------------
   Convergence criterion met in 26 iterations!
 
@@ -737,32 +737,32 @@
      -----------------------------------
         a       i         L(a,i)
      -----------------------------------
-        1      6       -0.934302980285
-        4      6       -0.113940647873
-        6      6        0.032704845192
-       13      6        0.027802552762
-        1      3        0.011444229191
-       10      6       -0.009054018781
-        1      5       -0.008730825126
-       22      6       -0.007422819385
-       19      5        0.006892929045
-        8      4        0.006439007669
+        1      6        0.934302980285
+        4      6        0.113940647873
+        6      6       -0.032704845192
+       13      6       -0.027802552762
+        1      3       -0.011444229191
+       10      6        0.009054018781
+        1      5        0.008730825126
+       22      6        0.007422819385
+       19      5       -0.006892929045
+        8      4       -0.006439007669
      ------------------------------------
 
      Largest double amplitudes:
      --------------------------------------------------
         a      i       b      j         L(ai,bj)
      --------------------------------------------------
-        2      4       1      6        0.171035162949
-        6      5       1      6       -0.100231515518
-        3      4       1      6        0.099701690101
-        1      5       1      6        0.089497856573
-        4      5       1      6        0.079150704118
-        1      6       5      6       -0.071472425439
-        7      4       1      6       -0.068295546905
-        1      2       1      6        0.065072321962
-        4      4       2      6        0.055704061628
-        3      5       2      6        0.042583103145
+        2      4       1      6       -0.171035162949
+        6      5       1      6        0.100231515518
+        3      4       1      6       -0.099701690101
+        1      5       1      6       -0.089497856573
+        4      5       1      6       -0.079150704118
+        1      6       5      6        0.071472425439
+        7      4       1      6        0.068295546905
+        1      2       1      6       -0.065072321962
+        4      4       2      6       -0.055704061628
+        3      5       2      6       -0.042583103145
      --------------------------------------------------
 
   - CCSD excitation energies:
@@ -804,12 +804,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.013190189064
 
-  Peak memory usage during the execution of eT: 14.482536 MB
+  Peak memory usage during the execution of eT: 14.477132 MB
 
-  Total wall time in eT (sec):              1.05150
-  Total cpu time in eT (sec):               2.06563
+  Total wall time in eT (sec):              1.84000
+  Total cpu time in eT (sec):               1.22870
 
-  Calculation end:2022-06-30 08:48:25 UTC +02:00
+  Calculation end:2022-10-19 10:29:50 UTC -07:00
 
   - Implementation references:
 

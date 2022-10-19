@@ -13,7 +13,7 @@ from runtest import version_info, cli, run, get_filter
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_hf_filter
+from filters import get_hf_filter, get_file_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -22,19 +22,19 @@ assert version_info.major == 2
 threshold = 1.0e-10
 
 f = get_hf_filter(threshold)
-g = [get_filter(abs_tolerance=threshold, ignore_sign=True)]
+g = get_file_filter(threshold)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['hf_orbital_files.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f,
-                         'molden': g,
-                         'mo_information.out': g})
+inp = 'hf_orbital_files.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f,
+                     'molden': g,
+                     'mo_information.out': g})
 
 sys.exit(ierr)

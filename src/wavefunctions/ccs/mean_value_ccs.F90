@@ -133,7 +133,7 @@ contains
 !!    corresponding to terms of the ground state density
 !!    and the left transition density.
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -270,7 +270,6 @@ contains
 !!                - sum_aibj t_i^a L^J_ja L^J_ib t_j^b
 !!
       use batching_index_class, only: batching_index
-      use array_utilities, only: zero_array
 !
       implicit none
 !
@@ -295,8 +294,7 @@ contains
       timer = timings('Calculate energy (ccs)', 'n')
       call timer%turn_on()
 
-      call mem%alloc(X_J, wf%eri_t1%n_J)
-      call zero_array(X_J, wf%eri_t1%n_J)
+      call mem%alloc(X_J, wf%eri_t1%n_J, set_zero=.true.)
 !
       req0 = 0
 !
@@ -455,90 +453,9 @@ contains
    end subroutine calculate_energy_ccs
 !
 !
-   module subroutine calculate_energy_omega_term_ccs(wf)
-!!
-!!    Calculate energy omega term (CCS)
-!!    Written by Andreas Skeidsvoll, Jan 2019
-!!
-!!    Adds multipliers dot omega to the energy,
-!!
-!!       energy += sum_mu tbar_mu Omega_mu,
-!!
-!!    which appears in the energy expression:
-!!
-!!          < Lambda|H|CC > when Omega != 0.
-!!
-!!    This routine does not have to be overwritten in descendants.
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(:), allocatable :: multipliers, omega
-!
-      real(dp), external :: ddot
-!
-      call mem%alloc(multipliers, wf%n_gs_amplitudes)
-      call mem%alloc(omega, wf%n_gs_amplitudes)
-!
-      call wf%get_multipliers(multipliers)
-      call wf%construct_omega(omega)
-!
-      wf%energy = wf%energy + ddot(wf%n_gs_amplitudes, multipliers, 1, omega, 1)
-!
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
-      call mem%dealloc(omega, wf%n_gs_amplitudes)
-!
-   end subroutine calculate_energy_omega_term_ccs
-!
-!
-   module subroutine calculate_energy_length_dipole_term_ccs(wf, electric_field)
-!!
-!!    Calculate energy length dipole term (CCS)
-!!    Written by Andreas Skeidsvoll, Jan 2019
-!!
-!!    Adds dipole part of the length gauge electromagnetic potential to the energy,
-!!
-!!       energy += 2 sum_ii (-mu·E)_ii,
-!!
-!!    where mu is the vector of electric dipole integral matrices
-!!    and E is a uniform classical electric
-!!    vector field. This routine does not have to be overwritten in descendants.
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(3), intent(in) :: electric_field
-!
-      real(dp), dimension(:,:,:), allocatable :: mu
-!
-      integer :: i
-!
-!     Construct t1 transformed dipole moment
-!
-      call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
-      call wf%get_t1_oei('dipole', mu)
-!
-!     Add one-electron electric field contribution to the diagonal
-!     of Fock and one-electron integral terms
-!
-      do i = 1, wf%n_o
-!
-         wf%energy = wf%energy - two*(mu(i, i, 1)*electric_field(1)   &
-                                      + mu(i, i, 2)*electric_field(2) &
-                                      + mu(i, i, 3)*electric_field(3))
-!
-      enddo
-!
-      call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
-!
-   end subroutine calculate_energy_length_dipole_term_ccs
-!
-!
    module function get_electronic_dipole_ccs(wf) result(mu_electronic)
 !!
-!!    Get electronic dipole 
+!!    Get electronic dipole
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019-2021
 !!
       implicit none
@@ -577,7 +494,7 @@ contains
 !
    module function get_electronic_quadrupole_ccs(wf) result(q_electronic)
 !!
-!!    Get electronic quadrupole 
+!!    Get electronic quadrupole
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none

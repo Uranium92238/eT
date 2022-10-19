@@ -36,12 +36,12 @@ test_dir = Path(__file__).parent
 checkfiles = [test_dir / i for i in checkfiles]
 
 ierr = 0
-for inp in ['hf_file_check.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'hf_file_check.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 missing_files = [i for i in checkfiles if not i.exists()]
 filerror = len(missing_files)

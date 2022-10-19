@@ -24,9 +24,13 @@ module abstract_solver_class
 !!    Written by Eirik F. Kjønstad, 2021
 !!
 !
+   use timings_class, only: timings
+!
    implicit none
 !
    type, abstract :: abstract_solver
+!
+      type(timings) :: total_timer, iteration_timer
 !
    contains
 !

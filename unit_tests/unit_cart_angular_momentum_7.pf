@@ -29,7 +29,7 @@ contains
       integer :: l = 7
       integer :: length = 36
 
-      output = output_file('unit_testing.out')
+      output = output_file('unit_cart_angular_momentum_7.out')
       call output%open_()
 
       factory = angular_momentum_factory(cartesian)

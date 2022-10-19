@@ -35,14 +35,14 @@ module cc_visualization_task_class
    type, extends(cc_task) :: cc_visualization_task
 !
       logical, private  :: plot_gs_density, plot_mn_densities, plot_es_densities
-      logical, private  :: plot_ntos, plot_cntos
+      logical, private  :: plot_ntos, plot_cntos, plot_mos
 !
       real(dp), private :: nto_threshold
 !
       character(len=5) :: es_transformation
 !
-      integer :: n_states_to_plot
-      integer, dimension(:), allocatable :: states_to_plot
+      integer :: n_states_to_plot_densities, n_states_to_plot_ntos
+      integer, dimension(:), allocatable :: states_to_plot_densities, states_to_plot_ntos
 !
       class(visualization), allocatable, private :: visualizer
 !
@@ -51,12 +51,16 @@ module cc_visualization_task_class
       procedure, public :: execute &
                         => execute_cc_visualization_task
 !
-      procedure, private :: set_states_to_plot
+      procedure, private :: set_states_to_plot_densities
+      procedure, private :: set_states_to_plot_ntos
       procedure, private :: visualize_ntos
       procedure, private :: plot_orbitals
+      procedure, private :: visualize_molecular_orbitals
       procedure, private :: visualize_ground_state_density
       procedure, private :: visualize_transition_densities
       procedure, private :: visualize_excited_state_densities
+!
+      procedure, private :: cleanup
 !
    end type cc_visualization_task
 !
@@ -83,6 +87,8 @@ contains
       type(cc_visualization_task) :: this
 !
       this%name_ = 'Plotting orbitals and/or CC densities'
+!
+      this%plot_mos = input%is_keyword_present('plot cc orbitals', 'visualization')
 !
       this%plot_gs_density = input%is_keyword_present('plot cc density', 'visualization')
 !
@@ -126,7 +132,7 @@ contains
       logical :: plot_anything
       character(len=4) :: tag
 !
-      plot_anything = any([this%plot_gs_density, this%plot_mn_densities, &
+      plot_anything = any([this%plot_mos, this%plot_gs_density, this%plot_mn_densities, &
                            this%plot_es_densities, this%plot_ntos, this%plot_cntos])
 !
 !
@@ -135,10 +141,12 @@ contains
       call this%print_header()
       call this%start_timer()
 !
-      call this%set_states_to_plot()
+      call this%set_states_to_plot_densities()
 !
       this%visualizer = visualization(wf%ao)
       call this%visualizer%initialize(wf%ao)
+!
+      call this%visualize_molecular_orbitals(wf)
 !
       call this%visualize_ground_state_density(wf)
 !
@@ -149,18 +157,69 @@ contains
 !
          if (this%plot_ntos) tag = 'nto'
          if (this%plot_cntos) tag = 'cnto'
+         call this%set_states_to_plot_ntos(trim(tag), wf%n_singlet_states)
          call this%visualize_ntos(wf, trim(tag))
 !
       end if
 !
       call this%visualizer%cleanup()
 !
-      if (allocated(this%states_to_plot)) &
-         call mem%dealloc(this%states_to_plot, this%n_states_to_plot)
+      call this%cleanup()
 !
       call this%end_timer()
 !
    end subroutine execute_cc_visualization_task
+!
+!
+   subroutine visualize_molecular_orbitals(this, wf)
+!!
+!!    Visualize molecular orbitals
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, 2019-2022
+!!
+      use global_in, only: input
+!
+      implicit none
+!
+      class(cc_visualization_task), intent(inout) :: this
+      class(ccs), intent(in) :: wf
+!
+      integer :: i, n_orbitals_to_plot
+!
+      integer, dimension(:), allocatable :: orbitals_to_plot
+!
+      real(dp), dimension(:,:), allocatable :: coefficients
+!
+      character(len=200), dimension(:), allocatable :: orbital_file_tags
+!
+      if (.not. this%plot_mos) return
+!
+      n_orbitals_to_plot = input%get_n_elements_for_keyword('plot cc orbitals', 'visualization')
+!
+      call mem%alloc(orbitals_to_plot, n_orbitals_to_plot)
+      call input%get_array_for_keyword('plot cc orbitals', 'visualization', &
+                                        n_orbitals_to_plot, orbitals_to_plot)
+!
+      call mem%alloc(coefficients, wf%ao%n, n_orbitals_to_plot)
+      allocate(orbital_file_tags(n_orbitals_to_plot))
+!
+      do i = 1, n_orbitals_to_plot
+!
+         call dcopy(wf%ao%n, wf%orbital_coefficients(1, orbitals_to_plot(i)), 1, &
+                    coefficients(1, i), 1)
+!
+         write(orbital_file_tags(i), '(a, i4.4)') 'CC_MO_', orbitals_to_plot(i)
+!
+      enddo
+!
+      call mem%dealloc(orbitals_to_plot, n_orbitals_to_plot)
+!
+      call this%visualizer%plot_orbitals(wf%ao, coefficients, &
+                                         n_orbitals_to_plot, orbital_file_tags)
+!
+      call mem%dealloc(coefficients, wf%ao%n, n_orbitals_to_plot)
+      deallocate(orbital_file_tags)
+!
+   end subroutine visualize_molecular_orbitals
 !
 !
    subroutine visualize_ground_state_density(this, wf)
@@ -203,7 +262,7 @@ contains
       class(ccs), intent(in) :: wf
       character(len=*), intent(in) :: tag
 !
-      integer :: state, n_significant_v, n_significant_o
+      integer :: state, n_significant_v, n_significant_o, p
 !
       real(dp), dimension(:,:), allocatable :: orbitals
 !
@@ -214,7 +273,9 @@ contains
 !
       call mem%alloc(orbitals, wf%ao%n, wf%n_mo)
 !
-      do state = 1, wf%n_singlet_states
+      do p = 1, this%n_states_to_plot_ntos
+!
+         state = this%states_to_plot_ntos(p)
 !
          call wf%construct_ntos_or_cntos(orbitals, state, n_significant_v, n_significant_o, &
                                          this%es_transformation, tag, this%nto_threshold)
@@ -295,9 +356,9 @@ contains
       call mem%alloc(density, wf%n_mo, wf%n_mo)
       call mem%alloc(c_D_ct, wf%ao%n, wf%ao%n)
 !
-      do p = 1, this%n_states_to_plot
+      do p = 1, this%n_states_to_plot_densities
 !
-         state_p = this%states_to_plot(p)
+         state_p = this%states_to_plot_densities(p)
 !
          do state_q = 1, wf%n_singlet_states
 !
@@ -347,9 +408,9 @@ contains
       call mem%alloc(density, wf%n_mo, wf%n_mo)
       call mem%alloc(c_D_ct, wf%ao%n, wf%ao%n)
 !
-      do p = 2, this%n_states_to_plot ! first initial state is the GS
+      do p = 2, this%n_states_to_plot_densities ! first initial state is the GS
 !
-         state_p = this%states_to_plot(p)
+         state_p = this%states_to_plot_densities(p)
 !
          call wf%get_density_for_plotting(c_D_ct, density, state_p, state_p, file_read)
 !
@@ -366,9 +427,9 @@ contains
    end subroutine visualize_excited_state_densities
 !
 !
-   subroutine set_states_to_plot(this)
+   subroutine set_states_to_plot_densities(this)
 !!
-!!    Set states to plot
+!!    Set states to plot densities
 !!    Written Alexander C. Paul, Apr 2021
 !!
 !!    Determine the states for which densities shall be plotted.
@@ -382,32 +443,95 @@ contains
 !
       if (input%is_keyword_present('states to plot', 'visualization')) then
 !
-         this%n_states_to_plot = input%get_n_elements_for_keyword('states to plot', &
-                                                                    'visualization')
+         this%n_states_to_plot_densities = input%get_n_elements_for_keyword('states to plot', &
+                                                                            'visualization')
 !
-         call mem%alloc(this%states_to_plot, this%n_states_to_plot)
+         call mem%alloc(this%states_to_plot_densities, this%n_states_to_plot_densities)
 !
          call input%get_array_for_keyword('states to plot', 'visualization', &
-                                          this%n_states_to_plot, this%states_to_plot)
+                                          this%n_states_to_plot_densities, &
+                                          this%states_to_plot_densities)
 
 !
-         if (any(this%states_to_plot == 0)) this%plot_gs_density = .true.
+         if (any(this%states_to_plot_densities == 0)) this%plot_gs_density = .true.
 !
       else if (input%is_keyword_present('initial states','cc response')) then
 !
-         this%n_states_to_plot = input%get_n_elements_for_keyword('initial states', &
-                                                                  'cc response')
+         this%n_states_to_plot_densities = input%get_n_elements_for_keyword('initial states', &
+                                                                            'cc response')
 !
-         call mem%alloc(this%states_to_plot, this%n_states_to_plot)
+         call mem%alloc(this%states_to_plot_densities, this%n_states_to_plot_densities)
 !
          call input%get_array_for_keyword('initial states', 'cc response', &
-                                          this%n_states_to_plot, this%states_to_plot)
+                                          this%n_states_to_plot_densities, &
+                                          this%states_to_plot_densities)
 !
-         if (any(this%states_to_plot == 0)) this%plot_gs_density = .true.
+         if (any(this%states_to_plot_densities == 0)) this%plot_gs_density = .true.
 !
       end if
 !
-   end subroutine set_states_to_plot
+   end subroutine set_states_to_plot_densities
+!
+!
+   subroutine set_states_to_plot_ntos(this, tag, default_n_states)
+!!
+!!    Set states to plot
+!!    Written Alexander C. Paul, Apr 2021
+!!
+!!    Sets number of states for which to plot ntos/cntos
+!!    Default: plot ntos for all orbitals
+!!
+!!    tag: either nto or cnto
+!!
+      use global_in, only: input
+!
+      implicit none
+!
+      class(cc_visualization_task), intent(inout) :: this
+      character(len=*), intent(in) :: tag
+      integer, intent(in) :: default_n_states
+!
+      integer :: i
+      character(len=:), allocatable :: keyword
+!
+      keyword = 'plot ' // trim(tag) // 's'
+!
+      this%n_states_to_plot_ntos = input%get_n_elements_for_keyword(keyword, 'visualization')
+!
+      if (this%n_states_to_plot_ntos == 0) then
+!
+         this%n_states_to_plot_ntos = default_n_states
+         call mem%alloc(this%states_to_plot_ntos, this%n_states_to_plot_ntos)
+         this%states_to_plot_ntos = [(i, i=1, default_n_states)]
+         return
+!
+      end if
+!
+      call mem%alloc(this%states_to_plot_ntos, this%n_states_to_plot_ntos)
+!
+      call input%get_array_for_keyword(keyword, 'visualization', &
+                                       this%n_states_to_plot_ntos, &
+                                       this%states_to_plot_ntos)
+!
+   end subroutine set_states_to_plot_ntos
+!
+!
+   subroutine cleanup(this)
+!!
+!!    Cleanup
+!!    Written Alexander C. Paul, Apr 2021
+!!
+      implicit none
+!
+      class(cc_visualization_task), intent(inout) :: this
+!
+      if (allocated(this%states_to_plot_densities)) &
+         call mem%dealloc(this%states_to_plot_densities, this%n_states_to_plot_densities)
+!
+      if (allocated(this%states_to_plot_ntos)) &
+         call mem%dealloc(this%states_to_plot_ntos, this%n_states_to_plot_ntos)
+!
+   end subroutine cleanup
 !
 !
 end module cc_visualization_task_class

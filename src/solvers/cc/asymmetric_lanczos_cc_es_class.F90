@@ -53,6 +53,7 @@ module asymmetric_lanczos_cc_es_class
 !!    See for further details:
 !!       S. Coriani et. al., J. Chem. Theory Comput. 2012, 8, 5, 1616-1628
 !!
+!
    use parameters
 !
    use abstract_solver_class, only: abstract_solver
@@ -82,8 +83,6 @@ module asymmetric_lanczos_cc_es_class
       character (len=40) :: es_type
 !
       real(dp), dimension(:), allocatable :: energies
-!
-      type(timings) :: timer
 !
       class(abstract_projection_tool), allocatable :: projector
 !
@@ -128,7 +127,6 @@ contains
 !!       - Prepares the wavefunction for Jacobian
 !!          and Jacobian transposetransformation
 !!
-      use array_utilities, only: zero_array
       use string_utilities, only: convert_to_uppercase
 !
       implicit none
@@ -137,8 +135,8 @@ contains
 !
       type(asymmetric_lanczos_cc_es) :: this
 !
-      this%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state')
-      call this%timer%turn_on()
+      this%total_timer = timings('Asymmetric Lanczos ES solver')
+      call this%total_timer%turn_on()
 !
 !     Set printables
 !
@@ -480,7 +478,7 @@ contains
 !!    L and R are reduced space eigenvectors of the order of chain length.
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -545,8 +543,8 @@ contains
 !!    Print summary
 !!    Written by Sarai D. Folkestad and Torsha Moitra, Nov 2019
 !!
-      use output_file_class,              only: output_file
-      use array_utilities,                only: quicksort_with_index_ascending
+      use output_file_class, only: output_file
+      use array_utilities,   only: quicksort_with_index_ascending
 !
       implicit none
 !
@@ -639,7 +637,8 @@ contains
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-      call output%printf('m', 'For full spectrum see file: ' // spectrum_file%name_, fs='(t6,a)')
+      call output%printf('m', 'For full spectrum see file: (a0)', &
+                        chars=[spectrum_file%get_name()], fs='(t6,a)')
 !
       call mem%dealloc(index_list, this%chain_length)
 !
@@ -677,16 +676,16 @@ contains
 !
       call this%destruct_energies()
 !
-      call this%timer%turn_off()
+      call this%total_timer%turn_off()
 !
       call output%printf('m', '- Finished solving the ' //  &
                          trim(convert_to_uppercase(this%wf%name_)) // ' excited &
                          &state equations.', fs='(/t3,a)')
 !
       call output%printf('m', 'Total wall time (sec): (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('wall')], fs='(/t6,a)')
       call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
-                         reals=[this%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+                         reals=[this%total_timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_asymmetric_lanczos_cc_es
 !

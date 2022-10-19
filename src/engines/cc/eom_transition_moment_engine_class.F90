@@ -91,11 +91,13 @@ contains
       call wf%save_tbar_intermediates()
 !
       this%excited_state_amplitudes = cc_es_amplitudes_task(transformation='right', &
+                                                            spin_symmetry='singlet', &
                                                             restart=restart)
 !
       call this%excited_state_amplitudes%execute(wf)
 !
       this%excited_state_amplitudes = cc_es_amplitudes_task(transformation='left', &
+                                                            spin_symmetry='singlet', &
                                                             restart=.true.)
 !
       call this%excited_state_amplitudes%execute(wf)
@@ -129,7 +131,7 @@ contains
       call this%allowed_cc_wfs%set('ccsd', allowed=.true.)
       call this%allowed_cc_wfs%set('cc3',  allowed=.true.)
 !
-end subroutine set_allowed_wfs_eom_transition_moment_engine
+   end subroutine set_allowed_wfs_eom_transition_moment_engine
 !
 !
 end module eom_transition_moment_engine_class

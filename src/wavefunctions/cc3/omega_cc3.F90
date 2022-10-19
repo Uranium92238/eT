@@ -44,7 +44,8 @@ contains
 !!    Directs the construction of the projection vector < mu| exp(-T) H exp(T) |R >
 !!    for the current amplitudes of the object wfn
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup_and_sort_1234_to_1324
       use reordering, only: symmetrize_add_contra_to_packed
       use reordering, only: construct_contravariant_t3
@@ -68,8 +69,7 @@ contains
 !
       call wf%ccsd%construct_omega(omega)
 !
-      call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(omega_abij, wf%n_t1**2)
+      call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o, set_zero=.true.)
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)

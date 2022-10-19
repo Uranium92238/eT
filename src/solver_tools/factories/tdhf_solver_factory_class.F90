@@ -36,7 +36,6 @@ module tdhf_solver_factory_class
    use start_vector_tool_class,         only: start_vector_tool
    use tdhf_start_vector_tool_class,    only: tdhf_start_vector_tool
    use preconditioner_getter_class,     only: preconditioner_getter
-   use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
 !
    implicit none
 !
@@ -77,7 +76,6 @@ contains
 !!    for the determination of TDHF (RPA or Tamm-Dancoff)
 !!    excitation energies.
 !!
-      use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
       use null_projection_tool_class, only: null_projection_tool
 !
       implicit none
@@ -92,7 +90,6 @@ contains
       class(eigen_storage_tool),        allocatable :: storer
       class(start_vector_tool),         allocatable :: start_vector
       class(preconditioner_getter),     allocatable :: preconditioner
-      class(eigen_davidson_print_tool), allocatable :: printer
       class(null_projection_tool),      allocatable :: projector
 !
       real(dp) :: lindep_threshold
@@ -118,9 +115,6 @@ contains
 !
       endif
 !
-      printer = eigen_davidson_print_tool()
-      call printer%print_banner()
-!
       lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
       davidson = eigen_davidson_tool(name_            = 'tdhf_davidson',      &
                                      n_parameters      = wf%n_v*wf%n_o,       &
@@ -135,7 +129,6 @@ contains
                                      storer                = storer,              &
                                      start_vector          = start_vector,        &
                                      preconditioner        = preconditioner,      &
-                                     printer               = printer,             &
                                      projector             = projector,           &
                                      n_solutions           = this%n_states,       &
                                      max_iterations        = this%max_iterations)

@@ -43,9 +43,6 @@ contains
 !!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq) + (effective Fock contributions)
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf
@@ -63,9 +60,7 @@ contains
       n_a_v = wf%n_cc2_v + wf%n_ccsd_v
 !
       call mem%alloc(h, wf%n_mo, wf%n_mo)
-      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
-!
-      call zero_array(F_eff, wf%n_mo**2)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo, set_zero=.true.)
 !
       call wf%get_t1_oei('hamiltonian', h, screening=.true.)
 !

@@ -30,7 +30,8 @@ module davidson_tool_class
    use record_storer_class, only: record_storer
    use memory_manager_class, only: mem
    use global_out, only: output
-   use array_utilities, only: get_l2_norm, copy_and_scale, zero_array
+   use array_utilities, only: get_l2_norm
+   use array_initialization, only: copy_and_scale, zero_array
    use precondition_tool_class, only: precondition_tool
    use batching_index_class, only: batching_index
    use timings_class, only: timings
@@ -161,11 +162,8 @@ contains
       call davidson%trials%initialize()
       call davidson%transforms%initialize()
 !
-      call mem%alloc(davidson%omega_re, davidson%max_dim_red)
-      call mem%alloc(davidson%omega_im, davidson%max_dim_red)
-!
-      call zero_array(davidson%omega_re, davidson%max_dim_red)
-      call zero_array(davidson%omega_im, davidson%max_dim_red)
+      call mem%alloc(davidson%omega_re, davidson%max_dim_red, set_zero=.true.)
+      call mem%alloc(davidson%omega_im, davidson%max_dim_red, set_zero=.true.)
 !
    end subroutine initialize_davidson_tool
 !

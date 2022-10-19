@@ -34,7 +34,7 @@ module pcm_environment_class
 #ifdef HAS_PCMSOLVER
 !
    use point_charges_class,  only: point_charges
-   use global_in,            only: input 
+   use global_in,            only: input
 !
 !  External module
 !
@@ -45,10 +45,10 @@ module pcm_environment_class
    type, extends(environment) :: pcm_environment
 !
       type(c_ptr),                      private :: pcm_context
-      character(len=200),               private :: input         
-      character(len=200),               private :: solvent       
-      character(len=200),               private :: solver_type   
-      real(dp),                         private :: tesserae_area 
+      character(len=200),               private :: input
+      character(len=200),               private :: solvent
+      character(len=200),               private :: solver_type
+      real(dp),                         private :: tesserae_area
       type(point_charges), allocatable, private :: pcm_points
 !
    contains
@@ -59,7 +59,7 @@ module pcm_environment_class
                 => initialize_pcm_environment
 !
       procedure :: update &
-                => update_pcm_environment 
+                => update_pcm_environment
 !
       procedure :: get_energy &
                 => get_energy_pcm_environment
@@ -98,17 +98,17 @@ contains
 !
    pure function new_pcm_environment() result(embedding)
 !!
-!!    New pcm environment 
+!!    New pcm environment
 !!    Written by Sarai D. Folkestad, 2020
 !!
-      implicit none 
+      implicit none
 !
-      type(pcm_environment) :: embedding 
+      type(pcm_environment) :: embedding
 !
       embedding%type_          = 'PCM'
       embedding%n_charges      = 0
       embedding%input          = 'internal'
-      embedding%solvent        = '' 
+      embedding%solvent        = ''
       embedding%tesserae_area  = 0.3d0    ! Angstrom
       embedding%solver_type    = 'iefpcm' ! default IEF
 !
@@ -122,9 +122,9 @@ contains
 !!
 !!    Modified by Sarai D. Folkestad, Sep 2020
 !!    for environment tool
-!!    
+!!
       use iso_c_binding,   only: c_char, c_int, c_null_char
-      use array_utilities, only: zero_array, copy_and_scale
+      use array_initialization, only: zero_array, copy_and_scale
 !
       implicit none
 !
@@ -133,9 +133,9 @@ contains
 !
       real(dp), dimension(:), allocatable    :: r
       type(PCMInput)                         :: host_input
-      type(point_charges)                    :: qm_points 
+      type(point_charges)                    :: qm_points
 !
-      integer(c_int), dimension(4)           :: symmetry_info 
+      integer(c_int), dimension(4)           :: symmetry_info
 !
       symmetry_info = [int(0,c_int),int(0,c_int),int(0,c_int),int(0,c_int)]
 !
@@ -145,7 +145,7 @@ contains
         call output%error_msg('PCMSolver is not compatible')
 !
       host_input = embedding%pcmsolver_input()
-! 
+!
 !     Extract info on QM system
 !
       call ao%get_point_charges(qm_points)
@@ -155,10 +155,10 @@ contains
       call dcopy(3*qm_points%n_charges, qm_points%r, 1, r, 1)
       call dscal(3*qm_points%n_charges, angstrom_to_bohr, r, 1)
 !
-!     Initialize pcm solver 
+!     Initialize pcm solver
 !
       if(trim(embedding%input).eq.'internal') then ! get pcm solver input from eT.inp
-!      
+!
          embedding%pcm_context = pcmsolver_new(PCMSOLVER_READER_HOST,               &
                                               int(qm_points%n_charges, kind=c_int), &
                                               qm_points%q, r,                       &
@@ -166,19 +166,19 @@ contains
                                               c_funloc(host_writer))
 !
       else ! get pcm solver input from separate file
-!      
+!
          embedding%pcm_context = pcmsolver_new(PCMSOLVER_READER_OWN,                &
                                               int(qm_points%n_charges, kind=c_int), &
                                               qm_points%q, r,                       &
                                               symmetry_info, host_input,            &
                                               c_funloc(host_writer))
 !
-      endif   
+      endif
 !
-      call mem%dealloc(r, 3*qm_points%n_charges) 
-!     
+      call mem%dealloc(r, 3*qm_points%n_charges)
+!
 !     Collect information on position of pcm point chrges
-!                    
+!
       embedding%n_charges = pcmsolver_get_cavity_size(embedding%pcm_context)
 !
       embedding%pcm_points = point_charges(embedding%n_charges)
@@ -206,9 +206,6 @@ contains
 !!
 !!    Modified for pcm_environment by Sarai D. Folkestad
 !!
-!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(pcm_environment),          intent(inout)  :: embedding
@@ -241,12 +238,12 @@ contains
       call pcmsolver_set_surface_function(embedding%pcm_context,                 &
                                           int(embedding%n_charges, kind=c_int),  &
                                           potential,                             &
-                                          pcmsolver_fstring_to_carray('NucMEP'))                                    
+                                          pcmsolver_fstring_to_carray('NucMEP'))
 !
       call pcmsolver_compute_asc(embedding%pcm_context, &
                                  pcmsolver_fstring_to_carray('NucMEP'), &
                                  pcmsolver_fstring_to_carray('NucASC'), &
-                                 irrep=0_c_int)                                  
+                                 irrep=0_c_int)
 !
       call pcmsolver_get_surface_function(embedding%pcm_context,                 &
                                           int(embedding%n_charges, kind=c_int),  &
@@ -280,7 +277,7 @@ contains
 !!
 !!    Print description
 !!    Written by Tommaso Giovannini, April 2019
-!!    
+!!
       implicit none
 !
       class(pcm_environment), intent(in) :: embedding
@@ -294,11 +291,11 @@ contains
       call output%printf('m', 'For details on PCMSolver, see:', fs='(/t6,a)')
       call output%printf('m', 'Di Remigio et al., IJQC, 2019, 119, e25685', fs='(t6,a)')
 !
-      if(embedding%input .eq. 'external') then 
+      if(embedding%input .eq. 'external') then
 !
          call output%printf('m', 'PCM Solver was set via external file', fs='(/t6,a)')
 !
-      else 
+      else
 !
          call output%printf('m', 'PCM Solver was set via internal parameters', fs='(/t6,a)')
          call output%printf('m', 'Solver Type:   '//trim(embedding%solver_type), fs='(t6,a)')
@@ -308,7 +305,7 @@ contains
 !
       endif
 !
-      if(input%requested_cc_calculation()) then 
+      if(input%requested_cc_calculation()) then
          call output%printf('m', 'CC calculation: zero-order approximation', fs='(/t6,a)')
          call output%printf('m', 'PCM charges only affect MOs and Fock', fs='(t6,a/)')
       endif
@@ -323,7 +320,7 @@ contains
 !!    Get energy
 !!    Written by Sarai D. Folkestad
 !!
-!!    Based on PCM routines written by Tommaso Giovannini 
+!!    Based on PCM routines written by Tommaso Giovannini
 !!
 !!    embedding energy = sum_i sum_I q_i Q_I/|r_i - R_I|
 !!
@@ -337,7 +334,7 @@ contains
       real(dp), dimension(ao%n, ao%n), intent(in) :: density
       real(dp) :: embedding_energy
 !
-      call do_nothing(density)   
+      call do_nothing(density)
 !
       embedding_energy = half*embedding%get_nuclei_mm_energy(ao)
 !
@@ -362,7 +359,7 @@ contains
       scf_energy = embedding%get_energy(ao, density)&
                  + half*ddot((ao%n)**2, density, 1, ao%v, 1)
 !
-!     Electrostatic energy: 
+!     Electrostatic energy:
 !     Tr(vD) +  sum_i sum_I q_i Q_I/|r_i - R_I|
 !
       electrostatic_energy = two*scf_energy
@@ -393,41 +390,41 @@ contains
       class(pcm_environment) :: embedding
 !
       logical :: file_exists
-!      
+!
       call input%get_keyword('input', 'pcm', embedding%input)
-!      
-      if (trim(embedding%input) .eq. 'internal') then 
-!      
+!
+      if (trim(embedding%input) .eq. 'internal') then
+!
          call input%get_keyword('solvent','pcm',embedding%solvent)
          call input%get_keyword('tesserae area','pcm',embedding%tesserae_area)
          call input%get_keyword('solver type','pcm',embedding%solver_type)
-!         
+!
          if(len_trim(embedding%solvent) .eq. 0) &
             call output%error_msg('PCM Calculation Internal Input: Solvent Not Specified')
-!      
+!
       else if(trim(embedding%input) .eq. 'external') then
-!      
+!
          inquire(file='@pcmsolver.inp', exist=file_exists)
-!         
+!
          if(.not.file_exists) &
             call output%error_msg("PCM Calculation External Input: No @pcmsolver.inp in scratch.")
-!      
+!
       else
-!      
+!
          call output%error_msg('PCM Calculation: neither internal or external input is set')
-!      
+!
       endif
 !
 !
    end subroutine read_parameters_pcm_environment
 !
 !
-   function get_nuclei_mm_energy_pcm_environment(embedding, ao) result(E) 
+   function get_nuclei_mm_energy_pcm_environment(embedding, ao) result(E)
 !!
 !!    Get MM energy contribution
 !!    Written by Sarai D. Folkestad
 !!
-!!    Returns the nuclei-MM interaction energy 
+!!    Returns the nuclei-MM interaction energy
 !!
 !!       E = sum_i sum_I q_i Q_I/|r_i - R_I|
 !!
@@ -459,7 +456,7 @@ contains
 !!      PCMSolver, an API for the Polarizable Continuum Model
 !!      Copyright (C) 2019 Roberto Di Remigio, Luca Frediani and contributors.
 !!
-!!   Modified to add the possibility of changing values of some properties 
+!!   Modified to add the possibility of changing values of some properties
 !!   on input (area, solver_type, solvent).
 !!
 !
@@ -505,7 +502,7 @@ contains
 !
       host_input%patch_level     = int(pcmmod_patch_level, kind=c_int)
       host_input%coarsity        = pcmmod_coarsity
-!      
+!
       host_input%area            = embedding%tesserae_area
       host_input%min_distance    = pcmmod_min_distance
       host_input%der_order       = int(pcmmod_der_order, kind=c_int)
@@ -547,7 +544,7 @@ contains
 !!   Modified to fit with the default indentation of eT messages.
 !!
 !
-      implicit none 
+      implicit none
 !
       character(kind=c_char), intent(in) :: message(*)
       integer(c_int) :: length, length_2, i, n_messages
@@ -560,21 +557,21 @@ contains
 !
          if (message(length + 1_c_int) == c_null_char) exit
 !
-         if (message(length + 1_c_int) == char(10)) then 
-!         
+         if (message(length + 1_c_int) == char(10)) then
+!
             n_messages = n_messages + 1_c_int
 !
          endif
-!       
+!
          length = length + 1_c_int
 !
       end do
-!     
-!     
+!
+!
       allocate(message_eT(n_messages))
 !
       message_eT = ' '
-!     
+!
       length_2 = 1_c_int
       n_messages = 1_c_int
 !
@@ -584,7 +581,7 @@ contains
 !
          if (message(i) .eq. char(10)) then
 !
-            write(message_eT(n_messages),'(1000a)') message(length_2:i-1) 
+            write(message_eT(n_messages),'(1000a)') message(length_2:i-1)
             length_2 = i + 1_c_int
             n_messages = n_messages + 1_c_int
 !
@@ -608,13 +605,13 @@ contains
 !!    Get potential at pcm points
 !!    Written by Sarai D. Folkestad
 !!
-!!    Returns the potential at the pcm charges from the 
+!!    Returns the potential at the pcm charges from the
 !!    nuclei
 !!
 !!      potential(I) = sum_J Q_J/|R_J - r_I|
 !!
 !!    where Q_J and R_J are the charge and position of the QM nuclei
-!!    and r_I is an pcm point 
+!!    and r_I is an pcm point
 !!
       implicit none
 !
@@ -644,15 +641,15 @@ contains
    implicit none
 !
    type, extends(environment) :: pcm_environment
-!  
-!      
+!
+!
    contains
 !
       procedure :: initialize &
                 => initialize_pcm_environment
 !
       procedure :: update &
-                => update_pcm_environment 
+                => update_pcm_environment
 !
       procedure :: get_energy &
                 => get_energy_pcm_environment
@@ -680,7 +677,7 @@ contains
       type(pcm_environment) :: embedding
 !
       embedding%type_                = ''
-      embedding%n_charges            = 0 
+      embedding%n_charges            = 0
 !
       call output%error_msg('constructor was called for pcm environment, &
                            &, but eT is not compiled with pcm. &

@@ -26,7 +26,7 @@ module fci_solver_factory_class
 !
    use kinds
    use global_out,                      only: output
-   use transformation_class,       only: transformation
+   use transformation_class,            only: transformation
    use eigen_storage_tool_class,        only: eigen_storage_tool
    use fci_class,                       only: fci
    use eigen_davidson_tool_class,       only: eigen_davidson_tool
@@ -35,7 +35,6 @@ module fci_solver_factory_class
    use start_vector_tool_class,         only: start_vector_tool
    use fci_start_vector_tool_class,     only: fci_start_vector_tool
    use preconditioner_getter_class,     only: preconditioner_getter
-   use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
 !
    implicit none
 !
@@ -72,9 +71,8 @@ contains
 !!
 !!    for the determination of FCI energies and eigenfunctions.
 !!
-      use eigen_davidson_print_tool_class, only: eigen_davidson_print_tool
       use null_projection_tool_class,      only: null_projection_tool
-      use fci_transformation_class,   only: fci_transformation
+      use fci_transformation_class,        only: fci_transformation
       use fci_eigen_storage_tool_class,    only: fci_eigen_storage_tool
       use fci_preconditioner_getter_class, only: fci_preconditioner_getter
 !
@@ -84,14 +82,13 @@ contains
       class(fci),                                intent(in)     :: wf
       class(eigen_davidson_solver), allocatable, intent(out)    :: solver
 !
-      class(eigen_davidson_tool),       allocatable :: davidson
-      class(convergence_tool),          allocatable :: convergence_checker
-      class(transformation),       allocatable :: transformer
-      class(eigen_storage_tool),        allocatable :: storer
-      class(start_vector_tool),         allocatable :: start_vector
-      class(preconditioner_getter),     allocatable :: preconditioner
-      class(eigen_davidson_print_tool), allocatable :: printer
-      class(null_projection_tool),      allocatable :: projector
+      class(eigen_davidson_tool),   allocatable :: davidson
+      class(convergence_tool),      allocatable :: convergence_checker
+      class(transformation),        allocatable :: transformer
+      class(eigen_storage_tool),    allocatable :: storer
+      class(start_vector_tool),     allocatable :: start_vector
+      class(preconditioner_getter), allocatable :: preconditioner
+      class(null_projection_tool),  allocatable :: projector
 !
       real(dp) :: lindep_threshold
 !
@@ -108,9 +105,6 @@ contains
       storer         = fci_eigen_storage_tool(wf)
       preconditioner = fci_preconditioner_getter(wf)
 !
-      printer = eigen_davidson_print_tool()
-      call printer%print_banner()
-!
       lindep_threshold = min(1.0d-11, 0.1d0 * this%residual_threshold)
 !
       davidson = eigen_davidson_tool(name_             = 'fci_davidson',      &
@@ -126,7 +120,6 @@ contains
                                      storer                = storer,              &
                                      start_vector          = start_vector,        &
                                      preconditioner        = preconditioner,      &
-                                     printer               = printer,             &
                                      projector             = projector,           &
                                      n_solutions           = this%n_states,       &
                                      max_iterations        = this%max_iterations)

@@ -32,9 +32,7 @@ module uhf_class
    use global_out, only: output
    use global_in, only: input
 !
-   use sequential_file_class, only: sequential_file
    use stream_file_class, only: stream_file
-   use output_file_class, only: output_file
 !
    use ao_eri_getter_class,  only: ao_eri_getter
 !
@@ -281,7 +279,7 @@ contains
 !!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale, zero_array
 !
       implicit none
 !
@@ -597,7 +595,7 @@ contains
 !!    density possesses this symmetry.
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -857,27 +855,32 @@ contains
 !
    subroutine write_orbital_info_uhf(wf)
 !!
-!!    Write orbital info
+!!    Write orbital information
 !!    Written by Alexander C. Paul Nov 2020
 !!
+      use output_file_class, only: output_file
+!
       implicit none
 !
       class(uhf), intent(inout) :: wf
+      type(output_file) :: mo_file
 !
-      wf%mo_information_file = output_file('eT.mo_information.out')
-      call wf%mo_information_file%open_('rewind')
+      mo_file = output_file('eT.mo_information.out')
+      call mo_file%open_('rewind')
 !
-      call wf%print_orbitals_and_energies(wf%orbital_energies_a,     &
+      call wf%write_orbitals_and_energies(mo_file,    &
+                                          wf%orbital_energies_a,     &
                                           wf%orbital_coefficients_a, &
                                           '- Alpha molecular orbital')
 !
-      call wf%mo_information_file%print_separator('m', 83, '=', fs='(//t3,a/)')
+      call mo_file%print_separator('m', 83, '=', fs='(//t3,a/)')
 !
-      call wf%print_orbitals_and_energies(wf%orbital_energies_b,     &
+      call wf%write_orbitals_and_energies(mo_file,    &
+                                          wf%orbital_energies_b,     &
                                           wf%orbital_coefficients_b, &
                                           '- Beta molecular orbital')
 !
-      call wf%mo_information_file%close_()
+      call mo_file%close_()
 !
    end subroutine write_orbital_info_uhf
 !
@@ -1140,7 +1143,7 @@ contains
 !!    occupation numbers.
 !!
 !
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use array_utilities, only: symmetric_sandwich
 !
       implicit none

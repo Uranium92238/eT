@@ -98,6 +98,52 @@ contains
    end subroutine initialize_excited_state_files_ccs
 !
 !
+   module subroutine initialize_triplet_excited_state_files_ccs(wf)
+!!
+!!    Initialize triplet excited state files
+!!    Written by Alexander C. Paul, 2019-2020
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=13) :: file_name
+      integer :: state
+      integer, dimension(:), allocatable :: amplitude_block_sizes
+!
+      call wf%get_triplet_es_amplitude_block_sizes(amplitude_block_sizes)
+!
+      if (.not. allocated(wf%triplet_r_storers)) then
+!
+         allocate(wf%triplet_r_storers(wf%n_triplet_states))
+!
+         do state = 1, wf%n_triplet_states
+!
+            write(file_name,'(a,i3.3)') 'r_triplet_', state
+            wf%triplet_r_storers(state) = amplitude_file_storer(trim(file_name), &
+                                                            amplitude_block_sizes)
+!
+         end do
+!
+      end if
+!
+      if (.not. allocated(wf%triplet_l_storers)) then
+!
+         allocate(wf%triplet_l_storers(wf%n_triplet_states))
+!
+         do state = 1, wf%n_triplet_states
+!
+            write(file_name,'(a,i3.3)') 'l_triplet_', state
+            wf%triplet_l_storers(state) = amplitude_file_storer(trim(file_name), &
+                                                   amplitude_block_sizes)
+!
+         end do
+!
+      end if
+!
+   end subroutine initialize_triplet_excited_state_files_ccs
+!
+!
    module subroutine save_amplitudes_ccs(wf)
 !!
 !!    Save amplitudes
@@ -240,6 +286,46 @@ contains
    end subroutine save_excited_state_ccs
 !
 !
+   module subroutine save_triplet_excited_state_ccs(wf, X, first, last, side, energies)
+!!
+!!    Save triplet excited state
+!!    Written by Eirik F. Kjønstad and Alexander C. Paul, 2019-2022
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: first, last ! first, last state number
+!
+      real(dp), dimension(wf%n_es_amplitudes, first:last), intent(in) :: X
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right'
+!
+      real(dp), dimension(first:last), optional, intent(in) :: energies
+!
+      integer :: state
+!
+      if (trim(side) .eq. 'right') then
+!
+         do state = first, last
+!
+            call wf%triplet_r_storers(state)%save_(X(:,state), energies(state))
+!
+         end do
+!
+      else if (trim(side) .eq. 'left') then
+!
+         do state = first, last
+!
+            call wf%triplet_l_storers(state)%save_(X(:,state), energies(state))
+!
+         end do
+!
+      endif
+!
+   end subroutine save_triplet_excited_state_ccs
+!
+!
    module subroutine read_excited_state_ccs(wf, X, first, last, side, energies)
 !!
 !!    Read excited state
@@ -290,6 +376,57 @@ contains
    end subroutine read_excited_state_ccs
 !
 !
+   module subroutine read_triplet_excited_state_ccs(wf, X, first, last, side, energies)
+!!
+!!    Read triplet excited state
+!!    Written by Eirik F. Kjønstad and Alexander C. Paul, 2019-2022
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: first, last ! first, last state number
+!
+      real(dp), dimension(wf%n_triplet_amplitudes, first:last), intent(out) :: X
+      real(dp), dimension(first:last), optional,           intent(out) :: energies
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right'
+!
+      real(dp), dimension(first:last) :: temp_energies
+!
+      integer :: state
+!
+      if (trim(side) .eq. 'right') then
+!
+         do state = first, last
+!
+            call wf%triplet_r_storers(state)%read_(X(:,state), temp_energies(state))
+!
+         end do
+!
+      elseif (trim(side) .eq. 'left') then
+!
+         do state = first, last
+!
+            call wf%triplet_l_storers(state)%read_(X(:,state), temp_energies(state))
+!
+         end do
+!
+      else
+!
+         call output%error_msg('Tried to read an excited state, &
+                               &but argument side not recognized: ' // side)
+!
+      endif
+!
+      if (present(energies)) then
+         energies = temp_energies
+      end if
+!
+   end subroutine read_triplet_excited_state_ccs
+!
+!
+
    module subroutine check_and_get_restart_vector_ccs(wf, vector, energy, n, side, found)
 !!
 !!    Check and get restart vector
@@ -652,7 +789,7 @@ contains
 !
       if (density_file%exists()) then
 !
-         call density_file%open_('read')
+         call density_file%open_()
          call density_file%read_(density, wf%n_mo**2)
 !
          file_read = .true.

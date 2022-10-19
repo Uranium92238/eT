@@ -33,10 +33,7 @@ module cnto_tool_class
 !!
 !
    use parameters
-   use global_out,           only: output
    use memory_manager_class, only: mem
-   use array_utilities,      only: zero_array, scale_diagonal
-   use stream_file_class,    only: stream_file
    use nto_tool_class,       only: nto_tool
 !
    implicit none

@@ -52,13 +52,13 @@ contains
 !
    function new_cc_jacobian_preconditioner_getter(wf, n_parameters) result(this)
 !!
-!!    New Coupled Cluster jacobian preconditioner getter
+!!    New
 !!    Written by Sarai D. Folkestad, 2021
 !!
       implicit none
 !
       class(ccs), intent(in), target :: wf
-      integer, intent(in) :: n_parameters
+      integer,    intent(in) :: n_parameters
       type(cc_jacobian_preconditioner_getter) :: this
 !
       this%wf => wf
@@ -75,7 +75,7 @@ contains
       implicit none
 !
       class(cc_jacobian_preconditioner_getter), intent(in) :: this
-      real(dp), dimension(this%n_parameters), intent(out) :: preconditioner
+      real(dp), dimension(this%n_parameters),   intent(out) :: preconditioner
 !
       call this%wf%get_orbital_differences(preconditioner, this%n_parameters)
 !

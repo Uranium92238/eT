@@ -87,7 +87,7 @@ contains
 !!
 !!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: symmetric_sum, add_2143_to_1234, add_2341_to_1234
 !
       implicit none
@@ -104,8 +104,7 @@ contains
 !
 !     Construct t2bar
 !
-      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(t2bar, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !

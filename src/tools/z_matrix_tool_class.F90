@@ -32,7 +32,6 @@ module z_matrix_tool_class
 !
    use parameters
    use math_utilities, only: cross_product_R3, dot_R3, norm_R3
-   use global_out, only: output
    use memory_manager_class, only: mem
 !
    implicit none
@@ -43,13 +42,13 @@ module z_matrix_tool_class
 !
       character(len=2), dimension(:), allocatable  :: symbols
 !
-      integer, dimension(:), allocatable           :: distance_connections
-      integer, dimension(:), allocatable           :: angle_connections
-      integer, dimension(:), allocatable           :: dihedral_connections
+      integer, dimension(:), allocatable :: distance_connections
+      integer, dimension(:), allocatable :: angle_connections
+      integer, dimension(:), allocatable :: dihedral_connections
 !
-      real(dp), dimension(:), allocatable          :: distances
-      real(dp), dimension(:), allocatable          :: angles
-      real(dp), dimension(:), allocatable          :: dihedrals
+      real(dp), dimension(:), allocatable :: distances
+      real(dp), dimension(:), allocatable :: angles
+      real(dp), dimension(:), allocatable :: dihedrals
 !
    contains
 !
@@ -302,7 +301,7 @@ contains
 !!
 !!    Converts z matrix to cartesian coordinates
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

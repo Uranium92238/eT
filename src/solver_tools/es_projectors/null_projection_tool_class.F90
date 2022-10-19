@@ -64,7 +64,6 @@ contains
    end function new_null_projection_tool
 !
 !
-!
    subroutine project_null_projection_tool(tool, vector)
 !!
 !!    Project
@@ -81,7 +80,6 @@ contains
       call do_nothing(vector)
 !
    end subroutine project_null_projection_tool
-!
 !
 !
 end module null_projection_tool_class

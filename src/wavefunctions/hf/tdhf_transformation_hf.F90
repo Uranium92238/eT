@@ -45,7 +45,7 @@ contains
 !!
 !
       use omp_lib
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -71,8 +71,7 @@ contains
       n_threads = 1
 !$    n_threads = omp_get_max_threads()
 !
-      call mem%alloc(G_thread, wf%ao%n, wf%ao%n, n_threads)
-      call zero_array(G_thread, (wf%ao%n**2)*n_threads)
+      call mem%alloc(G_thread, wf%ao%n, wf%ao%n, n_threads, set_zero=.true.)
 !
 !$omp parallel do                                                                 &
 !$omp private(s1, s2, s3, s4, s1s2, s1s2_packed, s3s4, deg_12, deg_34, deg_,&
@@ -417,7 +416,7 @@ contains
 !!
 !!    sigma = Ab
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -451,7 +450,7 @@ contains
 !!       sigma = (A + B)(A - B) b = (A + B) c, for c = (A - B) b
 !!
 !
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -464,8 +463,7 @@ contains
 !
       call zero_array(sigma, wf%n_v*wf%n_o)
 
-      call mem%alloc(c, wf%n_v, wf%n_o)
-      call zero_array(c, wf%n_v*wf%n_o)
+      call mem%alloc(c, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%A_transformation(b, c)
       call wf%B_transformation(b, c)
@@ -582,7 +580,8 @@ contains
 !!    Get TDHF start vectors
 !!    Written by Sarai D. Folkestad, May 2021
 !!
-      use array_utilities, only: zero_array, get_n_lowest
+      use array_initialization, only: zero_array
+      use array_utilities, only: get_n_lowest
 !
       implicit none
 !

@@ -134,7 +134,7 @@ contains
 !!
       use visualization_class, only : visualization
       use array_utilities, only: symmetric_sandwich_right_transposition
-      use sequential_file_class, only: sequential_file
+      use formatted_read_file_class, only: formatted_read_file
       use timings_class, only: timings
 !
       implicit none
@@ -145,7 +145,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: mo_density, density
 !
-      type(sequential_file) :: density_matrix_real_file, density_matrix_imaginary_file
+      type(formatted_read_file) :: density_matrix_real_file, density_matrix_imaginary_file
 !
       integer :: file_count, iostat
 !
@@ -163,8 +163,8 @@ contains
       call mem%alloc(density, wf%ao%n, wf%ao%n)
 !
 !     Plot real electron densities using density matrices on file
-      density_matrix_real_file = sequential_file('eT.cc_propagation_density_matrix_real.out', 'formatted')
-      call density_matrix_real_file%open_('read','rewind')
+      density_matrix_real_file = formatted_read_file('eT.cc_propagation_density_matrix_real.out')
+      call density_matrix_real_file%open_('rewind')
 !
       file_count = 0
 !
@@ -192,9 +192,8 @@ contains
       call density_matrix_real_file%close_
 !
 !     Plot imaginary electron densities using density matrices on file
-      density_matrix_imaginary_file = sequential_file('eT.cc_propagation_density_matrix_imag.out', &
-                                                      'formatted')
-      call density_matrix_imaginary_file%open_('read','rewind')
+      density_matrix_imaginary_file = formatted_read_file('eT.cc_propagation_density_matrix_imag.out')
+      call density_matrix_imaginary_file%open_('rewind')
 !
       file_count = 0
 !

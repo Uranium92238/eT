@@ -22,19 +22,17 @@ from filters import get_mlhf_filter
 assert version_info.major == 2
 
 threshold = 1.0e-10
-# construct filter(s)
 f = get_mlhf_filter(threshold) 
-
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['mlhf_screening_collective_coulomb_exchange.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'mlhf_screening_collective_coulomb_exchange.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

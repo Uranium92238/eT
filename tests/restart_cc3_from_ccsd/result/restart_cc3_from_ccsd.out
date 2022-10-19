@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -91,7 +91,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:48:59 UTC +02:00
+  Calculation start:2022-10-19 10:28:57 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -169,7 +169,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.5174E-11     0.7884E+02
+     1           -78.843851693631     0.5159E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -260,8 +260,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.18407
-     Total cpu time (sec):               0.36404
+     Total wall time (sec):              0.25400
+     Total cpu time (sec):               0.28115
 
 
   Determining CC cluster amplitudes
@@ -311,7 +311,7 @@
     6           -79.104388533055     0.1346E-07     0.1648E-10
     7           -79.104388533033     0.4337E-09     0.2193E-10
     8           -79.104388533033     0.1620E-10     0.2700E-12
-    9           -79.104388533033     0.8781E-12     0.2984E-12
+    9           -79.104388533033     0.8783E-12     0.2984E-12
   ---------------------------------------------------------------
   Convergence criterion met in 9 iterations!
 
@@ -355,8 +355,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.70915
-     Total cpu time (sec):               1.41913
+     Total wall time (sec):              1.79400
+     Total cpu time (sec):               1.32916
 
 
   Determining CC multipliers
@@ -414,8 +414,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              1.19189
-     Total cpu time (sec):               2.38174
+     Total wall time (sec):              3.99300
+     Total cpu time (sec):               2.66640
 
   - CC multipliers solver summary:
 
@@ -458,9 +458,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -663,8 +663,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -677,7 +675,7 @@
         a       i         R(a,i)
      -----------------------------------
         1      6        0.957024237091
-        4      6        0.128106916557
+        4      6        0.128106916556
         6      6       -0.037962135464
        13      6       -0.030333985278
         1      3       -0.010934123624
@@ -704,7 +702,7 @@
         2      5       2      6       -0.033634000243
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CC3 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -716,8 +714,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              1.53815
-     Total cpu time (sec):               3.06789
+     Total wall time (sec):              4.88500
+     Total cpu time (sec):               3.29397
 
 
   Determining CC excited state amplitudes
@@ -726,9 +724,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -938,8 +936,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -979,7 +975,7 @@
         3      5       2      6       -0.047506819105
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CC3 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -991,8 +987,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              1.47904
-     Total cpu time (sec):               2.95903
+     Total wall time (sec):              5.02700
+     Total cpu time (sec):               3.33125
 
 
   Biorthonormalization of excited CC states
@@ -1023,12 +1019,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.012976254400
 
-  Peak memory usage during the execution of eT: 16.458192 MB
+  Peak memory usage during the execution of eT: 16.530612 MB
 
-  Total wall time in eT (sec):              5.62362
-  Total cpu time in eT (sec):              11.17412
+  Total wall time in eT (sec):             16.74900
+  Total cpu time in eT (sec):              11.57740
 
-  Calculation end:2022-06-30 08:49:04 UTC +02:00
+  Calculation end:2022-10-19 10:29:14 UTC -07:00
 
   - Implementation references:
 

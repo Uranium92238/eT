@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -63,7 +63,7 @@
      end solver scf
 
 
-  Calculation start:2022-06-30 08:45:04 UTC +02:00
+  Calculation start:2022-10-19 10:30:33 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -154,11 +154,11 @@
      4           -74.815298949693     0.1093E-02     0.1520E-03
      5           -74.815315485048     0.9298E-04     0.1654E-04
      6           -74.815315619359     0.9509E-05     0.1343E-06
-     7           -74.815315619820     0.1079E-05     0.4612E-09
-     8           -74.815315619823     0.9798E-07     0.3212E-11
+     7           -74.815315619820     0.1079E-05     0.4610E-09
+     8           -74.815315619823     0.9798E-07     0.3268E-11
      9           -74.815315619823     0.4290E-08     0.1421E-13
-    10           -74.815315619823     0.2737E-09     0.2842E-13
-    11           -74.815315619823     0.2805E-10     0.2842E-13
+    10           -74.815315619823     0.2737E-09     0.1421E-13
+    11           -74.815315619823     0.2805E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 11 iterations!
 
@@ -171,12 +171,12 @@
 
   :: There was 1 warning during the execution of eT. ::
 
-  Peak memory usage during the execution of eT: 28.096 KB
+  Peak memory usage during the execution of eT: 27.356 KB
 
-  Total wall time in eT (sec):              0.06060
-  Total cpu time in eT (sec):               0.09826
+  Total wall time in eT (sec):              0.21400
+  Total cpu time in eT (sec):               0.12011
 
-  Calculation end:2022-06-30 08:45:04 UTC +02:00
+  Calculation end:2022-10-19 10:30:33 UTC -07:00
 
   - Implementation references:
 

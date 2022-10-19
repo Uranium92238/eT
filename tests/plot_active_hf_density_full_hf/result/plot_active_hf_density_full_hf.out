@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -70,7 +70,7 @@
      end visualization
 
 
-  Calculation start:2022-06-30 08:45:05 UTC +02:00
+  Calculation start:2022-10-19 10:30:32 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -158,12 +158,12 @@
      5            -1.128700091529     0.2517E-04     0.5187E-07
      6            -1.128700093479     0.4950E-05     0.1949E-08
      7            -1.128700093553     0.9754E-06     0.7471E-10
-     8            -1.128700093556     0.1924E-06     0.2894E-11
-     9            -1.128700093556     0.3799E-07     0.1121E-12
-    10            -1.128700093556     0.7506E-08     0.4219E-14
-    11            -1.128700093556     0.1483E-08     0.8882E-15
-    12            -1.128700093556     0.2933E-09     0.2220E-15
-    13            -1.128700093556     0.5800E-10     0.1110E-14
+     8            -1.128700093556     0.1924E-06     0.2891E-11
+     9            -1.128700093556     0.3799E-07     0.1152E-12
+    10            -1.128700093556     0.7506E-08     0.4885E-14
+    11            -1.128700093556     0.1483E-08     0.4441E-15
+    12            -1.128700093556     0.2933E-09     0.6661E-15
+    13            -1.128700093556     0.5800E-10     0.2220E-14
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -191,12 +191,12 @@
 
   - Plotting density
 
-  Peak memory usage during the execution of eT: 681.672 KB
+  Peak memory usage during the execution of eT: 681.148 KB
 
-  Total wall time in eT (sec):              0.10757
-  Total cpu time in eT (sec):               0.17858
+  Total wall time in eT (sec):              0.08000
+  Total cpu time in eT (sec):               0.08622
 
-  Calculation end:2022-06-30 08:45:05 UTC +02:00
+  Calculation end:2022-10-19 10:30:32 UTC -07:00
 
   - Implementation references:
 

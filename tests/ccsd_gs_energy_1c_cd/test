@@ -31,11 +31,11 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_gs_energy_1c_cd.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_gs_energy_1c_cd.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

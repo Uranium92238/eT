@@ -72,7 +72,7 @@ contains
 !!    Written by Eirik F. Kjønstad, Jan 2022
 !!
       use warning_suppressor
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

@@ -52,7 +52,7 @@ contains
 !!
       use reordering, only: construct_packed_contravariant
       use reordering, only: construct_packed_covariant
-      use array_utilities, only: copy_and_scale, zero_array
+      use array_initialization, only: copy_and_scale, zero_array
 !
       implicit none
 !

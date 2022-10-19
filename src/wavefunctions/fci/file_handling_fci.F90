@@ -23,7 +23,7 @@ submodule (fci_class) file_handling_fci
 !! File handling submodule
 !!
 !! Gathers routines that save wavefunction parameters to file,
-!! and reads them from file, plus other routines related to the 
+!! and reads them from file, plus other routines related to the
 !! handling of the files that belong to the wavefunction.
 !!
 !
@@ -76,7 +76,7 @@ contains
 !
       vector_length = int(wf%n_determinants, kind=i64)
 !
-      call wf%fci_files(state)%open_('write', 'rewind')
+      call wf%fci_files(state)%open_('rewind')
 !
       call wf%fci_files(state)%write_(energy)
       call wf%fci_files(state)%write_(vector_length)
@@ -100,7 +100,7 @@ contains
       integer, intent(in) :: state
       integer(i64) :: vector_length
 !
-      call wf%fci_files(state)%open_('read', 'rewind')
+      call wf%fci_files(state)%open_('rewind')
       call wf%fci_files(state)%read_(vector_length, dp + 1)
 !
       if (int(vector_length) /= wf%n_determinants) &

@@ -27,11 +27,11 @@ f = get_hf_filter(threshold)
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'hf_energy.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

@@ -176,7 +176,8 @@ contains
 !!    NB: Terms where mu == nu are separated out in construct_es_density
 !!        and construct_right_transition_density
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: squareup
 !
       implicit none
@@ -486,7 +487,7 @@ contains
 !!
 !!       eta^X_mu = < Lambda| [X, tau_mu] |CC >
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: symmetrize_and_add_to_packed
 !
       implicit none
@@ -506,8 +507,7 @@ contains
 !
 !     etaX_ai:
 !
-      call mem%alloc(etaX_ai, wf%n_v, wf%n_o)
-      call zero_array(etaX_ai, (wf%n_o*wf%n_v))
+      call mem%alloc(etaX_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%etaX_ccs_a1(X, etaX_ai)
       call wf%etaX_ccs_b1(X, etaX_ai)
@@ -530,8 +530,7 @@ contains
 !
 !     etaX_aibj:
 !
-      call mem%alloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(etaX_aibj, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%etaX_doubles_a2(X, etaX_aibj)
       call wf%etaX_doubles_b2(X, etaX_aibj)
@@ -838,7 +837,7 @@ contains
 !!
 !!       xi^X_mu = < mu| exp(-T) X exp(T)|R >
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
       use reordering, only: symmetrize_and_add_to_packed
 !
       implicit none
@@ -858,8 +857,7 @@ contains
 !
 !     xiX_ai
 !
-      call mem%alloc(xiX_ai, wf%n_v, wf%n_o)
-      call zero_array(xiX_ai, (wf%n_o*wf%n_v))
+      call mem%alloc(xiX_ai, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%xiX_ccs_a1(X, xiX_ai)
       call wf%xiX_doubles_a1(X, xiX_ai)
@@ -880,8 +878,7 @@ contains
 !
 !     xiX_aibj
 !
-      call mem%alloc(xiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(xiX_aibj, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(xiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call wf%xiX_doubles_a2(X, xiX_aibj)
 !
@@ -914,7 +911,6 @@ contains
 !!
 !!    where u_aick = 2t_ckai - t_ciak
 !!
-      use array_utilities, only: zero_array
       use reordering, only: squareup, add_1432_to_1234
 !
       implicit none
@@ -951,8 +947,7 @@ contains
 !
 !     Form u_aick = 2 t_ai_ck - t_ak_ci
 !
-      call mem%alloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(u_aick, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy(wf%n_o**2 * wf%n_v**2, two, t_aick, 1, u_aick, 1)
@@ -1086,7 +1081,6 @@ contains
 !!
 !!    where u_ckdl = 2*t_ckdl - t_cldk
 !!
-      use array_utilities, only: zero_array
       use reordering, only: squareup, add_1432_to_1234
 !
       implicit none
@@ -1161,8 +1155,7 @@ contains
       call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_ckdl, wf%n_v*wf%n_o)
 !
-      call mem%alloc(u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(u_ckdl, (wf%n_o*wf%n_v)**2)
+      call mem%alloc(u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o, set_zero=.true.)
 !
       call add_1432_to_1234(-one, t_ckdl, u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o*wf%n_v)**2, two, t_ckdl, 1, u_ckdl, 1)

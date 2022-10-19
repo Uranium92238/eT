@@ -30,7 +30,7 @@ module ccsd_class
    use global_out, only: output
    use timings_class, only: timings
    use memory_manager_class, only: mem
-   use sequential_file_class, only: sequential_file
+   use stream_file_class, only: stream_file
 !
    implicit none
 !
@@ -38,25 +38,25 @@ module ccsd_class
 !
 !     Intermediate files
 !
-      type(sequential_file), private :: jacobian_c2_intermediate_oovo_1
-      type(sequential_file), private :: jacobian_c2_intermediate_oovo_2
-      type(sequential_file), private :: jacobian_c2_intermediate_oovo_3
-      type(sequential_file), private :: jacobian_d2_intermediate
-      type(sequential_file), private :: jacobian_e2_intermediate
-      type(sequential_file), private :: jacobian_g2_intermediate_vovo
-      type(sequential_file), private :: jacobian_h2_intermediate
-      type(sequential_file), private :: jacobian_j2_intermediate_oooo
+      type(stream_file), private :: jacobian_c2_intermediate_oovo_1
+      type(stream_file), private :: jacobian_c2_intermediate_oovo_2
+      type(stream_file), private :: jacobian_c2_intermediate_oovo_3
+      type(stream_file), private :: jacobian_d2_intermediate
+      type(stream_file), private :: jacobian_e2_intermediate
+      type(stream_file), private :: jacobian_g2_intermediate_vovo
+      type(stream_file), private :: jacobian_h2_intermediate
+      type(stream_file), private :: jacobian_j2_intermediate_oooo
 !
-      type(sequential_file), private :: jacobian_transpose_d1_intermediate
-      type(sequential_file), private :: jacobian_transpose_e1_intermediate
-      type(sequential_file), private :: jacobian_transpose_f1_intermediate
-      type(sequential_file), private :: jacobian_transpose_g1_intermediate
-      type(sequential_file), private :: jacobian_transpose_d2_intermediate
-      type(sequential_file), private :: jacobian_transpose_e2_oo_intermediate
-      type(sequential_file), private :: jacobian_transpose_e2_vv_intermediate
-      type(sequential_file), private :: jacobian_transpose_f2_intermediate
-      type(sequential_file), private :: jacobian_transpose_g2_intermediate
-      type(sequential_file), private :: jacobian_transpose_i2_intermediate
+      type(stream_file), private :: jacobian_transpose_d1_intermediate
+      type(stream_file), private :: jacobian_transpose_e1_intermediate
+      type(stream_file), private :: jacobian_transpose_f1_intermediate
+      type(stream_file), private :: jacobian_transpose_g1_intermediate
+      type(stream_file), private :: jacobian_transpose_d2_intermediate
+      type(stream_file), private :: jacobian_transpose_e2_oo_intermediate
+      type(stream_file), private :: jacobian_transpose_e2_vv_intermediate
+      type(stream_file), private :: jacobian_transpose_f2_intermediate
+      type(stream_file), private :: jacobian_transpose_g2_intermediate
+      type(stream_file), private :: jacobian_transpose_i2_intermediate
 !
    contains
 !
@@ -360,7 +360,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -426,7 +426,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
       use reordering, only: construct_packed_contravariant
 !
       implicit none
@@ -585,7 +585,7 @@ contains
 !!    tag specified the printed label for the vector, e.g. tag = "t" for
 !!    the cluster amplitudes.
 !!
-      use array_utilities, only: get_n_highest, zero_array
+      use array_utilities, only: get_n_highest
       use index_invert, only : invert_compound_index, invert_packed_index
 !
       implicit none
@@ -611,10 +611,9 @@ contains
       if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
 !
       call mem%alloc(dominant_indices, n_elements)
-      call mem%alloc(dominant_values, n_elements)
+      call mem%alloc(dominant_values, n_elements, set_zero=.true.)
 !
       dominant_indices = 0
-      call zero_array(dominant_values, n_elements)
       call get_n_highest(n_elements, wf%n_t2, abs_x2, dominant_values, dominant_indices)
 !
 !     Print largest contributions

@@ -13,7 +13,7 @@ from runtest import version_info, get_filter, cli, run
 from runtest_config import configure
 
 # functions to get the filters
-from filters import get_eom_filter 
+from filters import get_eom_filter
 
 # we stop the script if the major version is not compatible
 assert version_info.major == 2
@@ -27,11 +27,11 @@ f = get_eom_filter(n_states, threshold)
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_es_transition_strengths.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'ccsd_es_transition_strengths.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

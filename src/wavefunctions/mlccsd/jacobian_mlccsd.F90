@@ -45,7 +45,6 @@ contains
 !!    Prepare for Jacobian
 !!    Written by Sarai D. Folkestad, 2019
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2143_to_1234, add_2341_to_1234
       use reordering, only: sort_1234_to_2143, sort_1234_to_2413
 !
@@ -87,8 +86,7 @@ contains
       call mem%alloc(g_kcld, n_a_o, n_a_v, n_a_o, n_a_v)
       call wf%eri_t1%get('ovov', g_kcld, 1, n_a_o, 1, n_a_v, 1, n_a_o, 1, n_a_v)
 !
-      call mem%alloc(L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
-      call zero_array(L_ckdl, n_a_v**2 * n_a_o**2)
+      call mem%alloc(L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o, set_zero=.true.)
       call add_2143_to_1234(two, g_kcld, L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
       call add_2341_to_1234(-one, g_kcld, L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
 !
@@ -135,7 +133,8 @@ contains
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
 !!
-      use array_utilities, only: scale_diagonal, zero_array
+      use array_initialization, only: zero_array
+      use array_utilities, only: scale_diagonal
       use reordering, only: symmetric_sum, sort_1234_to_1324
       use reordering, only: add_1324_to_1234, packin, squareup
 !
@@ -187,8 +186,7 @@ contains
 !
 !     :: CCSD/CC2 contributions to the transformed doubles vector ::
 !
-      call mem%alloc(rho_aibj, n_a_v, n_a_o, n_a_v, n_a_o)
-      call zero_array(rho_aibj, n_a_v**2 * n_a_o**2)
+      call mem%alloc(rho_aibj, n_a_v, n_a_o, n_a_v, n_a_o, set_zero=.true.)
 !
       call wf%jacobian_cc2_a2(rho_aibj, c(1 : wf%n_t1), n_a_o, n_a_v, &
                              1, 1, n_a_o, n_a_v)
@@ -197,8 +195,7 @@ contains
 !
       call symmetric_sum(rho_aibj, (n_a_v)*(n_a_o))
 !
-      call mem%alloc(rho_aibj_ccsd, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-      call zero_array(rho_aibj_ccsd, (wf%n_ccsd_v**2)*(wf%n_ccsd_o**2))
+      call mem%alloc(rho_aibj_ccsd, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o, set_zero=.true.)
 !
       call wf%jacobian_ccsd_b2(rho_aibj_ccsd, c(1 : wf%n_t1))
       call wf%jacobian_ccsd_c2(rho_aibj_ccsd, c(1 : wf%n_t1))
@@ -223,9 +220,7 @@ contains
       call wf%omega_ccsd_b2(rho_aibj_ccsd, c_aibj)
 !
       call mem%alloc(c_abij, n_a_v, n_a_v, n_a_o, n_a_o)
-      call mem%alloc(rho_abij, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o)
-!
-      call zero_array(rho_abij, (wf%n_ccsd_v**2)*(wf%n_ccsd_o**2))
+      call mem%alloc(rho_abij, wf%n_ccsd_v, wf%n_ccsd_v, wf%n_ccsd_o, wf%n_ccsd_o, set_zero=.true.)
 !
       call sort_1234_to_1324(c_aibj, c_abij, n_a_v, n_a_o, n_a_v, n_a_o)
       call mem%dealloc(c_aibj, n_a_v, n_a_o, n_a_v, n_a_o)
@@ -283,7 +278,7 @@ contains
 !!
 !!    All indices are CC2 indices
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -548,7 +543,7 @@ contains
 !!
 !!     c, k are CCSD + CC2, l is unrestricted
 !!
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -571,7 +566,7 @@ contains
 !
 !     Form X_ljai = sum_ck g_ljkc x_ki^ac
 !
-      call wf%jacobian_c2_intermediate_oovo_1%open_('read', 'rewind')
+      call wf%jacobian_c2_intermediate_oovo_1%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_1%read_(X_ljai, (wf%n_o)*(wf%n_ccsd_v)*(wf%n_ccsd_o**2))
       call wf%jacobian_c2_intermediate_oovo_1%close_('keep')
 !
@@ -635,8 +630,8 @@ contains
 !
       call mem%alloc(X_kjbi, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      wf%jacobian_c2_intermediate_oovo_2 = sequential_file('jacobian_c2_intermediate_oovo_2_ccsd')
-      call wf%jacobian_c2_intermediate_oovo_2%open_('read', 'rewind')
+      wf%jacobian_c2_intermediate_oovo_2 = stream_file('jacobian_c2_intermediate_oovo_2_ccsd')
+      call wf%jacobian_c2_intermediate_oovo_2%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_2%read_(X_kjbi, (wf%n_o)*(wf%n_ccsd_v)*(wf%n_ccsd_o**2))
       call wf%jacobian_c2_intermediate_oovo_2%close_('keep')
 !
@@ -1002,8 +997,8 @@ contains
 !
       call mem%alloc(X_kibj, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      wf%jacobian_d2_intermediate = sequential_file('jacobian_d2_intermediate_ccsd')
-      call wf%jacobian_d2_intermediate%open_('read', 'rewind')
+      wf%jacobian_d2_intermediate = stream_file('jacobian_d2_intermediate_ccsd')
+      call wf%jacobian_d2_intermediate%open_('rewind')
 !
       call wf%jacobian_d2_intermediate%read_(X_kibj, wf%n_o*(wf%n_ccsd_o**2)*wf%n_ccsd_v)
 !
@@ -1455,7 +1450,6 @@ contains
 !!
 !!    Adapted for MLCCSD by Sarai D. Folkestad, 2019
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2134_to_1234, add_2431_to_1234
 !
       implicit none
@@ -1533,8 +1527,7 @@ contains
 !
          call batch_b%determine_limits(current_b_batch)
 !
-         call mem%alloc(rho_aibj_batch, wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o)
-         call zero_array(rho_aibj_batch, (wf%n_ccsd_o**2)*(batch_b%length)*(wf%n_ccsd_v))
+         call mem%alloc(rho_aibj_batch, wf%n_ccsd_v, wf%n_ccsd_o, batch_b%length, wf%n_ccsd_o, set_zero=.true.)
 !
          call mem%alloc(g_kcbd, wf%n_o, wf%n_v, batch_b%length, wf%n_v)
 !
@@ -1582,8 +1575,7 @@ contains
 !
          call mem%dealloc(g_kcbd_3, n_a_o, n_a_v, batch_b%length, wf%n_v)
 !
-         call mem%alloc(L_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
-         call zero_array(L_ckbd, (wf%n_v**2)*(wf%n_o)*(batch_b%length))
+         call mem%alloc(L_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v, set_zero=.true.)
 !
          call add_2134_to_1234(two, g_kcbd, L_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
          call add_2431_to_1234(-one, g_kcbd, L_ckbd, wf%n_v, wf%n_o, batch_b%length, wf%n_v)
@@ -1705,8 +1697,8 @@ contains
 !
       call mem%alloc(X_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      wf%jacobian_e2_intermediate = sequential_file('jacobian_e2_intermediate_ccsd')
-      call wf%jacobian_e2_intermediate%open_('read', 'rewind')
+      wf%jacobian_e2_intermediate = stream_file('jacobian_e2_intermediate_ccsd')
+      call wf%jacobian_e2_intermediate%open_('rewind')
 !
       call wf%jacobian_e2_intermediate%read_(X_ckbj, n_a_o*n_a_v*(wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
@@ -1771,7 +1763,6 @@ contains
 !!
 !!    c, k, d, l are CCSD + CC2 indices
 !!
-      use array_utilities, only: zero_array
       use reordering, only: add_2341_to_1234, add_2143_to_1234, add_1243_to_1234
 !
       implicit none
@@ -1808,8 +1799,7 @@ contains
 !
       call wf%eri_t1%get('ovov', g_kcld, 1, n_a_o, 1, n_a_v, 1, n_a_o, 1, n_a_v)
 !
-      call mem%alloc(L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
-      call zero_array(L_ckdl, (n_a_v**2)*(n_a_o**2))
+      call mem%alloc(L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o, set_zero=.true.)
 !
       call add_2341_to_1234(-one, g_kcld, L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
       call add_2143_to_1234(two, g_kcld, L_ckdl, n_a_v, n_a_o, n_a_v, n_a_o)
@@ -1996,7 +1986,7 @@ contains
 !
       call mem%alloc(X_ckbj, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      call wf%jacobian_g2_intermediate_vovo%open_('read', 'rewind')
+      call wf%jacobian_g2_intermediate_vovo%open_('rewind')
 !
       call wf%jacobian_g2_intermediate_vovo%read_(X_ckbj, n_a_o*n_a_v*(wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
@@ -2040,7 +2030,7 @@ contains
 !
       call mem%alloc(X_db, n_a_v, wf%n_ccsd_v)
 !
-      call wf%jacobian_g2_intermediate_vv%open_('read', 'rewind')
+      call wf%jacobian_g2_intermediate_vv%open_('rewind')
 !
       call wf%jacobian_g2_intermediate_vv%read_(X_db, n_a_v*(wf%n_ccsd_v))
 !
@@ -2081,7 +2071,7 @@ contains
 !     :: Term 3: - sum_ckld x_ckdj * L_kcld * c_aibl = -sum_l X_lj c_aibl
 !
       call mem%alloc(X_lj, n_a_o, wf%n_ccsd_o)
-      call wf%jacobian_g2_intermediate_oo%open_('read', 'rewind')
+      call wf%jacobian_g2_intermediate_oo%open_('rewind')
 !
       call wf%jacobian_g2_intermediate_oo%read_(X_lj, n_a_o*(wf%n_ccsd_o))
 !
@@ -2173,7 +2163,7 @@ contains
 !
       call mem%alloc(X_aidl, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
 !
-      call wf%jacobian_h2_intermediate_vovo_1%open_('read', 'rewind')
+      call wf%jacobian_h2_intermediate_vovo_1%open_('rewind')
 !
       call wf%jacobian_h2_intermediate_vovo_1%read_(X_aidl, n_a_v*n_a_o*(wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
@@ -2215,7 +2205,7 @@ contains
 !
       call mem%alloc(X_ajdk, wf%n_ccsd_v, wf%n_ccsd_o, n_a_v, n_a_o)
 !
-      call wf%jacobian_h2_intermediate_vovo_2%open_('read', 'rewind')
+      call wf%jacobian_h2_intermediate_vovo_2%open_('rewind')
 !
       call wf%jacobian_h2_intermediate_vovo_2%read_(X_ajdk, n_a_v*n_a_o*(wf%n_ccsd_o)*(wf%n_ccsd_v))
 !
@@ -2613,7 +2603,7 @@ contains
 !
       call mem%alloc(X_klij, n_a_o, n_a_o, wf%n_ccsd_o, wf%n_ccsd_o)
 !
-      call wf%jacobian_j2_intermediate_oooo%open_('read', 'rewind')
+      call wf%jacobian_j2_intermediate_oooo%open_('rewind')
       call wf%jacobian_j2_intermediate_oooo%read_(X_klij, n_a_o**2 * (wf%n_ccsd_o**2))
       call wf%jacobian_j2_intermediate_oooo%close_('keep')
 !
@@ -2652,7 +2642,7 @@ contains
 !
       call mem%alloc(g_klcd, n_a_o, n_a_o, n_a_v, n_a_v)
 !
-      call wf%jacobian_j2_intermediate_oovv%open_('read', 'rewind')
+      call wf%jacobian_j2_intermediate_oovv%open_('rewind')
       call wf%jacobian_j2_intermediate_oovv%read_(g_klcd, n_a_v**2 * n_a_o**2)
       call wf%jacobian_j2_intermediate_oovv%close_('keep')
 !
@@ -2985,8 +2975,8 @@ contains
       call mem%dealloc(g_kjcl, wf%n_o, wf%n_ccsd_o, n_a_v, n_a_o)
       call mem%dealloc(x_ckai, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
 !
-      wf%jacobian_c2_intermediate_oovo_2 = sequential_file('jacobian_c2_intermediate_oovo_2_ccsd')
-      call wf%jacobian_c2_intermediate_oovo_2%open_('write', 'rewind')
+      wf%jacobian_c2_intermediate_oovo_2 = stream_file('jacobian_c2_intermediate_oovo_2_ccsd')
+      call wf%jacobian_c2_intermediate_oovo_2%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_2%write_(X_kjbi,(wf%n_o)*(wf%n_ccsd_v)*(wf%n_ccsd_o**2))
       call wf%jacobian_c2_intermediate_oovo_2%close_('keep')
 !
@@ -3058,8 +3048,8 @@ contains
       call mem%dealloc(x_ckai, n_a_v, n_a_o, wf%n_ccsd_v, wf%n_ccsd_o)
       call mem%dealloc(L_ljck, wf%n_o, wf%n_ccsd_o, n_a_v, n_a_o)
 !
-      wf%jacobian_c2_intermediate_oovo_1 = sequential_file('jacobian_c2_intermediate_oovo_1_ccsd')
-      call wf%jacobian_c2_intermediate_oovo_1%open_('write', 'rewind')
+      wf%jacobian_c2_intermediate_oovo_1 = stream_file('jacobian_c2_intermediate_oovo_1_ccsd')
+      call wf%jacobian_c2_intermediate_oovo_1%open_('rewind')
       call wf%jacobian_c2_intermediate_oovo_1%write_(X_ljai, (wf%n_o)*(wf%n_ccsd_v)*(wf%n_ccsd_o**2))
       call wf%jacobian_c2_intermediate_oovo_1%close_('keep')
 !
@@ -3088,7 +3078,6 @@ contains
 !!    and the intermediate is stored in the file jacobian_d2_intermediate
 !!    which is a wf variable.
 !!
-      use array_utilities, only: zero_array
       use reordering, only: sort_1234_to_4231
 !
       implicit none
@@ -3114,8 +3103,7 @@ contains
       timer = timings('Jacobian CCSD D2 intermediate', pl='v')
       call timer%turn_on()
 !
-      call mem%alloc(X_kibj, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o)
-      call zero_array(X_kibj, wf%n_o*(wf%n_ccsd_o**2)*wf%n_ccsd_v)
+      call mem%alloc(X_kibj, wf%n_o, wf%n_ccsd_o, wf%n_ccsd_v, wf%n_ccsd_o, set_zero=.true.)
 !
 !     Order amplitudes as x_ij_cd = x_ij^cd = x_ci_dj
 !
@@ -3216,8 +3204,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_d2_intermediate = sequential_file('jacobian_d2_intermediate_ccsd')
-      call wf%jacobian_d2_intermediate%open_('write', 'rewind')
+      wf%jacobian_d2_intermediate = stream_file('jacobian_d2_intermediate_ccsd')
+      call wf%jacobian_d2_intermediate%open_('rewind')
       call wf%jacobian_d2_intermediate%write_(X_kibj, wf%n_o*(wf%n_ccsd_o**2)*wf%n_ccsd_v)
       call wf%jacobian_d2_intermediate%close_('keep')
 !
@@ -3315,8 +3303,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_e2_intermediate = sequential_file('jacobian_e2_intermediate_ccsd')
-      call wf%jacobian_e2_intermediate%open_('write', 'rewind')
+      wf%jacobian_e2_intermediate = stream_file('jacobian_e2_intermediate_ccsd')
+      call wf%jacobian_e2_intermediate%open_('rewind')
       call wf%jacobian_e2_intermediate%write_(X_ckbj, n_a_o*n_a_v*(wf%n_ccsd_o)*(wf%n_ccsd_v))
       call wf%jacobian_e2_intermediate%close_('keep')
 !
@@ -3423,8 +3411,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_g2_intermediate_vovo = sequential_file('jacobian_g2_intermediate_vovo_ccsd')
-      call wf%jacobian_g2_intermediate_vovo%open_('write', 'rewind')
+      wf%jacobian_g2_intermediate_vovo = stream_file('jacobian_g2_intermediate_vovo_ccsd')
+      call wf%jacobian_g2_intermediate_vovo%open_('rewind')
       call wf%jacobian_g2_intermediate_vovo%write_(X_ckbj, n_a_o*n_a_v*(wf%n_ccsd_o)*(wf%n_ccsd_v))
       call wf%jacobian_g2_intermediate_vovo%close_('keep')
 !
@@ -3455,8 +3443,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_g2_intermediate_vv = sequential_file('jacobian_g2_intermediate_vv_ccsd')
-      call wf%jacobian_g2_intermediate_vv%open_('write', 'rewind')
+      wf%jacobian_g2_intermediate_vv = stream_file('jacobian_g2_intermediate_vv_ccsd')
+      call wf%jacobian_g2_intermediate_vv%open_('rewind')
       call wf%jacobian_g2_intermediate_vv%write_(X_db, n_a_v*(wf%n_ccsd_v))
       call wf%jacobian_g2_intermediate_vv%close_('keep')
 !
@@ -3490,8 +3478,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_g2_intermediate_oo = sequential_file('jacobian_g2_intermediate_oo_ccsd')
-      call wf%jacobian_g2_intermediate_oo%open_('write', 'rewind')
+      wf%jacobian_g2_intermediate_oo = stream_file('jacobian_g2_intermediate_oo_ccsd')
+      call wf%jacobian_g2_intermediate_oo%open_('rewind')
       call wf%jacobian_g2_intermediate_oo%write_(X_lj, n_a_o*(wf%n_ccsd_o))
       call wf%jacobian_g2_intermediate_oo%close_('keep')
 !
@@ -3592,8 +3580,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_h2_intermediate_vovo_1 = sequential_file('jacobian_h2_intermediate_vovo_1_ccsd')
-      call wf%jacobian_h2_intermediate_vovo_1%open_('write', 'rewind')
+      wf%jacobian_h2_intermediate_vovo_1 = stream_file('jacobian_h2_intermediate_vovo_1_ccsd')
+      call wf%jacobian_h2_intermediate_vovo_1%open_('rewind')
       call wf%jacobian_h2_intermediate_vovo_1%write_(X_aidl, &
                   n_a_v*n_a_o*(wf%n_ccsd_o)*(wf%n_ccsd_v))
       call wf%jacobian_h2_intermediate_vovo_1%close_('keep')
@@ -3654,8 +3642,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_h2_intermediate_vovo_2 = sequential_file('jacobian_h2_intermediate_vovo_2_ccsd')
-      call wf%jacobian_h2_intermediate_vovo_2%open_('write', 'rewind')
+      wf%jacobian_h2_intermediate_vovo_2 = stream_file('jacobian_h2_intermediate_vovo_2_ccsd')
+      call wf%jacobian_h2_intermediate_vovo_2%open_('rewind')
       call wf%jacobian_h2_intermediate_vovo_2%write_(X_ajdk, &
                n_a_v*n_a_o*(wf%n_ccsd_o)*(wf%n_ccsd_v))
       call wf%jacobian_h2_intermediate_vovo_2%close_('keep')
@@ -3755,8 +3743,8 @@ contains
 !
 !     Store intermediate to file
 !
-      wf%jacobian_j2_intermediate_oooo = sequential_file('jacobian_j2_intermediate_oooo_ccsd')
-      call wf%jacobian_j2_intermediate_oooo%open_('write', 'rewind')
+      wf%jacobian_j2_intermediate_oooo = stream_file('jacobian_j2_intermediate_oooo_ccsd')
+      call wf%jacobian_j2_intermediate_oooo%open_('rewind')
       call wf%jacobian_j2_intermediate_oooo%write_(X_klij, n_a_o**2 * (wf%n_ccsd_o**2))
       call wf%jacobian_j2_intermediate_oooo%close_('keep')
 !
@@ -3764,8 +3752,8 @@ contains
 !
 !     Storing the integrals g_kcld ordered as g_klcd
 !
-      wf%jacobian_j2_intermediate_oovv = sequential_file('jacobian_j2_intermediate_oovv_ccsd')
-      call wf%jacobian_j2_intermediate_oovv%open_('write', 'rewind')
+      wf%jacobian_j2_intermediate_oovv = stream_file('jacobian_j2_intermediate_oovv_ccsd')
+      call wf%jacobian_j2_intermediate_oovv%open_('rewind')
       call wf%jacobian_j2_intermediate_oovv%write_(g_klcd, n_a_v**2 * n_a_o**2)
       call wf%jacobian_j2_intermediate_oovv%close_('keep')
 !

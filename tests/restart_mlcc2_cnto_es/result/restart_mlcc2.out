@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -91,7 +91,7 @@
      end mlcc
 
 
-  Calculation start:2022-06-30 08:49:19 UTC +02:00
+  Calculation start:2022-10-19 10:30:07 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -169,7 +169,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.2419E-12     0.7884E+02
+     1           -78.843851693631     0.2421E-12     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -255,8 +255,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21932
-     Total cpu time (sec):               0.43931
+     Total wall time (sec):              0.35500
+     Total cpu time (sec):               0.26923
   Requested restart for CNTOs, reading orbital transformation matrices
 
   - MLCC2 orbital partitioning:
@@ -300,7 +300,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.880333762123     0.5755E-12     0.7888E+02
+    1           -78.880333762123     0.5748E-12     0.7888E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -328,8 +328,8 @@
 
   - Finished solving the MLCC2 ground state equations
 
-     Total wall time (sec):              0.00251
-     Total cpu time (sec):               0.00251
+     Total wall time (sec):              0.00800
+     Total cpu time (sec):               0.00757
 
 
   Determining CC excited state amplitudes
@@ -338,9 +338,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -393,10 +393,10 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.267792494311       0.1104E-12
-     2      0.321906407185       0.7814E-13
-     3      0.371333270705       0.5329E-12
-     4      0.421950679115       0.5326E-12
+     1      0.267792494311       0.1110E-12
+     2      0.321906407185       0.7593E-13
+     3      0.371333270705       0.5321E-12
+     4      0.421950679115       0.5324E-12
   -----------------------------------------------
 
   Note: residual of all states converged  in first iteration.
@@ -405,8 +405,6 @@
   Convergence criterion met in 1 iterations!
 
   - Resorting roots according to excitation energy.
-
-  - Stored converged states to file.
 
   - Excitation vector amplitudes:
 
@@ -514,7 +512,7 @@
        20      2       -0.010295389720
      ------------------------------------
 
-     - Electronic excitation energies:
+  - MLCC2 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -523,21 +521,21 @@
         1                  0.267792494311        7.287004935950
         2                  0.321906407185        8.759519508229
         3                  0.371333270705       10.104492971230
-        4                  0.421950679115       11.481862810797
+        4                  0.421950679115       11.481862810798
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the MLCC2 excited state equations (right)
 
-     Total wall time (sec):              0.00594
-     Total cpu time (sec):               0.01594
+     Total wall time (sec):              0.02800
+     Total cpu time (sec):               0.02017
 
-  Peak memory usage during the execution of eT: 10.699784 MB
+  Peak memory usage during the execution of eT: 10.667904 MB
 
-  Total wall time in eT (sec):              0.28874
-  Total cpu time in eT (sec):               0.54412
+  Total wall time in eT (sec):              0.43500
+  Total cpu time in eT (sec):               0.34888
 
-  Calculation end:2022-06-30 08:49:20 UTC +02:00
+  Calculation end:2022-10-19 10:30:07 UTC -07:00
 
   - Implementation references:
 

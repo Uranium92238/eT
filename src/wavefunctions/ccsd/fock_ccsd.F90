@@ -44,7 +44,6 @@ contains
 !!
 !!    Depending on the 'task' different blocks (ij, ai, ia, ab) will be constructed
 !!
-      use array_utilities, only: zero_array
       use warning_suppressor, only: do_nothing
 !
       implicit none
@@ -61,9 +60,7 @@ contains
       call do_nothing(task)
 !
       call mem%alloc(h, wf%n_mo, wf%n_mo)
-      call mem%alloc(F_eff, wf%n_mo, wf%n_mo)
-!
-      call zero_array(F_eff, wf%n_mo**2)
+      call mem%alloc(F_eff, wf%n_mo, wf%n_mo, set_zero=.true.)
 !
       call wf%get_t1_oei('hamiltonian', h, screening=.true.)
 !

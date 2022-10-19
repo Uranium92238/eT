@@ -65,7 +65,7 @@ contains
 !!    Written by Sarai D. Folkestad, May 2021
 !!
 !
-      use array_utilities, only: constant_array
+      use array_initialization, only: constant_array
 !
       implicit none
 !

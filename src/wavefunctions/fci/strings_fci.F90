@@ -648,7 +648,7 @@ contains
 !!       destruction_signs:   sign of generated determinant (zero if p is unoccupied), see eq. 1.2.3 MEST
 !!
 !
-      use array_utilities, only: zero_array_int, zero_array
+      use array_initialization, only: zero_array_int, zero_array
 !
       implicit none
 !
@@ -708,7 +708,7 @@ contains
 !!       creation_strings: address of the generated determinant (zero if p is occupied)
 !!       creation_signs:   sign of generated determinant (zero if p is occupied), see eq. 1.2.3 MEST
 !!
-      use array_utilities, only: zero_array_int, zero_array
+      use array_initialization, only: zero_array_int, zero_array
 !
       implicit none
 !

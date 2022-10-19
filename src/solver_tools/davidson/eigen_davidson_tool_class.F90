@@ -201,8 +201,6 @@ contains
       davidson%dim_red      = 0
       davidson%n_new_trials = 0
 !
-      call davidson%print_settings()
-!
       davidson%trials = record_storer(trim(davidson%name_) // '_trials',            &
                                       davidson%n_parameters,                        &
                                       davidson%max_dim_red + davidson%n_solutions,  &
@@ -269,10 +267,8 @@ contains
 !
       info = 0
 !
-      call mem%alloc(X_red, davidson%dim_red, davidson%dim_red)
+      call mem%alloc(X_red, davidson%dim_red, davidson%dim_red, set_zero=.true.)
       call mem%alloc(A_red, davidson%dim_red, davidson%dim_red)
-!
-      call zero_array(X_red, davidson%dim_red**2)
       call dcopy(davidson%dim_red**2, davidson%A_red, 1, A_red, 1)
 !
       if (davidson%non_unit_metric) then

@@ -552,7 +552,7 @@ contains
 !!
 !!    The result has to be scaled by 1/3 to obtain the final energy correction
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !

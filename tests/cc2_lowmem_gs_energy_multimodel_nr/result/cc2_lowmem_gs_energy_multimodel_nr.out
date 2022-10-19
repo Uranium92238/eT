@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -78,7 +78,7 @@
      end do
 
 
-  Calculation start:2022-06-30 08:49:34 UTC +02:00
+  Calculation start:2022-10-19 10:30:27 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -188,19 +188,19 @@
   Fock matrix construction using density differences
      9           -78.843851693630     0.3151E-06     0.1027E-09
   Fock matrix construction using density differences
-    10           -78.843851693631     0.2637E-07     0.4405E-12
+    10           -78.843851693631     0.2637E-07     0.4832E-12
   Fock matrix construction using density differences
-    11           -78.843851693631     0.5634E-08     0.0000E+00
+    11           -78.843851693631     0.5634E-08     0.2842E-13
   Fock matrix construction using density differences
-    12           -78.843851693631     0.1415E-08     0.8527E-13
+    12           -78.843851693631     0.1415E-08     0.2842E-13
   Fock matrix construction using density differences
-    13           -78.843851693631     0.6806E-09     0.2842E-13
+    13           -78.843851693631     0.6806E-09     0.0000E+00
   Fock matrix construction using density differences
     14           -78.843851693631     0.1491E-09     0.1421E-13
   Fock matrix construction using density differences
-    15           -78.843851693631     0.2501E-10     0.9948E-13
+    15           -78.843851693631     0.2501E-10     0.5684E-13
   Fock matrix construction using density differences
-    16           -78.843851693631     0.5165E-11     0.1137E-12
+    16           -78.843851693631     0.5171E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -296,8 +296,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.19588
-     Total cpu time (sec):               0.39580
+     Total wall time (sec):              0.48300
+     Total cpu time (sec):               0.27875
 
 
   Determining CC cluster amplitudes
@@ -416,7 +416,7 @@
      -----------------------------
        1           0.1480E-09
        2           0.3751E-10
-       3           0.8106E-11
+       3           0.8107E-11
        4           0.9346E-12
      -----------------------------
 
@@ -426,19 +426,19 @@
 
      Iteration     Residual norm
      -----------------------------
-       1           0.6860E-11
+       1           0.6861E-11
        2           0.2931E-11
        3           0.4648E-12
-       4           0.8498E-13
+       4           0.8499E-13
      -----------------------------
 
-    9           -79.085769729576     0.8392E-12     0.4263E-13
+    9           -79.085769729575     0.8399E-12     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 9 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -79.085769729576
+     Final ground state energy (a.u.):   -79.085769729575
 
      Correlation energy (a.u.):           -0.241918035945
 
@@ -460,17 +460,17 @@
 
   - Finished solving the LOW MEMORY CC2 ground state equations
 
-     Total wall time (sec):              0.07233
-     Total cpu time (sec):               0.14226
+     Total wall time (sec):              0.26900
+     Total cpu time (sec):               0.17389
 
   - Cleaning up low memory cc2 wavefunction
 
-  Peak memory usage during the execution of eT: 10.699752 MB
+  Peak memory usage during the execution of eT: 10.667888 MB
 
-  Total wall time in eT (sec):              0.76691
-  Total cpu time in eT (sec):               1.47962
+  Total wall time in eT (sec):              1.41400
+  Total cpu time in eT (sec):               1.03652
 
-  Calculation end:2022-06-30 08:49:35 UTC +02:00
+  Calculation end:2022-10-19 10:30:28 UTC -07:00
 
   - Implementation references:
 

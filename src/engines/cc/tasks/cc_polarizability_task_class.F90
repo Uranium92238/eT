@@ -25,17 +25,17 @@ module cc_polarizability_task_class
 !!
 !
    use parameters
-   use global_out,                        only: output
-   use memory_manager_class,              only: mem
-   use ccs_class,                         only: ccs
-   use cc_task_class,                     only: cc_task
-   use sequential_file_class,             only: sequential_file
-   use cc_eta_xi_calculator_class,        only: cc_eta_xi_calculator
-   use cc_eom_eta_xi_calculator_class,    only: cc_eom_eta_xi_calculator
-   use cc_lr_eta_xi_calculator_class,     only: cc_lr_eta_xi_calculator
-   use cc_F_transformation_class,         only: cc_F_transformation
-   use cc_null_F_transformation_class,    only: cc_null_F_transformation
-   use cc_lr_F_transformation_class,      only: cc_lr_F_transformation
+   use global_out,                     only: output
+   use memory_manager_class,           only: mem
+   use ccs_class,                      only: ccs
+   use cc_task_class,                  only: cc_task
+   use stream_file_class,              only: stream_file
+   use cc_eta_xi_calculator_class,     only: cc_eta_xi_calculator
+   use cc_eom_eta_xi_calculator_class, only: cc_eom_eta_xi_calculator
+   use cc_lr_eta_xi_calculator_class,  only: cc_lr_eta_xi_calculator
+   use cc_F_transformation_class,      only: cc_F_transformation
+   use cc_null_F_transformation_class, only: cc_null_F_transformation
+   use cc_lr_F_transformation_class,   only: cc_lr_F_transformation
 !
    implicit none
 !
@@ -46,7 +46,7 @@ module cc_polarizability_task_class
       real(dp), dimension(:,:), allocatable, private :: xiX
       real(dp), dimension(:,:), allocatable, private :: etaX
 !
-      type(sequential_file), dimension(:,:,:), allocatable, private :: t_response_files
+      type(stream_file), dimension(:,:,:), allocatable, private :: t_response_files
 !
       integer, private :: n_frequencies = 0
       real(dp), dimension(:), allocatable, private :: frequencies
@@ -66,6 +66,7 @@ module cc_polarizability_task_class
 !
       procedure, private :: initialize_t_response_files
       procedure, private :: determine_t_responses
+      procedure, private :: solve_response_equations
 !
       procedure, private :: set_polarizability_components_to_compute
       procedure, private :: set_t_response_components_to_compute
@@ -209,10 +210,10 @@ contains
          do freq = 1, this%n_frequencies
             do sign_ = 1, 2
 !
-               write(file_name, '(a, i3.3, a, i3.3, a, i3.3)') 'dipole_t_response_component_', &
-                                                      q, '_frequency_', freq, '_sign_', sign_
+               write(file_name, '(3(a, i3.3))') 'dipole_t_response_component_', &
+                                                q, '_frequency_', freq, '_sign_', sign_
 !
-               this%t_response_files(freq, q, sign_) = sequential_file(file_name)
+               this%t_response_files(freq, q, sign_) = stream_file(file_name)
 !
             enddo
          enddo
@@ -226,8 +227,7 @@ contains
 !!    Determine t responses
 !!    Written Eirik F. Kjønstad, 2022
 !!
-      use array_utilities, only: copy_and_scale
-      use davidson_cc_linear_equations_class, only: davidson_cc_linear_equations
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -242,8 +242,6 @@ contains
       real(dp) :: prefactor
 !
       character(len=1) :: sign_character
-!
-      type(davidson_cc_linear_equations), allocatable :: t_response_solver
 !
       call wf%prepare_for_jacobian()
 !
@@ -266,23 +264,12 @@ contains
                                'component (i0) and ((a1))-frequencies.', &
                                ints=[q], chars=[sign_character], fs='(t3,a)')
 !
-            t_response_solver = davidson_cc_linear_equations(wf,                                   &
-                                                             section='cc response',                &
-                                                             eq_description='Solving for the       &
-                                                             &amplitude response vectors in CC     &
-                                                             &response theory.',                   &
-                                                             n_frequencies=this%n_frequencies,     &
-                                                             n_rhs=1)
-!
             prefactor = real((-1)**sign_, kind=dp) ! for frequencies
 !
-            call t_response_solver%run(wf,                                     &
-                                       rhs,                                    &
-                                       prefactor*this%frequencies,             &
-                                       this%t_response_files(:, q, sign_),     &
-                                       'right')
-!
-            call t_response_solver%cleanup(wf)
+            call this%solve_response_equations(wf             = wf,                             &
+                                               frequencies    = prefactor * this%frequencies,   &
+                                               rhs            = rhs,                            &
+                                               solution_files = this%t_response_files(:,q,sign_))
 !
          enddo
       enddo
@@ -290,6 +277,88 @@ contains
       call mem%dealloc(rhs, wf%n_es_amplitudes)
 !
    end subroutine determine_t_responses
+!
+!
+   subroutine solve_response_equations(this, wf, frequencies, rhs, solution_files)
+!!
+!!    Solve response equations
+!!    Written by Eirik Kjønstad, Oct 2022
+!!
+!!    Solves (A - freq_k) X_k = rhs and stores result in solution_files(k).
+!!
+      use linear_davidson_tool_class,                          only: linear_davidson_tool
+      use file_linear_equation_storage_tool_class,             only: file_linear_equation_storage_tool
+      use vector_getter_rhs_tool_class,                        only: vector_getter_rhs_tool
+      use linear_davidson_multiple_solutions_print_tool_class, only: linear_davidson_multiple_solutions_print_tool
+!
+      use cc_jacobian_transformation_class,        only: cc_jacobian_transformation
+      use linear_davidson_solver_class,            only: linear_davidson_solver
+      use cc_jacobian_preconditioner_getter_class, only: cc_jacobian_preconditioner_getter
+      use cc_response_solver_settings_class,       only: cc_response_solver_settings
+!
+      implicit none 
+!
+      class(cc_polarizability_task), intent(inout) :: this 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(this%n_frequencies), intent(in) :: frequencies
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: rhs 
+!
+      class(stream_file), dimension(this%n_frequencies), intent(inout) :: solution_files
+!
+      class(linear_davidson_solver),                        allocatable :: solver
+      class(linear_davidson_tool),                          allocatable :: davidson
+      class(cc_jacobian_transformation),                    allocatable :: transformer
+      class(file_linear_equation_storage_tool),             allocatable :: storer
+      class(vector_getter_rhs_tool),                        allocatable :: rhs_getter
+      class(cc_jacobian_preconditioner_getter),             allocatable :: preconditioner
+      class(linear_davidson_multiple_solutions_print_tool), allocatable :: printer
+      class(cc_response_solver_settings),                   allocatable :: settings
+!
+      settings = cc_response_solver_settings()
+!
+      printer = linear_davidson_multiple_solutions_print_tool()
+!
+      davidson = linear_davidson_tool(name_             = 'cc_response_davidson',            &
+                                      n_parameters      = wf%n_es_amplitudes,                &
+                                      lindep_threshold  = min(1.0d-11, settings%threshold),  &
+                                      max_dim_red       = 100,                               &
+                                      n_equations       = this%n_frequencies,                &
+                                      records_in_memory = settings%records_in_memory)
+!
+      transformer = cc_jacobian_transformation(wf,             &
+                                               side='right',   &
+                                               n_parameters=wf%n_es_amplitudes)
+!
+      storer = file_linear_equation_storage_tool(n_parameters = wf%n_es_amplitudes, &
+                                                 n_solutions  = this%n_frequencies, &
+                                                 files        = solution_files)
+!
+      preconditioner = cc_jacobian_preconditioner_getter(wf, wf%n_es_amplitudes)
+!
+      rhs_getter = vector_getter_rhs_tool(n_parameters = wf%n_es_amplitudes, &
+                                          n_rhs        = 1,                  &
+                                          rhs          = rhs)
+!
+      solver = linear_davidson_solver(transformer        = transformer,             &
+                                      davidson           = davidson,                &
+                                      storer             = storer,                  &
+                                      preconditioner     = preconditioner,          &
+                                      rhs_getter         = rhs_getter,              &
+                                      printer            = printer,                 &
+                                      n_rhs              = 1,                       &
+                                      n_solutions        = this%n_frequencies,      &
+                                      max_iterations     = settings%max_iterations, &
+                                      residual_threshold = settings%threshold,      &
+                                      frequencies        = frequencies)
+
+!
+      call solver%run()
+      call solver%cleanup()
+!
+   end subroutine solve_response_equations
 !
 !
    subroutine set_polarizability_components_to_compute(this)
@@ -526,7 +595,7 @@ contains
 !
       do sign_ = 1, 2
 !
-         call this%t_response_files(freq, k, sign_)%open_('read', 'rewind')
+         call this%t_response_files(freq, k, sign_)%open_('rewind')
          call this%t_response_files(freq, k, sign_)%read_(t(:,sign_), wf%n_es_amplitudes)
          call this%t_response_files(freq, k, sign_)%close_()
 !

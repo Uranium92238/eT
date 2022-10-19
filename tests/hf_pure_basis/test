@@ -20,18 +20,17 @@ assert version_info.major == 2
 
 # construct filter(s)
 threshold = 1.0e-9
-
 f = get_hf_filter(threshold)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['hf_pure_basis.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'hf_pure_basis.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

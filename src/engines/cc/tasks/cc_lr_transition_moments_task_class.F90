@@ -29,7 +29,7 @@ module cc_lr_transition_moments_task_class
    use cc_transition_moments_task_class, only: cc_transition_moments_task
    use memory_manager_class, only: mem
    use global_out, only: output
-   use sequential_file_class, only: sequential_file
+   use stream_file_class, only: stream_file
    use cc_eta_xi_calculator_class, only: cc_eta_xi_calculator
    use cc_lr_eta_xi_calculator_class, only: cc_lr_eta_xi_calculator
 !
@@ -42,7 +42,7 @@ module cc_lr_transition_moments_task_class
       real(dp), dimension(:,:), allocatable, private :: xiX
       real(dp), dimension(:,:), allocatable, private :: etaX
 !
-      type(sequential_file), dimension(:), allocatable :: M_vectors
+      type(stream_file), dimension(:), allocatable :: M_vectors
 !
       class(cc_eta_xi_calculator), allocatable, private :: eta_xi_calculator
 !
@@ -51,7 +51,8 @@ module cc_lr_transition_moments_task_class
       procedure, public :: execute &
                         => execute_cc_lr_transition_moments_task
 !
-      procedure, private :: determine_M_vectors
+      procedure, private         :: determine_M_vectors
+      procedure, private, nopass :: solve_M_vector_equations
 !
    end type cc_lr_transition_moments_task
 !
@@ -143,7 +144,7 @@ contains
 !
       do state = 1, wf%n_singlet_states
 !
-         call this%M_vectors(state)%open_('read', 'rewind')
+         call this%M_vectors(state)%open_('rewind')
          call this%M_vectors(state)%read_(M, wf%n_es_amplitudes)
          call this%M_vectors(state)%close_()
 !
@@ -199,8 +200,6 @@ contains
 !!    Eirik F. Kjønstad, Nov 2019. It is adapted/based on the general structure set up
 !!    to determine M vectors originally written by Josefine H. Andersen, spring 2019.
 !!
-      use davidson_cc_linear_equations_class, only: davidson_cc_linear_equations
-!
       implicit none
 !
       class(cc_lr_transition_moments_task), intent(inout) :: this
@@ -209,12 +208,10 @@ contains
 !
       integer :: k
 !
-      real(dp), dimension(:), allocatable :: R ! Stores R_k temporarily
-      real(dp), dimension(:,:), allocatable :: minus_FR ! [-F R_k], k = 1, 2, ..., n_singlet_states
+      real(dp), dimension(:), allocatable :: R           ! Stores R_k temporarily
+      real(dp), dimension(:,:), allocatable :: minus_FR  ! [-F R_k], k = 1, 2, ..., n_singlet_states
 !
       character(len=200) :: file_name
-!
-      class(davidson_cc_linear_equations), allocatable :: M_vectors_solver
 !
 !     Build the matrix FR of right-hand-sides, -FR = [-F R_k], k = 1, 2, ..., n_singlet_states
 !
@@ -241,27 +238,96 @@ contains
 !
          write(file_name, '(a, i3.3)') 'M_vector_state_', k
 !
-         this%M_vectors(k) = sequential_file(trim(file_name))
+         this%M_vectors(k) = stream_file(trim(file_name))
 !
       enddo
 !
-!     Call solver to converge the M vectors
+!     Converge and store M vectors
 !
-      M_vectors_solver = davidson_cc_linear_equations(wf,                                       &
-                                                      section='cc response',                    &
-                                                      eq_description='Solving for the M vectors &
-                                                      &in CC response theory.',                 &
-                                                      n_frequencies=wf%n_singlet_states,        &
-                                                      n_rhs=wf%n_singlet_states)
-!
-      call M_vectors_solver%run(wf, minus_FR, -wf%right_excitation_energies, &
-                              this%M_vectors, 'left')
-!
-      call M_vectors_solver%cleanup(wf)
+      call this%solve_M_vector_equations(wf, minus_FR, this%M_vectors)
 !
       call mem%dealloc(minus_FR, wf%n_es_amplitudes, wf%n_singlet_states)
 !
    end subroutine determine_M_vectors
+!
+!
+   subroutine solve_M_vector_equations(wf, minus_FR, M_files)
+!!
+!!    Solve M vector equations
+!!    Written by Eirik Kjønstad, Oct 2022
+!!
+      use linear_davidson_tool_class,                          only: linear_davidson_tool
+      use file_linear_equation_storage_tool_class,             only: file_linear_equation_storage_tool
+      use vector_getter_rhs_tool_class,                        only: vector_getter_rhs_tool
+      use linear_davidson_multiple_solutions_print_tool_class, only: linear_davidson_multiple_solutions_print_tool
+!
+      use cc_jacobian_transformation_class,        only: cc_jacobian_transformation
+      use linear_davidson_solver_class,            only: linear_davidson_solver
+      use cc_jacobian_preconditioner_getter_class, only: cc_jacobian_preconditioner_getter
+      use cc_response_solver_settings_class,       only: cc_response_solver_settings
+!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes, wf%n_singlet_states), intent(in), target :: minus_FR
+!
+      class(stream_file), dimension(wf%n_singlet_states), intent(inout), target :: M_files
+!
+      class(linear_davidson_solver),                        allocatable :: solver
+      class(linear_davidson_tool),                          allocatable :: davidson
+      class(cc_jacobian_transformation),                    allocatable :: transformer
+      class(file_linear_equation_storage_tool),             allocatable :: storer
+      class(vector_getter_rhs_tool),                        allocatable :: rhs_getter
+      class(cc_jacobian_preconditioner_getter),             allocatable :: preconditioner
+      class(linear_davidson_multiple_solutions_print_tool), allocatable :: printer
+      class(cc_response_solver_settings),                   allocatable :: settings
+!
+      real(dp), dimension(:), allocatable :: frequencies
+!
+      settings = cc_response_solver_settings()
+!
+      printer = linear_davidson_multiple_solutions_print_tool()
+!
+      davidson = linear_davidson_tool(name_             = 'M_vectors_davidson',              &
+                                      n_parameters      = wf%n_es_amplitudes,                &
+                                      lindep_threshold  = min(1.0d-11, settings%threshold),  &
+                                      max_dim_red       = 100,                               &
+                                      n_rhs             = wf%n_singlet_states,               &
+                                      n_frequencies     = wf%n_singlet_states,               &
+                                      records_in_memory = settings%records_in_memory)
+!
+      transformer = cc_jacobian_transformation(wf,                         &
+                                               side         = 'left',      &
+                                               n_parameters = wf%n_es_amplitudes)
+!
+      storer = file_linear_equation_storage_tool(n_parameters = wf%n_es_amplitudes,    &
+                                                 n_solutions  = wf%n_singlet_states,   &
+                                                 files        = M_files)
+!
+      preconditioner = cc_jacobian_preconditioner_getter(wf, wf%n_es_amplitudes)
+!
+      rhs_getter = vector_getter_rhs_tool(n_parameters = wf%n_es_amplitudes,  &
+                                          n_rhs        = wf%n_singlet_states, &
+                                          rhs          = minus_FR)
+!
+      frequencies = -wf%right_excitation_energies
+      solver = linear_davidson_solver(transformer        = transformer,             &
+                                      davidson           = davidson,                &
+                                      storer             = storer,                  &
+                                      preconditioner     = preconditioner,          &
+                                      rhs_getter         = rhs_getter,              &
+                                      printer            = printer,                 &
+                                      n_rhs              = wf%n_singlet_states,     &
+                                      n_solutions        = wf%n_singlet_states,     &
+                                      max_iterations     = settings%max_iterations, &
+                                      residual_threshold = settings%threshold,      &
+                                      frequencies        = frequencies)
+!
+      call solver%run()
+      call solver%cleanup()
+!
+   end subroutine solve_M_vector_equations
 !
 !
 end module cc_lr_transition_moments_task_class

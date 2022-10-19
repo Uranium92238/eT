@@ -47,6 +47,7 @@ module linear_davidson_solver_class
    use parameters
    use memory_manager_class, only: mem
    use linear_davidson_tool_class, only: linear_davidson_tool
+   use timings_class, only: timings
 !
    use transformation_class,                    only: transformation
    use linear_equation_storage_tool_class,      only: linear_equation_storage_tool
@@ -71,7 +72,8 @@ module linear_davidson_solver_class
 !
       class(transformation),         allocatable          :: transformer
       class(linear_equation_storage_tool),allocatable, private :: storer
-      class(linear_equation_start_vector_tool),           allocatable, private :: start_vector
+      logical, private :: override_default_start_vector
+      class(linear_equation_start_vector_tool), allocatable, private :: start_vector
       class(preconditioner_getter),       allocatable, private :: preconditioner
       class(rhs_linear_equation_tool),    allocatable, private :: rhs_getter
       class(linear_davidson_print_tool),  allocatable, private :: printer
@@ -99,7 +101,6 @@ contains
    function new_linear_davidson_solver(transformer,         &
                                        davidson,            &
                                        storer,              &
-                                       start_vector,        &
                                        preconditioner,      &
                                        rhs_getter,          &
                                        printer,             &
@@ -107,7 +108,8 @@ contains
                                        n_solutions,         &
                                        max_iterations,      &
                                        residual_threshold,  &
-                                       frequencies) result(this)
+                                       frequencies,         &
+                                       start_vector) result(this)
 !!
 !!    New general linear Davidson
 !!    Written by Sarai D. Folkestad, May 2021
@@ -119,19 +121,18 @@ contains
       class(transformation),              intent(in) :: transformer
       type(linear_davidson_tool),         intent(in) :: davidson
       class(linear_equation_storage_tool),intent(in) :: storer
-      class(linear_equation_start_vector_tool),          intent(in) :: start_vector
       class(preconditioner_getter),      intent(in) :: preconditioner
       class(rhs_linear_equation_tool),   intent(in) :: rhs_getter
       class(linear_davidson_print_tool), intent(in) :: printer
       integer,                           intent(in) :: max_iterations, n_solutions, n_rhs
       real(dp),                          intent(in) :: residual_threshold
       real(dp), dimension(n_solutions),  intent(in) :: frequencies
+      class(linear_equation_start_vector_tool), intent(in), optional :: start_vector
 !
 
       this%transformer         = transformer
       this%davidson            = davidson
       this%storer              = storer
-      this%start_vector        = start_vector
       this%preconditioner      = preconditioner
       this%rhs_getter          = rhs_getter
       this%printer             = printer
@@ -142,6 +143,16 @@ contains
       this%residual_threshold  = residual_threshold
       this%frequencies         = frequencies
 !
+      if (present(start_vector)) then 
+         this%start_vector = start_vector
+         this%override_default_start_vector = .true. 
+      else 
+         this%override_default_start_vector = .false.
+      endif 
+!
+      this%total_timer = timings("Linear davidson solver total", pl='m')
+      this%iteration_timer = timings("Linear davidson solver iteration", pl='m')
+!
    end function new_linear_davidson_solver
 !
 !
@@ -151,7 +162,8 @@ contains
 !!    Written by Regina Matveeva and Ida-Marie Høyvik, Sept 2021
 !!
       use global_out, only: output
-      use array_utilities, only: get_l2_norm, zero_array
+      use array_utilities, only: get_l2_norm
+      use array_initialization, only:  zero_array
 !
       implicit none
 !
@@ -166,12 +178,13 @@ contains
       real(dp), dimension(:),    allocatable     :: solution
       real(dp), dimension(:,:),  allocatable     :: rhs
 !
+      call this%total_timer%turn_on()
+!
       call mem%alloc(rhs, this%davidson%n_parameters, this%n_rhs)
 !
       call this%rhs_getter%get(rhs)
 !
-      call mem%alloc(converged, this%n_rhs)
-      converged = .false.
+      call mem%alloc(converged, this%n_rhs, set_to=.false.)
 !
       do n = 1, this%n_rhs
 !
@@ -186,9 +199,7 @@ contains
          call output%printf('m', 'Right hand side is zero to within threshold (e6.1).', &
                             reals=[this%residual_threshold], fs='(/t3,a)')
 !
-         call mem%alloc(solution, this%davidson%n_parameters)
-!
-         call zero_array(solution, this%davidson%n_parameters)
+         call mem%alloc(solution, this%davidson%n_parameters, set_zero=.true.)
 !
          call this%storer%store(solution, 1)
 !
@@ -217,10 +228,20 @@ contains
       call this%preconditioner%get(c)
       call this%davidson%set_preconditioner(c)
 !
-      do trial = 1, this%n_solutions
-         call this%start_vector%get(c, trial)
-         call this%davidson%set_trial(c, trial)
-      end do
+      if (this%override_default_start_vector) then 
+!
+         do trial = 1, this%n_solutions
+!
+            call this%start_vector%get(c, trial)
+            call this%davidson%set_trial(c, trial)
+!
+         end do
+!
+      else 
+!
+         call this%davidson%set_trials_to_preconditioner_guess()
+!
+      endif 
 !
       call this%printer%print_settings(this%residual_threshold, this%max_iterations)
 !
@@ -239,6 +260,8 @@ contains
       call this%printer%print_iteration_header()
 !
       do while (.not. all(converged) .and. (iteration .le. this%max_iterations))
+!
+         call this%iteration_timer%turn_on()
 !
          iteration = iteration + 1
 !
@@ -282,17 +305,21 @@ contains
 !
          call mem%dealloc(solution, this%davidson%n_parameters)
 !
+         call this%iteration_timer%turn_off()
+         call this%iteration_timer%reset()
+!
       enddo
 !
       call mem%dealloc(c, this%davidson%n_parameters)
       call mem%dealloc(residual, this%davidson%n_parameters)
       call mem%dealloc(residual_norm, this%n_solutions)
+      call mem%dealloc(rhs, this%davidson%n_parameters, this%n_rhs)
 !
       call this%printer%print_summary(this%n_solutions, converged, iteration)
 !
       call mem%dealloc(converged, this%n_solutions)
 !
-      call mem%dealloc(rhs, this%davidson%n_parameters, this%n_rhs)
+      call this%total_timer%turn_off()
 !
    end subroutine run_linear_davidson_solver
 !

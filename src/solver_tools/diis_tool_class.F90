@@ -64,8 +64,7 @@ module diis_tool_class
    use parameters
 !
    use global_out,            only: output
-   use array_utilities,       only: zero_array
-   use sequential_file_class, only: sequential_file
+   use array_initialization,  only: zero_array
    use record_storer_class,   only: record_storer
    use memory_manager_class,  only: mem
    use batching_index_class,  only: batching_index

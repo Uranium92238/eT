@@ -20,18 +20,17 @@ assert version_info.major == 2
 
 # construct filter(s)
 threshold = 1.0e-10
-
 f = get_mlhf_filter(threshold)
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['mlhf_scf_energy.inp']:
-    # the run function runs the code and filters the outputs
-    ierr += run(options,
-                configure,
-                input_files=inp,
-                filters={'out': f})
+inp = 'mlhf_scf_energy.inp'
+# the run function runs the code and filters the outputs
+ierr += run(options,
+            configure,
+            input_files=inp,
+            filters={'out': f})
 
 sys.exit(ierr)

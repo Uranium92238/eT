@@ -53,7 +53,6 @@ module mlccsd_class
    use timings_class, only: timings
    use memory_manager_class, only: mem
    use stream_file_class, only: stream_file
-   use sequential_file_class, only: sequential_file
    use batching_index_class, only: batching_index
    use amplitude_file_storer_class, only: amplitude_file_storer
 !
@@ -87,17 +86,17 @@ module mlccsd_class
 !
 !     Intermediates for Jacobian transformation
 !
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_1
-      type(sequential_file) :: jacobian_c2_intermediate_oovo_2
-      type(sequential_file) :: jacobian_d2_intermediate
-      type(sequential_file) :: jacobian_e2_intermediate
-      type(sequential_file) :: jacobian_g2_intermediate_vovo
-      type(sequential_file) :: jacobian_g2_intermediate_vv
-      type(sequential_file) :: jacobian_g2_intermediate_oo
-      type(sequential_file) :: jacobian_h2_intermediate_vovo_1
-      type(sequential_file) :: jacobian_h2_intermediate_vovo_2
-      type(sequential_file) :: jacobian_j2_intermediate_oooo
-      type(sequential_file) :: jacobian_j2_intermediate_oovv
+      type(stream_file) :: jacobian_c2_intermediate_oovo_1
+      type(stream_file) :: jacobian_c2_intermediate_oovo_2
+      type(stream_file) :: jacobian_d2_intermediate
+      type(stream_file) :: jacobian_e2_intermediate
+      type(stream_file) :: jacobian_g2_intermediate_vovo
+      type(stream_file) :: jacobian_g2_intermediate_vv
+      type(stream_file) :: jacobian_g2_intermediate_oo
+      type(stream_file) :: jacobian_h2_intermediate_vovo_1
+      type(stream_file) :: jacobian_h2_intermediate_vovo_2
+      type(stream_file) :: jacobian_j2_intermediate_oooo
+      type(stream_file) :: jacobian_j2_intermediate_oovv
 !
    contains
 !
@@ -158,9 +157,6 @@ module mlccsd_class
 !
       procedure :: get_amplitudes               => get_amplitudes_mlccsd
       procedure :: set_amplitudes               => set_amplitudes_mlccsd
-!
-      procedure :: form_newton_raphson_t_estimate &
-                  => form_newton_raphson_t_estimate_mlccsd
 !
 !     Jacobian transformation
 !
@@ -445,9 +441,11 @@ contains
 !!    If there is a CC2 space, we must construct the transformation matrix which transforms
 !!    between the MLCCSD basis and the basis where s amplitudes are constructed.
 !!
+      use global_in, only: input
+!
       implicit none
 !
-      class(mlccsd) :: wf
+      class(mlccsd), intent(inout) :: wf
 !
       logical :: has_restart_files
 !
@@ -478,6 +476,10 @@ contains
 !
       call wf%print_orbital_space()
       call wf%check_orbital_space()
+!
+      if (input%is_keyword_present('print orbitals', 'system')) then
+         call wf%write_orbitals(trim(wf%name_))
+      end if
 !
    end subroutine mo_preparations_mlccsd
 !
@@ -538,7 +540,7 @@ contains
       if (wf%n_cc2_o < 0 .or. wf%n_ccs_o < 0 .or. &
           wf%n_cc2_v < 0 .or. wf%n_ccs_v < 0 ) call output%error_msg('negative orbital space size.')
 !
-      if (wf%n_ccsd_o +wf%n_cc2_o + wf%n_ccs_o .ne. wf%n_o) &
+      if (wf%n_ccsd_o + wf%n_cc2_o + wf%n_ccs_o .ne. wf%n_o) &
          call output%error_msg('occupied spaces do not add to n_o.')
 !
       if (wf%n_ccsd_v + wf%n_cc2_v + wf%n_ccs_v .ne. wf%n_v) &
@@ -586,7 +588,6 @@ contains
 !!    Construct X2 in packed form and store in wf%x2
 !!
 !!
-      use array_utilities, only: zero_array
       use reordering, only: packin
 !
       implicit none
@@ -600,9 +601,8 @@ contains
       call mem%alloc(x_aibj, wf%n_ccsd_v + wf%n_cc2_v, &
                              wf%n_ccsd_o + wf%n_cc2_o, &
                              wf%n_ccsd_v + wf%n_cc2_v, &
-                             wf%n_ccsd_o + wf%n_cc2_o)
-!
-      call zero_array(x_aibj, ((wf%n_ccsd_v + wf%n_cc2_v)**2)*((wf%n_ccsd_o + wf%n_cc2_o)**2))
+                             wf%n_ccsd_o + wf%n_cc2_o, &
+                             set_zero=.true.)
 !
       if (wf%do_cc2) call wf%construct_cc2_amplitudes(x_aibj)
 !
@@ -645,7 +645,7 @@ contains
 !!    Note: assumes wf%x2 in memory
 !!
       use reordering, only: squareup, add_1432_to_1234
-      use array_utilities, only: copy_and_scale
+      use array_initialization, only: copy_and_scale
 !
       implicit none
 !
@@ -1036,7 +1036,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!    Adapted by Alexander C. Paul to use the restart logical, Oct 2020
 !!
-      use array_utilities, only: zero_array
+      use array_initialization, only: zero_array
 !
       implicit none
 !
@@ -1146,57 +1146,6 @@ contains
    end subroutine set_t2_to_cc2_guess_mlccsd
 !
 !
-   subroutine form_newton_raphson_t_estimate_mlccsd(wf, t, dt)
-!!
-!!    Form Newton-Raphson t estimate
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
-!!
-!!    The correction is assumed to be obtained from either
-!!    solving the Newton-Raphson equation
-!!
-!!       A dt = -omega,
-!!
-!!    where A and omega are given in the biorthonormal basis,
-!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon)
-!!
-!!        dt = -omega/epsilon
-!!
-!!    Epsilon is the vector of orbital differences.
-!!
-!!    On exit, t = t + dt, where the appropriate basis change has been accounted
-!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
-!!    dt is expressed in the basis compatible with t.
-!!
-      implicit none
-!
-      class(mlccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t
-!
-      integer :: ai, aiai
-!
-!     Change dt doubles diagonal to match the definition of the
-!     double amplitudes
-!
-!$omp parallel do private(ai, aiai)
-      do ai = 1, wf%n_ccsd_o*wf%n_ccsd_v
-!
-         aiai = ai*(ai - 3)/2 + 2*ai
-         dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
-!
-      enddo
-!$omp end parallel do
-!
-!     Add the dt vector to the t vector
-!
-      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
-!
-   end subroutine form_newton_raphson_t_estimate_mlccsd
-!
-!
    subroutine cleanup_mlccsd(wf)
 !!
 !!    Cleanup
@@ -1250,7 +1199,7 @@ contains
    end subroutine cleanup_mlccsd
 !
 !
-   subroutine print_X1_diagnostics_mlccsd(wf, X, label)
+   subroutine print_X1_diagnostics_mlccsd(wf, X, n_amplitudes, label)
 !!
 !!    Print X1 diagnostics
 !!    Written by Sarai D. Folkestad, Nov 2019
@@ -1261,7 +1210,8 @@ contains
 !
       class(mlccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X
+      integer, intent(in) :: n_amplitudes
+      real(dp), dimension(n_amplitudes), intent(in) :: X
 !
       character(len=1), intent(in) :: label
 !
@@ -1271,7 +1221,7 @@ contains
 !
       integer :: a, i, ai, ai_full
 !
-      call wf%ccs%print_X1_diagnostics(X, label)
+      call wf%ccs%print_X1_diagnostics(X, n_amplitudes, label)
 !
       call mem%alloc(X_internal, wf%n_ccsd_v*wf%n_ccsd_o)
 !
@@ -1310,8 +1260,6 @@ contains
 !!    CVS projection
 !!    Written by Sarai D. Folkestad, Oct 2018
 !!
-      use array_utilities, only: zero_array
-!
       implicit none
 !
       class(mlccsd), intent(inout) :: wf

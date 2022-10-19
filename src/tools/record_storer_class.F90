@@ -148,7 +148,7 @@ contains
                               records_in_mem) result(storer)
 !!
 !!    Record storer constructor
-!!    Writen by Eirik F. Kjønstad, 2019
+!!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    name_:            Name of storer.
 !!
@@ -258,7 +258,7 @@ contains
 !
 !        Open file with read-write access
 !
-         call storer%file_%open_('readwrite')
+         call storer%file_%open_()
 !
 !        Set up an array for each batching index
 !        by adding arrays to the linked list
@@ -337,7 +337,7 @@ contains
 !
 !        If record is on file, read record from file
 !
-         call storer%file_%open_('read')
+         call storer%file_%open_()
 !
          call storer%file_%read_(x, n, n)
 !
@@ -377,7 +377,7 @@ contains
 !
 !        If on file, read from file
 !
-         call storer%file_%open_('read')
+         call storer%file_%open_()
 !
          call storer%file_%read_(x, a_range%first, a_range%get_last())
 !
@@ -657,7 +657,7 @@ contains
 !
 !        Save records to file
 !
-         call storer%file_%open_('write')
+         call storer%file_%open_()
 !
          call storer%file_%write_(x, a_range%first, a_range%get_last())
 !
@@ -701,7 +701,7 @@ contains
 !
 !        If records are on file, save records on file
 !
-         call storer%file_%open_('write')
+         call storer%file_%open_()
 !
          call storer%file_%write_(x, n, n)
 !

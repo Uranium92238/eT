@@ -28,12 +28,12 @@ f.extend(g)
 options = cli()
 
 ierr = 0
-inp = 'ccs_gs_dipole.inp'  
+inp = 'ccs_gs_dipole.inp'
 ierr += run(options,
             configure,
             input_files=inp,
             extra_args='-ks --scratch ./scratch',
-            filters={'out': f}) 
+            filters={'out': f})
 
 inp = 'restart_ccs_gs_dipole.inp'
 ierr += run(options,

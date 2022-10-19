@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -70,7 +70,7 @@
      end qed
 
 
-  Calculation start:2022-06-30 08:45:37 UTC +02:00
+  Calculation start:2022-10-19 10:30:24 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -155,23 +155,23 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -177.447420684370     0.7569E-01     0.1774E+03
+     1          -177.447420684369     0.7569E-01     0.1774E+03
      2          -177.474059634300     0.1129E-01     0.2664E-01
-     3          -177.475058205026     0.4151E-02     0.9986E-03
+     3          -177.475058205025     0.4151E-02     0.9986E-03
      4          -177.475186639359     0.1381E-02     0.1284E-03
      5          -177.475200524554     0.4333E-03     0.1389E-04
      6          -177.475201885677     0.8204E-04     0.1361E-05
      7          -177.475201969394     0.2303E-04     0.8372E-07
      8          -177.475201979825     0.4854E-05     0.1043E-07
-     9          -177.475201980669     0.1044E-05     0.8432E-09
-    10          -177.475201980699     0.2420E-06     0.3052E-10
-    11          -177.475201980700     0.5280E-07     0.1279E-11
-    12          -177.475201980700     0.9673E-08     0.0000E+00
-    13          -177.475201980700     0.3445E-08     0.0000E+00
-    14          -177.475201980700     0.1661E-08     0.8527E-13
-    15          -177.475201980700     0.6708E-09     0.0000E+00
-    16          -177.475201980700     0.1430E-09     0.2842E-13
-    17          -177.475201980700     0.4938E-10     0.2842E-13
+     9          -177.475201980668     0.1044E-05     0.8430E-09
+    10          -177.475201980699     0.2420E-06     0.3087E-10
+    11          -177.475201980700     0.5280E-07     0.1137E-11
+    12          -177.475201980700     0.9673E-08     0.8527E-13
+    13          -177.475201980700     0.3445E-08     0.2842E-13
+    14          -177.475201980700     0.1661E-08     0.1137E-12
+    15          -177.475201980700     0.6708E-09     0.2274E-12
+    16          -177.475201980700     0.1430E-09     0.1137E-12
+    17          -177.475201980700     0.4938E-10     0.1421E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -196,12 +196,12 @@
        Quadratic         :    0.001250000000
       Coherent state     :    0.000000000000
 
-  Peak memory usage during the execution of eT: 370.848 KB
+  Peak memory usage during the execution of eT: 366.988 KB
 
-  Total wall time in eT (sec):              2.00647
-  Total cpu time in eT (sec):               3.94786
+  Total wall time in eT (sec):              1.67700
+  Total cpu time in eT (sec):               1.36552
 
-  Calculation end:2022-06-30 08:45:39 UTC +02:00
+  Calculation end:2022-10-19 10:30:25 UTC -07:00
 
   - Implementation references:
 

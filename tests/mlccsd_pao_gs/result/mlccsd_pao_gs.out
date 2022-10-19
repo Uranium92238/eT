@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -83,7 +83,7 @@
      end mlcc
 
 
-  Calculation start:2022-06-30 08:49:23 UTC +02:00
+  Calculation start:2022-10-19 10:30:25 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -175,14 +175,14 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6749E-05     0.2185E-07
-     8           -78.843851693528     0.2204E-05     0.7487E-09
+     8           -78.843851693528     0.2204E-05     0.7488E-09
      9           -78.843851693630     0.3162E-06     0.1027E-09
-    10           -78.843851693631     0.2573E-07     0.4832E-12
-    11           -78.843851693631     0.5507E-08     0.1421E-13
-    12           -78.843851693631     0.1348E-08     0.4263E-13
-    13           -78.843851693631     0.6167E-09     0.5684E-13
-    14           -78.843851693631     0.1382E-09     0.0000E+00
-    15           -78.843851693631     0.2500E-10     0.5684E-13
+    10           -78.843851693631     0.2573E-07     0.3695E-12
+    11           -78.843851693631     0.5507E-08     0.2842E-13
+    12           -78.843851693631     0.1348E-08     0.2842E-13
+    13           -78.843851693631     0.6167E-09     0.4263E-13
+    14           -78.843851693631     0.1382E-09     0.2842E-13
+    15           -78.843851693631     0.2501E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -259,7 +259,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.7161E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1241E-14
 
   - Settings for integral handling:
 
@@ -268,10 +268,10 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.23139
-     Total cpu time (sec):               0.46137
+     Total wall time (sec):              0.45700
+     Total cpu time (sec):               0.22424
 
-     The smallest diagonal after decomposition is:  -0.4508E-16
+     The smallest diagonal after decomposition is:  -0.1290E-15
 
   - MLCCSD orbital partitioning:
 
@@ -321,7 +321,7 @@
     4           -79.054587871610     0.2277E-02     0.1145E-02
     5           -79.054560413514     0.7812E-03     0.2746E-04
     6           -79.054607772130     0.3314E-03     0.4736E-04
-    7           -79.054606049428     0.1193E-03     0.1723E-05
+    7           -79.054606049427     0.1193E-03     0.1723E-05
     8           -79.054600210232     0.4802E-04     0.5839E-05
     9           -79.054599449048     0.1421E-04     0.7612E-06
    10           -79.054598958575     0.4396E-05     0.4905E-06
@@ -332,10 +332,10 @@
    15           -79.054599133583     0.4410E-07     0.3410E-08
    16           -79.054599132424     0.1566E-07     0.1160E-08
    17           -79.054599132674     0.4060E-08     0.2509E-09
-   18           -79.054599132671     0.1382E-08     0.3524E-11
+   18           -79.054599132671     0.1382E-08     0.3510E-11
    19           -79.054599132620     0.5214E-09     0.5136E-10
    20           -79.054599132612     0.1664E-09     0.7873E-11
-   21           -79.054599132609     0.5738E-10     0.2885E-11
+   21           -79.054599132609     0.5738E-10     0.2899E-11
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
 
@@ -352,7 +352,7 @@
         1      4       -0.013231738445
         5      3        0.012538085351
         8      4       -0.006327515317
-        6      2        0.005258843920
+        6      2        0.005258843919
         4      5        0.004821055083
         6      4        0.004749918902
        12      3       -0.004360820325
@@ -363,15 +363,15 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.09539
-     Total cpu time (sec):               0.18516
+     Total wall time (sec):              0.52700
+     Total cpu time (sec):               0.28792
 
-  Peak memory usage during the execution of eT: 10.699752 MB
+  Peak memory usage during the execution of eT: 10.667888 MB
 
-  Total wall time in eT (sec):              0.75670
-  Total cpu time in eT (sec):               1.48051
+  Total wall time in eT (sec):              1.47500
+  Total cpu time in eT (sec):               1.02875
 
-  Calculation end:2022-06-30 08:49:23 UTC +02:00
+  Calculation end:2022-10-19 10:30:27 UTC -07:00
 
   - Implementation references:
 

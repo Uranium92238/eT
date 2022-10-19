@@ -392,7 +392,8 @@ contains
 !!    Get FCI start vectors
 !!    Written by Enrico Ronca, 2022
 !!
-      use array_utilities, only: get_l2_norm, zero_array
+      use array_utilities, only: get_l2_norm
+      use array_initialization, only:  zero_array
 !
       implicit none
 !

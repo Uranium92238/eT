@@ -54,7 +54,7 @@ contains
 !
    function new_es_cvs_projection_tool(wf) result(tool)
 !!
-!!    New ES CVS projection tool 
+!!    New
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
       implicit none 

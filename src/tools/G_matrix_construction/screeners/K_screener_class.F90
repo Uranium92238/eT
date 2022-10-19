@@ -284,6 +284,8 @@ contains
 !!    Returns a logical array with elements s3_is_significant(s3, s1)
 !!    which is true if s3 is significant for s1
 !!
+      use array_initialization, only: set_logicals
+!
       implicit none
 !
       class(K_screener),                     intent(in)  :: this
@@ -295,10 +297,8 @@ contains
       integer :: s1, s, s2, s2_tilde, s3, s4, s4_tilde, s1s2
       real(dp) :: cs_eri_max_s1s2s, density_K
 !
-      s3_is_significant = .false.
-!
-      call mem%alloc(significant_s3_or_s4_for_s1, ao%n_sh, ao%n_sh)
-      significant_s3_or_s4_for_s1 = .false.
+      call set_logicals(s3_is_significant, ao%n_sh**2, .false.)
+      call mem%alloc(significant_s3_or_s4_for_s1, ao%n_sh, ao%n_sh, set_to=.false.)
 !
 !$omp parallel do private(s1, s, s2_tilde, s2, s1s2, cs_eri_max_s1s2s, density_K) schedule(dynamic)
       do s1 = 1, ao%n_sh
@@ -362,10 +362,9 @@ contains
 !!
       implicit none
 !
-
       class(K_screener),                    intent(inout) :: this
       class(ao_tool),                       intent(in)    :: ao
-      logical, dimension(ao%n_sh, ao%n_sh), intent(out)   :: s3_is_significant
+      logical, dimension(ao%n_sh, ao%n_sh), intent(in)    :: s3_is_significant
 !
       integer :: s1, s3, counter
 !
@@ -395,7 +394,7 @@ contains
 !
       class(K_screener),                    intent(inout) :: this
       class(ao_tool),                       intent(in)    :: ao
-      logical, dimension(ao%n_sh, ao%n_sh), intent(out)   :: s3_is_significant
+      logical, dimension(ao%n_sh, ao%n_sh), intent(in)    :: s3_is_significant
 !
       integer :: s1, s3
 !
