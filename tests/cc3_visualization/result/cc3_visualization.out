@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -92,7 +92,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:48:56 UTC +02:00
+  Calculation start:2022-10-19 10:29:10 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -182,12 +182,12 @@
      6           -75.952529016089     0.1214E-04     0.1364E-06
      7           -75.952529017728     0.3369E-05     0.1639E-08
      8           -75.952529017921     0.8367E-06     0.1928E-09
-     9           -75.952529017935     0.1360E-06     0.1434E-10
-    10           -75.952529017935     0.4602E-08     0.9948E-13
-    11           -75.952529017935     0.6939E-09     0.2842E-13
-    12           -75.952529017935     0.1022E-09     0.0000E+00
-    13           -75.952529017935     0.1158E-10     0.4263E-13
-    14           -75.952529017935     0.6200E-12     0.5684E-13
+     9           -75.952529017935     0.1360E-06     0.1437E-10
+    10           -75.952529017935     0.4602E-08     0.8527E-13
+    11           -75.952529017935     0.6939E-09     0.0000E+00
+    12           -75.952529017935     0.1022E-09     0.2842E-13
+    13           -75.952529017935     0.1158E-10     0.1421E-13
+    14           -75.952529017935     0.6200E-12     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -266,8 +266,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.6941E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2898E-15
+     Maximal difference between approximate and actual diagonal:              0.1059E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1059E-14
 
   - Settings for integral handling:
 
@@ -276,8 +276,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.02461
-     Total cpu time (sec):               0.05460
+     Total wall time (sec):              0.05600
+     Total cpu time (sec):               0.05185
 
 
   Determining CC cluster amplitudes
@@ -324,7 +324,7 @@
     6           -76.103583840570     0.2357E-07     0.2658E-08
     7           -76.103583840458     0.8958E-09     0.1119E-09
     8           -76.103583840452     0.2560E-10     0.6310E-11
-    9           -76.103583840451     0.8540E-12     0.6253E-12
+    9           -76.103583840451     0.8540E-12     0.6395E-12
   ---------------------------------------------------------------
   Convergence criterion met in 9 iterations!
 
@@ -368,8 +368,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.06537
-     Total cpu time (sec):               0.13537
+     Total wall time (sec):              0.75000
+     Total cpu time (sec):               0.52321
 
 
   Determining CC multipliers
@@ -424,8 +424,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.07326
-     Total cpu time (sec):               0.14324
+     Total wall time (sec):              1.15500
+     Total cpu time (sec):               0.77884
 
   - CC multipliers solver summary:
 
@@ -468,9 +468,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -657,7 +657,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.4154E-11
-     2      0.356222305228       0.6286E-10
+     2      0.356222305228       0.6288E-10
   -----------------------------------------------
 
   Iteration:                 21
@@ -665,7 +665,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.4154E-11
-     2      0.356222305228       0.1327E-10
+     2      0.356222305228       0.1339E-10
   -----------------------------------------------
 
   Iteration:                 22
@@ -673,13 +673,11 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.4154E-11
-     2      0.356222305228       0.3318E-11
+     2      0.356222305228       0.4126E-11
   -----------------------------------------------
   Convergence criterion met in 22 iterations!
 
   - Resorting roots according to excitation energy.
-
-  - Stored converged states to file.
 
   - Excitation vector amplitudes:
 
@@ -699,9 +697,9 @@
         5      4        0.003759060613
         5      2       -0.000625000177
         5      1        0.000559985204
-        3      5       -0.000000000000
-        1      4        0.000000000000
         2      5        0.000000000000
+        3      5        0.000000000000
+        1      4        0.000000000000
      ------------------------------------
 
      Largest double amplitudes:
@@ -757,21 +755,21 @@
         2      4       3      4       -0.034215724588
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CC3 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.251328058022        6.838984804481
-        2                  0.356222305228        9.693302656490
+        2                  0.356222305228        9.693302656491
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              0.14999
-     Total cpu time (sec):               0.29994
+     Total wall time (sec):              2.39000
+     Total cpu time (sec):               1.60769
 
 
   Determining CC excited state amplitudes
@@ -780,9 +778,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -931,7 +929,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058021       0.6891E-10
-     2      0.356222304926       0.1789E-07
+     2      0.356222304925       0.1789E-07
   -----------------------------------------------
 
   Iteration:                 16
@@ -939,7 +937,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.1557E-10
-     2      0.356222305135       0.5338E-08
+     2      0.356222305135       0.5371E-08
   -----------------------------------------------
 
   Iteration:                 17
@@ -947,7 +945,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305227       0.1394E-08
+     2      0.356222305226       0.1615E-08
   -----------------------------------------------
 
   Iteration:                 18
@@ -955,7 +953,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305233       0.9134E-09
+     2      0.356222305230       0.1388E-08
   -----------------------------------------------
 
   Iteration:                 19
@@ -963,7 +961,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305243       0.7373E-09
+     2      0.356222305247       0.8302E-09
   -----------------------------------------------
 
   Iteration:                 20
@@ -971,7 +969,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305233       0.2109E-09
+     2      0.356222305233       0.2119E-09
   -----------------------------------------------
 
   Iteration:                 21
@@ -979,7 +977,7 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305229       0.5335E-10
+     2      0.356222305229       0.5341E-10
   -----------------------------------------------
 
   Iteration:                 22
@@ -995,13 +993,11 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251328058022       0.2870E-11
-     2      0.356222305228       0.2386E-11
+     2      0.356222305228       0.2390E-11
   -----------------------------------------------
   Convergence criterion met in 23 iterations!
 
   - Resorting roots according to excitation energy.
-
-  - Stored converged states to file.
 
   - Excitation vector amplitudes:
 
@@ -1022,7 +1018,7 @@
         5      2       -0.000696779541
         5      1        0.000502945252
         2      5        0.000000000000
-        3      5       -0.000000000000
+        3      5        0.000000000000
         1      4        0.000000000000
      ------------------------------------
 
@@ -1079,7 +1075,7 @@
         1      4       6      4        0.050944488880
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CC3 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -1092,8 +1088,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.15176
-     Total cpu time (sec):               0.30167
+     Total wall time (sec):              2.46400
+     Total cpu time (sec):               1.40227
 
 
   Biorthonormalization of excited CC states
@@ -1118,7 +1114,7 @@
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X          -0.0000000000     -0.0000000000            0.0000000000
+     X           0.0000000000      0.0000000000            0.0000000000
      Y           0.0000000000      0.0000000000            0.0000000000
      Z          -0.1222202177     -0.2374172157            0.0290171838
      --------------------------------------------------------------------------
@@ -1128,14 +1124,14 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.356222305228
-     Excitation energy [eV]:            9.693302656490
+     Excitation energy [eV]:            9.693302656491
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X           0.0000000000      0.0000000000            0.0000000000
+     X          -0.0000000000     -0.0000000000            0.0000000000
      Y          -0.4964044533     -0.9757760820            0.4843795925
      Z          -0.0000000000     -0.0000000000            0.0000000000
      --------------------------------------------------------------------------
@@ -1145,14 +1141,14 @@
      -------------------------
      Calculation type:                             EOM
      Excitation energy [E_h]:           0.104894247206
-     Excitation energy [eV]:            2.854317852010
+     Excitation energy [eV]:            2.854317852009
      Hartree-to-eV (CODATA 2014):          27.21138602
 
                    Transition moments [a.u.]         Transition strength [a.u.]
      --------------------------------------------------------------------------
      Comp. q     < n |q| m >       < m |q| n >        < n |q| m > < m |q| n >
      --------------------------------------------------------------------------
-     X           0.0000000000      0.0000000000            0.0000000000
+     X          -0.0000000000     -0.0000000000            0.0000000000
      Y           0.0000000000     -0.0000000000           -0.0000000000
      Z          -0.1505053173     -0.1493771546            0.0224820561
      --------------------------------------------------------------------------
@@ -1167,7 +1163,7 @@
 
      Comp.            Nuclear           State 0           State 1
      ------------------------------------------------------------
-     X           0.0000000000      0.0000000000      0.0000000000
+     X           0.0000000000     -0.0000000000     -0.0000000000
      Y           1.1273350169      0.9584309697      0.0411290650
      Z          94.4863062283      0.0000000000      0.0000000000
      ------------------------------------------------------------
@@ -1203,12 +1199,12 @@
 
   - Plotting density
 
-  Peak memory usage during the execution of eT: 821.296 KB
+  Peak memory usage during the execution of eT: 818.864 KB
 
-  Total wall time in eT (sec):              0.74427
-  Total cpu time in eT (sec):               1.45546
+  Total wall time in eT (sec):              7.77100
+  Total cpu time in eT (sec):               4.93354
 
-  Calculation end:2022-06-30 08:48:57 UTC +02:00
+  Calculation end:2022-10-19 10:29:17 UTC -07:00
 
   - Implementation references:
 

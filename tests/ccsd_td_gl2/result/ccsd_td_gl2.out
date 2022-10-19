@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -108,7 +108,7 @@
      end electric field
 
 
-  Calculation start:2022-06-30 08:47:39 UTC +02:00
+  Calculation start:2022-10-19 10:28:53 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -202,12 +202,12 @@
      7           -78.843851692779     0.6096E-05     0.2185E-07
      8           -78.843851693528     0.2137E-05     0.7488E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4405E-12
+    10           -78.843851693631     0.2637E-07     0.4263E-12
     11           -78.843851693631     0.5634E-08     0.1421E-13
-    12           -78.843851693631     0.1415E-08     0.8527E-13
-    13           -78.843851693631     0.6806E-09     0.2842E-13
-    14           -78.843851693631     0.1491E-09     0.0000E+00
-    15           -78.843851693631     0.2501E-10     0.5684E-13
+    12           -78.843851693631     0.1415E-08     0.1279E-12
+    13           -78.843851693631     0.6806E-09     0.4263E-13
+    14           -78.843851693631     0.1491E-09     0.5684E-13
+    15           -78.843851693631     0.2500E-10     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -298,8 +298,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.27282
-     Total cpu time (sec):               0.54273
+     Total wall time (sec):              0.33400
+     Total cpu time (sec):               0.26447
 
 
   Determining CC cluster amplitudes
@@ -392,8 +392,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.35377
-     Total cpu time (sec):               0.71376
+     Total wall time (sec):              0.42400
+     Total cpu time (sec):               0.42363
 
 
   Determining CC multipliers
@@ -443,7 +443,7 @@
      -----------------------------------
         1      5        0.022790118911
        14      4       -0.015907507086
-        7      4        0.014297181952
+        7      4        0.014297181953
         4      5        0.011712306731
        15      5       -0.010007216957
         6      2        0.009083547622
@@ -521,12 +521,12 @@
          z      0.0206311633     -0.0000037968
      ------------------------------------------
 
-  Peak memory usage during the execution of eT: 40.924768 MB
+  Peak memory usage during the execution of eT: 40.919344 MB
 
-  Total wall time in eT (sec):              9.52643
-  Total cpu time in eT (sec):              18.97827
+  Total wall time in eT (sec):             12.38400
+  Total cpu time in eT (sec):              12.23401
 
-  Calculation end:2022-06-30 08:47:49 UTC +02:00
+  Calculation end:2022-10-19 10:29:05 UTC -07:00
 
   - Implementation references:
 

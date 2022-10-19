@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -81,7 +81,7 @@
      end solver cc response
 
 
-  Calculation start:2022-06-30 08:47:02 UTC +02:00
+  Calculation start:2022-10-19 10:29:09 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -174,13 +174,13 @@
      7           -78.843676336278     0.6088E-05     0.2185E-07
      8           -78.843676337024     0.2134E-05     0.7461E-09
      9           -78.843676337126     0.3154E-06     0.1025E-09
-    10           -78.843676337127     0.2634E-07     0.4405E-12
-    11           -78.843676337127     0.5597E-08     0.2842E-13
-    12           -78.843676337127     0.1667E-08     0.7105E-13
-    13           -78.843676337127     0.7764E-09     0.4263E-13
-    14           -78.843676337127     0.1445E-09     0.4263E-13
-    15           -78.843676337127     0.2401E-10     0.4263E-13
-    16           -78.843676337127     0.4865E-11     0.1421E-13
+    10           -78.843676337127     0.2634E-07     0.3979E-12
+    11           -78.843676337127     0.5597E-08     0.5684E-13
+    12           -78.843676337127     0.1667E-08     0.2842E-13
+    13           -78.843676337127     0.7764E-09     0.2842E-13
+    14           -78.843676337127     0.1445E-09     0.2842E-13
+    15           -78.843676337127     0.2400E-10     0.8527E-13
+    16           -78.843676337127     0.4865E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -270,8 +270,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.28323
-     Total cpu time (sec):               0.56318
+     Total wall time (sec):              0.32500
+     Total cpu time (sec):               0.26759
 
 
   Determining CC cluster amplitudes
@@ -303,25 +303,25 @@
   ---------------------------------------------------------------
     1           -79.084077835139     0.9451E-01     0.7908E+02
     2           -79.092423265378     0.2732E-01     0.8345E-02
-    3           -79.099238114217     0.7525E-02     0.6815E-02
+    3           -79.099238114218     0.7525E-02     0.6815E-02
     4           -79.100188779336     0.2098E-02     0.9507E-03
     5           -79.100209227511     0.5171E-03     0.2045E-04
     6           -79.100230097906     0.2316E-03     0.2087E-04
-    7           -79.100222251158     0.4967E-04     0.7847E-05
+    7           -79.100222251159     0.4967E-04     0.7847E-05
     8           -79.100220947051     0.1195E-04     0.1304E-05
     9           -79.100220337523     0.4257E-05     0.6095E-06
    10           -79.100220132091     0.1863E-05     0.2054E-06
    11           -79.100220175033     0.7313E-06     0.4294E-07
-   12           -79.100220186150     0.3170E-06     0.1112E-07
+   12           -79.100220186151     0.3170E-06     0.1112E-07
    13           -79.100220199848     0.1053E-06     0.1370E-07
    14           -79.100220193779     0.3052E-07     0.6069E-08
-   15           -79.100220192940     0.6335E-08     0.8387E-09
+   15           -79.100220192941     0.6335E-08     0.8387E-09
    16           -79.100220193154     0.2110E-08     0.2132E-09
    17           -79.100220193343     0.6412E-09     0.1894E-09
    18           -79.100220193403     0.1569E-09     0.5976E-10
    19           -79.100220193411     0.5326E-10     0.7660E-11
    20           -79.100220193412     0.2038E-10     0.1066E-11
-   21           -79.100220193412     0.7823E-11     0.6395E-12
+   21           -79.100220193412     0.7822E-11     0.6395E-12
   ---------------------------------------------------------------
   Convergence criterion met in 21 iterations!
 
@@ -365,8 +365,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.41093
-     Total cpu time (sec):               0.82059
+     Total wall time (sec):              0.49500
+     Total cpu time (sec):               0.40533
 
 
   Determining CC multipliers
@@ -449,893 +449,825 @@
   Determining CC polarizabilities
   ===============================
 
-   - Davidson coupled cluster linear equations solver
-  ------------------------------------------------------
-  A Davidson solver that solves linear equations involving the Jacobian 
-  transformation. When solving multiple linear equations, it builds a 
-  shared reduced space in which to express each of the solutions to the 
-  equations.
-
-  Solving for the       amplitude response vectors in CC     response 
-  theory.
-
-  - Davidson CC linear equations solver settings:
-
-     Residual threshold:        0.10E-10
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                 9729
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (davidson_t_response_trials): file
-     Storage (davidson_t_response_transforms): file
+     Storage (cc_response_davidson_trials): file
+     Storage (cc_response_davidson_transforms): file
 
-  - Entering iterative loop to solve equations.
+  - Davidson solver settings
 
-  Iteration:               1
-  Reduced space dimension: 3
+     Residual threshold:              0.10E-10
+     Max number of iterations:             100
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.76E+00
-  -0.40E-01      0.74E+00
-  -0.60E-01      0.71E+00
-  ------------------------------
+  Iteration:                  1
+  Reduced space dimension:    3
 
-  Iteration:               2
-  Reduced space dimension: 6
+   Solution       Residual norm
+  -----------------------------
+     1               0.7608E+00
+     2               0.7371E+00
+     3               0.7150E+00
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.14E+00
-  -0.40E-01      0.13E+00
-  -0.60E-01      0.13E+00
-  ------------------------------
+  Iteration:                  2
+  Reduced space dimension:    6
 
-  Iteration:               3
-  Reduced space dimension: 9
+   Solution       Residual norm
+  -----------------------------
+     1               0.1400E+00
+     2               0.1334E+00
+     3               0.1274E+00
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.34E-01
-  -0.40E-01      0.32E-01
-  -0.60E-01      0.30E-01
-  ------------------------------
+  Iteration:                  3
+  Reduced space dimension:    9
 
-  Iteration:               4
-  Reduced space dimension: 12
+   Solution       Residual norm
+  -----------------------------
+     1               0.3372E-01
+     2               0.3162E-01
+     3               0.2972E-01
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.70E-02
-  -0.40E-01      0.64E-02
-  -0.60E-01      0.59E-02
-  ------------------------------
+  Iteration:                  4
+  Reduced space dimension:   12
 
-  Iteration:               5
-  Reduced space dimension: 15
+   Solution       Residual norm
+  -----------------------------
+     1               0.6956E-02
+     2               0.6416E-02
+     3               0.5938E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.14E-02
-  -0.40E-01      0.13E-02
-  -0.60E-01      0.12E-02
-  ------------------------------
+  Iteration:                  5
+  Reduced space dimension:   15
 
-  Iteration:               6
-  Reduced space dimension: 18
+   Solution       Residual norm
+  -----------------------------
+     1               0.1420E-02
+     2               0.1296E-02
+     3               0.1187E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.28E-03
-  -0.40E-01      0.25E-03
-  -0.60E-01      0.23E-03
-  ------------------------------
+  Iteration:                  6
+  Reduced space dimension:   18
 
-  Iteration:               7
-  Reduced space dimension: 21
+   Solution       Residual norm
+  -----------------------------
+     1               0.2786E-03
+     2               0.2504E-03
+     3               0.2261E-03
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.56E-04
-  -0.40E-01      0.50E-04
-  -0.60E-01      0.44E-04
-  ------------------------------
+  Iteration:                  7
+  Reduced space dimension:   21
 
-  Iteration:               8
-  Reduced space dimension: 24
+   Solution       Residual norm
+  -----------------------------
+     1               0.5574E-04
+     2               0.4963E-04
+     3               0.4441E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.12E-04
-  -0.40E-01      0.11E-04
-  -0.60E-01      0.93E-05
-  ------------------------------
+  Iteration:                  8
+  Reduced space dimension:   24
 
-  Iteration:               9
-  Reduced space dimension: 27
+   Solution       Residual norm
+  -----------------------------
+     1               0.1196E-04
+     2               0.1051E-04
+     3               0.9273E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.27E-05
-  -0.40E-01      0.23E-05
-  -0.60E-01      0.20E-05
-  ------------------------------
+  Iteration:                  9
+  Reduced space dimension:   27
 
-  Iteration:               10
-  Reduced space dimension: 30
+   Solution       Residual norm
+  -----------------------------
+     1               0.2666E-05
+     2               0.2302E-05
+     3               0.1997E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.65E-06
-  -0.40E-01      0.56E-06
-  -0.60E-01      0.48E-06
-  ------------------------------
+  Iteration:                 10
+  Reduced space dimension:   30
 
-  Iteration:               11
-  Reduced space dimension: 33
+   Solution       Residual norm
+  -----------------------------
+     1               0.6494E-06
+     2               0.5580E-06
+     3               0.4824E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.18E-06
-  -0.40E-01      0.15E-06
-  -0.60E-01      0.13E-06
-  ------------------------------
+  Iteration:                 11
+  Reduced space dimension:   33
 
-  Iteration:               12
-  Reduced space dimension: 36
+   Solution       Residual norm
+  -----------------------------
+     1               0.1795E-06
+     2               0.1492E-06
+     3               0.1257E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.49E-07
-  -0.40E-01      0.40E-07
-  -0.60E-01      0.32E-07
-  ------------------------------
+  Iteration:                 12
+  Reduced space dimension:   36
 
-  Iteration:               13
-  Reduced space dimension: 39
+   Solution       Residual norm
+  -----------------------------
+     1               0.4948E-07
+     2               0.3969E-07
+     3               0.3245E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.17E-07
-  -0.40E-01      0.13E-07
-  -0.60E-01      0.11E-07
-  ------------------------------
+  Iteration:                 13
+  Reduced space dimension:   39
 
-  Iteration:               14
-  Reduced space dimension: 42
+   Solution       Residual norm
+  -----------------------------
+     1               0.1706E-07
+     2               0.1336E-07
+     3               0.1067E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.62E-08
-  -0.40E-01      0.47E-08
-  -0.60E-01      0.37E-08
-  ------------------------------
+  Iteration:                 14
+  Reduced space dimension:   42
 
-  Iteration:               15
-  Reduced space dimension: 45
+   Solution       Residual norm
+  -----------------------------
+     1               0.6210E-08
+     2               0.4725E-08
+     3               0.3665E-08
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.18E-08
-  -0.40E-01      0.13E-08
-  -0.60E-01      0.10E-08
-  ------------------------------
+  Iteration:                 15
+  Reduced space dimension:   45
 
-  Iteration:               16
-  Reduced space dimension: 48
+   Solution       Residual norm
+  -----------------------------
+     1               0.1764E-08
+     2               0.1313E-08
+     3               0.9973E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.38E-09
-  -0.40E-01      0.28E-09
-  -0.60E-01      0.21E-09
-  ------------------------------
+  Iteration:                 16
+  Reduced space dimension:   48
 
-  Iteration:               17
-  Reduced space dimension: 51
+   Solution       Residual norm
+  -----------------------------
+     1               0.3767E-09
+     2               0.2789E-09
+     3               0.2108E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.83E-10
-  -0.40E-01      0.61E-10
-  -0.60E-01      0.46E-10
-  ------------------------------
+  Iteration:                 17
+  Reduced space dimension:   51
 
-  Iteration:               18
-  Reduced space dimension: 54
+   Solution       Residual norm
+  -----------------------------
+     1               0.8334E-10
+     2               0.6122E-10
+     3               0.4592E-10
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.19E-10
-  -0.40E-01      0.13E-10
-  -0.60E-01      0.10E-10
-  ------------------------------
+  Iteration:                 18
+  Reduced space dimension:   54
 
-  Iteration:               19
-  Reduced space dimension: 56
+   Solution       Residual norm
+  -----------------------------
+     1               0.1865E-10
+     2               0.1349E-10
+     3               0.9971E-11
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.38E-11
-  -0.40E-01      0.27E-11
-  -0.60E-01      0.20E-11
-  ------------------------------
+  Iteration:                 19
+  Reduced space dimension:   56
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.3832E-11
+     2               0.2747E-11
+     3               0.2016E-11
+  -----------------------------
   Convergence criterion met in 19 iterations!
 
-  - Finished solving the CCSD linear equations
-
-     Total wall time (sec):               0.81032
-     Total cpu time (sec):                1.62035
-
-   - Davidson coupled cluster linear equations solver
-  ------------------------------------------------------
-  A Davidson solver that solves linear equations involving the Jacobian 
-  transformation. When solving multiple linear equations, it builds a 
-  shared reduced space in which to express each of the solutions to the 
-  equations.
-
-  Solving for the       amplitude response vectors in CC     response 
-  theory.
-
-  - Davidson CC linear equations solver settings:
-
-     Residual threshold:        0.10E-10
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                 9729
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (davidson_t_response_trials): file
-     Storage (davidson_t_response_transforms): file
+     Storage (cc_response_davidson_trials): file
+     Storage (cc_response_davidson_transforms): file
 
-  - Entering iterative loop to solve equations.
+  - Davidson solver settings
 
-  Iteration:               1
-  Reduced space dimension: 3
+     Residual threshold:              0.10E-10
+     Max number of iterations:             100
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.81E+00
-   0.40E-01      0.84E+00
-   0.60E-01      0.87E+00
-  ------------------------------
+  Iteration:                  1
+  Reduced space dimension:    3
 
-  Iteration:               2
-  Reduced space dimension: 6
+   Solution       Residual norm
+  -----------------------------
+     1               0.8138E+00
+     2               0.8431E+00
+     3               0.8748E+00
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.16E+00
-   0.40E-01      0.16E+00
-   0.60E-01      0.17E+00
-  ------------------------------
+  Iteration:                  2
+  Reduced space dimension:    6
 
-  Iteration:               3
-  Reduced space dimension: 9
+   Solution       Residual norm
+  -----------------------------
+     1               0.1551E+00
+     2               0.1638E+00
+     3               0.1733E+00
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.39E-01
-   0.40E-01      0.41E-01
-   0.60E-01      0.45E-01
-  ------------------------------
+  Iteration:                  3
+  Reduced space dimension:    9
 
-  Iteration:               4
-  Reduced space dimension: 12
+   Solution       Residual norm
+  -----------------------------
+     1               0.3859E-01
+     2               0.4148E-01
+     3               0.4474E-01
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.82E-02
-   0.40E-01      0.90E-02
-   0.60E-01      0.99E-02
-  ------------------------------
+  Iteration:                  4
+  Reduced space dimension:   12
 
-  Iteration:               5
-  Reduced space dimension: 15
+   Solution       Residual norm
+  -----------------------------
+     1               0.8220E-02
+     2               0.8998E-02
+     3               0.9899E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.17E-02
-   0.40E-01      0.19E-02
-   0.60E-01      0.21E-02
-  ------------------------------
+  Iteration:                  5
+  Reduced space dimension:   15
 
-  Iteration:               6
-  Reduced space dimension: 18
+   Solution       Residual norm
+  -----------------------------
+     1               0.1727E-02
+     2               0.1915E-02
+     3               0.2133E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.35E-03
-   0.40E-01      0.39E-03
-   0.60E-01      0.44E-03
-  ------------------------------
+  Iteration:                  6
+  Reduced space dimension:   18
 
-  Iteration:               7
-  Reduced space dimension: 21
+   Solution       Residual norm
+  -----------------------------
+     1               0.3453E-03
+     2               0.3897E-03
+     3               0.4425E-03
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.71E-04
-   0.40E-01      0.81E-04
-   0.60E-01      0.93E-04
-  ------------------------------
+  Iteration:                  7
+  Reduced space dimension:   21
 
-  Iteration:               8
-  Reduced space dimension: 24
+   Solution       Residual norm
+  -----------------------------
+     1               0.7147E-04
+     2               0.8140E-04
+     3               0.9326E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.15E-04
-   0.40E-01      0.18E-04
-   0.60E-01      0.21E-04
-  ------------------------------
+  Iteration:                  8
+  Reduced space dimension:   24
 
-  Iteration:               9
-  Reduced space dimension: 27
+   Solution       Residual norm
+  -----------------------------
+     1               0.1539E-04
+     2               0.1777E-04
+     3               0.2060E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.36E-05
-   0.40E-01      0.43E-05
-   0.60E-01      0.51E-05
-  ------------------------------
+  Iteration:                  9
+  Reduced space dimension:   27
 
-  Iteration:               10
-  Reduced space dimension: 30
+   Solution       Residual norm
+  -----------------------------
+     1               0.3621E-05
+     2               0.4281E-05
+     3               0.5107E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.10E-05
-   0.40E-01      0.12E-05
-   0.60E-01      0.16E-05
-  ------------------------------
+  Iteration:                 10
+  Reduced space dimension:   30
 
-  Iteration:               11
-  Reduced space dimension: 33
+   Solution       Residual norm
+  -----------------------------
+     1               0.1023E-05
+     2               0.1248E-05
+     3               0.1560E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.25E-06
-   0.40E-01      0.32E-06
-   0.60E-01      0.41E-06
-  ------------------------------
+  Iteration:                 11
+  Reduced space dimension:   33
 
-  Iteration:               12
-  Reduced space dimension: 36
+   Solution       Residual norm
+  -----------------------------
+     1               0.2538E-06
+     2               0.3165E-06
+     3               0.4102E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.73E-07
-   0.40E-01      0.94E-07
-   0.60E-01      0.13E-06
-  ------------------------------
+  Iteration:                 12
+  Reduced space dimension:   36
 
-  Iteration:               13
-  Reduced space dimension: 39
+   Solution       Residual norm
+  -----------------------------
+     1               0.7317E-07
+     2               0.9373E-07
+     3               0.1265E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.22E-07
-   0.40E-01      0.28E-07
-   0.60E-01      0.39E-07
-  ------------------------------
+  Iteration:                 13
+  Reduced space dimension:   39
 
-  Iteration:               14
-  Reduced space dimension: 42
+   Solution       Residual norm
+  -----------------------------
+     1               0.2150E-07
+     2               0.2820E-07
+     3               0.3918E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.57E-08
-   0.40E-01      0.76E-08
-   0.60E-01      0.11E-07
-  ------------------------------
+  Iteration:                 14
+  Reduced space dimension:   42
 
-  Iteration:               15
-  Reduced space dimension: 45
+   Solution       Residual norm
+  -----------------------------
+     1               0.5669E-08
+     2               0.7580E-08
+     3               0.1075E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.15E-08
-   0.40E-01      0.21E-08
-   0.60E-01      0.30E-08
-  ------------------------------
+  Iteration:                 15
+  Reduced space dimension:   45
 
-  Iteration:               16
-  Reduced space dimension: 48
+   Solution       Residual norm
+  -----------------------------
+     1               0.1531E-08
+     2               0.2082E-08
+     3               0.2998E-08
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.33E-09
-   0.40E-01      0.45E-09
-   0.60E-01      0.64E-09
-  ------------------------------
+  Iteration:                 16
+  Reduced space dimension:   48
 
-  Iteration:               17
-  Reduced space dimension: 51
+   Solution       Residual norm
+  -----------------------------
+     1               0.3286E-09
+     2               0.4471E-09
+     3               0.6429E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.77E-10
-   0.40E-01      0.11E-09
-   0.60E-01      0.15E-09
-  ------------------------------
+  Iteration:                 17
+  Reduced space dimension:   51
 
-  Iteration:               18
-  Reduced space dimension: 54
+   Solution       Residual norm
+  -----------------------------
+     1               0.7695E-10
+     2               0.1055E-09
+     3               0.1529E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.19E-10
-   0.40E-01      0.26E-10
-   0.60E-01      0.39E-10
-  ------------------------------
+  Iteration:                 18
+  Reduced space dimension:   54
 
-  Iteration:               19
-  Reduced space dimension: 57
+   Solution       Residual norm
+  -----------------------------
+     1               0.1872E-10
+     2               0.2627E-10
+     3               0.3898E-10
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.46E-11
-   0.40E-01      0.66E-11
-   0.60E-01      0.10E-10
-  ------------------------------
+  Iteration:                 19
+  Reduced space dimension:   57
 
-  Iteration:               20
-  Reduced space dimension: 58
+   Solution       Residual norm
+  -----------------------------
+     1               0.4634E-11
+     2               0.6640E-11
+     3               0.1010E-10
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.11E-11
-   0.40E-01      0.15E-11
-   0.60E-01      0.23E-11
-  ------------------------------
+  Iteration:                 20
+  Reduced space dimension:   58
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.1124E-11
+     2               0.1536E-11
+     3               0.2323E-11
+  -----------------------------
   Convergence criterion met in 20 iterations!
 
-  - Finished solving the CCSD linear equations
-
-     Total wall time (sec):               0.87162
-     Total cpu time (sec):                1.75114
-
-   - Davidson coupled cluster linear equations solver
-  ------------------------------------------------------
-  A Davidson solver that solves linear equations involving the Jacobian 
-  transformation. When solving multiple linear equations, it builds a 
-  shared reduced space in which to express each of the solutions to the 
-  equations.
-
-  Solving for the       amplitude response vectors in CC     response 
-  theory.
-
-  - Davidson CC linear equations solver settings:
-
-     Residual threshold:        0.10E-10
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                 9729
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (davidson_t_response_trials): file
-     Storage (davidson_t_response_transforms): file
+     Storage (cc_response_davidson_trials): file
+     Storage (cc_response_davidson_transforms): file
 
-  - Entering iterative loop to solve equations.
+  - Davidson solver settings
 
-  Iteration:               1
-  Reduced space dimension: 3
+     Residual threshold:              0.10E-10
+     Max number of iterations:             100
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.33E+00
-  -0.40E-01      0.32E+00
-  -0.60E-01      0.31E+00
-  ------------------------------
+  Iteration:                  1
+  Reduced space dimension:    3
 
-  Iteration:               2
-  Reduced space dimension: 6
+   Solution       Residual norm
+  -----------------------------
+     1               0.3299E+00
+     2               0.3198E+00
+     3               0.3107E+00
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.53E-01
-  -0.40E-01      0.49E-01
-  -0.60E-01      0.46E-01
-  ------------------------------
+  Iteration:                  2
+  Reduced space dimension:    6
 
-  Iteration:               3
-  Reduced space dimension: 9
+   Solution       Residual norm
+  -----------------------------
+     1               0.5304E-01
+     2               0.4949E-01
+     3               0.4646E-01
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.11E-01
-  -0.40E-01      0.97E-02
-  -0.60E-01      0.89E-02
-  ------------------------------
+  Iteration:                  3
+  Reduced space dimension:    9
 
-  Iteration:               4
-  Reduced space dimension: 12
+   Solution       Residual norm
+  -----------------------------
+     1               0.1062E-01
+     2               0.9705E-02
+     3               0.8932E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.23E-02
-  -0.40E-01      0.20E-02
-  -0.60E-01      0.18E-02
-  ------------------------------
+  Iteration:                  4
+  Reduced space dimension:   12
 
-  Iteration:               5
-  Reduced space dimension: 15
+   Solution       Residual norm
+  -----------------------------
+     1               0.2257E-02
+     2               0.2018E-02
+     3               0.1818E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.45E-03
-  -0.40E-01      0.40E-03
-  -0.60E-01      0.36E-03
-  ------------------------------
+  Iteration:                  5
+  Reduced space dimension:   15
 
-  Iteration:               6
-  Reduced space dimension: 18
+   Solution       Residual norm
+  -----------------------------
+     1               0.4480E-03
+     2               0.3976E-03
+     3               0.3554E-03
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.12E-03
-  -0.40E-01      0.11E-03
-  -0.60E-01      0.94E-04
-  ------------------------------
+  Iteration:                  6
+  Reduced space dimension:   18
 
-  Iteration:               7
-  Reduced space dimension: 21
+   Solution       Residual norm
+  -----------------------------
+     1               0.1229E-03
+     2               0.1072E-03
+     3               0.9421E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.36E-04
-  -0.40E-01      0.31E-04
-  -0.60E-01      0.27E-04
-  ------------------------------
+  Iteration:                  7
+  Reduced space dimension:   21
 
-  Iteration:               8
-  Reduced space dimension: 24
+   Solution       Residual norm
+  -----------------------------
+     1               0.3607E-04
+     2               0.3102E-04
+     3               0.2687E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.92E-05
-  -0.40E-01      0.78E-05
-  -0.60E-01      0.67E-05
-  ------------------------------
+  Iteration:                  8
+  Reduced space dimension:   24
 
-  Iteration:               9
-  Reduced space dimension: 27
+   Solution       Residual norm
+  -----------------------------
+     1               0.9178E-05
+     2               0.7788E-05
+     3               0.6658E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.20E-05
-  -0.40E-01      0.17E-05
-  -0.60E-01      0.14E-05
-  ------------------------------
+  Iteration:                  9
+  Reduced space dimension:   27
 
-  Iteration:               10
-  Reduced space dimension: 30
+   Solution       Residual norm
+  -----------------------------
+     1               0.2003E-05
+     2               0.1690E-05
+     3               0.1437E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.43E-06
-  -0.40E-01      0.35E-06
-  -0.60E-01      0.29E-06
-  ------------------------------
+  Iteration:                 10
+  Reduced space dimension:   30
 
-  Iteration:               11
-  Reduced space dimension: 33
+   Solution       Residual norm
+  -----------------------------
+     1               0.4258E-06
+     2               0.3505E-06
+     3               0.2932E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.97E-07
-  -0.40E-01      0.77E-07
-  -0.60E-01      0.63E-07
-  ------------------------------
+  Iteration:                 11
+  Reduced space dimension:   33
 
-  Iteration:               12
-  Reduced space dimension: 36
+   Solution       Residual norm
+  -----------------------------
+     1               0.9716E-07
+     2               0.7718E-07
+     3               0.6293E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.28E-07
-  -0.40E-01      0.21E-07
-  -0.60E-01      0.17E-07
-  ------------------------------
+  Iteration:                 12
+  Reduced space dimension:   36
 
-  Iteration:               13
-  Reduced space dimension: 39
+   Solution       Residual norm
+  -----------------------------
+     1               0.2832E-07
+     2               0.2144E-07
+     3               0.1661E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.72E-08
-  -0.40E-01      0.54E-08
-  -0.60E-01      0.42E-08
-  ------------------------------
+  Iteration:                 13
+  Reduced space dimension:   39
 
-  Iteration:               14
-  Reduced space dimension: 42
+   Solution       Residual norm
+  -----------------------------
+     1               0.7221E-08
+     2               0.5418E-08
+     3               0.4160E-08
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.18E-08
-  -0.40E-01      0.13E-08
-  -0.60E-01      0.10E-08
-  ------------------------------
+  Iteration:                 14
+  Reduced space dimension:   42
 
-  Iteration:               15
-  Reduced space dimension: 45
+   Solution       Residual norm
+  -----------------------------
+     1               0.1792E-08
+     2               0.1335E-08
+     3               0.1018E-08
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.39E-09
-  -0.40E-01      0.29E-09
-  -0.60E-01      0.22E-09
-  ------------------------------
+  Iteration:                 15
+  Reduced space dimension:   45
 
-  Iteration:               16
-  Reduced space dimension: 48
+   Solution       Residual norm
+  -----------------------------
+     1               0.3858E-09
+     2               0.2895E-09
+     3               0.2215E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.93E-10
-  -0.40E-01      0.68E-10
-  -0.60E-01      0.51E-10
-  ------------------------------
+  Iteration:                 16
+  Reduced space dimension:   48
 
-  Iteration:               17
-  Reduced space dimension: 51
+   Solution       Residual norm
+  -----------------------------
+     1               0.9321E-10
+     2               0.6814E-10
+     3               0.5092E-10
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.23E-10
-  -0.40E-01      0.17E-10
-  -0.60E-01      0.12E-10
-  ------------------------------
+  Iteration:                 17
+  Reduced space dimension:   51
 
-  Iteration:               18
-  Reduced space dimension: 54
+   Solution       Residual norm
+  -----------------------------
+     1               0.2305E-10
+     2               0.1659E-10
+     3               0.1218E-10
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-  -0.20E-01      0.62E-11
-  -0.40E-01      0.43E-11
-  -0.60E-01      0.31E-11
-  ------------------------------
+  Iteration:                 18
+  Reduced space dimension:   54
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.6248E-11
+     2               0.4330E-11
+     3               0.3067E-11
+  -----------------------------
   Convergence criterion met in 18 iterations!
 
-  - Finished solving the CCSD linear equations
-
-     Total wall time (sec):               0.68511
-     Total cpu time (sec):                1.36486
-
-   - Davidson coupled cluster linear equations solver
-  ------------------------------------------------------
-  A Davidson solver that solves linear equations involving the Jacobian 
-  transformation. When solving multiple linear equations, it builds a 
-  shared reduced space in which to express each of the solutions to the 
-  equations.
-
-  Solving for the       amplitude response vectors in CC     response 
-  theory.
-
-  - Davidson CC linear equations solver settings:
-
-     Residual threshold:        0.10E-10
-     Max number of iterations:       100
-
    - Davidson tool settings:
 
      Number of parameters:                 9729
      Number of requested solutions:           3
      Max reduced space dimension:           100
 
-     Storage (davidson_t_response_trials): file
-     Storage (davidson_t_response_transforms): file
+     Storage (cc_response_davidson_trials): file
+     Storage (cc_response_davidson_transforms): file
 
-  - Entering iterative loop to solve equations.
+  - Davidson solver settings
 
-  Iteration:               1
-  Reduced space dimension: 3
+     Residual threshold:              0.10E-10
+     Max number of iterations:             100
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.35E+00
-   0.40E-01      0.37E+00
-   0.60E-01      0.38E+00
-  ------------------------------
+  Iteration:                  1
+  Reduced space dimension:    3
 
-  Iteration:               2
-  Reduced space dimension: 6
+   Solution       Residual norm
+  -----------------------------
+     1               0.3533E+00
+     2               0.3672E+00
+     3               0.3828E+00
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.62E-01
-   0.40E-01      0.68E-01
-   0.60E-01      0.75E-01
-  ------------------------------
+  Iteration:                  2
+  Reduced space dimension:    6
 
-  Iteration:               3
-  Reduced space dimension: 9
+   Solution       Residual norm
+  -----------------------------
+     1               0.6183E-01
+     2               0.6789E-01
+     3               0.7540E-01
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.13E-01
-   0.40E-01      0.15E-01
-   0.60E-01      0.17E-01
-  ------------------------------
+  Iteration:                  3
+  Reduced space dimension:    9
 
-  Iteration:               4
-  Reduced space dimension: 12
+   Solution       Residual norm
+  -----------------------------
+     1               0.1301E-01
+     2               0.1463E-01
+     3               0.1665E-01
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.28E-02
-   0.40E-01      0.33E-02
-   0.60E-01      0.38E-02
-  ------------------------------
+  Iteration:                  4
+  Reduced space dimension:   12
 
-  Iteration:               5
-  Reduced space dimension: 15
+   Solution       Residual norm
+  -----------------------------
+     1               0.2850E-02
+     2               0.3272E-02
+     3               0.3803E-02
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.58E-03
-   0.40E-01      0.67E-03
-   0.60E-01      0.78E-03
-  ------------------------------
+  Iteration:                  5
+  Reduced space dimension:   15
 
-  Iteration:               6
-  Reduced space dimension: 18
+   Solution       Residual norm
+  -----------------------------
+     1               0.5758E-03
+     2               0.6669E-03
+     3               0.7821E-03
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.16E-03
-   0.40E-01      0.19E-03
-   0.60E-01      0.23E-03
-  ------------------------------
+  Iteration:                  6
+  Reduced space dimension:   18
 
-  Iteration:               7
-  Reduced space dimension: 21
+   Solution       Residual norm
+  -----------------------------
+     1               0.1605E-03
+     2               0.1895E-03
+     3               0.2268E-03
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.48E-04
-   0.40E-01      0.57E-04
-   0.60E-01      0.70E-04
-  ------------------------------
+  Iteration:                  7
+  Reduced space dimension:   21
 
-  Iteration:               8
-  Reduced space dimension: 24
+   Solution       Residual norm
+  -----------------------------
+     1               0.4806E-04
+     2               0.5744E-04
+     3               0.6953E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.12E-04
-   0.40E-01      0.15E-04
-   0.60E-01      0.18E-04
-  ------------------------------
+  Iteration:                  8
+  Reduced space dimension:   24
 
-  Iteration:               9
-  Reduced space dimension: 27
+   Solution       Residual norm
+  -----------------------------
+     1               0.1226E-04
+     2               0.1487E-04
+     3               0.1829E-04
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.26E-05
-   0.40E-01      0.32E-05
-   0.60E-01      0.40E-05
-  ------------------------------
+  Iteration:                  9
+  Reduced space dimension:   27
 
-  Iteration:               10
-  Reduced space dimension: 30
+   Solution       Residual norm
+  -----------------------------
+     1               0.2610E-05
+     2               0.3205E-05
+     3               0.4008E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.59E-06
-   0.40E-01      0.76E-06
-   0.60E-01      0.10E-05
-  ------------------------------
+  Iteration:                 10
+  Reduced space dimension:   30
 
-  Iteration:               11
-  Reduced space dimension: 33
+   Solution       Residual norm
+  -----------------------------
+     1               0.5889E-06
+     2               0.7644E-06
+     3               0.1035E-05
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.16E-06
-   0.40E-01      0.22E-06
-   0.60E-01      0.31E-06
-  ------------------------------
+  Iteration:                 11
+  Reduced space dimension:   33
 
-  Iteration:               12
-  Reduced space dimension: 36
+   Solution       Residual norm
+  -----------------------------
+     1               0.1596E-06
+     2               0.2192E-06
+     3               0.3141E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.51E-07
-   0.40E-01      0.73E-07
-   0.60E-01      0.11E-06
-  ------------------------------
+  Iteration:                 12
+  Reduced space dimension:   36
 
-  Iteration:               13
-  Reduced space dimension: 39
+   Solution       Residual norm
+  -----------------------------
+     1               0.5107E-07
+     2               0.7300E-07
+     3               0.1075E-06
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.12E-07
-   0.40E-01      0.17E-07
-   0.60E-01      0.25E-07
-  ------------------------------
+  Iteration:                 13
+  Reduced space dimension:   39
 
-  Iteration:               14
-  Reduced space dimension: 42
+   Solution       Residual norm
+  -----------------------------
+     1               0.1174E-07
+     2               0.1682E-07
+     3               0.2491E-07
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.30E-08
-   0.40E-01      0.42E-08
-   0.60E-01      0.62E-08
-  ------------------------------
+  Iteration:                 14
+  Reduced space dimension:   42
 
-  Iteration:               15
-  Reduced space dimension: 45
+   Solution       Residual norm
+  -----------------------------
+     1               0.2982E-08
+     2               0.4221E-08
+     3               0.6185E-08
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.73E-09
-   0.40E-01      0.10E-08
-   0.60E-01      0.15E-08
-  ------------------------------
+  Iteration:                 15
+  Reduced space dimension:   45
 
-  Iteration:               16
-  Reduced space dimension: 48
+   Solution       Residual norm
+  -----------------------------
+     1               0.7324E-09
+     2               0.1027E-08
+     3               0.1487E-08
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.20E-09
-   0.40E-01      0.29E-09
-   0.60E-01      0.45E-09
-  ------------------------------
+  Iteration:                 16
+  Reduced space dimension:   48
 
-  Iteration:               17
-  Reduced space dimension: 51
+   Solution       Residual norm
+  -----------------------------
+     1               0.2013E-09
+     2               0.2944E-09
+     3               0.4456E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.55E-10
-   0.40E-01      0.82E-10
-   0.60E-01      0.13E-09
-  ------------------------------
+  Iteration:                 17
+  Reduced space dimension:   51
 
-  Iteration:               18
-  Reduced space dimension: 54
+   Solution       Residual norm
+  -----------------------------
+     1               0.5479E-10
+     2               0.8205E-10
+     3               0.1267E-09
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.15E-10
-   0.40E-01      0.23E-10
-   0.60E-01      0.36E-10
-  ------------------------------
+  Iteration:                 18
+  Reduced space dimension:   54
 
-  Iteration:               19
-  Reduced space dimension: 57
+   Solution       Residual norm
+  -----------------------------
+     1               0.1472E-10
+     2               0.2272E-10
+     3               0.3609E-10
+  -----------------------------
 
-  Frequency      Residual norm
-  ------------------------------
-   0.20E-01      0.36E-11
-   0.40E-01      0.56E-11
-   0.60E-01      0.89E-11
-  ------------------------------
+  Iteration:                 19
+  Reduced space dimension:   57
+
+   Solution       Residual norm
+  -----------------------------
+     1               0.3575E-11
+     2               0.5574E-11
+     3               0.8946E-11
+  -----------------------------
   Convergence criterion met in 19 iterations!
-
-  - Finished solving the CCSD linear equations
-
-     Total wall time (sec):               0.66164
-     Total cpu time (sec):                1.32161
      The convention applied here defines the polarizabilities as the response 
      functions, without negative sign.
      << mu_x, mu_x >>(0.20E-01):    -10.667179880761
@@ -1345,12 +1277,12 @@
      << mu_x, mu_x >>(0.60E-01):    -10.789511136656
      << mu_z, mu_x >>(0.60E-01):     -0.000657453296
 
-  Peak memory usage during the execution of eT: 16.125784 MB
+  Peak memory usage during the execution of eT: 16.277132 MB
 
-  Total wall time in eT (sec):              4.67439
-  Total cpu time in eT (sec):               9.29782
+  Total wall time in eT (sec):              8.62900
+  Total cpu time in eT (sec):               6.83386
 
-  Calculation end:2022-06-30 08:47:07 UTC +02:00
+  Calculation end:2022-10-19 10:29:17 UTC -07:00
 
   - Implementation references:
 

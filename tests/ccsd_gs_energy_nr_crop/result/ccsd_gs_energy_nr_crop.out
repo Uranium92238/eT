@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -73,7 +73,7 @@
      end method
 
 
-  Calculation start:2022-06-30 08:49:35 UTC +02:00
+  Calculation start:2022-10-19 10:29:48 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -166,7 +166,7 @@
   Fock matrix construction using density differences
      2          -224.129918926026     0.1379E+00     0.3335E-01
   Fock matrix construction using density differences
-     3          -224.263401531486     0.8692E-02     0.1335E+00
+     3          -224.263401531487     0.8692E-02     0.1335E+00
   Fock matrix construction using density differences
      4          -224.265088430954     0.4649E-02     0.1687E-02
   Fock matrix construction using density differences
@@ -174,7 +174,7 @@
   Fock matrix construction using density differences
      6          -224.265560152942     0.1474E-02     0.6648E-04
   Fock matrix construction using density differences
-     7          -224.265586748992     0.6005E-03     0.2660E-04
+     7          -224.265586748991     0.6005E-03     0.2660E-04
   Fock matrix construction using density differences
      8          -224.265595555115     0.1830E-03     0.8806E-05
   Fock matrix construction using density differences
@@ -188,29 +188,29 @@
   Fock matrix construction using density differences
     13          -224.265596150268     0.1295E-05     0.1055E-09
   Fock matrix construction using density differences
-    14          -224.265596150306     0.6215E-06     0.3809E-10
+    14          -224.265596150306     0.6215E-06     0.3823E-10
   Fock matrix construction using density differences
-    15          -224.265596150314     0.3151E-06     0.7702E-11
+    15          -224.265596150314     0.3151E-06     0.7589E-11
   Fock matrix construction using density differences
-    16          -224.265596150315     0.1212E-06     0.1052E-11
+    16          -224.265596150315     0.1212E-06     0.1165E-11
   Fock matrix construction using density differences
-    17          -224.265596150315     0.4099E-07     0.3411E-12
+    17          -224.265596150315     0.4099E-07     0.1705E-12
   Fock matrix construction using density differences
-    18          -224.265596150315     0.3185E-07     0.8527E-13
+    18          -224.265596150315     0.3185E-07     0.2842E-13
   Fock matrix construction using density differences
-    19          -224.265596150315     0.2288E-07     0.1421E-12
+    19          -224.265596150315     0.2288E-07     0.1990E-12
   Fock matrix construction using density differences
-    20          -224.265596150315     0.1098E-07     0.1705E-12
+    20          -224.265596150315     0.1098E-07     0.1137E-12
   Fock matrix construction using density differences
     21          -224.265596150315     0.7963E-08     0.5684E-13
   Fock matrix construction using density differences
-    22          -224.265596150315     0.6392E-08     0.5684E-13
+    22          -224.265596150315     0.6392E-08     0.8527E-13
   Fock matrix construction using density differences
-    23          -224.265596150315     0.1258E-08     0.1137E-12
+    23          -224.265596150315     0.1258E-08     0.8527E-13
   Fock matrix construction using density differences
-    24          -224.265596150315     0.1267E-08     0.1705E-12
+    24          -224.265596150315     0.1267E-08     0.1421E-12
   Fock matrix construction using density differences
-    25          -224.265596150315     0.7460E-09     0.8527E-13
+    25          -224.265596150315     0.7460E-09     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 25 iterations!
 
@@ -297,7 +297,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.8323E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.1443E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
@@ -306,8 +306,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.81765
-     Total cpu time (sec):               1.62036
+     Total wall time (sec):              0.77000
+     Total cpu time (sec):               0.82334
 
 
   Determining CC cluster amplitudes
@@ -439,17 +439,17 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              2.48625
-     Total cpu time (sec):               4.96950
+     Total wall time (sec):              2.14000
+     Total cpu time (sec):               1.80244
 
   - Cleaning up ccsd wavefunction
 
-  Peak memory usage during the execution of eT: 59.297016 MB
+  Peak memory usage during the execution of eT: 59.289320 MB
 
-  Total wall time in eT (sec):              5.57175
-  Total cpu time in eT (sec):              11.07592
+  Total wall time in eT (sec):              5.16300
+  Total cpu time in eT (sec):               5.12569
 
-  Calculation end:2022-06-30 08:49:41 UTC +02:00
+  Calculation end:2022-10-19 10:29:53 UTC -07:00
 
   - Implementation references:
 

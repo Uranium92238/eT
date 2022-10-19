@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -41,6 +41,7 @@
      system
         name: formamide
         charge: 0
+        print orbitals
      end system
 
      do
@@ -75,6 +76,12 @@
         hf
      end frozen orbitals
 
+     visualization
+         file format: cube
+         plot cc orbitals: [6,7]
+         grid spacing: 0.2
+         grid buffer: 1.0
+     end visualization
 
      active atoms
         selection type: range
@@ -82,7 +89,7 @@
      end active atoms
 
 
-  Calculation start:2022-06-30 08:46:23 UTC +02:00
+  Calculation start:2022-10-19 10:30:24 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 16.000000 GB
@@ -164,14 +171,14 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -166.526025276883     0.1642E+00     0.1665E+03
+     1          -166.526025276884     0.1642E+00     0.1665E+03
      2          -166.615837132106     0.1108E+00     0.8981E-01
      3          -166.653902505872     0.7162E-01     0.3807E-01
      4          -166.666439535201     0.4236E-01     0.1254E-01
      5          -166.671637703802     0.2798E-01     0.5198E-02
-     6          -166.673477847057     0.1590E-01     0.1840E-02
+     6          -166.673477847056     0.1590E-01     0.1840E-02
      7          -166.674186528525     0.1054E-01     0.7087E-03
-     8          -166.674444686188     0.5950E-02     0.2582E-03
+     8          -166.674444686187     0.5950E-02     0.2582E-03
      9          -166.674541899503     0.3927E-02     0.9721E-04
     10          -166.674577779784     0.2226E-02     0.3588E-04
     11          -166.674591192949     0.1459E-02     0.1341E-04
@@ -186,34 +193,34 @@
     20          -166.674599126136     0.1631E-04     0.1844E-08
     21          -166.674599126823     0.1031E-04     0.6871E-09
     22          -166.674599127079     0.6094E-05     0.2561E-09
-    23          -166.674599127174     0.3832E-05     0.9544E-10
-    24          -166.674599127210     0.2276E-05     0.3547E-10
-    25          -166.674599127223     0.1425E-05     0.1336E-10
-    26          -166.674599127228     0.8499E-06     0.4889E-11
-    27          -166.674599127230     0.5301E-06     0.1734E-11
-    28          -166.674599127230     0.3172E-06     0.8242E-12
-    29          -166.674599127231     0.1972E-06     0.1421E-12
-    30          -166.674599127231     0.1184E-06     0.0000E+00
-    31          -166.674599127231     0.7341E-07     0.2558E-12
-    32          -166.674599127231     0.4417E-07     0.5684E-13
-    33          -166.674599127231     0.2733E-07     0.0000E+00
-    34          -166.674599127231     0.1648E-07     0.5684E-13
+    23          -166.674599127174     0.3832E-05     0.9521E-10
+    24          -166.674599127210     0.2276E-05     0.3575E-10
+    25          -166.674599127223     0.1425E-05     0.1313E-10
+    26          -166.674599127228     0.8499E-06     0.5002E-11
+    27          -166.674599127230     0.5301E-06     0.1876E-11
+    28          -166.674599127230     0.3172E-06     0.6537E-12
+    29          -166.674599127231     0.1972E-06     0.1990E-12
+    30          -166.674599127231     0.1184E-06     0.1137E-12
+    31          -166.674599127231     0.7341E-07     0.1137E-12
+    32          -166.674599127231     0.4417E-07     0.2842E-13
+    33          -166.674599127231     0.2733E-07     0.8527E-13
+    34          -166.674599127231     0.1648E-07     0.8527E-13
     35          -166.674599127231     0.1017E-07     0.8527E-13
     36          -166.674599127231     0.6146E-08     0.0000E+00
-    37          -166.674599127231     0.3788E-08     0.5684E-13
-    38          -166.674599127231     0.2292E-08     0.2842E-13
-    39          -166.674599127231     0.1411E-08     0.0000E+00
-    40          -166.674599127231     0.8547E-09     0.0000E+00
-    41          -166.674599127231     0.5254E-09     0.1137E-12
+    37          -166.674599127231     0.3788E-08     0.8527E-13
+    38          -166.674599127231     0.2292E-08     0.8527E-13
+    39          -166.674599127231     0.1411E-08     0.5684E-13
+    40          -166.674599127231     0.8547E-09     0.1421E-12
+    41          -166.674599127231     0.5254E-09     0.1705E-12
     42          -166.674599127231     0.3187E-09     0.1137E-12
-    43          -166.674599127231     0.1957E-09     0.2842E-13
-    44          -166.674599127231     0.1188E-09     0.8527E-13
-    45          -166.674599127231     0.7290E-10     0.1705E-12
+    43          -166.674599127231     0.1957E-09     0.8527E-13
+    44          -166.674599127231     0.1188E-09     0.1705E-12
+    45          -166.674599127231     0.7290E-10     0.5684E-13
     46          -166.674599127231     0.4430E-10     0.5684E-13
-    47          -166.674599127231     0.2716E-10     0.8527E-13
-    48          -166.674599127231     0.1651E-10     0.2842E-13
-    49          -166.674599127231     0.1012E-10     0.2842E-13
-    50          -166.674599127231     0.6153E-11     0.1137E-12
+    47          -166.674599127231     0.2716E-10     0.5684E-13
+    48          -166.674599127231     0.1651E-10     0.1137E-12
+    49          -166.674599127231     0.1012E-10     0.2274E-12
+    50          -166.674599127231     0.6153E-11     0.1421E-12
   ---------------------------------------------------------------
   Convergence criterion met in 50 iterations!
 
@@ -221,10 +228,10 @@
 
      HOMO-LUMO gap:                  0.638568161216
      Nuclear repulsion energy:      71.772502337484
-     Electronic energy:           -238.447101464714
+     Electronic energy:           -238.447101464715
      Total energy:                -166.674599127231
 
-     The smallest diagonal after decomposition is:  -0.2220E-15
+     The smallest diagonal after decomposition is:  -0.2432E-15
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -301,7 +308,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4557E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1392E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.8384E-15
 
   - Settings for integral handling:
 
@@ -310,8 +317,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.13347
-     Total cpu time (sec):               0.27346
+     Total wall time (sec):              0.21800
+     Total cpu time (sec):               0.14497
 
 
   Determining CC cluster amplitudes
@@ -343,7 +350,7 @@
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
     1          -166.764876575931     0.6756E-01     0.1668E+03
-    2          -166.780592593724     0.2418E-01     0.1572E-01
+    2          -166.780592593725     0.2418E-01     0.1572E-01
     3          -166.787621276173     0.4091E-02     0.7029E-02
     4          -166.788009386050     0.1010E-02     0.3881E-03
     5          -166.787958270775     0.1412E-03     0.5112E-04
@@ -351,14 +358,14 @@
     7          -166.787947654044     0.8403E-05     0.3090E-06
     8          -166.787947452072     0.1967E-05     0.2020E-06
     9          -166.787947287415     0.4036E-06     0.1647E-06
-   10          -166.787947269414     0.1263E-06     0.1800E-07
+   10          -166.787947269415     0.1263E-06     0.1800E-07
    11          -166.787947271141     0.2951E-07     0.1726E-08
    12          -166.787947272337     0.7042E-08     0.1196E-08
    13          -166.787947271655     0.9549E-09     0.6819E-09
-   14          -166.787947271606     0.2514E-09     0.4837E-10
+   14          -166.787947271607     0.2514E-09     0.4837E-10
    15          -166.787947271622     0.5715E-10     0.1569E-10
-   16          -166.787947271626     0.1050E-10     0.4036E-11
-   17          -166.787947271626     0.2288E-11     0.0000E+00
+   16          -166.787947271626     0.1050E-10     0.4007E-11
+   17          -166.787947271626     0.2288E-11     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -402,15 +409,32 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02233
-     Total cpu time (sec):               0.04236
+     Total wall time (sec):              0.11600
+     Total cpu time (sec):               0.07426
 
-  Peak memory usage during the execution of eT: 912.504 KB
 
-  Total wall time in eT (sec):              0.73925
-  Total cpu time in eT (sec):               1.43737
+  Plotting orbitals and/or CC densities
+  =====================================
 
-  Calculation end:2022-06-30 08:46:24 UTC +02:00
+  :: Visualization of orbitals and density
+
+     Grid information              x             y             z
+     ------------------------------------------------------------------
+     First (A):                   -1.98         -2.23         -1.05
+     Last (A):                     2.02          1.97          0.75
+     Number of grid points:        21            22             10
+     ------------------------------------------------------------------
+
+  - Placing the AOs evaluated on the grid in memory
+
+  - Plotting orbitals
+
+  Peak memory usage during the execution of eT: 1.267976 MB
+
+  Total wall time in eT (sec):              1.06200
+  Total cpu time in eT (sec):               0.93270
+
+  Calculation end:2022-10-19 10:30:25 UTC -07:00
 
   - Implementation references:
 

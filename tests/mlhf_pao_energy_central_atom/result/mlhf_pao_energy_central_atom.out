@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -69,7 +69,7 @@
      end active atoms
 
 
-  Calculation start:2022-06-30 08:45:29 UTC +02:00
+  Calculation start:2022-10-19 10:30:17 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -177,18 +177,18 @@
      2          -152.011877032057     0.1366E+00     0.2562E-01
      3          -152.018448490303     0.2167E-01     0.6571E-02
      4          -152.018690017977     0.5645E-02     0.2415E-03
-     5          -152.018703912213     0.1006E-02     0.1389E-04
-     6          -152.018704702591     0.1890E-03     0.7904E-06
-     7          -152.018704720002     0.2445E-04     0.1741E-07
-     8          -152.018704720373     0.5552E-05     0.3710E-09
-     9          -152.018704720397     0.1150E-05     0.2416E-10
-    10          -152.018704720398     0.2301E-06     0.8527E-12
-    11          -152.018704720398     0.7198E-07     0.8527E-13
-    12          -152.018704720398     0.1570E-07     0.2842E-13
-    13          -152.018704720398     0.2151E-08     0.2842E-13
-    14          -152.018704720398     0.5725E-09     0.0000E+00
-    15          -152.018704720398     0.4649E-10     0.0000E+00
-    16          -152.018704720398     0.8078E-11     0.0000E+00
+     5          -152.018703912212     0.1006E-02     0.1389E-04
+     6          -152.018704702590     0.1890E-03     0.7904E-06
+     7          -152.018704720001     0.2445E-04     0.1741E-07
+     8          -152.018704720372     0.5552E-05     0.3711E-09
+     9          -152.018704720396     0.1150E-05     0.2404E-10
+    10          -152.018704720397     0.2301E-06     0.8527E-12
+    11          -152.018704720397     0.7198E-07     0.1705E-12
+    12          -152.018704720397     0.1570E-07     0.2842E-13
+    13          -152.018704720397     0.2151E-08     0.0000E+00
+    14          -152.018704720397     0.5725E-09     0.0000E+00
+    15          -152.018704720398     0.4649E-10     0.5684E-13
+    16          -152.018704720397     0.8080E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -197,20 +197,20 @@
      HOMO-LUMO gap:                  0.695204742952
      Nuclear repulsion energy:      37.386395233393
      Electronic energy:           -189.405099953791
-     Total energy:                -152.018704720398
+     Total energy:                -152.018704720397
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
-     Active energy:               -104.805789875469
+     Active energy:               -104.805789875468
      Active-inactive energy:        19.262564524015
-     Inactive energy:             -103.861874602338
+     Inactive energy:             -103.861874602337
 
-  Peak memory usage during the execution of eT: 420.016 KB
+  Peak memory usage during the execution of eT: 412.080 KB
 
-  Total wall time in eT (sec):              1.57181
-  Total cpu time in eT (sec):               3.10552
+  Total wall time in eT (sec):              1.95000
+  Total cpu time in eT (sec):               1.58646
 
-  Calculation end:2022-06-30 08:45:30 UTC +02:00
+  Calculation end:2022-10-19 10:30:19 UTC -07:00
 
   - Implementation references:
 

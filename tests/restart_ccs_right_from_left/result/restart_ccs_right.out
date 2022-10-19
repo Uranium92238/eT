@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.9.0 J (development)
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-07-21 11:31:45 UTC +02:00
-  Git branch:         increase-coverage
-  Git hash:           2edf7f869960e9a837a1fed9792ffe4ff197a085
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -82,9 +82,9 @@
      end solver cc es
 
 
-  Calculation start:2022-07-21 11:33:34 UTC +02:00
+  Calculation start:2022-10-19 10:30:31 UTC -07:00
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -160,7 +160,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.834776868443     0.5996E-11     0.7883E+02
+     1           -78.834776868443     0.5991E-11     0.7883E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -239,8 +239,8 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.9225E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.2992E-14
+     Maximal difference between approximate and actual diagonal:              0.9226E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1216E-14
 
   - Settings for integral handling:
 
@@ -249,8 +249,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.05398
-     Total cpu time (sec):               0.18965
+     Total wall time (sec):              0.14100
+     Total cpu time (sec):               0.14654
 
 
   Determining CC cluster amplitudes
@@ -283,7 +283,7 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -78.834776868443     0.5775E-11     0.7883E+02
+    1           -78.834776868443     0.5772E-11     0.7883E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -311,12 +311,14 @@
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00174
-     Total cpu time (sec):               0.00174
+     Total wall time (sec):              0.00400
+     Total cpu time (sec):               0.00397
 
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -331,8 +333,6 @@
      Number of requested solutions:           3
      Max reduced space dimension:            96
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
      Restarting right vector 1 from file l_001.
      Restarting right vector 2 from file l_002.
      Restarting right vector 3 from file l_003.
@@ -347,9 +347,9 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.272804563107    0.000000000000     0.9619E-11   0.2728E+00
-     2   0.330739896852    0.000000000000     0.3904E-11   0.3307E+00
-     3   0.361256674676    0.000000000000     0.8722E-11   0.3613E+00
+     1   0.272804563107    0.000000000000     0.9610E-11   0.2728E+00
+     2   0.330739896852    0.000000000000     0.3902E-11   0.3307E+00
+     3   0.361256674676    0.000000000000     0.8717E-11   0.3613E+00
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -364,16 +364,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        1      6        0.970913903184
-        4      6        0.210535303759
-        6      6       -0.077587089128
-        9      6        0.070293197189
-        7      6        0.033030108894
-        5      6        0.020327260889
-        1      5        0.013437502191
-        1      3       -0.011370419527
-       13      6       -0.009576505392
-       10      6        0.005821429214
+        1      6       -0.970913903184
+        4      6       -0.210535303759
+        6      6        0.077587089128
+        9      6       -0.070293197189
+        7      6       -0.033030108894
+        5      6       -0.020327260889
+        1      5       -0.013437502191
+        1      3        0.011370419527
+       13      6        0.009576505392
+       10      6       -0.005821429214
      ------------------------------------
 
      Electronic state nr. 2
@@ -385,16 +385,16 @@
      -----------------------------------
         a       i         R(a,i)
      -----------------------------------
-        2      6       -0.928452722534
-        3      6       -0.340505441137
-        8      6       -0.146468213753
-       14      6        0.012939905309
-        2      3        0.011250724162
-       11      6       -0.010323362784
-        3      3        0.006599877422
-        2      5       -0.006195893250
-        4      6       -0.004564808625
-        7      4       -0.004336029395
+        2      6        0.928452722534
+        3      6        0.340505441137
+        8      6        0.146468213753
+       14      6       -0.012939905309
+        2      3       -0.011250724162
+       11      6        0.010323362784
+        3      3       -0.006599877422
+        2      5        0.006195893250
+        4      6        0.004564808625
+        7      4        0.004336029395
      ------------------------------------
 
      Electronic state nr. 3
@@ -430,12 +430,12 @@
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
-  Peak memory usage during the execution of eT: 3.842528 MB
+  Peak memory usage during the execution of eT: 3.822084 MB
 
-  Total wall time in eT (sec):              0.10112
-  Total cpu time in eT (sec):               0.31313
+  Total wall time in eT (sec):              0.16800
+  Total cpu time in eT (sec):               0.17640
 
-  Calculation end:2022-07-21 11:33:34 UTC +02:00
+  Calculation end:2022-10-19 10:30:31 UTC -07:00
 
   - Implementation references:
 

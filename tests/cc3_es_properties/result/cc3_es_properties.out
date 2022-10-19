@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -83,7 +83,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:48:47 UTC +02:00
+  Calculation start:2022-10-19 10:28:53 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -176,12 +176,12 @@
      7           -78.806369660762     0.3301E-05     0.1558E-08
      8           -78.806369660945     0.8317E-06     0.1829E-09
      9           -78.806369660959     0.1352E-06     0.1418E-10
-    10           -78.806369660959     0.4496E-08     0.1279E-12
-    11           -78.806369660959     0.2386E-08     0.4263E-13
-    12           -78.806369660959     0.8987E-09     0.1421E-13
-    13           -78.806369660959     0.1587E-09     0.4263E-13
-    14           -78.806369660959     0.1519E-10     0.2842E-13
-    15           -78.806369660959     0.2112E-11     0.0000E+00
+    10           -78.806369660959     0.4496E-08     0.5684E-13
+    11           -78.806369660959     0.2386E-08     0.2842E-13
+    12           -78.806369660959     0.8987E-09     0.0000E+00
+    13           -78.806369660959     0.1587E-09     0.0000E+00
+    14           -78.806369660959     0.1518E-10     0.1421E-13
+    15           -78.806369660959     0.2112E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -262,7 +262,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4523E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.3427E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.4462E-15
 
   - Settings for integral handling:
 
@@ -271,8 +271,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.03412
-     Total cpu time (sec):               0.07410
+     Total wall time (sec):              0.10600
+     Total cpu time (sec):               0.07478
 
 
   Determining CC cluster amplitudes
@@ -363,8 +363,8 @@
 
   - Finished solving the CC3 ground state equations
 
-     Total wall time (sec):              0.11164
-     Total cpu time (sec):               0.22163
+     Total wall time (sec):              0.94800
+     Total cpu time (sec):               0.68337
 
 
   Determining CC multipliers
@@ -422,8 +422,8 @@
 
   - Finished solving the cc3 multipliers equations
 
-     Total wall time (sec):              0.21486
-     Total cpu time (sec):               0.43480
+     Total wall time (sec):              3.07600
+     Total cpu time (sec):               1.55981
 
   - CC multipliers solver summary:
 
@@ -466,9 +466,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -757,8 +757,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -835,7 +833,7 @@
         1      5       5      6       -0.034238405314
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CC3 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -848,8 +846,8 @@
 
   - Finished solving the CC3 excited state equations (right)
 
-     Total wall time (sec):              0.55233
-     Total cpu time (sec):               1.10211
+     Total wall time (sec):              5.99100
+     Total cpu time (sec):               3.32169
 
 
   Determining CC excited state amplitudes
@@ -858,9 +856,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -952,7 +950,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.251100759380       0.1649E-04
+     1      0.251100759379       0.1649E-04
      2      0.356984130873       0.4458E-03
   -----------------------------------------------
 
@@ -1137,13 +1135,11 @@
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
      1      0.251100767333       0.8239E-11
-     2      0.356977768141       0.6850E-11
+     2      0.356977768141       0.6849E-11
   -----------------------------------------------
   Convergence criterion met in 31 iterations!
 
   - Resorting roots according to excitation energy.
-
-  - Stored converged states to file.
 
   - Excitation vector amplitudes:
 
@@ -1221,7 +1217,7 @@
         1      5       6      5        0.050712658081
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CC3 excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -1234,8 +1230,8 @@
 
   - Finished solving the CC3 excited state equations (left)
 
-     Total wall time (sec):              0.41805
-     Total cpu time (sec):               0.83799
+     Total wall time (sec):              5.64900
+     Total cpu time (sec):               3.30258
 
 
   Biorthonormalization of excited CC states
@@ -1300,12 +1296,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.001603861745
 
-  Peak memory usage during the execution of eT: 1.395672 MB
+  Peak memory usage during the execution of eT: 1.392352 MB
 
-  Total wall time in eT (sec):              1.57810
-  Total cpu time in eT (sec):               3.13411
+  Total wall time in eT (sec):             16.93800
+  Total cpu time in eT (sec):               9.74669
 
-  Calculation end:2022-06-30 08:48:49 UTC +02:00
+  Calculation end:2022-10-19 10:29:10 UTC -07:00
 
   - Implementation references:
 

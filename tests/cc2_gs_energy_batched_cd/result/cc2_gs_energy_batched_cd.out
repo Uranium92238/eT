@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -73,7 +73,7 @@
      end do
 
 
-  Calculation start:2022-06-30 08:45:54 UTC +02:00
+  Calculation start:2022-10-19 10:29:29 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -128,7 +128,7 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.504367259661
+     Energy of initial guess:               -78.504367259660
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
@@ -164,15 +164,15 @@
      4           -78.877399713719     0.1937E-02     0.2869E-03
      5           -78.877443438041     0.3625E-03     0.4372E-04
      6           -78.877445874704     0.8440E-04     0.2437E-05
-     7           -78.877445941939     0.7188E-05     0.6724E-07
-     8           -78.877445942637     0.9985E-06     0.6984E-09
-     9           -78.877445942676     0.3910E-06     0.3887E-10
-    10           -78.877445942681     0.6734E-07     0.4988E-11
-    11           -78.877445942681     0.1633E-07     0.1279E-12
-    12           -78.877445942681     0.5292E-08     0.5684E-13
-    13           -78.877445942681     0.1773E-08     0.1421E-13
-    14           -78.877445942681     0.3502E-09     0.4263E-13
-    15           -78.877445942681     0.8473E-10     0.5684E-13
+     7           -78.877445941939     0.7188E-05     0.6723E-07
+     8           -78.877445942637     0.9985E-06     0.6985E-09
+     9           -78.877445942676     0.3910E-06     0.3865E-10
+    10           -78.877445942681     0.6734E-07     0.4903E-11
+    11           -78.877445942681     0.1633E-07     0.4121E-12
+    12           -78.877445942681     0.5292E-08     0.1990E-12
+    13           -78.877445942681     0.1773E-08     0.1563E-12
+    14           -78.877445942681     0.3502E-09     0.4121E-12
+    15           -78.877445942681     0.8473E-10     0.1421E-12
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -298,7 +298,7 @@
   -------------------------------------------------------------------------------------------------------
      1               443 /      70       0.48661E+01         127             27             11961
      2               407 /      62       0.46251E-01         286            115             46805
-     3               334 /      51       0.44363E-03         179            176             58784
+     3               334 /      51       0.44301E-03         179            176             58784
      4               209 /      32       0.43678E-05         150            238             49742
      5                76 /       8       0.42515E-07         110            277             21052
      6                 0 /       0       0.36791E-09          32            294                 0
@@ -338,7 +338,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9712E-10
-     Minimal element of difference between approximate and actual diagonal:  -0.1362E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.6155E-14
 
   - Settings for integral handling:
 
@@ -347,8 +347,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              3.79975
-     Total cpu time (sec):               7.45229
+     Total wall time (sec):              3.92200
+     Total cpu time (sec):               3.79652
 
 
   Determining CC cluster amplitudes
@@ -387,11 +387,11 @@
     6           -79.198907951383     0.1442E-04     0.7105E-07
     7           -79.198907844963     0.2764E-05     0.1064E-06
     8           -79.198907847896     0.8147E-06     0.2933E-08
-    9           -79.198907849711     0.1157E-06     0.1816E-08
+    9           -79.198907849712     0.1157E-06     0.1816E-08
    10           -79.198907849930     0.2426E-07     0.2185E-09
    11           -79.198907850054     0.2750E-08     0.1236E-09
-   12           -79.198907850105     0.2828E-09     0.5147E-10
-   13           -79.198907850110     0.7638E-10     0.5130E-11
+   12           -79.198907850105     0.2828E-09     0.5146E-10
+   13           -79.198907850110     0.7638E-10     0.5144E-11
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -419,15 +419,15 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              1.03803
-     Total cpu time (sec):               2.07801
+     Total wall time (sec):              0.83800
+     Total cpu time (sec):               1.00494
 
-  Peak memory usage during the execution of eT: 194.117792 MB
+  Peak memory usage during the execution of eT: 194.007056 MB
 
-  Total wall time in eT (sec):              6.97405
-  Total cpu time in eT (sec):              13.76387
+  Total wall time in eT (sec):              7.18300
+  Total cpu time in eT (sec):               7.34409
 
-  Calculation end:2022-06-30 08:46:01 UTC +02:00
+  Calculation end:2022-10-19 10:29:37 UTC -07:00
 
   - Implementation references:
 

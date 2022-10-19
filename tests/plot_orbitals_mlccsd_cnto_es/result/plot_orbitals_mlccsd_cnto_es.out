@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza (development)
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-07-05 16:36:14 UTC +02:00
-  Git branch:         print-and-plot-orbitals-from-cc
-  Git hash:           69c8baab2049c27805107c8172f31d089ea59b9d
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -100,9 +100,9 @@
      end visualization
 
 
-  Calculation start:2022-07-06 12:50:40 UTC +02:00
+  Calculation start:2022-10-19 10:30:05 UTC -07:00
 
-  Running on 4 OMP threads
+  Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
 
 
@@ -194,19 +194,19 @@
      2          -132.129276759258     0.5915E-01     0.5030E-01
      3          -132.143238216604     0.6975E-02     0.1396E-01
      4          -132.143602921559     0.1486E-02     0.3647E-03
-     5          -132.143621223541     0.7086E-03     0.1830E-04
+     5          -132.143621223540     0.7086E-03     0.1830E-04
      6          -132.143625486849     0.9931E-04     0.4263E-05
      7          -132.143625729793     0.2144E-04     0.2429E-06
      8          -132.143625745014     0.4135E-05     0.1522E-07
-     9          -132.143625745269     0.2147E-06     0.2551E-09
-    10          -132.143625745270     0.3425E-07     0.9095E-12
-    11          -132.143625745269     0.1022E-07     0.2842E-13
-    12          -132.143625745270     0.3269E-08     0.5684E-13
-    13          -132.143625745269     0.5789E-09     0.8527E-13
-    14          -132.143625745270     0.1606E-09     0.1137E-12
-    15          -132.143625745270     0.3851E-10     0.5684E-13
-    16          -132.143625745269     0.1086E-10     0.5684E-13
-    17          -132.143625745270     0.2933E-11     0.5684E-13
+     9          -132.143625745269     0.2147E-06     0.2549E-09
+    10          -132.143625745269     0.3425E-07     0.8811E-12
+    11          -132.143625745269     0.1022E-07     0.0000E+00
+    12          -132.143625745269     0.3269E-08     0.5684E-13
+    13          -132.143625745269     0.5789E-09     0.0000E+00
+    14          -132.143625745270     0.1606E-09     0.8527E-13
+    15          -132.143625745269     0.3851E-10     0.1421E-12
+    16          -132.143625745269     0.1086E-10     0.0000E+00
+    17          -132.143625745269     0.2933E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -214,14 +214,14 @@
 
      HOMO-LUMO gap:                  0.617378258150
      Nuclear repulsion energy:      30.756612446719
-     Electronic energy:           -162.900238191989
-     Total energy:                -132.143625745270
+     Electronic energy:           -162.900238191988
+     Total energy:                -132.143625745269
 
   - Preparation for frozen core approximation
 
      There are 2 frozen core orbitals.
 
-     The smallest diagonal after decomposition is:  -0.9442E-16
+     The smallest diagonal after decomposition is:  -0.7553E-16
 
   - Preparation for frozen Hartree-Fock orbitals
 
@@ -293,7 +293,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.8410E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.9315E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1287E-14
 
   - Settings for integral handling:
 
@@ -302,18 +302,18 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.08032
-     Total cpu time (sec):               0.32796
+     Total wall time (sec):              0.33700
+     Total cpu time (sec):               0.23023
 
   Running CC2 calculation for CNTOs.
 
   - Summary of CC2 calculation for CNTOs:
 
-     Wall time for CC2 ground calculation (sec):                   0.01
-     CPU time for CC2 ground calculation (sec):                    0.05
+     Wall time for CC2 ground calculation (sec):                   0.11
+     CPU time for CC2 ground calculation (sec):                    0.06
 
-     Wall time for CC2 excited calculation (sec):                  0.01
-     CPU time for CC2 excited calculation (sec):                   0.04
+     Wall time for CC2 excited calculation (sec):                  0.09
+     CPU time for CC2 excited calculation (sec):                   0.08
 
   - MLCCSD orbital partitioning:
 
@@ -359,20 +359,20 @@
     1          -132.175545838538     0.3215E-01     0.1322E+03
     2          -132.180894330399     0.1047E-01     0.5348E-02
     3          -132.182587133042     0.2036E-02     0.1693E-02
-    4          -132.182652323857     0.3253E-03     0.6519E-04
+    4          -132.182652323856     0.3253E-03     0.6519E-04
     5          -132.182659277321     0.8548E-04     0.6953E-05
     6          -132.182659041972     0.2522E-04     0.2353E-06
     7          -132.182659187600     0.4940E-05     0.1456E-06
     8          -132.182659238055     0.9994E-06     0.5046E-07
     9          -132.182659199713     0.1863E-06     0.3834E-07
-   10          -132.182659208936     0.4484E-07     0.9223E-08
+   10          -132.182659208935     0.4484E-07     0.9223E-08
    11          -132.182659210204     0.1012E-07     0.1269E-08
    12          -132.182659209432     0.2706E-08     0.7724E-09
    13          -132.182659209515     0.6675E-09     0.8268E-10
    14          -132.182659209527     0.2417E-09     0.1228E-10
-   15          -132.182659209520     0.5408E-10     0.7390E-11
+   15          -132.182659209519     0.5408E-10     0.7390E-11
    16          -132.182659209518     0.1443E-10     0.1307E-11
-   17          -132.182659209519     0.4479E-11     0.4832E-12
+   17          -132.182659209519     0.4478E-11     0.4832E-12
   ---------------------------------------------------------------
   Convergence criterion met in 17 iterations!
 
@@ -389,23 +389,25 @@
         8      1       -0.009940617621
         2      1       -0.007711679528
         6      1       -0.005290034424
-        1      1       -0.004321257464
+        1      1       -0.004321257465
         3      2        0.003542044751
         2      3       -0.001247118375
         1      4        0.001057082649
-        4      1        0.001021855467
+        4      1        0.001021855468
         9      1       -0.000961287518
         4      4        0.000742871526
      ------------------------------------
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.02074
-     Total cpu time (sec):               0.08073
+     Total wall time (sec):              0.26500
+     Total cpu time (sec):               0.18486
 
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -420,8 +422,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:            72
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
 
   - Davidson solver settings
 
@@ -465,7 +465,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305769102354    0.000000000000     0.1749E-02   0.3502E-04
+     1   0.305769102355    0.000000000000     0.1749E-02   0.3502E-04
   -------------------------------------------------------------------------
 
   Iteration:                  6
@@ -473,7 +473,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305727180767    0.000000000000     0.6296E-03   0.4192E-04
+     1   0.305727180768    0.000000000000     0.6296E-03   0.4192E-04
   -------------------------------------------------------------------------
 
   Iteration:                  7
@@ -489,7 +489,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305703716901    0.000000000000     0.2135E-04   0.7525E-05
+     1   0.305703716902    0.000000000000     0.2135E-04   0.7525E-05
   -------------------------------------------------------------------------
 
   Iteration:                  9
@@ -537,7 +537,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305704042391    0.000000000000     0.2848E-08   0.2658E-09
+     1   0.305704042392    0.000000000000     0.2848E-08   0.2658E-09
   -------------------------------------------------------------------------
 
   Iteration:                 15
@@ -561,7 +561,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305704042349    0.000000000000     0.4444E-10   0.6864E-11
+     1   0.305704042349    0.000000000000     0.4444E-10   0.6865E-11
   -------------------------------------------------------------------------
 
   Iteration:                 18
@@ -569,7 +569,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305704042349    0.000000000000     0.1722E-10   0.2637E-13
+     1   0.305704042349    0.000000000000     0.1722E-10   0.2642E-13
   -------------------------------------------------------------------------
 
   Iteration:                 19
@@ -577,7 +577,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1   0.305704042349    0.000000000000     0.7985E-11   0.2119E-12
+     1   0.305704042349    0.000000000000     0.7985E-11   0.2113E-12
   -------------------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -598,15 +598,15 @@
         a       i         R(a,i)
      -----------------------------------
         1      2       -0.978791426653
-        4      2       -0.092092575504
-        2      2       -0.022331680189
+        4      2       -0.092092575505
+        2      2       -0.022331680190
         7      2       -0.010606269643
         9      2        0.008185354062
         8      2       -0.004651379747
         3      4       -0.004217303073
         6      2       -0.003597003590
         3      3       -0.003040870005
-        5      2        0.002790505225
+        5      2        0.002790505254
      ------------------------------------
 
   - MLCCSD excitation energies:
@@ -615,7 +615,7 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                  0.305704042349        8.318630704222
+        1                  0.305704042349        8.318630704231
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
@@ -636,12 +636,12 @@
 
   - Plotting orbitals
 
-  Peak memory usage during the execution of eT: 6.234512 MB
+  Peak memory usage during the execution of eT: 6.225484 MB
 
-  Total wall time in eT (sec):              0.70948
-  Total cpu time in eT (sec):               2.14908
+  Total wall time in eT (sec):              2.74000
+  Total cpu time in eT (sec):               1.80397
 
-  Calculation end:2022-07-06 12:50:40 UTC +02:00
+  Calculation end:2022-10-19 10:30:08 UTC -07:00
 
   - Implementation references:
 

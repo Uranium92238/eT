@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -77,7 +77,7 @@
      end solver fci
 
 
-  Calculation start:2022-06-30 08:49:34 UTC +02:00
+  Calculation start:2022-10-19 10:30:31 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -158,7 +158,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -74.652410642769     0.4000E-12     0.7465E+02
+     1           -74.652410642769     0.4011E-12     0.7465E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -237,17 +237,19 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2832E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.2832E-15
+     Maximal difference between approximate and actual diagonal:              0.3794E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.7651E-16
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00705
-     Total cpu time (sec):               0.01695
+     Total wall time (sec):              0.01500
+     Total cpu time (sec):               0.01388
 
 
   Determining FCI eigenstates
   ===========================
+     Storage (fci_davidson_trials): memory
+     Storage (fci_davidson_transforms): memory
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -262,8 +264,6 @@
      Number of requested solutions:           5
      Max reduced space dimension:           100
 
-     Storage (fci_davidson_trials): memory
-     Storage (fci_davidson_transforms): memory
 
   Requested restart. Reading in solution from file.
 
@@ -286,10 +286,10 @@
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
      1 -74.692085805113    0.000000000000     0.2007E-10   0.7469E+02
-     2 -74.612599930733    0.000000000000     0.5792E-10   0.7461E+02
-     3 -74.382687297414    0.000000000000     0.4189E-10   0.7438E+02
-     4 -74.132033916286    0.000000000000     0.3911E-11   0.7413E+02
-     5 -74.062698387151    0.000000000000     0.1387E-10   0.7406E+02
+     2 -74.612599930733    0.000000000000     0.5817E-10   0.7461E+02
+     3 -74.382687297414    0.000000000000     0.4187E-10   0.7438E+02
+     4 -74.132033916286    0.000000000000     0.3894E-11   0.7413E+02
+     5 -74.062698387151    0.000000000000     0.1385E-10   0.7406E+02
   -------------------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -321,16 +321,16 @@
 
      Largest CI amplitudes:
      ---------------------------
-     002a222      0.990913305779
-     202a022      0.069883204004
-     022a022      0.035065532612
-     00222a2      0.033968374233
-     a022ba2      0.032156657077
-     ab2aba2     -0.031914323063
-     ba2aab2     -0.031816360280
-     ba20a22      0.031662132801
-     022a202      0.029272354184
-     02202a2     -0.027816747380
+     002a222     -0.990913305779
+     202a022     -0.069883204004
+     022a022     -0.035065532612
+     00222a2     -0.033968374233
+     a022ba2     -0.032156657077
+     ab2aba2      0.031914323063
+     ba2aab2      0.031816360279
+     ba20a22     -0.031662132801
+     022a202     -0.029272354184
+     02202a2      0.027816747380
      ---------------------------
 
      Electronic state nr. 3
@@ -359,10 +359,10 @@
 
      Largest CI amplitudes:
      ---------------------------
-     0baa222      0.560568685377
+     0aab222      0.560568685377
      0aba222     -0.560568685377
-     0aab222      0.560568685376
-     a0b2a22     -0.091471675982
+     0baa222      0.560568685377
+     a0b2a22     -0.091471675981
      a0a2b22      0.091471675981
      b0a2a22      0.091471675981
      abaab22      0.078937458316
@@ -378,16 +378,16 @@
 
      Largest CI amplitudes:
      ---------------------------
-     0a02222      0.935878499794
-     00222a2     -0.208284715969
-     0a20222     -0.181256078386
-     ba02a22     -0.117497778462
-     ab02a22     -0.071241590630
-     0a22202     -0.062015759619
-     200a222     -0.056125697615
-     2a02022      0.053912751511
-     020a222     -0.053747385375
-     0a22022     -0.049093083846
+     0a02222     -0.935878499794
+     00222a2      0.208284715969
+     0a20222      0.181256078386
+     ba02a22      0.117497778462
+     ab02a22      0.071241590630
+     0a22202      0.062015759619
+     200a222      0.056125697615
+     2a02022     -0.053912751511
+     020a222      0.053747385375
+     0a22022      0.049093083846
      ---------------------------
 
   - Electronic energies:
@@ -396,22 +396,22 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                -74.692085805113    -2032.475179481896
-        2                -74.612599930733    -2030.312258671010
-        3                -74.382687297414    -2024.056017254896
-        4                -74.132033916286    -2017.235391343792
-        5                -74.062698387151    -2015.348675495600
+        1                -74.692085805113    -2032.475179481894
+        2                -74.612599930733    -2030.312258671009
+        3                -74.382687297414    -2024.056017254892
+        4                -74.132033916286    -2017.235391343788
+        5                -74.062698387151    -2015.348675495598
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   :: There was 1 warning during the execution of eT. ::
 
-  Peak memory usage during the execution of eT: 1.938608 MB
+  Peak memory usage during the execution of eT: 1.923592 MB
 
-  Total wall time in eT (sec):              0.04225
-  Total cpu time in eT (sec):               0.06495
+  Total wall time in eT (sec):              0.04300
+  Total cpu time in eT (sec):               0.03861
 
-  Calculation end:2022-06-30 08:49:34 UTC +02:00
+  Calculation end:2022-10-19 10:30:31 UTC -07:00
 
   - Implementation references:
 

@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -88,7 +88,7 @@
      end visualization
 
 
-  Calculation start:2022-06-30 08:45:06 UTC +02:00
+  Calculation start:2022-10-19 10:30:28 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -186,15 +186,15 @@
      5          -150.957123614074     0.2761E-03     0.2799E-04
      6          -150.957124723509     0.3249E-04     0.1109E-05
      7          -150.957124734962     0.5185E-05     0.1145E-07
-     8          -150.957124735349     0.1119E-05     0.3872E-09
-     9          -150.957124735375     0.1335E-06     0.2581E-10
+     8          -150.957124735349     0.1119E-05     0.3874E-09
+     9          -150.957124735375     0.1335E-06     0.2586E-10
     10          -150.957124735376     0.2042E-07     0.6253E-12
-    11          -150.957124735375     0.2676E-08     0.5684E-13
-    12          -150.957124735375     0.9364E-09     0.5684E-13
-    13          -150.957124735376     0.3023E-09     0.1137E-12
-    14          -150.957124735375     0.7502E-10     0.1137E-12
-    15          -150.957124735375     0.1241E-10     0.2842E-13
-    16          -150.957124735376     0.3361E-11     0.2274E-12
+    11          -150.957124735375     0.2676E-08     0.2274E-12
+    12          -150.957124735375     0.9364E-09     0.2842E-13
+    13          -150.957124735375     0.3023E-09     0.5684E-13
+    14          -150.957124735375     0.7502E-10     0.5684E-13
+    15          -150.957124735375     0.1241E-10     0.0000E+00
+    16          -150.957124735376     0.3364E-11     0.1990E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -204,6 +204,13 @@
      Nuclear repulsion energy:      33.053483663804
      Electronic energy:           -184.010608399180
      Total energy:                -150.957124735376
+
+     The smallest diagonal after decomposition is:  -0.2907E-15
+
+  - Preparation for frozen Hartree-Fock orbitals
+
+     There are 4 frozen occupied orbitals.
+     There are 1 frozen virtual orbitals.
 
 
   Plotting orbitals and/or the HF density
@@ -221,13 +228,6 @@
   - Placing the AOs evaluated on the grid in memory
 
   - Plotting density
-
-     The smallest diagonal after decomposition is:  -0.5139E-15
-
-  - Preparation for frozen Hartree-Fock orbitals
-
-     There are 4 frozen occupied orbitals.
-     There are 1 frozen virtual orbitals.
 
 
   :: CC2 wavefunction
@@ -299,7 +299,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.6695E-11
-     Minimal element of difference between approximate and actual diagonal:  -0.6525E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.3974E-15
 
   - Settings for integral handling:
 
@@ -308,8 +308,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.06926
-     Total cpu time (sec):               0.13926
+     Total wall time (sec):              0.20200
+     Total cpu time (sec):               0.10682
 
 
   Determining CC cluster amplitudes
@@ -348,9 +348,9 @@
     6          -151.092266535892     0.3084E-05     0.4610E-07
     7          -151.092266524127     0.4410E-06     0.1177E-07
     8          -151.092266527115     0.7231E-07     0.2988E-08
-    9          -151.092266526168     0.1187E-07     0.9473E-09
+    9          -151.092266526167     0.1187E-07     0.9473E-09
    10          -151.092266526304     0.3604E-08     0.1361E-09
-   11          -151.092266526308     0.6756E-09     0.4206E-11
+   11          -151.092266526308     0.6756E-09     0.4178E-11
    12          -151.092266526301     0.1374E-09     0.6906E-11
    13          -151.092266526301     0.1957E-10     0.2274E-12
    14          -151.092266526301     0.3359E-11     0.1705E-12
@@ -381,15 +381,15 @@
 
   - Finished solving the CC2 ground state equations
 
-     Total wall time (sec):              0.01864
-     Total cpu time (sec):               0.03865
+     Total wall time (sec):              0.09100
+     Total cpu time (sec):               0.05781
 
-  Peak memory usage during the execution of eT: 1.444328 MB
+  Peak memory usage during the execution of eT: 1.446172 MB
 
-  Total wall time in eT (sec):              0.38946
-  Total cpu time in eT (sec):               0.73201
+  Total wall time in eT (sec):              0.66200
+  Total cpu time in eT (sec):               0.54164
 
-  Calculation end:2022-06-30 08:45:07 UTC +02:00
+  Calculation end:2022-10-19 10:30:29 UTC -07:00
 
   - Implementation references:
 

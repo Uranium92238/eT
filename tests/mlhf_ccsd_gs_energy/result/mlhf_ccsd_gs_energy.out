@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -78,7 +78,7 @@
      end active atoms
 
 
-  Calculation start:2022-06-30 08:48:26 UTC +02:00
+  Calculation start:2022-10-19 10:29:53 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -186,18 +186,18 @@
      2          -152.011877032057     0.1366E+00     0.2562E-01
      3          -152.018448490303     0.2167E-01     0.6571E-02
      4          -152.018690017977     0.5645E-02     0.2415E-03
-     5          -152.018703912213     0.1006E-02     0.1389E-04
+     5          -152.018703912212     0.1006E-02     0.1389E-04
      6          -152.018704702591     0.1890E-03     0.7904E-06
      7          -152.018704720002     0.2445E-04     0.1741E-07
      8          -152.018704720373     0.5552E-05     0.3712E-09
      9          -152.018704720397     0.1150E-05     0.2413E-10
-    10          -152.018704720398     0.2301E-06     0.8811E-12
-    11          -152.018704720398     0.7198E-07     0.1421E-12
-    12          -152.018704720398     0.1570E-07     0.8527E-13
-    13          -152.018704720398     0.2151E-08     0.2842E-13
-    14          -152.018704720398     0.5725E-09     0.5684E-13
-    15          -152.018704720398     0.4648E-10     0.0000E+00
-    16          -152.018704720398     0.8077E-11     0.2842E-13
+    10          -152.018704720398     0.2301E-06     0.7674E-12
+    11          -152.018704720398     0.7198E-07     0.8527E-13
+    12          -152.018704720398     0.1570E-07     0.1705E-12
+    13          -152.018704720398     0.2151E-08     0.0000E+00
+    14          -152.018704720397     0.5725E-09     0.1705E-12
+    15          -152.018704720397     0.4648E-10     0.5684E-13
+    16          -152.018704720397     0.8080E-11     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -206,7 +206,7 @@
      HOMO-LUMO gap:                  0.695204742952
      Nuclear repulsion energy:      37.386395233393
      Electronic energy:           -189.405099953791
-     Total energy:                -152.018704720398
+     Total energy:                -152.018704720397
 
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
@@ -285,7 +285,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.9407E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.1389E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.1569E-14
 
   - Settings for integral handling:
 
@@ -294,8 +294,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              1.39712
-     Total cpu time (sec):               2.76341
+     Total wall time (sec):              1.66500
+     Total cpu time (sec):               1.30295
 
 
   Determining CC cluster amplitudes
@@ -326,25 +326,25 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -152.224703416269     0.7638E-01     0.1522E+03
-    2          -152.228974477795     0.2179E-01     0.4271E-02
-    3          -152.232921954254     0.5776E-02     0.3947E-02
-    4          -152.233529148105     0.1217E-02     0.6072E-03
-    5          -152.233528796464     0.2569E-03     0.3516E-06
+    1          -152.224703416268     0.7638E-01     0.1522E+03
+    2          -152.228974477794     0.2179E-01     0.4271E-02
+    3          -152.232921954253     0.5776E-02     0.3947E-02
+    4          -152.233529148104     0.1217E-02     0.6072E-03
+    5          -152.233528796463     0.2569E-03     0.3516E-06
     6          -152.233541280768     0.7053E-04     0.1248E-04
     7          -152.233541468614     0.1823E-04     0.1878E-06
     8          -152.233541024860     0.5389E-05     0.4438E-06
     9          -152.233540954472     0.1675E-05     0.7039E-07
-   10          -152.233540868877     0.5955E-06     0.8560E-07
+   10          -152.233540868876     0.5955E-06     0.8560E-07
    11          -152.233540895967     0.2020E-06     0.2709E-07
-   12          -152.233540897467     0.7080E-07     0.1499E-08
-   13          -152.233540900974     0.1974E-07     0.3507E-08
+   12          -152.233540897466     0.7080E-07     0.1499E-08
+   13          -152.233540900973     0.1974E-07     0.3507E-08
    14          -152.233540900548     0.4213E-08     0.4254E-09
    15          -152.233540900454     0.8468E-09     0.9399E-10
-   16          -152.233540900453     0.2799E-09     0.1506E-11
+   16          -152.233540900452     0.2799E-09     0.1506E-11
    17          -152.233540900460     0.4641E-10     0.7276E-11
-   18          -152.233540900459     0.1231E-10     0.1421E-11
-   19          -152.233540900458     0.3090E-11     0.5969E-12
+   18          -152.233540900458     0.1231E-10     0.1450E-11
+   19          -152.233540900458     0.3090E-11     0.5684E-12
   ---------------------------------------------------------------
   Convergence criterion met in 19 iterations!
 
@@ -388,15 +388,15 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.48995
-     Total cpu time (sec):               0.97991
+     Total wall time (sec):              0.81100
+     Total cpu time (sec):               0.44628
 
-  Peak memory usage during the execution of eT: 24.228776 MB
+  Peak memory usage during the execution of eT: 24.160132 MB
 
-  Total wall time in eT (sec):              3.64291
-  Total cpu time in eT (sec):               7.16418
+  Total wall time in eT (sec):              4.92700
+  Total cpu time in eT (sec):               3.44416
 
-  Calculation end:2022-06-30 08:48:29 UTC +02:00
+  Calculation end:2022-10-19 10:29:58 UTC -07:00
 
   - Implementation references:
 

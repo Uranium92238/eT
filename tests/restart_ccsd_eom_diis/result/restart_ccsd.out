@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -92,7 +92,7 @@
      end solver cc multipliers
 
 
-  Calculation start:2022-06-30 08:48:23 UTC +02:00
+  Calculation start:2022-10-19 10:29:17 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -170,7 +170,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -78.843851693631     0.5172E-11     0.7884E+02
+     1           -78.843851693631     0.5170E-11     0.7884E+02
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -261,8 +261,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.21762
-     Total cpu time (sec):               0.43737
+     Total wall time (sec):              0.29200
+     Total cpu time (sec):               0.26617
 
 
   Determining CC cluster amplitudes
@@ -339,8 +339,8 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.02401
-     Total cpu time (sec):               0.04401
+     Total wall time (sec):              0.03000
+     Total cpu time (sec):               0.01759
 
 
   Determining CC multipliers
@@ -393,14 +393,14 @@
    18          0.4829E-11
    19          0.2072E-11
    20          0.1116E-11
-   21          0.3722E-12
+   21          0.3721E-12
   ----------------------------
   Convergence criterion met in 21 iterations!
 
   - Finished solving the ccsd multipliers equations
 
-     Total wall time (sec):              0.27717
-     Total cpu time (sec):               0.55716
+     Total wall time (sec):              0.79800
+     Total cpu time (sec):               0.37668
 
   - CC multipliers solver summary:
 
@@ -443,9 +443,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -622,7 +622,7 @@
 
    Root     Eigenvalue (Re)     Residual norm
   -----------------------------------------------
-     1      0.247194254855       0.3863E-06
+     1      0.247194254854       0.3863E-06
      2      0.356085032388       0.1575E-04
      3      0.312716692497       0.4595E-05
   -----------------------------------------------
@@ -774,8 +774,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -817,7 +815,7 @@
 
      Electronic state nr. 2
 
-     Energy (Hartree):                  0.356085057592
+     Energy (Hartree):                  0.312716698779
      Fraction singles (|R1|/|R|):       0.974191508731
 
      Largest single amplitudes:
@@ -854,7 +852,7 @@
 
      Electronic state nr. 3
 
-     Energy (Hartree):                  0.312716698779
+     Energy (Hartree):                  0.356085057592
      Fraction singles (|R1|/|R|):       0.977805372200
 
      Largest single amplitudes:
@@ -863,7 +861,7 @@
      -----------------------------------
         1      5        0.957314847871
         2      4       -0.137091155508
-        4      5        0.090812850216
+        4      5        0.090812850215
         1      2       -0.071675967621
         3      4       -0.054796039253
         5      6       -0.040602500552
@@ -889,7 +887,7 @@
         4      4       2      5       -0.031072898992
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CCSD excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
@@ -903,8 +901,8 @@
 
   - Finished solving the CCSD excited state equations (right)
 
-     Total wall time (sec):              0.87272
-     Total cpu time (sec):               1.73297
+     Total wall time (sec):              2.72200
+     Total cpu time (sec):               1.56503
 
 
   Determining CC excited state amplitudes
@@ -913,9 +911,9 @@
    - DIIS coupled cluster excited state solver
   -----------------------------------------------
 
-  A DIIS solver that solves for the lowest eigenvalues and  the right 
-  eigenvectors of the Jacobian matrix, A. The eigenvalue  problem is solved 
-  by DIIS extrapolation of residuals for each  eigenvector until the convergence 
+  A DIIS solver that solves for the lowest eigenvalues and the eigenvectors 
+  of the Jacobian matrix, A. The eigenvalue problem is solved by DIIS 
+  extrapolation of residuals for each eigenvector until the convergence 
   criteria are met.
 
   More on the DIIS algorithm can be found in P. Pulay, Chemical Physics 
@@ -1238,8 +1236,6 @@
 
   - Resorting roots according to excitation energy.
 
-  - Stored converged states to file.
-
   - Excitation vector amplitudes:
 
      Electronic state nr. 1
@@ -1353,22 +1349,22 @@
         1      2       2      4        0.050263933720
      --------------------------------------------------
 
-     - Electronic excitation energies:
+  - CCSD excitation energies:
 
                                       Excitation energy
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
         1                  0.247194255572        6.726498310300
-        2                  0.312716698779        8.509454805379
+        2                  0.312716698779        8.509454805380
         3                  0.356085057593        9.689567958108
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   - Finished solving the CCSD excited state equations (left)
 
-     Total wall time (sec):              1.04119
-     Total cpu time (sec):               2.09106
+     Total wall time (sec):              2.92700
+     Total cpu time (sec):               1.59991
 
 
   Biorthonormalization of excited CC states
@@ -1433,12 +1429,12 @@
      --------------------------------------------------------------------------
      Oscillator strength:      0.102561743915
 
-  Peak memory usage during the execution of eT: 14.844312 MB
+  Peak memory usage during the execution of eT: 14.838420 MB
 
-  Total wall time in eT (sec):              2.56325
-  Total cpu time in eT (sec):               5.02100
+  Total wall time in eT (sec):              6.84200
+  Total cpu time in eT (sec):               3.88656
 
-  Calculation end:2022-06-30 08:48:25 UTC +02:00
+  Calculation end:2022-10-19 10:29:24 UTC -07:00
 
   - Implementation references:
 

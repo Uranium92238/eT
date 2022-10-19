@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -80,7 +80,7 @@
      end fci mean value
 
 
-  Calculation start:2022-06-30 08:49:34 UTC +02:00
+  Calculation start:2022-10-19 10:30:33 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -179,7 +179,7 @@
      9            -3.611348229384     0.4308E-06     0.5344E-07
     10            -3.611348220711     0.1928E-07     0.8673E-08
     11            -3.611348221079     0.6327E-09     0.3676E-09
-    12            -3.611348221074     0.4891E-10     0.4484E-11
+    12            -3.611348221074     0.4891E-10     0.4480E-11
   ---------------------------------------------------------------
   Convergence criterion met in 12 iterations!
 
@@ -196,7 +196,7 @@
      Sz:                   1.00000000
      Sz(Sz + 1):           2.00000000
      S^2:                  2.00000000
-     Spin contamination:   0.00000000
+     Spin contamination:  -0.00000000
 
 
   :: FCI wavefunction
@@ -258,17 +258,19 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.2032E-15
-     Minimal element of difference between approximate and actual diagonal:  -0.1135E-15
+     Maximal difference between approximate and actual diagonal:              0.2033E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.2033E-15
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.00516
-     Total cpu time (sec):               0.00515
+     Total wall time (sec):              0.01200
+     Total cpu time (sec):               0.00955
 
 
   Determining FCI eigenstates
   ===========================
+     Storage (fci_davidson_trials): file
+     Storage (fci_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -283,8 +285,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (fci_davidson_trials): file
-     Storage (fci_davidson_transforms): file
 
   - Davidson solver settings
 
@@ -352,7 +352,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.630971447362    0.000000000000     0.8296E-06   0.8530E-11
+     1  -3.630971447362    0.000000000000     0.8296E-06   0.8535E-11
   -------------------------------------------------------------------------
 
   Iteration:                  9
@@ -360,7 +360,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.630971447362    0.000000000000     0.1222E-06   0.2820E-12
+     1  -3.630971447362    0.000000000000     0.1222E-06   0.2727E-12
   -------------------------------------------------------------------------
 
   Iteration:                 10
@@ -368,7 +368,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.630971447362    0.000000000000     0.1632E-07   0.1332E-14
+     1  -3.630971447362    0.000000000000     0.1632E-07   0.1021E-13
   -------------------------------------------------------------------------
 
   Iteration:                 11
@@ -376,7 +376,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.630971447362    0.000000000000     0.2345E-08   0.3997E-14
+     1  -3.630971447362    0.000000000000     0.2345E-08   0.0000E+00
   -------------------------------------------------------------------------
 
   Iteration:                 12
@@ -384,7 +384,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.630971447362    0.000000000000     0.2579E-09   0.7550E-14
+     1  -3.630971447362    0.000000000000     0.2579E-09   0.0000E+00
   -------------------------------------------------------------------------
 
   Iteration:                 13
@@ -392,7 +392,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  -3.630971447362    0.000000000000     0.3119E-10   0.5329E-14
+     1  -3.630971447362    0.000000000000     0.3119E-10   0.3109E-14
   -------------------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -405,16 +405,16 @@
 
      Largest CI amplitudes:
      --------------------------
-     000aa2      0.996437115603
-     200aa0     -0.050810767358
-     a00a20     -0.031465550225
-     0a002a     -0.020946949445
-     200a0a     -0.020713533039
-     0aa002     -0.020217050337
-     000a2a      0.018479410902
-     a00aba     -0.016888912759
-     00aaba      0.014844727138
-     0a020a      0.011697494405
+     000aa2     -0.996437115603
+     200aa0      0.050810767358
+     a00a20      0.031465550225
+     0a002a      0.020946949445
+     200a0a      0.020713533039
+     0aa002      0.020217050337
+     000a2a     -0.018479410902
+     a00aba      0.016888912759
+     00aaba     -0.014844727138
+     0a020a     -0.011697494405
      --------------------------
 
   - Electronic energies:
@@ -477,12 +477,12 @@
 
   :: There was 1 warning during the execution of eT. ::
 
-  Peak memory usage during the execution of eT: 125.080 KB
+  Peak memory usage during the execution of eT: 119.568 KB
 
-  Total wall time in eT (sec):              0.06594
-  Total cpu time in eT (sec):               0.10988
+  Total wall time in eT (sec):              0.18800
+  Total cpu time in eT (sec):               0.12562
 
-  Calculation end:2022-06-30 08:49:34 UTC +02:00
+  Calculation end:2022-10-19 10:30:33 UTC -07:00
 
   - Implementation references:
 

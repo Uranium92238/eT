@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -80,7 +80,7 @@
      end do
 
 
-  Calculation start:2022-06-30 08:46:24 UTC +02:00
+  Calculation start:2022-10-19 10:30:28 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -211,11 +211,11 @@
      6           -76.375048210077     0.3457E-04     0.4114E-06
      7           -76.375048221831     0.3154E-05     0.1175E-07
      8           -76.375048221943     0.5777E-06     0.1120E-09
-     9           -76.375048221949     0.9572E-07     0.5528E-11
-    10           -76.375048221949     0.1643E-07     0.2558E-12
-    11           -76.375048221949     0.5335E-08     0.1421E-13
-    12           -76.375048221949     0.1290E-08     0.4263E-13
-    13           -76.375048221949     0.1458E-09     0.2842E-13
+     9           -76.375048221949     0.9572E-07     0.5642E-11
+    10           -76.375048221949     0.1643E-07     0.1421E-12
+    11           -76.375048221949     0.5335E-08     0.0000E+00
+    12           -76.375048221949     0.1290E-08     0.8527E-13
+    13           -76.375048221949     0.1458E-09     0.1421E-13
     14           -76.375048221949     0.2047E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
@@ -311,8 +311,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.16459
-     Total cpu time (sec):               0.33457
+     Total wall time (sec):              0.31500
+     Total cpu time (sec):               0.18164
 
 
   Determining CC cluster amplitudes
@@ -351,13 +351,13 @@
     6           -76.586378759421     0.6421E-04     0.8823E-05
     7           -76.586378078377     0.1662E-04     0.6810E-06
     8           -76.586377646384     0.4075E-05     0.4320E-06
-    9           -76.586377562056     0.9522E-06     0.8433E-07
+    9           -76.586377562057     0.9522E-06     0.8433E-07
    10           -76.586377511988     0.2214E-06     0.5007E-07
    11           -76.586377526349     0.4978E-07     0.1436E-07
    12           -76.586377525507     0.1023E-07     0.8421E-09
    13           -76.586377525978     0.2770E-08     0.4711E-09
    14           -76.586377525844     0.7536E-09     0.1340E-09
-   15           -76.586377525836     0.2218E-09     0.7645E-11
+   15           -76.586377525837     0.2218E-09     0.7645E-11
    16           -76.586377525837     0.4201E-10     0.3979E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
@@ -402,15 +402,15 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.12501
-     Total cpu time (sec):               0.25496
+     Total wall time (sec):              0.29300
+     Total cpu time (sec):               0.16162
 
-  Peak memory usage during the execution of eT: 7.341928 MB
+  Peak memory usage during the execution of eT: 7.338248 MB
 
-  Total wall time in eT (sec):              0.69153
-  Total cpu time in eT (sec):               1.31978
+  Total wall time in eT (sec):              1.09300
+  Total cpu time in eT (sec):               0.80350
 
-  Calculation end:2022-06-30 08:46:25 UTC +02:00
+  Calculation end:2022-10-19 10:30:29 UTC -07:00
 
   - Implementation references:
 

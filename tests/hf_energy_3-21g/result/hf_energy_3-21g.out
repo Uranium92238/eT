@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -62,7 +62,7 @@
      end method
 
 
-  Calculation start:2022-06-30 08:44:53 UTC +02:00
+  Calculation start:2022-10-19 10:30:30 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -147,21 +147,21 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -176.427944702642     0.4861E-01     0.1764E+03
-     2          -176.447985480619     0.1017E-01     0.2004E-01
+     1          -176.427944702642     0.4186E-01     0.1764E+03
+     2          -176.447985480619     0.1518E-01     0.2004E-01
      3          -176.449095710219     0.5570E-02     0.1110E-02
      4          -176.449182641423     0.1383E-02     0.8693E-04
      5          -176.449192645236     0.2453E-03     0.1000E-04
      6          -176.449193031189     0.9789E-04     0.3860E-06
-     7          -176.449193080484     0.8148E-05     0.4929E-07
-     8          -176.449193081522     0.1166E-05     0.1038E-08
-     9          -176.449193081558     0.2214E-06     0.3635E-10
-    10          -176.449193081559     0.8171E-07     0.1194E-11
-    11          -176.449193081560     0.2615E-07     0.1705E-12
-    12          -176.449193081560     0.7254E-08     0.1137E-12
-    13          -176.449193081560     0.5253E-09     0.1137E-12
-    14          -176.449193081560     0.2362E-09     0.1137E-12
-    15          -176.449193081560     0.6418E-10     0.5684E-13
+     7          -176.449193080484     0.7844E-05     0.4929E-07
+     8          -176.449193081522     0.1119E-05     0.1038E-08
+     9          -176.449193081558     0.2526E-06     0.3638E-10
+    10          -176.449193081560     0.8171E-07     0.1478E-11
+    11          -176.449193081560     0.2335E-07     0.1705E-12
+    12          -176.449193081560     0.6473E-08     0.8527E-13
+    13          -176.449193081560     0.4681E-09     0.1137E-12
+    14          -176.449193081560     0.2362E-09     0.5684E-13
+    15          -176.449193081560     0.6504E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 15 iterations!
 
@@ -172,12 +172,12 @@
      Electronic energy:           -224.967510701287
      Total energy:                -176.449193081560
 
-  Peak memory usage during the execution of eT: 108.568 KB
+  Peak memory usage during the execution of eT: 106.172 KB
 
-  Total wall time in eT (sec):              0.10939
-  Total cpu time in eT (sec):               0.19618
+  Total wall time in eT (sec):              0.23000
+  Total cpu time in eT (sec):               0.21174
 
-  Calculation end:2022-06-30 08:44:53 UTC +02:00
+  Calculation end:2022-10-19 10:30:30 UTC -07:00
 
   - Implementation references:
 

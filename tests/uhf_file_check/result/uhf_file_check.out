@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -64,7 +64,7 @@
      end solver scf
 
 
-  Calculation start:2022-06-30 08:45:24 UTC +02:00
+  Calculation start:2022-10-19 10:30:21 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -163,21 +163,21 @@
     10           -78.656324392031     0.8514E-05     0.4091E-08
     11           -78.656324400673     0.4014E-05     0.8642E-08
     12           -78.656324403810     0.6173E-06     0.3137E-08
-    13           -78.656324403929     0.4504E-06     0.1191E-09
+    13           -78.656324403929     0.4504E-06     0.1192E-09
     14           -78.656324403966     0.3797E-06     0.3674E-10
-    15           -78.656324403999     0.2984E-06     0.3281E-10
-    16           -78.656324404021     0.1161E-06     0.2271E-10
-    17           -78.656324404025     0.5464E-07     0.3524E-11
-    18           -78.656324404025     0.4187E-07     0.1990E-12
-    19           -78.656324404025     0.2086E-07     0.7105E-13
-    20           -78.656324404025     0.3529E-08     0.4263E-13
-    21           -78.656324404025     0.9043E-09     0.1421E-13
-    22           -78.656324404025     0.3486E-09     0.0000E+00
-    23           -78.656324404025     0.1300E-09     0.4263E-13
-    24           -78.656324404025     0.9426E-10     0.8527E-13
-    25           -78.656324404025     0.5442E-10     0.7105E-13
-    26           -78.656324404025     0.2286E-10     0.1421E-13
-    27           -78.656324404025     0.5590E-11     0.0000E+00
+    15           -78.656324403999     0.2984E-06     0.3283E-10
+    16           -78.656324404021     0.1161E-06     0.2274E-10
+    17           -78.656324404025     0.5464E-07     0.3467E-11
+    18           -78.656324404025     0.4187E-07     0.1847E-12
+    19           -78.656324404025     0.2086E-07     0.9948E-13
+    20           -78.656324404025     0.3529E-08     0.8527E-13
+    21           -78.656324404025     0.9043E-09     0.4263E-13
+    22           -78.656324404025     0.3486E-09     0.1421E-13
+    23           -78.656324404025     0.1300E-09     0.2842E-13
+    24           -78.656324404025     0.9426E-10     0.2842E-13
+    25           -78.656324404025     0.5442E-10     0.2842E-13
+    26           -78.656324404025     0.2286E-10     0.2842E-13
+    27           -78.656324404025     0.5590E-11     0.1421E-13
   ---------------------------------------------------------------
   Convergence criterion met in 27 iterations!
 
@@ -196,12 +196,12 @@
      S^2:                  2.00764752
      Spin contamination:   0.00764752
 
-  Peak memory usage during the execution of eT: 305.912 KB
+  Peak memory usage during the execution of eT: 303.156 KB
 
-  Total wall time in eT (sec):              1.11867
-  Total cpu time in eT (sec):               2.20125
+  Total wall time in eT (sec):              1.93600
+  Total cpu time in eT (sec):               1.50862
 
-  Calculation end:2022-06-30 08:45:25 UTC +02:00
+  Calculation end:2022-10-19 10:30:23 UTC -07:00
 
   - Implementation references:
 

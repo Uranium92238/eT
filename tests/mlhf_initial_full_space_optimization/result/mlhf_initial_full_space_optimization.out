@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -75,7 +75,7 @@
      end active atoms
 
 
-  Calculation start:2022-06-30 08:45:32 UTC +02:00
+  Calculation start:2022-10-19 10:30:17 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -185,17 +185,17 @@
   ---------------------------------------------------------------
      1          -152.058301564710     0.1155E-02     0.1521E+03
      2          -152.058302192275     0.4069E-03     0.6276E-06
-     3          -152.058302306404     0.7494E-04     0.1141E-06
+     3          -152.058302306403     0.7494E-04     0.1141E-06
      4          -152.058302307904     0.1886E-04     0.1501E-08
-     5          -152.058302308077     0.4225E-05     0.1729E-09
+     5          -152.058302308077     0.4225E-05     0.1730E-09
      6          -152.058302308086     0.9786E-06     0.9038E-11
      7          -152.058302308087     0.1118E-06     0.5684E-12
-     8          -152.058302308087     0.3255E-07     0.2842E-13
-     9          -152.058302308087     0.7923E-08     0.2842E-13
+     8          -152.058302308087     0.3255E-07     0.1705E-12
+     9          -152.058302308087     0.7923E-08     0.1137E-12
     10          -152.058302308087     0.2454E-08     0.1137E-12
-    11          -152.058302308087     0.8598E-10     0.2842E-13
-    12          -152.058302308087     0.1929E-10     0.1990E-12
-    13          -152.058302308087     0.8163E-11     0.0000E+00
+    11          -152.058302308087     0.8599E-10     0.2842E-13
+    12          -152.058302308087     0.1929E-10     0.0000E+00
+    13          -152.058302308087     0.8166E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 13 iterations!
 
@@ -209,15 +209,15 @@
   - Summary of MLHF active/inactive contributions to electronic energy (a.u.):
 
      Active energy:               -104.799512917235
-     Active-inactive energy:        19.316446319110
-     Inactive energy:             -103.961630943355
+     Active-inactive energy:        19.316446319109
+     Inactive energy:             -103.961630943354
 
-  Peak memory usage during the execution of eT: 721.792 KB
+  Peak memory usage during the execution of eT: 708.768 KB
 
-  Total wall time in eT (sec):              1.65993
-  Total cpu time in eT (sec):               3.26220
+  Total wall time in eT (sec):              1.99600
+  Total cpu time in eT (sec):               1.55715
 
-  Calculation end:2022-06-30 08:45:33 UTC +02:00
+  Calculation end:2022-10-19 10:30:19 UTC -07:00
 
   - Implementation references:
 

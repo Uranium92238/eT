@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -80,7 +80,7 @@
      end do
 
 
-  Calculation start:2022-06-30 08:46:25 UTC +02:00
+  Calculation start:2022-10-19 10:30:27 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -219,13 +219,13 @@
      5           -76.069353258480     0.1832E-03     0.1160E-04
      6           -76.069353670717     0.3504E-04     0.4122E-06
      7           -76.069353682126     0.3105E-05     0.1141E-07
-     8           -76.069353682236     0.5654E-06     0.1102E-09
-     9           -76.069353682243     0.1316E-06     0.6111E-11
-    10           -76.069353682243     0.2105E-07     0.3695E-12
+     8           -76.069353682236     0.5654E-06     0.1101E-09
+     9           -76.069353682243     0.1316E-06     0.6168E-11
+    10           -76.069353682243     0.2105E-07     0.3979E-12
     11           -76.069353682243     0.4778E-08     0.5684E-13
-    12           -76.069353682243     0.1103E-08     0.7105E-13
-    13           -76.069353682243     0.1712E-09     0.5684E-13
-    14           -76.069353682243     0.5663E-10     0.0000E+00
+    12           -76.069353682243     0.1103E-08     0.1279E-12
+    13           -76.069353682243     0.1712E-09     0.2842E-13
+    14           -76.069353682243     0.5663E-10     0.2842E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -310,7 +310,7 @@
 
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
-     Maximal difference between approximate and actual diagonal:              0.1995E-12
+     Maximal difference between approximate and actual diagonal:              0.1994E-12
      Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
@@ -320,8 +320,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.14191
-     Total cpu time (sec):               0.28772
+     Total wall time (sec):              0.33400
+     Total cpu time (sec):               0.20960
 
 
   Determining CC cluster amplitudes
@@ -411,15 +411,15 @@
 
   - Finished solving the CCSD ground state equations
 
-     Total wall time (sec):              0.15809
-     Total cpu time (sec):               0.31810
+     Total wall time (sec):              0.37600
+     Total cpu time (sec):               0.16962
 
-  Peak memory usage during the execution of eT: 7.341992 MB
+  Peak memory usage during the execution of eT: 7.338312 MB
 
-  Total wall time in eT (sec):              0.66512
-  Total cpu time in eT (sec):               1.27724
+  Total wall time in eT (sec):              1.23600
+  Total cpu time in eT (sec):               0.83206
 
-  Calculation end:2022-06-30 08:46:25 UTC +02:00
+  Calculation end:2022-10-19 10:30:28 UTC -07:00
 
   - Implementation references:
 

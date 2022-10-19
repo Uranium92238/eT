@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -69,7 +69,7 @@
      end active atoms
 
 
-  Calculation start:2022-06-30 08:45:33 UTC +02:00
+  Calculation start:2022-10-19 10:30:33 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -200,13 +200,13 @@
      1          -449.546150858738     0.5400E+00     0.4495E+03
      2          -449.584876546543     0.5395E-01     0.3873E-01
      3          -449.585298685713     0.1238E-01     0.4221E-03
-     4          -449.585321962210     0.1714E-03     0.2328E-04
+     4          -449.585321962209     0.1714E-03     0.2328E-04
      5          -449.585321970899     0.5908E-04     0.8690E-08
      6          -449.585321972542     0.2448E-05     0.1643E-08
-     7          -449.585321972546     0.6539E-07     0.3070E-11
-     8          -449.585321972545     0.1485E-07     0.5684E-13
+     7          -449.585321972545     0.6539E-07     0.3126E-11
+     8          -449.585321972545     0.1485E-07     0.0000E+00
      9          -449.585321972545     0.1707E-08     0.5684E-13
-    10          -449.585321972545     0.5353E-09     0.5684E-13
+    10          -449.585321972545     0.5353E-09     0.0000E+00
     11          -449.585321972545     0.1137E-09     0.5684E-13
     12          -449.585321972545     0.1028E-10     0.5684E-13
   ---------------------------------------------------------------
@@ -225,12 +225,12 @@
      Active-inactive energy:        26.974330971521
      Inactive energy:             -523.660135835336
 
-  Peak memory usage during the execution of eT: 249.704 KB
+  Peak memory usage during the execution of eT: 238.868 KB
 
-  Total wall time in eT (sec):              0.18600
-  Total cpu time in eT (sec):               0.35116
+  Total wall time in eT (sec):              0.17400
+  Total cpu time in eT (sec):               0.19938
 
-  Calculation end:2022-06-30 08:45:33 UTC +02:00
+  Calculation end:2022-10-19 10:30:33 UTC -07:00
 
   - Implementation references:
 

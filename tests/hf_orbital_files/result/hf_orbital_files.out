@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -64,7 +64,7 @@
      end method
 
 
-  Calculation start:2022-06-30 08:44:50 UTC +02:00
+  Calculation start:2022-10-19 10:30:20 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -119,7 +119,7 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -78.484417586942
+     Energy of initial guess:               -78.484417586941
      Number of electrons in guess:           12.000000000000
 
   - Screening and integral thresholds:
@@ -156,15 +156,15 @@
      5           -78.844712382238     0.3969E-03     0.4050E-04
      6           -78.844714473163     0.5479E-04     0.2091E-05
      7           -78.844714511466     0.3013E-05     0.3830E-07
-     8           -78.844714511775     0.8681E-06     0.3087E-09
-     9           -78.844714511793     0.2748E-06     0.1828E-10
-    10           -78.844714511796     0.4003E-07     0.2274E-11
-    11           -78.844714511796     0.1118E-07     0.5684E-13
-    12           -78.844714511796     0.2816E-08     0.2842E-13
-    13           -78.844714511796     0.1160E-08     0.1279E-12
-    14           -78.844714511796     0.3002E-09     0.5684E-13
-    15           -78.844714511796     0.2935E-10     0.4263E-13
-    16           -78.844714511796     0.3526E-11     0.0000E+00
+     8           -78.844714511775     0.8681E-06     0.3086E-09
+     9           -78.844714511793     0.2748E-06     0.1833E-10
+    10           -78.844714511796     0.4003E-07     0.2203E-11
+    11           -78.844714511796     0.1118E-07     0.9948E-13
+    12           -78.844714511795     0.2816E-08     0.2700E-12
+    13           -78.844714511796     0.1160E-08     0.2700E-12
+    14           -78.844714511796     0.3002E-09     0.1137E-12
+    15           -78.844714511796     0.2935E-10     0.9948E-13
+    16           -78.844714511796     0.3526E-11     0.2132E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -175,12 +175,12 @@
      Electronic energy:            -91.012325918966
      Total energy:                 -78.844714511796
 
-  Peak memory usage during the execution of eT: 644.304 KB
+  Peak memory usage during the execution of eT: 639.520 KB
 
-  Total wall time in eT (sec):              0.96545
-  Total cpu time in eT (sec):               1.86962
+  Total wall time in eT (sec):              1.11800
+  Total cpu time in eT (sec):               0.88339
 
-  Calculation end:2022-06-30 08:44:51 UTC +02:00
+  Calculation end:2022-10-19 10:30:21 UTC -07:00
 
   - Implementation references:
 

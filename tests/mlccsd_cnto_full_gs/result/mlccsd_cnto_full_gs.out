@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -88,7 +88,7 @@
      end mlcc
 
 
-  Calculation start:2022-06-30 08:49:21 UTC +02:00
+  Calculation start:2022-10-19 10:30:10 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -180,15 +180,15 @@
      5           -78.843850612079     0.3973E-03     0.3613E-04
      6           -78.843851670925     0.5220E-04     0.1059E-05
      7           -78.843851692779     0.6096E-05     0.2185E-07
-     8           -78.843851693528     0.2137E-05     0.7488E-09
+     8           -78.843851693528     0.2137E-05     0.7487E-09
      9           -78.843851693630     0.3151E-06     0.1027E-09
-    10           -78.843851693631     0.2637E-07     0.4263E-12
+    10           -78.843851693631     0.2637E-07     0.4405E-12
     11           -78.843851693631     0.5634E-08     0.1421E-13
-    12           -78.843851693631     0.1415E-08     0.4263E-13
-    13           -78.843851693631     0.6806E-09     0.5684E-13
-    14           -78.843851693631     0.1491E-09     0.5684E-13
-    15           -78.843851693631     0.2501E-10     0.5684E-13
-    16           -78.843851693631     0.5169E-11     0.0000E+00
+    12           -78.843851693631     0.1415E-08     0.8527E-13
+    13           -78.843851693631     0.6806E-09     0.2842E-13
+    14           -78.843851693631     0.1491E-09     0.4263E-13
+    15           -78.843851693631     0.2501E-10     0.7105E-13
+    16           -78.843851693631     0.5166E-11     0.5684E-13
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
@@ -274,8 +274,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.19712
-     Total cpu time (sec):               0.39039
+     Total wall time (sec):              0.34900
+     Total cpu time (sec):               0.24414
 
   Running CCS calculation for NTOs/CNTOs.
 
@@ -284,8 +284,8 @@
      Wall time for CCS ground calculation (sec):                   0.00
      CPU time for CCS ground calculation (sec):                    0.00
 
-     Wall time for CCS excited calculation (sec):                  0.02
-     CPU time for CCS excited calculation (sec):                   0.04
+     Wall time for CCS excited calculation (sec):                  0.19
+     CPU time for CCS excited calculation (sec):                   0.08
 
   - MLCCSD orbital partitioning:
 
@@ -344,10 +344,10 @@
    10           -79.100383427012     0.1779E-05     0.1948E-06
    11           -79.100383466393     0.6705E-06     0.3938E-07
    12           -79.100383474630     0.2989E-06     0.8237E-08
-   13           -79.100383487351     0.1028E-06     0.1272E-07
+   13           -79.100383487352     0.1028E-06     0.1272E-07
    14           -79.100383481865     0.3056E-07     0.5487E-08
    15           -79.100383481092     0.6508E-08     0.7730E-09
-   16           -79.100383481302     0.2112E-08     0.2109E-09
+   16           -79.100383481303     0.2112E-08     0.2110E-09
    17           -79.100383481484     0.6588E-09     0.1819E-09
    18           -79.100383481546     0.1594E-09     0.6158E-10
    19           -79.100383481554     0.5326E-10     0.7915E-11
@@ -380,17 +380,17 @@
 
   - Finished solving the MLCCSD ground state equations
 
-     Total wall time (sec):              0.26506
-     Total cpu time (sec):               0.52502
+     Total wall time (sec):              0.51600
+     Total cpu time (sec):               0.31541
 
   :: There was 1 warning during the execution of eT. ::
 
-  Peak memory usage during the execution of eT: 12.130736 MB
+  Peak memory usage during the execution of eT: 12.122604 MB
 
-  Total wall time in eT (sec):              1.02468
-  Total cpu time in eT (sec):               1.99199
+  Total wall time in eT (sec):              1.65100
+  Total cpu time in eT (sec):               1.25295
 
-  Calculation end:2022-06-30 08:49:22 UTC +02:00
+  Calculation end:2022-10-19 10:30:12 UTC -07:00
 
   - Implementation references:
 

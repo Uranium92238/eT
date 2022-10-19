@@ -1,7 +1,7 @@
 
 
 
-                     eT 1.8 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
@@ -15,17 +15,17 @@
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.8.0 Ibiza
+   This is eT 1.9.0 Jazzy
   ------------------------------------------------------------
-  Configuration date: 2022-06-30 08:43:06 UTC +02:00
-  Git branch:         release-v1.8.0
-  Git hash:           9204bbd8a5d9984444afd222ec28d0f1c1e17adf
-  Fortran compiler:   GNU 9.4.0
-  C compiler:         GNU 9.4.0
-  C++ compiler:       GNU 9.4.0
-  LAPACK type:        MKL
-  BLAS type:          MKL
-  64-bit integers:    ON
+  Configuration date: 2022-10-19 10:25:53 UTC -07:00
+  Git branch:         detached HEAD
+  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
+  Fortran compiler:   GNU 11.3.0
+  C compiler:         GNU 11.3.0
+  C++ compiler:       GNU 11.3.0
+  LAPACK type:        SYSTEM_NATIVE
+  BLAS type:          SYSTEM_NATIVE
+  64-bit integers:    OFF
   OpenMP:             ON
   PCM:                OFF
   Forced batching:    OFF
@@ -85,7 +85,7 @@
      end solver cc es
 
 
-  Calculation start:2022-06-30 08:45:48 UTC +02:00
+  Calculation start:2022-10-19 10:30:30 UTC -07:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -164,7 +164,7 @@
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1          -128.496443872332     0.5955E-10     0.1285E+03
+     1          -128.496443872333     0.5522E-10     0.1285E+03
   ---------------------------------------------------------------
   Convergence criterion met in 1 iterations!
 
@@ -172,8 +172,8 @@
 
      HOMO-LUMO gap:                  1.140324587556
      Nuclear repulsion energy:       0.000000000000
-     Electronic energy:           -128.496443872332
-     Total energy:                -128.496443872332
+     Electronic energy:           -128.496443872333
+     Total energy:                -128.496443872333
 
 
   :: CCS wavefunction
@@ -245,7 +245,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.4407E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.5724E-14
+     Minimal element of difference between approximate and actual diagonal:  -0.4078E-14
 
   - Settings for integral handling:
 
@@ -254,8 +254,8 @@
 
   - Finished decomposing the ERIs.
 
-     Total wall time (sec):              0.13950
-     Total cpu time (sec):               0.27949
+     Total wall time (sec):              0.52100
+     Total cpu time (sec):               0.18264
 
 
   Determining CC cluster amplitudes
@@ -286,14 +286,14 @@
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1          -128.496443872332     0.1490E-09     0.1285E+03
-    2          -128.496443872332     0.2068E-10     0.0000E+00
+    1          -128.496443872333     0.1491E-09     0.1285E+03
+    2          -128.496443872333     0.2068E-10     0.0000E+00
   ---------------------------------------------------------------
   Convergence criterion met in 2 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):  -128.496443872332
+     Final ground state energy (a.u.):  -128.496443872333
 
      Correlation energy (a.u.):            0.000000000000
 
@@ -301,26 +301,28 @@
      -----------------------------------
         a       i         t(a,i)
      -----------------------------------
-       10      5       -0.000000000022
-        4      4        0.000000000018
-       11      3        0.000000000017
-       12      4        0.000000000016
-       11      4        0.000000000016
-       12      3       -0.000000000015
-        3      3       -0.000000000015
-        2      5        0.000000000013
-        2      3        0.000000000013
+        4      4        0.000000000020
+       12      4       -0.000000000018
+       10      3       -0.000000000017
+       11      5        0.000000000016
+        3      3       -0.000000000016
+        2      5        0.000000000016
+       10      5        0.000000000015
+       11      4        0.000000000014
        13      2        0.000000000013
+       12      3        0.000000000013
      ------------------------------------
 
   - Finished solving the CCS ground state equations
 
-     Total wall time (sec):              0.00409
-     Total cpu time (sec):               0.01409
+     Total wall time (sec):              0.00800
+     Total cpu time (sec):               0.00521
 
 
   Determining CC excited state amplitudes
   =======================================
+     Storage (cc_es_davidson_trials): file
+     Storage (cc_es_davidson_transforms): file
 
   Davidson eigenvalue equation solver
   -----------------------------------
@@ -335,8 +337,6 @@
      Number of requested solutions:           1
      Max reduced space dimension:           100
 
-     Storage (cc_es_davidson_trials): file
-     Storage (cc_es_davidson_transforms): file
 
   - Davidson solver settings
 
@@ -371,7 +371,7 @@
 
   Root  Eigenvalue (Re)   Eigenvalue (Im)    |residual|   Delta E (Re)
   -------------------------------------------------------------------------
-     1  32.648311839222    0.000000000000     0.1682E-13   0.6817E-05
+     1  32.648311839222    0.000000000000     0.4736E-14   0.6817E-05
   -------------------------------------------------------------------------
   Convergence criterion met in 3 iterations!
 
@@ -389,13 +389,13 @@
         1      1        0.994433476432
        13      1       -0.105365006912
        19      1        0.000525613315
-        4      1       -0.000000000000
-       10      1        0.000000000000
-        2      1        0.000000000000
-       11      1        0.000000000000
         3      1        0.000000000000
+       10      1       -0.000000000000
+        2      1       -0.000000000000
        12      1        0.000000000000
-        7      1       -0.000000000000
+        4      1        0.000000000000
+       11      1        0.000000000000
+        8      1        0.000000000000
      ------------------------------------
 
   - CCS excitation energies:
@@ -404,18 +404,18 @@
                           ------------------------------------------
       State                (Hartree)             (eV)
      ---------------------------------------------------------------
-        1                 32.648311839222      888.405816358417
+        1                 32.648311839222      888.405816358418
      ---------------------------------------------------------------
      eV/Hartree (CODATA 2014): 27.21138602
 
   :: There was 1 warning during the execution of eT. ::
 
-  Peak memory usage during the execution of eT: 6.621488 MB
+  Peak memory usage during the execution of eT: 6.604452 MB
 
-  Total wall time in eT (sec):              1.03295
-  Total cpu time in eT (sec):               2.04002
+  Total wall time in eT (sec):              1.63400
+  Total cpu time in eT (sec):               1.10452
 
-  Calculation end:2022-06-30 08:45:49 UTC +02:00
+  Calculation end:2022-10-19 10:30:31 UTC -07:00
 
   - Implementation references:
 
