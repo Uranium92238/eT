@@ -188,6 +188,7 @@ module hf_class
 !
       procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_hf
       procedure :: prepare                                  => prepare_hf
+      procedure :: general_preparations                     => general_preparations_hf
 !
 !     Properties
 !
@@ -1236,6 +1237,32 @@ contains
 !
       logical, intent(in), optional :: embedding
 !
+      call wf%general_preparations(centers, embedding, charge)
+!
+      wf%eri_getter = ao_eri_getter(wf%ao)
+!
+   end subroutine prepare_hf
+!
+!
+   subroutine general_preparations_hf(wf, centers, embedding, charge)
+!!
+!!    General preparations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Initializes files, writes the restart file used for consistency checks
+!!    and constructs screening vectors
+!!
+      use atomic_center_class, only: atomic_center
+!
+      implicit none
+!
+      class(hf) :: wf
+!
+      class(atomic_center), dimension(:), optional, intent(in) :: centers
+      integer, intent(in), optional :: charge
+!
+      logical, intent(in), optional :: embedding
+!
       wf%orbital_file = stream_file('orbital_coefficients')
 !
       call wf%prepare_ao_tool(centers=centers, charge=charge)
@@ -1250,9 +1277,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(wf%gradient_threshold)
 !
-      wf%eri_getter = ao_eri_getter(wf%ao)
-!
-   end subroutine prepare_hf
+   end subroutine general_preparations_hf
 !
 !
    function calculate_expectation_value_hf(wf, A, density) result(expectation_value)

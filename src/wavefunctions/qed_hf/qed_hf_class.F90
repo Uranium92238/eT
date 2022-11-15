@@ -120,7 +120,7 @@ contains
          if (embedding) call output%error_msg("Embedding not supported in QED-HF")
       end if
 !
-      call wf%hf%prepare(centers, embedding, charge)
+      call wf%general_preparations(centers, embedding, charge)
 !
       wf%qed = qed_tool()
       call wf%qed%initialize(wf%ao)
