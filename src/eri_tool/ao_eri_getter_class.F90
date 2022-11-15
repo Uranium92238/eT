@@ -35,7 +35,7 @@ module ao_eri_getter_class
 !
    type :: ao_eri_getter
 !
-      type(ao_tool), pointer :: ao
+      class(ao_tool), pointer :: ao
 !
    contains
 !

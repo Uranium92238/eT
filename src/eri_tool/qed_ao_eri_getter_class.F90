@@ -39,7 +39,7 @@ module qed_ao_eri_getter_class
 !
    type, extends(ao_eri_getter) :: qed_ao_eri_getter
 !
-      type(qed_tool), pointer :: qed
+      class(qed_tool), pointer :: qed
 !
    contains
 !
