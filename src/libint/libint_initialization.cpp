@@ -202,7 +202,7 @@ void initialize_eri(const double eri_precision){
     electronic_repulsion_1der[0] = Engine(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
 
     electronic_repulsion[0].set_precision(eri_precision);
-    electronic_repulsion_1der[0].set_precision(eri_precision);
+    electronic_repulsion_1der[0].set_precision(0.0);
 
     for (int i = 1; i < omp_get_max_threads(); i++){
 
@@ -218,7 +218,6 @@ void set_eri_precision(const double eri_precision){
     for (int i = 0; i < omp_get_max_threads(); i++){
 
         electronic_repulsion[i].set_precision(eri_precision);
-        electronic_repulsion_1der[i].set_precision(eri_precision);
 
     }
 

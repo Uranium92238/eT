@@ -1,3 +1,7 @@
+# eT v1.9.2
+### Bugfixes
+- Fixed large error in HF molecular gradient due to low presicion in libint integrals. eT-program/eT!1185
+
 # eT v1.9.1
 ### Bugfixes
 - Removed duplicate call to constructor or the `ao_eri_getter_tool` in `qed_hf_class.F90` to avoid memory issues. Change pointers to `ao_tool` and `qed_tool` from type to class. eT-program/eT!1173
