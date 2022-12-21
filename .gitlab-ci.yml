@@ -37,21 +37,21 @@ code-quality:
 
 gnu-build:
   stage: gnu
-  dependencies: []
+  needs: []
   script:
     - whoami
     - cmake --version
     - git submodule init
     - git submodule update
     - >
-      if [ "$coverage" == "true" ]; then 
+      if [ "$coverage" == "true" ]; then
         extra_F_flags=' -fprofile-arcs -ftest-coverage -O0'
       fi
     - ./setup.py -clean --enable-pfunit --pfunit-dir=/pFUnit/build/installed -FC=gfortran-8 -CXX=g++-8 -F-flags="$extra_F_flags" $extra_setup_options --pcm
     - cd build
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}
-    - make -j16
+    - make -j8
   tags:
     - docker
   only:
@@ -60,7 +60,7 @@ gnu-build:
     - merge_requests
     - /^release\/\d+\.\d+$/
   artifacts:
-    paths: 
+    paths:
       - build/
 
 gnu-run:
@@ -68,9 +68,9 @@ gnu-run:
   needs: ["gnu-build"]
   script:
     - cd build
-    - ctest -j16 --output-on-failure
+    - ctest -j8 --output-on-failure
     - >
-      if [ "$coverage" == "true" ]; then 
+      if [ "$coverage" == "true" ]; then
         shopt -s globstar # Enable ** in gcov
         gcov-8 -abcfu **  # produce .gcov files for codecov
         curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
@@ -93,7 +93,7 @@ gnu-run:
 intel-build:
   stage: intel
   image: registry.gitlab.com/et-program/et/ubuntu-mkl-ifort-for-et
-  dependencies: []
+  needs: []
   script:
     - git submodule init
     - git submodule update
@@ -101,14 +101,14 @@ intel-build:
     - cd build
     - cmake_command=$(cat setup_cmake_output | head -1)
     - echo ${cmake_command}
-    - make -j16
+    - make -j8
   only:
     - master
     - development
     - merge_requests
     - /^release\/\d+\.\d+$/
   artifacts:
-    paths: 
+    paths:
       - build/
 
 intel-run:
@@ -117,7 +117,7 @@ intel-run:
   needs: ["intel-build"]
   script:
     - cd build
-    - ctest -j16 --output-on-failure
+    - ctest -j8 --output-on-failure
   only:
     - master
     - development
@@ -129,12 +129,12 @@ prepare-release:
   image: python:latest
   dependencies: []
   script:
-    - python3 dev_tools/export_release_info.py 
+    - python3 dev_tools/export_release_info.py
   artifacts:
     paths:
       - major.txt
       - minor.txt
-      - patch.txt   
+      - patch.txt
       - description.txt
   rules:
     - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
@@ -145,19 +145,18 @@ create-release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli
   needs: ["prepare-release"]
-  script: 
+  script:
     - major=$(cat major.txt)
     - minor=$(cat minor.txt)
     - patch=$(cat patch.txt)
     - description=$(cat description.txt)
     - >
-      release-cli create 
-      --name "v${major}.${minor}.${patch}" 
+      release-cli create
+      --name "v${major}.${minor}.${patch}"
       --description "${description}"
-      --tag-name "v${major}.${minor}.${patch}" 
+      --tag-name "v${major}.${minor}.${patch}"
       --ref $CI_COMMIT_SHA
   rules:
     - if: '$CI_PROJECT_NAMESPACE == "eT-program" && $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
     - when: never # Default: never run if the above conditions are false
-    

@@ -1,3 +1,7 @@
+# eT v1.9.3
+### Tests
+- Updated pipeline to run the intel and gnu pipelines in parallel. eT-program/eT!1238
+
 # eT v1.9.2
 ### Bugfixes
 - Fixed large error in HF molecular gradient due to low presicion in libint integrals. eT-program/eT!1185
