@@ -148,6 +148,7 @@ contains
 !
       precision_threshold = ao%get_libint_epsilon()
 !
+      n_threads = 1 ! needed when OMP is not enabled
 !$    n_threads = omp_get_max_threads()
 !
       call mem%alloc(G_thread, ao%n, ao%n, n_threads, set_zero=.true.)
@@ -163,6 +164,7 @@ contains
          s1 = ao%cs_eri_max_indices(s1s2_packed, 1)
          s2 = ao%cs_eri_max_indices(s1s2_packed, 2)
 !
+         thread = 0 ! needed when OMP is not enabled
 !$       thread = omp_get_thread_num()
 !
          degeneracy_12 = real(2-s2/s1, kind=dp)

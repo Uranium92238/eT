@@ -1,3 +1,7 @@
+# eT v1.9.4
+### Bugfixes
+- Fixed bug in G builder when OpenMP is disabled. eT-program/eT!1242
+
 # eT v1.9.3
 ### Tests
 - Updated pipeline to run the intel and gnu pipelines in parallel. eT-program/eT!1238
