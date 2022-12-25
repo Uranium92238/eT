@@ -1,3 +1,8 @@
+
+# eT v1.9.5
+### Bugfixes
+- Fixed bug in FCI code when OpenMP is disabled. eT-program/eT!1249
+
 # eT v1.9.4
 ### Bugfixes
 - Fixed bug in G builder when OpenMP is disabled. eT-program/eT!1242

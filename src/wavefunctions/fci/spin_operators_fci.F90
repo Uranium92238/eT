@@ -120,6 +120,7 @@ contains
 !$omp private(p, Jb, Ja, Ka, Kb, parity_JaJb, thread_n)
       do Jb = 1, wf%n_beta_strings
 !
+         thread_n = 1 ! Needed if OMP is not enabled
 !$       thread_n = omp_get_thread_num() + 1
 !
          do p = 1, wf%n_mo
