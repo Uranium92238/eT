@@ -241,7 +241,7 @@ contains
 !
 !     Print Geometry
 !
-      call molden%printf('m', '[ATOMS] AU', fs='(t1,a)')
+      call molden%printf('m', '[Atoms] (AU)', fs='(t1,a)')
       call wf%ao%print_molden_geometry(molden)
 !
 !     Print basis set information per atom
@@ -264,10 +264,10 @@ contains
             occupation = zero
          end if
 !
-         call molden%printf('m', 'Sym=X', fs='(t1,a)')
-         call molden%printf('m', 'Ene=(f17.10)', fs='(t1,a)', reals=[wf%orbital_energies(p)])
-         call molden%printf('m', 'Spin=Alpha', fs='(t1,a)')
-         call molden%printf('m', 'Occup=(f6.4)', reals=[occupation], fs='(t1,a)')
+         call molden%printf('m', ' Sym= X', fs='(t1,a)')
+         call molden%printf('m', ' Ene= (f17.10)', fs='(t1,a)', reals=[wf%orbital_energies(p)])
+         call molden%printf('m', ' Spin= Alpha', fs='(t1,a)')
+         call molden%printf('m', ' Occup= (f6.4)', reals=[occupation], fs='(t1,a)')
 !
          do q = 1, wf%ao%n
 !

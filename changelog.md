@@ -1,3 +1,6 @@
+# eT v1.9.6
+### Bugfixes
+- Fixed molden format such that molden files can be opened by avogadro. eT-program/eT!1272
 
 # eT v1.9.5
 ### Bugfixes
