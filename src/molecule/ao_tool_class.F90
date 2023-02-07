@@ -3097,15 +3097,13 @@ contains
       class(ao_tool), intent(in) :: ao
       type(output_file), intent(inout) :: file_
 !
-      integer :: counter, c
+      integer :: c
 !
-      counter = 0
       do c = 1, ao%n_centers
-         counter = counter + 1
          call file_%printf('m', '(b2)   (i5)   (i3)   (f15.10)  (f15.10)  (f15.10)', &
                             chars=[ao%centers(c)%symbol], fs='(t1,a)',               &
                             reals=[ao%centers(c)%coordinates*angstrom_to_bohr],      &
-                            ints=[counter, ao%centers(c)%number_])
+                            ints=[c, ao%centers(c)%number_])
       end do
 !
    end subroutine print_molden_geometry_ao_tool
@@ -3117,8 +3115,8 @@ contains
 !!    Written by Alexander C. Paul, May 2021
 !!
 !!    Prints basis set for a molden file:
-!!    Atom number
-!!    shell-label n_primitives
+!!    Atom number 0
+!!    shell-label n_primitives 1.00
 !!    exponent coefficient
 !!    "empty line"
 !!
@@ -3136,20 +3134,17 @@ contains
       class(ao_tool), intent(in) :: ao
       type(output_file), intent(inout) :: file_
 !
-      integer :: counter, c, s, i, n
+      integer :: c, s, i, n
       logical :: cartesian
 !
-      counter = 0
       do c = 1, ao%n_centers
 !
-         counter = counter + 1
-!
-         call file_%printf('m', '(i0)', fs='(t1,a)', ints=[counter])
+         call file_%printf('m', '(i0) 0', fs='(t1,a)', ints=[c])
 !
          do s = 1, ao%centers(c)%n_shells
 !
             n = ao%centers(c)%shells(s)%get_n_primitives()
-            call file_%printf('m', '(a0) (i0)', ints=[n], fs='(t1,a)', &
+            call file_%printf('m', ' (a0) (i0) 1.00', ints=[n], fs='(t1,a)', &
                  chars=[ao%centers(c)%shells(s)%get_angular_momentum_letter()])
 !
             do i = 1, n
@@ -3159,7 +3154,7 @@ contains
             end do
          end do
 !
-         call file_%printf('m', '')
+         call file_%newline('m')
 !
       end do
 !
@@ -3175,8 +3170,10 @@ contains
       end do
 !
       if (.not. cartesian) then
-         call file_%printf('m', '[5D7F]', fs='(t1,a)')
+         call file_%printf('m', '[5D]', fs='(t1,a)')
+         call file_%printf('m', '[7F]', fs='(t1,a)')
          call file_%printf('m', '[9G]', fs='(t1,a)')
+         call file_%newline('m')
       end if
 !
    end subroutine print_basis_set_molden_ao_tool
