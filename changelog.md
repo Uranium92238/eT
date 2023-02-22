@@ -1,3 +1,7 @@
+# eT v1.9.7
+### Tests
+- Make sure tests in master are run with GCC-8 Docker image. eT-program/eT!1286
+
 # eT v1.9.6
 ### Bugfixes
 - Fixed molden format such that molden files can be opened by avogadro. eT-program/eT!1272

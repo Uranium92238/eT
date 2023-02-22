@@ -1,4 +1,4 @@
-image: registry.gitlab.com/et-program/et/ubuntu-mkl-for-et
+image: registry.gitlab.com/et-program/et/ubuntu-mkl-for-et:v1.0
 
 stages:
   - pystyle
