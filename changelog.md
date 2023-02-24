@@ -1,3 +1,8 @@
+# eT v1.9.8
+### Tests
+- Update runtest library to v2.3.3. eT-program/eT!1289
+- The coefficients of all FCI states are now tested. eT-program/eT!1289
+
 # eT v1.9.7
 ### Tests
 - Make sure tests in master are run with GCC-8 Docker image. eT-program/eT!1286
