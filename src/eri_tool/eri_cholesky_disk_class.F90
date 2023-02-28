@@ -162,7 +162,8 @@ contains
 !
          call this%write_to_block(block_, &
                                  overlap_p, &
-                                 overlap_q, L_Jpq(:,:,1:overlap_q%length))
+                                 overlap_q, L_Jpq(:,:,overlap_q%first - range_q%first + 1: &
+                                                overlap_q%get_last() - range_q%first + 1))
       else
 !
          call mem%alloc(L_Jpq_copy, this%n_J, overlap_p%length, overlap_q%length)
@@ -221,7 +222,8 @@ contains
 !
          call this%read_from_block(block_, &
                            overlap_p, &
-                           overlap_q, L_Jpq(:,:,1:overlap_q%length))
+                           overlap_q, L_Jpq(:,:,overlap_q%first - range_q%first + 1: &
+                                                overlap_q%get_last() - range_q%first + 1))
       else
 !
          call mem%alloc(L_Jpq_copy, this%n_J, overlap_p%length, overlap_q%length)
