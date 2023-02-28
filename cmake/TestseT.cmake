@@ -328,6 +328,7 @@ add_eT_runtest(mlccsd_nto_gs                                "eT;short;mlccsd;gs;
 add_eT_runtest(mlccsd_cnto_full_es                          "eT;short;mlccsd;es;cnto")
 add_eT_runtest(mlccsd_cnto_es                               "eT;short;mlccsd;es;cnto")
 add_eT_runtest(mlccsd_pao_es                                "eT;short;mlccsd;es;pao")
+add_eT_runtest(mlccsd_pao_es_cholesky_disk                  "eT;short;mlccsd;es;pao;cholesky disk")
 add_eT_runtest(mlccsd_pao_full_cvs                          "eT;short;mlccsd;es;pao")
 add_eT_runtest(mlccsd_pao_cvs                               "eT;short;mlccsd;es;pao")
 add_eT_runtest(plot_orbitals_mlccsd_cnto_es                 "eT;short;mlccsd;es;cnto;visualization")

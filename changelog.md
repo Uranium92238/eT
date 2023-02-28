@@ -1,3 +1,7 @@
+# eT v1.9.9
+### Bugfixes
+- Fixes error for batching in the `cholesky_eri_disk` class. Appeared only for the batching setup used in the `basis_transformation` of `abstract_eri_cholesky`. eT-program/eT!1296
+
 # eT v1.9.8
 ### Tests
 - Update runtest library to v2.3.3. eT-program/eT!1289
