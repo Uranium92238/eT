@@ -188,9 +188,9 @@ contains
 !
                D_max_s1s2s3s4 = this%screener%get_D_max(s1, s2, s3, s4)
 !
-               call eri_getter%get_eri(eri,                       &
-                              s1, s2, s3, s4,                     &
-                              precision_threshold/D_max_s1s2s3s4, &
+               call eri_getter%get_eri(eri,                            &
+                              s1, s2, s3, s4,                          &
+                              precision_threshold/(D_max_s1s2s3s4**2), &
                               skip)
 !
                if (skip == 1) cycle

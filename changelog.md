@@ -1,3 +1,7 @@
+# eT v1.9.10
+### Bugfixes
+- Fix: the `precision_threshold` in the `ao_G_builder_class` has been adjusted to align with the definition of integral precision, which is defined as the square of the `eri_cutoff`. eT-program/eT!1306
+
 # eT v1.9.9
 ### Bugfixes
 - Fixes error for batching in the `cholesky_eri_disk` class. Appeared only for the batching setup used in the `basis_transformation` of `abstract_eri_cholesky`. eT-program/eT!1296
