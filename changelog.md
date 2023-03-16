@@ -1,3 +1,7 @@
+# eT v1.9.11
+### Bugfixes
+- Removed untested double batching in Davidson tool and unused routines. eT-program/eT!1309
+
 # eT v1.9.10
 ### Bugfixes
 - Fix: the `precision_threshold` in the `ao_G_builder_class` has been adjusted to align with the definition of integral precision, which is defined as the square of the `eri_cutoff`. eT-program/eT!1306

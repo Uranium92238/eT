@@ -54,7 +54,7 @@ module batching_index_class
 !!
 !!       enddo
 !!
-!!    The case is similar for a batching over several indices simultaneously. See 
+!!    The case is similar for a batching over several indices simultaneously. See
 !!    the memory manager "batch_setup" routines for details.
 !!
 !!
@@ -66,7 +66,7 @@ module batching_index_class
 !
    type, extends(range_) :: batching_index
 !
-!     Values determined by the memory manager 
+!     Values determined by the memory manager
 !
       integer :: max_length      ! Maximum length of a batch
       integer :: num_batches     ! The number of batches in total for the index
@@ -75,9 +75,9 @@ module batching_index_class
 !
       integer :: index_dimension ! Full length of index (e.g., typically n_vir for virtual index)
 !
-!     Offset to add when calculating batch limits 
+!     Offset to add when calculating batch limits
 !
-      integer :: offset 
+      integer :: offset
 !
 !     Logical for sanity check
 !
@@ -91,7 +91,7 @@ module batching_index_class
       procedure :: determine_limits    => determine_limits_batching_index
 !
 !     Debug option:
-!     Forced batching routine called by memory manager to ensure 
+!     Forced batching routine called by memory manager to ensure
 !     batching regardless of available memory. Batch size is randomly generated.
 !
       procedure :: force_batch         => force_batch_batching_index
@@ -107,11 +107,11 @@ module batching_index_class
    end type batching_index
 !
 !
-   interface batching_index 
+   interface batching_index
 !
       procedure :: new_batching_index
 !
-   end interface batching_index 
+   end interface batching_index
 !
 !
 contains
@@ -119,19 +119,19 @@ contains
 !
    function new_batching_index(dimension_, offset) result(batch_p)
 !!
-!!    New batching index 
+!!    New batching index
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!    Modified by Eirik F. Kjønstad, Mar 2020
 !!
 !!    Note: every batching index must be initialized!
 !!
-!!    dimension_: the total length of the index, e.g. the number of virtual 
-!!                orbitals "n_v" for a virtual index "a". 
+!!    dimension_: the total length of the index, e.g. the number of virtual
+!!                orbitals "n_v" for a virtual index "a".
 !!
-!!    offset:     (optional) offset for the index; e.g., if we have an 
-!!                MO index p that is restricted to virtual orbitals, we can 
+!!    offset:     (optional) offset for the index; e.g., if we have an
+!!                MO index p that is restricted to virtual orbitals, we can
 !!                set dimension_ to "n_v" and the offset to "n_o" (so that the
-!!                index can take the values n_o + 1, n_o + 2, ..., n_o + n_v). 
+!!                index can take the values n_o + 1, n_o + 2, ..., n_o + n_v).
 !!                Default is offset=0.
 !!
 !!    Eirik F. Kjønstad, Mar 2020: added offset.
@@ -141,7 +141,7 @@ contains
       type(batching_index) :: batch_p
 !
       integer, intent(in)           :: dimension_
-      integer, intent(in), optional :: offset 
+      integer, intent(in), optional :: offset
 !
       batch_p%index_dimension = dimension_
 !
@@ -207,9 +207,9 @@ contains
       real(dp) :: some_number_between_0_and_1 ! [0, 1)
 !
       call random_number(some_number_between_0_and_1)
-! 
+!
 !     1, 2, 3, ..., index_dimension - 1
-      this%max_length = 1 + floor((this%index_dimension - 1)*some_number_between_0_and_1) 
+      this%max_length = 1 + floor((this%index_dimension - 1)*some_number_between_0_and_1)
 !
       this%num_batches = (this%index_dimension-1)/(this%max_length)+1
 !
@@ -223,13 +223,13 @@ contains
 !
    subroutine do_not_batch_batching_index(this)
 !!
-!!    Do not batch 
+!!    Do not batch
 !!    Written by Eirik F. Kjønstad, Apr 2020
 !!
 !!    Does initialization needed for performing no batching,
 !!    i.e. setting the number of batches to 0.
 !!
-      implicit none 
+      implicit none
 !
       class(batching_index), intent(inout) :: this
 !
@@ -241,20 +241,20 @@ contains
 !
    subroutine do_single_batch_batching_index(this)
 !!
-!!    Do single batch 
-!!    Written by Eirik F. Kjønstad, Apr 2020 
+!!    Do single batch
+!!    Written by Eirik F. Kjønstad, Apr 2020
 !!
-!!    Does initialization needed to do one batch with entire range, 
+!!    Does initialization needed to do one batch with entire range,
 !!    i.e. setting the number of batches to 1.
 !!
-      implicit none 
+      implicit none
 !
-      class(batching_index), intent(inout) :: this 
+      class(batching_index), intent(inout) :: this
 !
       this%max_length  = this%index_dimension
       this%num_batches = 1
 !
-      this%range_ = range_(1, this%index_dimension)
+      call this%determine_limits(1)
 !
    end subroutine do_single_batch_batching_index
 !
