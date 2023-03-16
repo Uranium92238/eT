@@ -74,10 +74,10 @@ contains
       this%max_used = 0
       this%max_allowed = max_allowed
 !
-      this%tag = trim(tag)
+      allocate(this%tag, source=trim(tag))
 !
       call output%printf('debug', 'Memory tracker initialized - (a0)', &
-                         chars=[this%tag], ll=100)
+                         chars=[trim(this%tag)], ll=120)
 !
    end function new_memory_tracker
 !
@@ -125,12 +125,12 @@ contains
       character(len=17) :: difference, allowed_string, used_string
 !
       write(allowed_string, '(i0)') this%max_allowed
-      write(used_string, '(i0)') this%current
+      write(used_string, '(i0)') this%max_used
       write(difference,'(i0)') this%max_allowed - this%max_used
 !
       call output%printf('debug', 'Memory tracker finalized - ' // this%tag // ':')
       call output%printf('debug', 'allowed: (a0) B  used: (a0) B  difference: (a0) B', &
-                         chars=[allowed_string, used_string, difference], ll=100)
+                         chars=[allowed_string, used_string, difference], ll=120)
 !
    end subroutine destructor
 !

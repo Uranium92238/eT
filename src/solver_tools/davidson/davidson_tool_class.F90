@@ -351,49 +351,6 @@ contains
    end subroutine add_new_trial_davidson_tool
 !
 !
-   subroutine read_trial_davidson_tool(davidson, c, n)
-!!
-!!    Read trial vector
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
-!!
-!!    Reads the nth trial vector from file and places it in c.
-!!
-!!    If n is not passed, it reads the trial at wherever the cursor
-!!    in the file currently is.
-!!
-      implicit none
-!
-      class(davidson_tool), intent(inout) :: davidson
-!
-      real(dp), dimension(davidson%n_parameters), intent(out) :: c
-!
-      integer, intent(in) :: n
-!
-      call davidson%trials%copy_record_out(c, n)
-!
-   end subroutine read_trial_davidson_tool
-!
-!
-   subroutine write_trial_davidson_tool(davidson, c, n)
-!!
-!!    Write trial
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
-!!
-!!    Write nth trial vector c to file.
-!!
-      implicit none
-!
-      class(davidson_tool), intent(inout) :: davidson
-!
-      real(dp), dimension(davidson%n_parameters), intent(in) :: c
-!
-      integer, intent(in) :: n
-!
-      call davidson%trials%copy_record_in(c, n)
-!
-   end subroutine write_trial_davidson_tool
-!
-!
    subroutine orthonormalize_trial_vecs_davidson_tool(davidson)
 !!
 !!    Orthonormalize trial vecs
@@ -418,13 +375,14 @@ contains
 !
       type(batching_index), allocatable :: batch_i, batch_j
 !
-      type(range_), allocatable :: i_interval
-!
       integer, parameter :: n_orthonormalizations = 2
 !
       type(timings), allocatable :: timer
 !
       logical :: perform_batching
+      integer(i64) :: memory_needed
+      character(len=17) :: memory_needed_char, additional_memory_char
+
 !
       timer = timings('Davidson: orthonormalization of new trial vectors', 'v')
       call timer%turn_on()
@@ -442,8 +400,9 @@ contains
       n_new_trials = davidson%last_new_trial() - davidson%first_new_trial() + 1
       n_old_trials = n_trials - n_new_trials
 !
-      if ((n_new_trials + &
-           min(n_old_trials, 1))*(davidson%n_parameters)*dp .lt. mem%get_available()) then
+      memory_needed = (n_new_trials + min(n_old_trials, 1))*davidson%n_parameters*dp
+!
+      if (memory_needed <= mem%get_available()) then
 !
 !        Can keep all new vectors and at least one old vector
 !        => hold all new vectors (j) & batch over old vectors (i)
@@ -471,26 +430,22 @@ contains
 !           Set up batching over old vectors i
 !
             req_0 = req_1_j * n_new_trials
-            call mem%batch_setup(batch_i, req_0, req_1_i, 'orthonormalize_trial_vecs 1')
+            call mem%batch_setup(batch_i, req_0, req_1_i, 'orthonormalize_trial_vecs')
 !
          endif
 !
       else
 !
-!        Cannot hold all new and a single old vector
-!        => batch over both new (j) and old vectors (i)
+         call output%printf('m', 'Davidson orthogonalization: Not enough memory to hold &
+                                 &(i0) new trials and at least one old trial.', &
+                                 ints=[n_new_trials])
 !
-         call output%printf('debug', 'Davidson orthogonalization: &
-                                     &batching over old and new vectors')
+         memory_needed = (n_new_trials + 1)*davidson%n_parameters*dp
+         memory_needed_char = mem%get_memory_as_character(memory_needed)
+         additional_memory_char = mem%get_memory_as_character(memory_needed - mem%get_available())
 !
-         batch_i = batching_index(dimension_=n_trials,   &
-                                  offset=0)
-!
-         batch_j = batching_index(n_new_trials,          &
-                                  offset=n_old_trials)
-!
-         call mem%batch_setup(batch_i, batch_j, req_0, req_1_i, req_1_j, req_2, &
-                              'orthonormalize_trial_vecs 2')
+         call output%error_msg("Require total memory of (a0) - missing (a0).", &
+                               chars=[trim(memory_needed_char), trim(additional_memory_char)])
 !
       endif
 !
@@ -512,33 +467,24 @@ contains
 !
                call batch_i%determine_limits(current_i_batch)
 !
-!              Load only i vectors that are needed for the j batch
-!
-               i_interval = range_(batch_i%first,                                &
-                                   min(batch_i%get_last(), batch_j%first - 1) -  &
-                                   batch_i%first + 1)
-!
-               if (i_interval%length .lt. 1) cycle ! No i vectors to load;
-                                                         ! go to next i batch
-!
-               call davidson%trials%load(c_i, i_interval, 2)
+               call davidson%trials%load(c_i, batch_i, 2)
 !
 !              Remove i components along j vectors
 !
                do j = batch_j%first, batch_j%get_last()
-                  do i = i_interval%first, i_interval%get_last()
+                  do i = batch_i%first, batch_i%get_last()
 !
-                     r_ji = ddot(davidson%n_parameters,              &
-                                 c_j(:, j - batch_j%first + 1),      &
-                                 1,                                  &
-                                 c_i(:, i - i_interval%first + 1),   &
+                     r_ji = ddot(davidson%n_parameters,         &
+                                 c_j(:, j - batch_j%first + 1), &
+                                 1,                             &
+                                 c_i(:, i - batch_i%first + 1), &
                                  1)
 !
-                     call daxpy(davidson%n_parameters,            &
-                                -r_ji,                            &
-                                c_i(:, i - i_interval%first + 1), &
-                                1,                                &
-                                c_j(:, j - batch_j%first + 1),    &
+                     call daxpy(davidson%n_parameters,         &
+                                -r_ji,                         &
+                                c_i(:, i - batch_i%first + 1), &
+                                1,                             &
+                                c_j(:, j - batch_j%first + 1), &
                                 1)
 !
                   enddo
