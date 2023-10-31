@@ -374,15 +374,16 @@ contains
       real(dp) :: TrvD, ddot, E_nuc_mm
 !
       TrvD = ddot((ao%n)**2, ao%v, 1, density, 1)
+!
       E_nuc_mm = embedding%get_nuclei_mm_energy(ao)
 !
 !     1. 1/2 sum_I q_I chi_I
 !
       embedding_energy = embedding%get_mm_mm_energy()
 !
-!     2. 1/2 sum_i sum_I q_i Q_I/|r_i - R_I|
+!     2. 1/2 sum_i sum_I q_i Q_I/|r_i - R_I| + 1/2 Tr(vD)
 !
-      embedding_energy = embedding_energy + half*E_nuc_mm
+      embedding_energy = embedding_energy + half*E_nuc_mm + half*TrvD
 !
    end function get_energy_fq_environment
 !
