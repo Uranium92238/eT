@@ -1,3 +1,7 @@
+# eT v1.9.12
+### Bugfixes
+- Added missing energy term to FQ energy. eT-program/eT!1409
+
 # eT v1.9.11
 ### Bugfixes
 - Removed untested double batching in Davidson tool and unused routines. eT-program/eT!1309

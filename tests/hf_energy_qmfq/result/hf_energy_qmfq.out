@@ -1,72 +1,70 @@
 
 
 
-                     eT 1.9 - an electronic structure program
+                     eT 2.0 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
-   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
-   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
-   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
-   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
-   H. Tveten
+   J. H. Andersen, S. Angelico, A. Balbi, A. Barlini, A. Bianchi, M. 
+   Castagnola, S. Coriani, S. D. Folkestad, T. Giovannini, L. Goletto, 
+   T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, H. Koch, 
+   M. T. Lexander, T. Moitra, R. H. Myhre, A. C. Paul, R. Paul, J. Pedersen, 
+   M. Rinaldi, R. R. Riso, S. Roet, E. Ronca, B. S. Sannes, M. Scavino, 
+   A. K. Schnack-Petersen, A. S. Skeidsvoll, J. H. M. Trabski, Å. H. 
+   Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 1.9.0 Jazzy
-  ------------------------------------------------------------
-  Configuration date: 2022-10-19 10:25:53 UTC -07:00
-  Git branch:         detached HEAD
-  Git hash:           57c35dcc31df636729251e2448b7b0d0dd22e1f1
-  Fortran compiler:   GNU 11.3.0
-  C compiler:         GNU 11.3.0
-  C++ compiler:       GNU 11.3.0
-  LAPACK type:        SYSTEM_NATIVE
-  BLAS type:          SYSTEM_NATIVE
-  64-bit integers:    OFF
-  OpenMP:             ON
-  PCM:                OFF
-  Forced batching:    OFF
-  Runtime checks:     OFF
-  ------------------------------------------------------------
+   This is eT 2.0.0 A (development)
+  -------------------------------------------------------------
+  Configuration date:  2023-10-24 16:05:27 UTC +02:00
+  Git branch:          er_test_stabilization
+  Git hash:            bf16f693e3db1e9eb67088d995e0146c1c7b5864
+  Fortran compiler:    GNU 12.3.0
+  C compiler:          GNU 12.3.0
+  C++ compiler:        GNU 12.3.0
+  LAPACK type:         SYSTEM_NATIVE
+  BLAS type:           SYSTEM_NATIVE
+  OEI type:            libcint
+  ERI type:            libcint
+  64-bit integers:     OFF
+  OpenMP:              ON
+  PCM:                 OFF
+  Forced batching:     OFF
+  Runtime checks:      OFF
+  Initializing to NAN: OFF
+  -------------------------------------------------------------
 
 
   :: Input file
-  ================
+  =============
 
      Note: geometry section is excluded from this print
 
-     system
-        name: h2o-h2o-fq
+     - system
         charge: 0
-     end system
 
-     do
+     - do
        ground state
-     end do
 
-     memory
+     - memory
         available: 8
-     end memory
 
-     solver scf
+     - solver scf
         algorithm:          scf-diis
         energy threshold:   1.0d-10
         gradient threshold: 1.0d-10
-     end solver scf
 
-     molecular mechanics
+     - molecular mechanics
         forcefield: fq
-     end molecular mechanics
 
-     method
+     - method
         hf
-     end method
 
 
-  Calculation start:2022-10-19 10:30:32 UTC -07:00
+  Calculation start:2023-10-31 11:24:05 UTC +01:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -165,50 +163,54 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -76.062235942167
+     Energy of initial guess:               -75.746488945611
      Number of electrons in guess:           10.000000000000
 
   - Screening and integral thresholds:
 
      Coulomb screening threshold:    0.1000E-15
      Exchange screening threshold:   0.1000E-13
-     ERI cutoff:                     0.1000E-15
-     One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
+     ERI precision:                     0.1000E-15
+     One-electron integral precision:   0.1000E-20
+
+  Self-consistent field solver
+  ----------------------------
+
+  A Self-consistent field solver that solves an eigenvalue equations: 
+  F(C) C = C e.
 
   - SCF solver settings:
 
      Maximum iterations:                   100
      Acceleration type:                   diis
 
-  - Convergence thresholds
-
+  - Convergence thresholds:
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
   - DIIS tool settings:
 
      DIIS dimension:   8
-
      Storage (solver scf_errors): memory
      Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -76.167279756470     0.9671E-01     0.7617E+02
-     2           -76.197738767124     0.5107E-01     0.3046E-01
-     3           -76.206857227431     0.4489E-02     0.9118E-02
-     4           -76.207018878232     0.9313E-03     0.1617E-03
-     5           -76.207030498703     0.1952E-03     0.1162E-04
-     6           -76.207030950099     0.3794E-04     0.4514E-06
-     7           -76.207030963560     0.3170E-05     0.1346E-07
-     8           -76.207030963669     0.6267E-06     0.1094E-09
-     9           -76.207030963674     0.1931E-06     0.4263E-11
-    10           -76.207030963674     0.2812E-07     0.5116E-12
-    11           -76.207030963674     0.5357E-08     0.1421E-13
-    12           -76.207030963674     0.1568E-08     0.4263E-13
-    13           -76.207030963674     0.4163E-09     0.2842E-13
-    14           -76.207030963674     0.8156E-10     0.5684E-13
+     1           -75.829230907041     0.8070E-01     0.7583E+02
+     2           -75.863036096102     0.4768E-01     0.3381E-01
+     3           -75.871357656484     0.3758E-02     0.8322E-02
+     4           -75.871567230345     0.7970E-03     0.2096E-03
+     5           -75.871581732614     0.1579E-03     0.1450E-04
+     6           -75.871579019813     0.2947E-04     0.2713E-05
+     7           -75.871577992077     0.2418E-05     0.1028E-05
+     8           -75.871577828161     0.6124E-06     0.1639E-06
+     9           -75.871577781506     0.1894E-06     0.4665E-07
+    10           -75.871577768256     0.2567E-07     0.1325E-07
+    11           -75.871577766345     0.3637E-08     0.1911E-08
+    12           -75.871577766536     0.1083E-08     0.1909E-09
+    13           -75.871577766606     0.2944E-09     0.6992E-10
+    14           -75.871577766613     0.6945E-10     0.6921E-11
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -216,20 +218,20 @@
 
      HOMO-LUMO gap:                  0.678594129373
      Nuclear repulsion energy:       9.307879526626
-     Electronic energy:            -85.514910490300
-     Total energy:                 -76.207030963674
+     Electronic energy:            -85.179457293239
+     Total energy:                 -75.871577766613
 
   - Summary of QM/MM energetics:
                                          a.u.             eV     kcal/mol
      QM/MM SCF Contribution:        -0.185843425383    -5.05706  -116.619
      QM/MM Electrostatic Energy:    -0.047894522920    -1.30328   -30.054
 
-  Peak memory usage during the execution of eT: 129.224 KB
+  Peak memory usage during the execution of eT: 129.632 KB
 
-  Total wall time in eT (sec):              0.76600
-  Total cpu time in eT (sec):               0.48146
+  Total wall time in eT (s): 0.148
+  Total cpu time in eT (s):  0.251
 
-  Calculation end:2022-10-19 10:30:33 UTC -07:00
+  Calculation end:2023-10-31 11:24:05 UTC +01:00
 
   - Implementation references:
 
