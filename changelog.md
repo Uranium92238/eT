@@ -1,3 +1,6 @@
+# eT v1.9.13
+### Bugfixes
+- Revert eT-program/eT!1409, energy term FQ. eT-program/eT!1436
 # eT v1.9.12
 ### Bugfixes
 - Added missing energy term to FQ energy. eT-program/eT!1409

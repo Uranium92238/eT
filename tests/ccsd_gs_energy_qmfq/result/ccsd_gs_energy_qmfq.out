@@ -1,81 +1,86 @@
 
 
 
-                     eT 2.0 - an electronic structure program
+                     eT 1.9 - an electronic structure program
 
   ------------------------------------------------------------------------
    Author list in alphabetical order:
   ------------------------------------------------------------------------
-   J. H. Andersen, S. Angelico, A. Balbi, A. Barlini, A. Bianchi, M. 
-   Castagnola, S. Coriani, S. D. Folkestad, T. Giovannini, L. Goletto, 
-   T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, H. Koch, 
-   M. T. Lexander, T. Moitra, R. H. Myhre, A. C. Paul, R. Paul, J. Pedersen, 
-   M. Rinaldi, R. R. Riso, S. Roet, E. Ronca, B. S. Sannes, M. Scavino, 
-   A. K. Schnack-Petersen, A. S. Skeidsvoll, J. H. M. Trabski, Å. H. 
-   Tveten
+   J. H. Andersen, A. Balbi, S. Coriani, S. D. Folkestad, T. Giovannini, 
+   L. Goletto, T. S. Haugland, A. Hutcheson, I-M. Høyvik, E. F. Kjønstad, 
+   H. Koch, R. Matveeva, T. Moitra, R. H. Myhre, A. C. Paul, S. Roet, 
+   E. Ronca, M. Scavino, A. K. Schnack-Petersen, A. S. Skeidsvoll, Å. 
+   H. Tveten
   ------------------------------------------------------------------------
    J. Chem. Phys. 152, 184103 (2020); https://doi.org/10.1063/5.0004713
 
 
-   This is eT 2.0.0 A (development)
-  -------------------------------------------------------------
-  Configuration date:  2023-10-24 16:05:27 UTC +02:00
-  Git branch:          er_test_stabilization
-  Git hash:            bf16f693e3db1e9eb67088d995e0146c1c7b5864
-  Fortran compiler:    GNU 12.3.0
-  C compiler:          GNU 12.3.0
-  C++ compiler:        GNU 12.3.0
-  LAPACK type:         SYSTEM_NATIVE
-  BLAS type:           SYSTEM_NATIVE
-  OEI type:            libcint
-  ERI type:            libcint
-  64-bit integers:     OFF
-  OpenMP:              ON
-  PCM:                 OFF
-  Forced batching:     OFF
-  Runtime checks:      OFF
-  Initializing to NAN: OFF
-  -------------------------------------------------------------
+   This is eT 1.9.12 Jazzy
+  ------------------------------------------------------------
+  Configuration date: 2024-01-10 09:18:13 UTC +01:00
+  Git branch:         revert_fq_factor
+  Git hash:           f8de9c020ffe210903e451c13906adb6c13ea7c8
+  Fortran compiler:   GNU 11.4.0
+  C compiler:         GNU 11.4.0
+  C++ compiler:       GNU 11.4.0
+  LAPACK type:        MKL
+  BLAS type:          MKL
+  64-bit integers:    ON
+  OpenMP:             ON
+  PCM:                OFF
+  Forced batching:    OFF
+  Runtime checks:     OFF
+  ------------------------------------------------------------
 
 
   :: Input file
-  =============
+  ================
 
      Note: geometry section is excluded from this print
 
-     - system
+     system
+        name: h2o
         charge: 0
+     end system
 
-     - method
+     method
         hf
         ccsd
+     end method
 
-     - memory
+     memory
         available: 8
+     end memory
 
-     - solver cholesky
+     solver cholesky
         threshold: 1.0d-12
+     end solver cholesky
 
-     - solver scf
+     solver scf
         algorithm:          scf-diis
         energy threshold:   1.0d-10
         gradient threshold: 1.0d-10
+     end solver scf
 
-     - solver cc gs
+     solver cc gs
         omega threshold:  1.0d-10
         energy threshold: 1.0d-10
+     end solver cc gs
 
-     - solver cc multipliers
+     solver cc multipliers
         threshold: 1.0d-10
+     end solver cc multipliers
 
-     - molecular mechanics
+     molecular mechanics
         forcefield: fq
+     end molecular mechanics
 
-     - do
+     do
         ground state
+     end do
 
 
-  Calculation start:2023-10-31 11:24:06 UTC +01:00
+  Calculation start:2024-01-10 09:25:38 UTC +01:00
 
   Running on 2 OMP threads
   Memory available for calculation: 8.000000 GB
@@ -177,54 +182,50 @@
 
   - Setting initial AO density to sad
 
-     Energy of initial guess:               -75.840155905619
+     Energy of initial guess:               -75.948349660986
      Number of electrons in guess:           10.000000000000
 
   - Screening and integral thresholds:
 
      Coulomb screening threshold:    0.1000E-15
      Exchange screening threshold:   0.1000E-13
+     ERI cutoff:                     0.1000E-15
+     One-electron integral  cutoff:  0.1000E-20
      Cumulative Fock threshold:      0.1000E+01
-     ERI precision:                     0.1000E-15
-     One-electron integral precision:   0.1000E-20
-
-  Self-consistent field solver
-  ----------------------------
-
-  A Self-consistent field solver that solves an eigenvalue equations: 
-  F(C) C = C e.
 
   - SCF solver settings:
 
      Maximum iterations:                   100
      Acceleration type:                   diis
 
-  - Convergence thresholds:
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
 
   - DIIS tool settings:
 
      DIIS dimension:   8
+
      Storage (solver scf_errors): memory
      Storage (solver scf_parameters): memory
 
   Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
   ---------------------------------------------------------------
-     1           -75.907379571457     0.8301E-01     0.7591E+02
-     2           -75.940465791086     0.4772E-01     0.3309E-01
-     3           -75.948705493299     0.4505E-02     0.8240E-02
-     4           -75.948986165294     0.9578E-03     0.2807E-03
-     5           -75.949024331655     0.1836E-03     0.3817E-04
-     6           -75.949028205435     0.3365E-04     0.3874E-05
-     7           -75.949028551858     0.2732E-05     0.3464E-06
-     8           -75.949028477676     0.5528E-06     0.7418E-07
-     9           -75.949028438424     0.1330E-06     0.3925E-07
-    10           -75.949028428980     0.1741E-07     0.9444E-08
-    11           -75.949028428004     0.3399E-08     0.9755E-09
-    12           -75.949028428146     0.7661E-09     0.1414E-09
-    13           -75.949028428201     0.1156E-09     0.5524E-10
-    14           -75.949028428208     0.5202E-10     0.7134E-11
+     1           -76.030467272437     0.9245E-01     0.7603E+02
+     2           -76.060213481293     0.5151E-01     0.2975E-01
+     3           -76.069174693888     0.3903E-02     0.8961E-02
+     4           -76.069341656812     0.9539E-03     0.1670E-03
+     5           -76.069353258480     0.1832E-03     0.1160E-04
+     6           -76.069353670717     0.3504E-04     0.4122E-06
+     7           -76.069353682126     0.3105E-05     0.1141E-07
+     8           -76.069353682236     0.5654E-06     0.1102E-09
+     9           -76.069353682243     0.1316E-06     0.6096E-11
+    10           -76.069353682243     0.2105E-07     0.4263E-12
+    11           -76.069353682243     0.4778E-08     0.0000E+00
+    12           -76.069353682243     0.1103E-08     0.2842E-13
+    13           -76.069353682243     0.1712E-09     0.1421E-13
+    14           -76.069353682243     0.5663E-10     0.4263E-13
   ---------------------------------------------------------------
   Convergence criterion met in 14 iterations!
 
@@ -232,8 +233,8 @@
 
      HOMO-LUMO gap:                  0.685069619950
      Nuclear repulsion energy:       9.307879526626
-     Electronic energy:            -85.256907954834
-     Total energy:                 -75.949028428208
+     Electronic energy:            -85.377233208869
+     Total energy:                 -76.069353682243
 
   - Summary of QM/MM energetics:
                                          a.u.             eV     kcal/mol
@@ -310,7 +311,7 @@
  - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
 
      Maximal difference between approximate and actual diagonal:              0.1995E-12
-     Minimal element of difference between approximate and actual diagonal:  -0.5580E-15
+     Minimal element of difference between approximate and actual diagonal:  -0.1238E-14
 
   - Settings for integral handling:
 
@@ -319,8 +320,8 @@
 
   - Finished decomposing the ERIs.
 
-  Total wall time (s): 0.074
-  Total cpu time (s):  0.111
+     Total wall time (sec):              0.17968
+     Total cpu time (sec):               0.33424
 
 
   Determining CC cluster amplitudes
@@ -336,7 +337,8 @@
 
   - CC ground state solver settings:
 
-  - Convergence thresholds:
+  - Convergence thresholds
+
      Residual threshold:            0.1000E-09
      Energy threshold:              0.1000E-09
      Max number of iterations:      100
@@ -344,33 +346,34 @@
   - DIIS tool settings:
 
      DIIS dimension:   8
+
      Storage (cc_gs_diis_errors): file
      Storage (cc_gs_diis_parameters): file
 
   Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
   ---------------------------------------------------------------
-    1           -76.151357102995     0.7444E-01     0.7615E+02
-    2           -76.156458425918     0.2066E-01     0.5101E-02
-    3           -76.160163573315     0.4734E-02     0.3705E-02
-    4           -76.160567233056     0.1055E-02     0.4037E-03
-    5           -76.160575710348     0.2103E-03     0.8477E-05
-    6           -76.160584722362     0.6727E-04     0.9012E-05
-    7           -76.160583881226     0.1733E-04     0.8411E-06
-    8           -76.160583415077     0.4137E-05     0.4661E-06
-    9           -76.160583325689     0.9655E-06     0.8939E-07
-   10           -76.160583274531     0.2228E-06     0.5116E-07
-   11           -76.160583289042     0.5014E-07     0.1451E-07
-   12           -76.160583288121     0.9864E-08     0.9212E-09
-   13           -76.160583288579     0.2662E-08     0.4575E-09
-   14           -76.160583288444     0.7394E-09     0.1342E-09
-   15           -76.160583288436     0.2272E-09     0.8313E-11
-   16           -76.160583288436     0.4325E-10     0.1279E-12
+    1           -76.271682357029     0.7444E-01     0.7627E+02
+    2           -76.276783679953     0.2066E-01     0.5101E-02
+    3           -76.280488827350     0.4734E-02     0.3705E-02
+    4           -76.280892487091     0.1055E-02     0.4037E-03
+    5           -76.280900964383     0.2103E-03     0.8477E-05
+    6           -76.280909976397     0.6727E-04     0.9012E-05
+    7           -76.280909135261     0.1733E-04     0.8411E-06
+    8           -76.280908669112     0.4137E-05     0.4661E-06
+    9           -76.280908579724     0.9655E-06     0.8939E-07
+   10           -76.280908528566     0.2228E-06     0.5116E-07
+   11           -76.280908543077     0.5014E-07     0.1451E-07
+   12           -76.280908542156     0.9864E-08     0.9212E-09
+   13           -76.280908542614     0.2662E-08     0.4575E-09
+   14           -76.280908542479     0.7394E-09     0.1342E-09
+   15           -76.280908542471     0.2272E-09     0.8299E-11
+   16           -76.280908542471     0.4325E-10     0.1279E-12
   ---------------------------------------------------------------
   Convergence criterion met in 16 iterations!
 
   - Ground state summary:
 
-     Final ground state energy (a.u.):   -76.160583288436
+     Final ground state energy (a.u.):   -76.280908542471
 
      Correlation energy (a.u.):           -0.211554860228
 
@@ -379,13 +382,13 @@
         a       i         t(a,i)
      -----------------------------------
        13      3       -0.006759763627
-        1      4        0.005836090571
-        2      3        0.005618061023
-       14      4        0.004413514046
+        1      4       -0.005836090571
+        2      3       -0.005618061023
+       14      4       -0.004413514046
         1      2        0.004383675023
         5      2       -0.003986243346
         7      3        0.003949456204
-       10      5        0.003042991402
+       10      5       -0.003042991402
         8      4        0.002870184466
         4      4        0.002639343387
      ------------------------------------
@@ -401,22 +404,22 @@
         4      3       4      3       -0.028611385118
         2      3       2      3       -0.025315431105
         3      4       3      4       -0.024709303604
-        7      3       6      5        0.022866450903
+        7      3       6      5       -0.022866450903
         7      3       7      3       -0.022320386279
         2      3       6      5       -0.020380486011
      --------------------------------------------------
 
   - Finished solving the CCSD ground state equations
 
-  Total wall time (s): 0.063
-  Total cpu time (s):  0.081
+     Total wall time (sec):              0.14530
+     Total cpu time (sec):               0.26351
 
-  Peak memory usage during the execution of eT: 7.348608 MB
+  Peak memory usage during the execution of eT: 7.341992 MB
 
-  Total wall time in eT (s): 0.281
-  Total cpu time in eT (s):  0.435
+  Total wall time in eT (sec):              0.81453
+  Total cpu time in eT (sec):               1.46614
 
-  Calculation end:2023-10-31 11:24:07 UTC +01:00
+  Calculation end:2024-01-10 09:25:39 UTC +01:00
 
   - Implementation references:
 
