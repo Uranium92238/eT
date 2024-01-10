@@ -35,7 +35,7 @@ module parameters
 !
    integer, parameter :: major_version = 1
    integer, parameter :: minor_version = 9
-   integer, parameter :: patch_version = 12
+   integer, parameter :: patch_version = 13
 !
    character(len=27), parameter :: version_name = "Jazzy"
 !
