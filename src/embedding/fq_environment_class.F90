@@ -381,9 +381,9 @@ contains
 !
       embedding_energy = embedding%get_mm_mm_energy()
 !
-!     2. 1/2 sum_i sum_I q_i Q_I/|r_i - R_I| + 1/2 Tr(vD)
+!     2. 1/2 sum_i sum_I q_i Q_I/|r_i - R_I|
 !
-      embedding_energy = embedding_energy + half*E_nuc_mm + half*TrvD
+      embedding_energy = embedding_energy + half*E_nuc_mm
 !
    end function get_energy_fq_environment
 !
