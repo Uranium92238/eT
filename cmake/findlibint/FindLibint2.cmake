@@ -84,7 +84,10 @@ if(LIBINT2_GLOB_DIR)
       file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/*/3-21g.g94)
    endif()
    if(_BASIS_DIR)
-      get_filename_component(Libint2_BASIS_DIR ${_BASIS_DIR} PATH)
+      # Extract directory path without using get_filename_component
+      string(REGEX REPLACE "/[^/]*$" "" Libint2_BASIS_DIR "${_BASIS_DIR}")
+      # Or set it directly if we know the exact path
+      # set(Libint2_BASIS_DIR "/home/anik/software/libs/libint/libint-2.7.0-beta.6/share/libint/2.7.0/basis")
    endif()
    message(STATUS "Libint2 will search for basis sets from ${Libint2_BASIS_DIR}")
 endif()
